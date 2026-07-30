@@ -75,3 +75,9 @@ __pycache__/
 tools/misconception-spike/results.json
 tools/misconception-spike/run*.log
 tools/misconception-spike/.env.local
+
+# Live スパイクの生成物
+tools/live_spike/.env.local
+tools/misconception-survey/codes.txt
+tools/misconception-survey/results/
+tools/misconception-survey/judged.json
