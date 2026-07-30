@@ -1,0 +1,9 @@
+{
+  "name": "dekisugi-survey-host",
+  "private": true,
+  "type": "module",
+  "description": "デキすぎ君の調査アンケートのホスト。静的HTML + 回答受け口。",
+  "dependencies": {
+    "@vercel/blob": "^2.0.0"
+  }
+}
