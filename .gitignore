@@ -65,3 +65,13 @@ tools/type-survey/font_b64.txt
 
 # 実機計測の生ログ
 tools/*/measurements/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+
+# 誤概念スパイクの生成物（再実行で作り直せる。結論は RESULTS.md に残す）
+tools/misconception-spike/results.json
+tools/misconception-spike/run*.log
+tools/misconception-spike/.env.local
