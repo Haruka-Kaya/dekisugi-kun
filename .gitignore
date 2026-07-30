@@ -1,0 +1,67 @@
+# ---- Flutter / Dart ----
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/.pub-cache/
+**/.pub/
+**/doc/api/
+*.iml
+
+# rive_native がビルド時に落としてくるネイティブ成果物
+**/rive_native/native/
+
+# ---- Android ----
+**/android/.gradle/
+**/android/captures/
+**/android/local.properties
+**/android/**/gradle-wrapper.jar
+**/android/key.properties
+**/*.jks
+**/*.keystore
+
+# ---- iOS / macOS ----
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/App.framework
+**/ios/Flutter/flutter_export_environment.sh
+**/Podfile.lock
+**/.symlinks/
+
+# ---- IDE ----
+.idea/
+.vscode/
+*.swp
+*~
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- シークレット ----
+# 鍵・トークンの類は絶対に追跡しない
+.env
+.env.*
+!.env.example
+**/secrets/
+*.pem
+*.p12
+service-account*.json
+
+# ---- 調査ツールの一時生成物 ----
+# アンケートの実回答（個人の回答なので追跡しない。集計結果だけを残す）
+tools/type-survey/codes.txt
+tools/type-survey/results/
+# フォント生成の中間ファイル（index.html に埋め込み済みのため不要）
+tools/type-survey/NotoSansJP-VF.ttf
+tools/type-survey/NSJP-*.ttf
+tools/type-survey/NSJP-*.woff2
+tools/type-survey/font_b64.txt
+
+# 実機計測の生ログ
+tools/*/measurements/
