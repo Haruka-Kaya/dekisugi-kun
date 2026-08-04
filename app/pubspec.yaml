@@ -1,0 +1,40 @@
+name: dekisugi
+description: "AI デキすぎ君 — 教えることで学ぶ学習アプリ"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.5+1
+  dio: ^5.11.0
+  gemini_live: ^2026.7.24
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    # フォント本体は下の fonts: で入るが、**ライセンス文は入らない**。
+    # SIL OFL は頒布時に添付を求めるので、アセットとして明示的に同梱する。
+    - assets/fonts/OFL.txt
+
+  # 和文フォントは**同梱する**。google_fonts は実行時にネットワークから取りに行くので、
+  # 初回起動がオフラインだと文字が出ない／端末ごとに描画が変わる。
+  # 可変フォント1本（wght 100-900）。静的インスタンスを2本入れるより
+  # ウェイトの自由度が高く、サイズもほぼ同じ (9.15MB)。
+  # ライセンスは SIL OFL 1.1。assets/fonts/OFL.txt を同梱している。
+  fonts:
+    - family: NotoSansJP
+      fonts:
+        - asset: assets/fonts/NotoSansJP-Variable.ttf
