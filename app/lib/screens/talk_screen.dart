@@ -94,6 +94,7 @@ class _TalkScreenState extends State<TalkScreen> {
                 if (live.failure != null) _FailureBanner(failure: live.failure!),
                 if (live.recordingIssue != null)
                   _IssueBanner(issue: live.recordingIssue!),
+                if (live.suspectsSelfInterruption) const _EchoBanner(),
                 if (live.dossier != null) DossierBar(dossier: live.dossier!),
                 Expanded(child: _TurnLog(live: live)),
                 _Composer(live: live),
@@ -242,6 +243,39 @@ class _IssueBanner extends StatelessWidget {
           Expanded(
             child: Text(text,
                 style: t.textTheme.bodySmall?.copyWith(color: c.shakyFg)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// AI が自分の声を拾って自分を止めている疑い。
+///
+/// エコーキャンセルが効かない端末で起きる。会話がぶつ切りになるのに、
+/// 生徒には理由が分からない。**黙って壊れたままにしない。**
+/// 直す手段は端末側に無いので、**イヤホンという実際に効く回避策**を出す。
+class _EchoBanner extends StatelessWidget {
+  const _EchoBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    final c = context.appColors;
+    return Container(
+      width: double.infinity,
+      color: c.shakyChip,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Icon(Icons.headphones, size: 18, color: c.shakyFg),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'デキすぎ君の声をマイクが拾っているようです。'
+              'イヤホンをつけると話しやすくなります。',
+              style: t.textTheme.bodySmall?.copyWith(color: c.shakyFg),
+            ),
           ),
         ],
       ),

@@ -6,15 +6,18 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --import tsx --test \"test/*.test.ts\"",
+    "test": "tsc --noEmit && node --import tsx --test \"test/*.test.ts\"",
     "test:live": "node --import tsx --test test/director.live.test.ts",
     "dev": "vercel dev",
-    "deploy": "vercel deploy --prod"
+    "deploy": "vercel deploy --prod",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@google/genai": "^2.13.0"
   },
   "devDependencies": {
-    "tsx": "^4.23.5"
+    "@types/node": "^26.1.2",
+    "tsx": "^4.23.5",
+    "typescript": "^5.9.3"
   }
 }

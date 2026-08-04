@@ -134,6 +134,20 @@ class LiveSessionController extends ChangeNotifier {
   /// 直近の録音が変なら理由を返す。「聞こえていない」を黙って進めないため。
   RecordingIssue? get recordingIssue => diagnose(_peaks);
 
+  /// AI が自分の声を拾って自分を止めている疑いがあるか。
+  ///
+  /// エコーキャンセルが効かない端末では、スピーカーから出た AI の声を
+  /// マイクが拾い、サーバ側 VAD が「生徒が喋りはじめた」と判定して発話を打ち切る。
+  /// **会話がぶつ切りになるのに、生徒には理由が分からない。**
+  ///
+  /// 端末が AEC を持っているかは `record` からは分からない（Android は
+  /// `Echo canceler effect is not available.` とログに出すだけ）。
+  /// なので**挙動から推定する**: 生徒が何も言っていないのに
+  /// AI の発話が繰り返し打ち切られていたら、その疑いが濃い。
+  bool get suspectsSelfInterruption => _selfInterruptions >= 3;
+
+  int _selfInterruptions = 0;
+
   /// 入力音量。**音より先に目で「聞こえている」を返す**ために画面へ流す。
   /// 毎フレーム notifyListeners すると画面全体が組み直されるので、
   /// ここだけは Stream で受け渡して再構築の範囲を音量バーに閉じる。
@@ -400,6 +414,7 @@ class LiveSessionController extends ChangeNotifier {
 
     // 割り込み。**最優先で音を止める。** 遅れるほど「話を聞かない AI」に見える
     if (sc?.interrupted ?? false) {
+      _noteInterruption();
       _player.stopNow();
       _flushAiTurn();
       _setState(LiveState.listening);
@@ -442,6 +457,22 @@ class LiveSessionController extends ChangeNotifier {
       _pumpDirector();
       // 生徒が喋ったターンの後だけ呼ぶ。AI の独り言では状況が変わらない
       if (hadStudentTurn) _kickDirector();
+    }
+  }
+
+  /// 割り込みが「生徒の発話によるもの」か「AI の自分の声によるもの」かを見分ける。
+  ///
+  /// 生徒が実際に喋っていれば、途中経過の文字起こしが出ているはず。
+  /// **それが空のまま打ち切られたら、拾ったのは自分の声の疑いがある。**
+  void _noteInterruption() {
+    if (interimStudentText.isNotEmpty || _studentBuf.isNotEmpty) {
+      _selfInterruptions = 0; // 生徒がちゃんと割り込んだ
+      return;
+    }
+    _selfInterruptions++;
+    if (_selfInterruptions == 3) {
+      debugPrint('自己割り込みの疑い（エコーキャンセルが効いていない可能性）');
+      notifyListeners();
     }
   }
 

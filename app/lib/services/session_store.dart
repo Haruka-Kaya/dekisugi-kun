@@ -75,6 +75,15 @@ abstract class SessionStore {
   Future<DateTime?> examDate();
   Future<void> setExamDate(DateTime? date);
 
+  /// 端末に残す小さな値（端末ID・トークン・同意の記録など）。
+  ///
+  /// **秘密の保管庫ではない。** root を取られた端末では読める。
+  /// ここに置いてよいのは「盗まれても本人の情報にならないもの」だけ。
+  Future<String?> getSetting(String key);
+
+  /// null を渡すと消す。
+  Future<void> setSetting(String key, String? value);
+
   Future<void> close();
 }
 
@@ -197,24 +206,29 @@ class SqfliteSessionStore implements SessionStore {
 
   @override
   Future<DateTime?> examDate() async {
-    final rows =
-        await _db.query('settings', where: 'key = ?', whereArgs: ['exam_date']);
-    if (rows.isEmpty) return null;
-    final v = int.tryParse(rows.first['value'] as String? ?? '');
+    final v = int.tryParse(await getSetting('exam_date') ?? '');
     return v == null ? null : DateTime.fromMillisecondsSinceEpoch(v);
   }
 
   @override
-  Future<void> setExamDate(DateTime? date) async {
-    if (date == null) {
-      await _db.delete('settings', where: 'key = ?', whereArgs: ['exam_date']);
+  Future<void> setExamDate(DateTime? date) =>
+      setSetting('exam_date', date?.millisecondsSinceEpoch.toString());
+
+  @override
+  Future<String?> getSetting(String key) async {
+    final rows =
+        await _db.query('settings', where: 'key = ?', whereArgs: [key]);
+    return rows.isEmpty ? null : rows.first['value'] as String?;
+  }
+
+  @override
+  Future<void> setSetting(String key, String? value) async {
+    if (value == null) {
+      await _db.delete('settings', where: 'key = ?', whereArgs: [key]);
       return;
     }
-    await _db.insert(
-      'settings',
-      {'key': 'exam_date', 'value': '${date.millisecondsSinceEpoch}'},
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await _db.insert('settings', {'key': key, 'value': value},
+        conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
@@ -269,6 +283,7 @@ List<Utterance> decodeTranscript(String? json) {
 class MemorySessionStore implements SessionStore {
   final _sessions = <int, SavedSession>{};
   final _reviews = <String, ReviewItem>{};
+  final _settings = <String, String>{};
   DateTime? _exam;
   int _seq = 0;
 
@@ -364,6 +379,18 @@ class MemorySessionStore implements SessionStore {
 
   @override
   Future<void> setExamDate(DateTime? date) async => _exam = date;
+
+  @override
+  Future<String?> getSetting(String key) async => _settings[key];
+
+  @override
+  Future<void> setSetting(String key, String? value) async {
+    if (value == null) {
+      _settings.remove(key);
+    } else {
+      _settings[key] = value;
+    }
+  }
 
   @override
   Future<void> close() async {}

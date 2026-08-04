@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"],
+
+    // Vercel は api/*.ts をバンドルせず個別にトランスパイルするので、
+    // import 指定子は .js のまま出る。NodeNext がこの書き方を前提にしている
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": false,
+
+    // **`noEmit` をここに書かないこと。**
+    // Vercel のビルダはこの tsconfig を読んで関数をコンパイルするので、
+    // noEmit があると出力が空になり
+    // `Cannot read properties of undefined (reading 'readFile')` で落ちる。
+    // 型検査は `tsc --noEmit` と CLI 側で指定する（npm test / npm run typecheck）。
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["api/**/*.ts", "lib/**/*.ts", "test/**/*.ts"]
+}

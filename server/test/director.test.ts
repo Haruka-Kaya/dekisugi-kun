@@ -145,7 +145,7 @@ describe('誘発の判定', () => {
         probeUpdates: [{ id: 'M01', result: 'corrected', evidence: ['u04'] }],
       }),
     })
-    assert.equal(slot(out.dossier, 'fall').probes[0].result, 'corrected')
+    assert.equal(slot(out.dossier, 'fall').probes[0]!.result, 'corrected')
   })
 
   it('根拠のない accepted を通さない', async () => {
@@ -157,7 +157,7 @@ describe('誘発の判定', () => {
         probeUpdates: [{ id: 'M01', result: 'accepted', evidence: [] }],
       }),
     })
-    assert.equal(slot(out.dossier, 'fall').probes[0].result, 'unclear')
+    assert.equal(slot(out.dossier, 'fall').probes[0]!.result, 'unclear')
   })
 
   it('口にしていない誤概念の判定は捨てる', async () => {
@@ -172,7 +172,7 @@ describe('誘発の判定', () => {
         probeUpdates: [{ id: 'M01', result: 'corrected', evidence: ['u04'] }],
       }),
     })
-    assert.equal(slot(out.dossier, 'fall').probes[0].result, 'notTried')
+    assert.equal(slot(out.dossier, 'fall').probes[0]!.result, 'notTried')
   })
 
   it('決まった判定を unclear に戻さない', async () => {
@@ -187,7 +187,7 @@ describe('誘発の判定', () => {
         probeUpdates: [{ id: 'M01', result: 'unclear', evidence: ['u02'] }],
       }),
     })
-    assert.equal(slot(out.dossier, 'fall').probes[0].result, 'corrected')
+    assert.equal(slot(out.dossier, 'fall').probes[0]!.result, 'corrected')
   })
 })
 

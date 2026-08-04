@@ -20,7 +20,7 @@ function loadKey(): string | undefined {
   for (const p of ['../.env.local', 'C:/Users/kayah/jiyu-kenkyu-ai/.env.local']) {
     try {
       const m = /GEMINI_API_KEY\s*=\s*(\S+)/.exec(readFileSync(p, 'utf8'))
-      if (m) return m[1].replace(/^["']|["']$/g, '')
+      if (m) return m[1]!.replace(/^["']|["']$/g, '')
     } catch {
       /* 次を試す */
     }

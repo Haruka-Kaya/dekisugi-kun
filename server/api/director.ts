@@ -1,5 +1,7 @@
+import { verifyToken } from '../lib/auth.js'
 import { runDirector, type DirectorInput } from '../lib/director.js'
 import { emptyDossier } from '../lib/dossier.js'
+import { checkRate } from '../lib/ratelimit.js'
 import { unitById } from '../lib/units.js'
 
 /**
@@ -11,35 +13,29 @@ import { unitById } from '../lib/units.js'
  * 端末 → ここ → Gemini（テキスト生成）→ ここ → 端末
  * 音声はこの経路を通らない（端末が Gemini Live と直接つながっている）。
  *
- * > [!warning] いまは誰でも叩ける
- * > 認証とレート制限は段階5。**一般公開の前に必ず入れる。**
- * > 入れないと Gemini の請求が青天井になる。
+ * 端末ごとの署名付きトークン（`/api/register` で取る）と回数制限で守っている。
+ *
+ * > [!warning] これは本人確認ではない
+ * > 誰でも `/api/register` を叩けばトークンを取れる。守っているのは
+ * > 「同じ端末であること」までで、端末を大量に作られると1端末あたりの
+ * > 制限は意味を失う。だから**全体の1日上限**も別に持っている。
+ *
+ * > [!warning] 保存先が無いと回数制限は気休め
+ * > `KV_REST_API_URL` が未設定だとプロセス内カウンタに落ちる。
+ * > 繋がっているかは応答ヘッダ `X-RateLimit-Backend` で分かる。
  */
 
 /** 1リクエストの上限。逐語が長くなるので発話数でも切る */
 const MAX_BYTES = 256 * 1024
 const MAX_UTTERANCES = 200
 
-/**
- * 最低限の門。**これは認証ではない。**
- *
- * トークンは APK の中に平文で入るので、取り出せる人は誰でも通せる。
- * 止められるのは「URL を見つけただけの通りすがり」まで。
- * それでも、公開直後に無防備で置いて Gemini の請求が伸びるのは防げる。
- *
- * 本物の認証とレート制限は段階5。**一般公開の前に必ず入れ替える。**
- * `DIRECTOR_TOKEN` が未設定なら素通しする（ローカル開発のため）。
- */
-function tokenOk(req: Req): boolean {
-  const expected = process.env.DIRECTOR_TOKEN
-  if (!expected) return true
-  const got = req.headers?.['x-dekisugi-token']
-  const value = Array.isArray(got) ? got[0] : got
-  if (typeof value !== 'string' || value.length !== expected.length) return false
-  // 長さが同じときだけ全文字を比較する。早期 return で長さを漏らさない
-  let diff = 0
-  for (let i = 0; i < expected.length; i++) diff |= value.charCodeAt(i) ^ expected.charCodeAt(i)
-  return diff === 0
+/** `Authorization: Bearer xxx` から生のトークンを取る。 */
+function bearer(req: Req): string | undefined {
+  const raw = req.headers?.authorization ?? req.headers?.Authorization
+  const value = Array.isArray(raw) ? raw[0] : raw
+  if (typeof value !== 'string') return undefined
+  const m = /^Bearer\s+(.+)$/i.exec(value.trim())
+  return m ? m[1] : undefined
 }
 
 type Req = {
@@ -59,8 +55,22 @@ export default async function handler(req: Req, res: Res) {
     res.status(405).json({ error: 'method_not_allowed' })
     return
   }
-  if (!tokenOk(req)) {
-    res.status(401).json({ error: 'unauthorized' })
+  // ① 端末の識別。**Gemini を呼ぶ前に落とす**
+  const auth = verifyToken(bearer(req))
+  if (!auth.ok) {
+    // 期限切れは端末側で登録し直せば直る。区別して返す
+    res.status(401).json({ error: auth.reason === 'expired' ? 'token_expired' : 'unauthorized' })
+    return
+  }
+
+  // ② 回数の制限。ここが Gemini の請求を止める最後の砦
+  const rate = await checkRate(auth.token.did)
+  // 本物の保存先に繋がっているかを外から確認できるようにしておく
+  res.setHeader('X-RateLimit-Backend', rate.backend)
+  res.setHeader('X-RateLimit-Remaining', String(rate.remaining))
+  if (!rate.ok) {
+    res.setHeader('Retry-After', String(rate.retryAfterSeconds))
+    res.status(429).json({ error: 'rate_limited', retryAfter: rate.retryAfterSeconds })
     return
   }
 
