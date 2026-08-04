@@ -70,6 +70,11 @@ tools/*/measurements/
 node_modules/
 .vercel/
 .turbo/
+# Vercel Marketplace の連携が置いていく SDK ドキュメント。
+# Upstash は REST を直接叩いているので SDK は使わない
+server/.agents/
+server/.claude/
+server/skills-lock.json
 # lock ファイルは追跡する（依存の再現性のため）
 
 # ---- Python ----

@@ -79,11 +79,31 @@ vercel deploy --prod
 pwsh ..\tools\run-dev.ps1 -DirectorUrl https://xxxx.vercel.app -DirectorToken xxxx
 ```
 
-> [!warning] いまの門は認証ではない
-> `DIRECTOR_TOKEN` は APK の中に平文で入る。取り出せる人は誰でも通せる。
-> 止められるのは「URL を見つけただけの通りすがり」まで。
-> **一般公開の前に本物の認証とレート制限へ入れ替える**（段階5）。
-> 入れないと Gemini の請求が青天井になる。
+## 守り
+
+| 何 | 状態 |
+|---|---|
+| 端末ごとの署名付きトークン（`/api/register`） | 稼働中 |
+| レート制限（端末 80/時・400/日、全体 20000/日） | **Upstash Redis で稼働中** |
+| 本人確認・アカウント | **無い**（段階5 の範囲外） |
+
+`AUTH_SECRET` を変えると発行済みトークンが全部失効する ＝ **緊急時の停止スイッチ**。
+
+> [!note] レート制限が本物かは外から確認できる
+> `/api/director` の応答ヘッダ `X-RateLimit-Backend` が `kv` なら Upstash に、
+> `memory` ならプロセス内カウンタに落ちている。
+> memory はインスタンスをまたがないので**気休め**。
+>
+> 確認（残り回数が減っていけば、リクエストをまたいで数えられている）:
+> ```powershell
+> (Invoke-WebRequest "$base/api/director" -Method POST -ContentType 'application/json' `
+>    -Headers @{Authorization="Bearer $tok"} -Body $body -SkipHttpErrorCheck).Headers['X-RateLimit-Remaining']
+> ```
+
+> [!warning] これは本人確認ではない
+> 誰でも `/api/register` を叩けばトークンを取れる。守っているのは
+> 「同じ端末であること」まで。端末を大量に作られると1端末あたりの制限は
+> 意味を失うので、**全体の1日上限**を別に持っている。
 
 ## 単元を足す
 
