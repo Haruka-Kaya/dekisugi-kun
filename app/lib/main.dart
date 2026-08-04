@@ -1,5 +1,9 @@
+import 'package:provider/provider.dart';
+
 import 'config/app_theme.dart';
-import 'screens/home_screen.dart';
+import 'config/env.dart';
+import 'screens/talk_screen.dart';
+import 'services/live_session.dart';
 import 'ui/_material.dart';
 
 /// 明暗テーマを固定して起動するための開発用スイッチ。
@@ -25,21 +29,28 @@ class DekisugiApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'デキすぎ君',
-      debugShowCheckedModeBanner: false,
-      theme: buildAppTheme(Brightness.light),
-      darkTheme: buildAppTheme(Brightness.dark),
-      themeMode: _themeMode,
-      // 端末の文字サイズ設定を尊重しつつ上限を切る。
-      // 無制限だと 2.0倍以上でレイアウトが壊れ、固定すると弱視の利用者を締め出す。
-      // 下限 1.0 は縮小されて読めなくなるのを防ぐため。
-      builder: (context, child) => MediaQuery.withClampedTextScaling(
-        minScaleFactor: 1.0,
-        maxScaleFactor: 1.6,
-        child: child ?? const SizedBox.shrink(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => LiveSessionController(apiKey: Env.geminiApiKey),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'デキすぎ君',
+        debugShowCheckedModeBanner: false,
+        theme: buildAppTheme(Brightness.light),
+        darkTheme: buildAppTheme(Brightness.dark),
+        themeMode: _themeMode,
+        // 端末の文字サイズ設定を尊重しつつ上限を切る。
+        // 無制限だと 2.0倍以上でレイアウトが壊れ、固定すると弱視の利用者を締め出す。
+        // 下限 1.0 は縮小されて読めなくなるのを防ぐため。
+        builder: (context, child) => MediaQuery.withClampedTextScaling(
+          minScaleFactor: 1.0,
+          maxScaleFactor: 1.6,
+          child: child ?? const SizedBox.shrink(),
+        ),
+        home: const TalkScreen(),
       ),
-      home: const HomeScreen(),
     );
   }
 }

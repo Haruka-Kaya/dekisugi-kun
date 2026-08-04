@@ -1,6 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 会話に必須。マイクが無いと製品として成立しない -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Gemini Live への WebSocket -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- AEC のために AudioManager のモードを切り替える -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+
+    <!-- マイクが無い端末は Play ストアの対象から外す。
+         required="false" にすると、会話できない端末にインストールされてしまう -->
+    <uses-feature android:name="android.hardware.microphone" android:required="true"/>
+
     <application
-        android:label="dekisugi"
+        android:label="デキすぎ君"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

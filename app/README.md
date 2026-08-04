@@ -1,15 +1,20 @@
 # app — デキすぎ君 本体（Flutter）
 
-段階0（土台）まで実装済み。会話機能は段階1から。
+段階1（音声会話）まで実装済み。実機での通し確認は未了。
 
 ## 動かす
 
 ```powershell
-flutter run                                       # 端末の明暗設定に従う（本番の挙動）
-flutter run --dart-define=FORCE_BRIGHTNESS=dark   # ダーク固定
+pwsh ..\tools\run-dev.ps1                 # APIキーを .env.local から渡して起動
+pwsh ..\tools\run-dev.ps1 -Brightness dark
+pwsh ..\tools\test-live.ps1               # Gemini Live との通信テスト（実機不要）
 flutter analyze
 flutter test
 ```
+
+**APIキーをソースに書かないこと。** `--dart-define` で渡す。
+`--dart-define` の値は APK に平文で残るので、**配布ビルドでは使えない**
+（段階5 でサーバ発行の ephemeral token に差し替える）。
 
 ### UI を目で確認する（Windows 開発機）
 
@@ -57,6 +62,45 @@ cd build\web; python -m http.server 8123 --bind 127.0.0.1
 `weak` に ✗ や ! を使わない。デキすぎ君では説明できないことが日常で、
 それは失敗ではなく「次に見るところ」。この制約はテストで守っている。
 
+## 段階1 — Gemini Live で分かったこと
+
+**どちらも「ビルドも接続も通るのに音だけ出ない」壊れ方をする。** 実測で見つけた。
+
+| 罠 | 症状 | 対処 |
+|---|---|---|
+| `sendRealtimeText`（`realtimeInput.text`）で送る | 文字起こしは返るが**音声が1バイトも返らない** | `sendClientContent` で送る。同条件で 371KB 返った |
+| `gemini-3.1-flash-live-preview` | `usageMetadata` に responseTokenCount が出ない（0トークン）。実測 0/10 | `gemini-2.5-flash-native-audio-preview-09-2025` に変更。同設定で 3/3 |
+
+スパイク（`tools/live_spike`）は**文字起こししか見ていなかった**ので、
+どちらも見逃していた。そのまま実機に持っていけば声の出ないアプリになっていた。
+
+→ `test/live_config_network_test.dart` が**音声のバイト数**を assert する。
+モデルや設定を触ったら必ずこれを通してから実機へ。
+
+### 音声出力の作り
+
+`flutter_pcm_sound` には**キューを空にする API が無い**（`setup` で作り直すか
+`release` で壊すかの2択）。届いた音を全部 `feed()` すると、生徒が割り込んでも
+AI の声が鳴り続ける。
+
+そこで**再生待ちを Dart 側に持ち、native には 50ms ずつしか渡さない**
+（`setFeedThreshold` + feed コールバックの pull 方式）。
+割り込み時の鳴り残りは 100ms 以内で、その上限はテストで縛ってある。
+
+公式 example はターン全体をバッファして WAV 化してから鳴らすので、
+生成が終わるまで無音になる。会話には使えない。
+
+### ノイズ抑制
+
+`echoCancel` は品質ではなく**成立条件**。切ると AI の声を自分のマイクが拾って
+自己割り込みする。Android は `audioManagerMode: modeInCommunication` も要る
+（`flutter_pcm_sound` の出力が `USAGE_MEDIA` 固定なので、これが無いと AEC が
+出力側を参照できない端末がある）。
+
+`noiseSuppress` は**プラットフォーム標準のまま有効**にしてある。
+`asr-noise-2026.md` が否定しているのは**自前で足す抑制段**で、
+同文書 §10 の実装判断は「標準の抑制は維持する」。
+
 ## 検証の限界
 
 `flutter test` は**全フォントを固定幅のダミーに潰す**。実在しない family を指定しても
@@ -73,9 +117,20 @@ w400 でも w900 でも同じ幅（実測 528.0px = 11文字 × 48px）が返る
 
 ```
 lib/
-  config/   app_theme.dart（色・文字・角丸の適用）, app_radius.dart
-  screens/  画面。段階1で会話画面に置き換える
+  config/   app_theme.dart / app_radius.dart / live_config.dart（Live の設定と理由）/ env.dart
+  screens/  talk_screen.dart（段階1の会話画面。演出は段階3）
+  services/ live_session.dart（会話ぜんぶ）
+            mic_stream.dart（16kHz PCM16 + 音量 + 録音異常）
+            pcm_player.dart（24kHz ストリーム再生 + 割り込み）
+            speech_gate.dart（端末側の発話終了検知）
+            director_queue.dart（指示を静かなときだけ流す）
   ui/       _material.dart（import 集約点。ここ以外から material.dart を import しない）
   widgets/  StatusChip ほか
 assets/fonts/  NotoSansJP-Variable.ttf（SIL OFL 1.1・OFL.txt 同梱）
 ```
+
+`flutter test` は**ネットワークを使う**（`live_config_network_test.dart`）。
+APIキーが見つからない環境では skip する。
+
+`flutter create` を再実行すると `test/widget_test.dart` がテンプレのまま復活して
+`flutter analyze` が落ちる。復活したら消すこと。
