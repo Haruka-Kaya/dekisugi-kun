@@ -1,5 +1,5 @@
-import { emptyDossier } from '../lib/dossier.ts'
-import { UNITS, unitById } from '../lib/units.ts'
+import { emptyDossier } from '../lib/dossier.js'
+import { UNITS, unitById } from '../lib/units.js'
 
 /**
  * 単元の一覧と、空の理解カルテ。

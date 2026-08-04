@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { afterEach, describe, it } from 'node:test'
 
-import handler from '../api/director.ts'
+import handler from '../api/director.js'
 
 /** ハンドラの応答を捕まえる最小のレス */
 function fakeRes() {

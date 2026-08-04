@@ -1,6 +1,6 @@
-import { runDirector, type DirectorInput } from '../lib/director.ts'
-import { emptyDossier } from '../lib/dossier.ts'
-import { unitById } from '../lib/units.ts'
+import { runDirector, type DirectorInput } from '../lib/director.js'
+import { emptyDossier } from '../lib/dossier.js'
+import { unitById } from '../lib/units.js'
 
 /**
  * ディレクター。**状態を持たない。**

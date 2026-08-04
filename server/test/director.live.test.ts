@@ -12,8 +12,8 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { describe, it } from 'node:test'
 
-import { runDirector, type Utterance } from '../lib/director.ts'
-import { emptyDossier } from '../lib/dossier.ts'
+import { runDirector, type Utterance } from '../lib/director.js'
+import { emptyDossier } from '../lib/dossier.js'
 
 function loadKey(): string | undefined {
   if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY

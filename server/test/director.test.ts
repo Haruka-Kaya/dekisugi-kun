@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
-import { parseInput } from '../api/director.ts'
-import { runDirector, type DirectorInput, type Generate, type Utterance } from '../lib/director.ts'
-import { emptyDossier, type Dossier, type Slot } from '../lib/dossier.ts'
-import { misconceptionById } from '../lib/misconceptions.ts'
+import { parseInput } from '../api/director.js'
+import { runDirector, type DirectorInput, type Generate, type Utterance } from '../lib/director.js'
+import { emptyDossier, type Dossier, type Slot } from '../lib/dossier.js'
+import { misconceptionById } from '../lib/misconceptions.js'
 
 /** モデルの返答を固定する。ネットワークを使わない */
 function fixed(raw: unknown): Generate {

@@ -9,9 +9,9 @@ import {
   toReview,
   type Dossier,
   type Slot,
-} from '../lib/dossier.ts'
-import { MISCONCEPTIONS, misconceptionsFor } from '../lib/misconceptions.ts'
-import { UNITS, unitById, validateCatalog } from '../lib/units.ts'
+} from '../lib/dossier.js'
+import { MISCONCEPTIONS, misconceptionsFor } from '../lib/misconceptions.js'
+import { UNITS, unitById, validateCatalog } from '../lib/units.js'
 
 const UNIT = unitById('force-motion')!
 

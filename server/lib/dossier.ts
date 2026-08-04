@@ -1,5 +1,5 @@
-import { misconceptionsFor } from './misconceptions.ts'
-import { type Unit, unitById } from './units.ts'
+import { misconceptionsFor } from './misconceptions.js'
+import { type Unit, unitById } from './units.js'
 
 /**
  * 理解カルテ — 単元の概念ごとに「どこまで説明できたか」を追う。

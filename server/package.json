@@ -6,12 +6,15 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test \"test/*.test.ts\"",
-    "test:live": "node --test test/director.live.test.ts",
+    "test": "node --import tsx --test \"test/*.test.ts\"",
+    "test:live": "node --import tsx --test test/director.live.test.ts",
     "dev": "vercel dev",
     "deploy": "vercel deploy --prod"
   },
   "dependencies": {
     "@google/genai": "^2.13.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.5"
   }
 }

@@ -9,10 +9,10 @@ import {
   computeCoverage,
   gaps,
   nextProbe,
-} from './dossier.ts'
-import { generateJson, isolate } from './gemini.ts'
-import { misconceptionById } from './misconceptions.ts'
-import { type Unit, unitById } from './units.ts'
+} from './dossier.js'
+import { generateJson, isolate } from './gemini.js'
+import { misconceptionById } from './misconceptions.js'
+import { type Unit, unitById } from './units.js'
 
 export type Utterance = {
   id: string

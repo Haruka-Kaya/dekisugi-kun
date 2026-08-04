@@ -1,4 +1,4 @@
-import { MISCONCEPTIONS } from './misconceptions.ts'
+import { MISCONCEPTIONS } from './misconceptions.js'
 
 /**
  * 単元と、その中で生徒に説明してもらいたい概念。
