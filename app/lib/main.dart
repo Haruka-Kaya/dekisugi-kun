@@ -6,6 +6,7 @@ import 'config/motion.dart';
 import 'screens/talk_screen.dart';
 import 'services/director_client.dart';
 import 'services/live_session.dart';
+import 'services/session_store.dart';
 import 'ui/_material.dart';
 
 /// 明暗テーマを固定して起動するための開発用スイッチ。
@@ -22,22 +23,31 @@ ThemeMode get _themeMode => switch (_kForceBrightness) {
       _ => ThemeMode.system,
     };
 
-void main() {
-  runApp(const DekisugiApp());
+/// いま扱う単元。単元の選択画面は段階4 の範囲外。
+const String kUnitId = 'force-motion';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // 記録の置き場を先に開く。開けなくてもアプリは動く（記録が残らないだけ）
+  final store = await openSessionStore();
+  runApp(DekisugiApp(store: store));
 }
 
 class DekisugiApp extends StatelessWidget {
-  const DekisugiApp({super.key});
+  const DekisugiApp({super.key, required this.store});
+
+  final SessionStore store;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider<SessionStore>.value(value: store),
         ChangeNotifierProvider(
           create: (_) => LiveSessionController(
             apiKey: Env.geminiApiKey,
-            // 段階2 はまず力学1単元。単元の選択画面は段階4
-            unitId: 'force-motion',
+            unitId: kUnitId,
+            store: store,
             director: DirectorClient(
               baseUrl: Env.directorUrl,
               token: Env.directorToken,

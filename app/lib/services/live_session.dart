@@ -6,10 +6,12 @@ import 'package:gemini_live/gemini_live.dart';
 
 import '../config/live_config.dart';
 import '../models/dossier.dart';
+import '../models/review.dart';
 import 'director_client.dart';
 import 'director_queue.dart';
 import 'mic_stream.dart';
 import 'pcm_player.dart';
+import 'session_store.dart';
 import 'speech_gate.dart';
 
 /// 会話の見え方。**画面はこの6つだけを描き分ける。**
@@ -49,12 +51,14 @@ class LiveSessionController extends ChangeNotifier {
     required this.apiKey,
     required this.unitId,
     DirectorClient? director,
+    SessionStore? store,
     MicStream? mic,
     PcmPlayer? player,
     SpeechGate? gate,
     DirectorQueue? queue,
     this.sessionBudget = const Duration(minutes: 10),
   })  : _director = director,
+        _store = store,
         _mic = mic ?? MicStream(),
         _player = player ?? PcmPlayer(),
         _gate = gate ?? SpeechGate(),
@@ -71,6 +75,7 @@ class LiveSessionController extends ChangeNotifier {
   final Duration sessionBudget;
 
   final DirectorClient? _director;
+  final SessionStore? _store;
   final MicStream _mic;
   final PcmPlayer _player;
   final SpeechGate _gate;
@@ -99,6 +104,12 @@ class LiveSessionController extends ChangeNotifier {
 
   /// 直近で誘発を指示した誤概念。AI が実際に口にしたかの突き合わせに使う。
   String? lastLureId;
+
+  /// 端末に残している会話の行。null なら記録していない
+  int? _sessionId;
+
+  /// 前回の続きから始めたか。画面の文言を変えるために持つ
+  bool resumed = false;
 
   final StringBuffer _aiBuf = StringBuffer();
   final StringBuffer _studentBuf = StringBuffer();
@@ -137,6 +148,27 @@ class LiveSessionController extends ChangeNotifier {
 
   // ── 開始と終了 ─────────────────────────────────────────────
 
+  /// 中断していた会話を読み込む。**[start] の前に呼ぶ。**
+  ///
+  /// Live の接続そのものは復元できない（アプリが落ちた時点で切れている）。
+  /// 復元するのは**逐語と理解カルテ**で、ディレクターがそれを読んで
+  /// 続きから指示を出す。サーバが状態を持たない設計だからこれで足りる。
+  Future<bool> resumeSaved(SavedSession saved) async {
+    if (_state != LiveState.idle) return false;
+    if (saved.unitId != unitId) return false;
+
+    transcript
+      ..clear()
+      ..addAll(saved.transcript);
+    dossier = saved.dossier;
+    // 発話IDは連番。**使い回すとディレクターの根拠が別の発言を指す**
+    _seq = transcript.length;
+    _sessionId = saved.id;
+    resumed = true;
+    notifyListeners();
+    return true;
+  }
+
   Future<void> start() async {
     if (_state != LiveState.idle &&
         _state != LiveState.failed &&
@@ -145,6 +177,10 @@ class LiveSessionController extends ChangeNotifier {
     }
     _setState(LiveState.connecting);
     _failure = null;
+
+    // 記録の行を先に作る。**会話が始まる前に確保しておく** —
+    // 途中で落ちても、そこまでの発話が行き場を失わないように
+    _sessionId ??= await _store?.startSession(unitId);
 
     if (!await _mic.hasPermission()) {
       _fail(LiveFailure.noPermission);
@@ -179,6 +215,9 @@ class LiveSessionController extends ChangeNotifier {
 
   Future<void> stop({LiveState to = LiveState.idle}) async {
     _closing = true;
+    // 止める前に書き出す。**このあと OS に殺されても失われないように**
+    await _persist();
+    if (to == LiveState.done) await _finishRecord();
     _drainTimer?.cancel();
     _drainTimer = null;
     await _micSub?.cancel();
@@ -259,6 +298,38 @@ class LiveSessionController extends ChangeNotifier {
     }));
   }
 
+  /// いまの状態を端末へ書く。**1ターンごとに呼ぶ。**
+  ///
+  /// Android は裏に回ったアプリを予告なく落とす。`dispose` もライフサイクルの
+  /// コールバックも呼ばれる保証がないので、終了時にまとめて書いてはいけない。
+  Future<void> _persist() async {
+    final id = _sessionId;
+    if (id == null || _store == null) return;
+    try {
+      await _store.saveProgress(id, transcript: transcript, dossier: dossier);
+    } catch (e) {
+      // 記録に失敗しても会話は止めない
+      debugPrint('記録に失敗: $e');
+    }
+  }
+
+  /// 会話を閉じ、復習に回すものを残す。
+  Future<void> _finishRecord() async {
+    final id = _sessionId;
+    final store = _store;
+    if (id == null || store == null) return;
+    try {
+      await store.finishSession(id);
+      final d = dossier;
+      if (d != null) {
+        await store.upsertReviews(reviewItemsOf(d, DateTime.now()));
+      }
+    } catch (e) {
+      debugPrint('会話の締めに失敗: $e');
+    }
+    _sessionId = null;
+  }
+
   void _applyDirector(DirectorResult result) {
     // 文字起こしの校正を逐語へ反映する。記録は校正後を使う
     if (result.corrections.isNotEmpty) {
@@ -271,6 +342,8 @@ class LiveSessionController extends ChangeNotifier {
     dossier = result.dossier;
     lastLureId = result.lureId;
     notifyListeners();
+    // カルテが更新された時点で書く。校正結果もここで残る
+    unawaited(_persist());
 
     if (result.shouldEnd) {
       debugPrint('ディレクターが終了を指示: ${result.endReason}');
@@ -364,6 +437,8 @@ class LiveSessionController extends ChangeNotifier {
 
     if (sc?.turnComplete ?? false) {
       final hadStudentTurn = _flushTurns();
+      // ターンが終わるたびに書く。ディレクターの応答（6秒）を待たない
+      unawaited(_persist());
       _pumpDirector();
       // 生徒が喋ったターンの後だけ呼ぶ。AI の独り言では状況が変わらない
       if (hadStudentTurn) _kickDirector();

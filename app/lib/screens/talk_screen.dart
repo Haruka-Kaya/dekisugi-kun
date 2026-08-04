@@ -5,17 +5,56 @@ import '../config/app_theme.dart';
 import '../config/env.dart';
 import '../services/live_session.dart';
 import '../services/mic_stream.dart';
+import '../services/session_store.dart';
 import '../ui/_material.dart';
 import '../widgets/dossier_bar.dart';
 import '../widgets/stage.dart';
+import 'review_screen.dart';
 
 /// 会話画面。
 ///
 /// キャラクターを中心に置き、その下に理解カルテ、逐語、操作を並べる。
 /// **状態は「キャラの見た目」と「文字」の両方で出す** — 動きが止まっている
 /// 端末（Reduce Motion / 古い端末）でも、いま何が起きているか分かる必要がある。
-class TalkScreen extends StatelessWidget {
+class TalkScreen extends StatefulWidget {
   const TalkScreen({super.key});
+
+  @override
+  State<TalkScreen> createState() => _TalkScreenState();
+}
+
+class _TalkScreenState extends State<TalkScreen> {
+  /// 中断していた会話。あれば「続きから」を出す
+  SavedSession? _unfinished;
+
+  @override
+  void initState() {
+    super.initState();
+    _lookForUnfinished();
+  }
+
+  Future<void> _lookForUnfinished() async {
+    final store = context.read<SessionStore>();
+    final saved = await store.unfinished();
+    if (mounted) setState(() => _unfinished = saved);
+  }
+
+  Future<void> _resume() async {
+    final saved = _unfinished;
+    if (saved == null) return;
+    final live = context.read<LiveSessionController>();
+    if (await live.resumeSaved(saved)) {
+      setState(() => _unfinished = null);
+      await live.start();
+    }
+  }
+
+  Future<void> _discard() async {
+    final saved = _unfinished;
+    if (saved == null) return;
+    await context.read<SessionStore>().finishSession(saved.id);
+    setState(() => _unfinished = null);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +64,14 @@ class TalkScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('デキすぎ君に教える'),
         actions: [
+          IconButton(
+            tooltip: 'もう一度見るところ',
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) =>
+                  ReviewScreen(store: context.read<SessionStore>()),
+            )),
+            icon: const Icon(Icons.bookmarks_outlined),
+          ),
           if (live.isRunning)
             IconButton(
               tooltip: '終わる',
@@ -38,6 +85,12 @@ class TalkScreen extends StatelessWidget {
           : Column(
               children: [
                 Stage(live: live),
+                if (_unfinished != null && !live.isRunning)
+                  _ResumeBanner(
+                    saved: _unfinished!,
+                    onResume: _resume,
+                    onDiscard: _discard,
+                  ),
                 if (live.failure != null) _FailureBanner(failure: live.failure!),
                 if (live.recordingIssue != null)
                   _IssueBanner(issue: live.recordingIssue!),
@@ -74,6 +127,50 @@ class _MissingKey extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 中断していた会話の再開。
+///
+/// **「アプリを離れた」ではなく「OS に殺された」前提**で作ってある。
+/// 発話は1ターンごとに端末へ書いているので、落ちた直前まで残っている。
+/// Live の接続自体は復元できないが、復元するのは逐語と理解カルテなので、
+/// ディレクターがそれを読んで続きから指示を出せる。
+class _ResumeBanner extends StatelessWidget {
+  const _ResumeBanner({
+    required this.saved,
+    required this.onResume,
+    required this.onDiscard,
+  });
+
+  final SavedSession saved;
+  final VoidCallback onResume;
+  final VoidCallback onDiscard;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    final c = context.appColors;
+    final turns = saved.transcript.where((u) => u.isStudent).length;
+
+    return Container(
+      width: double.infinity,
+      color: c.highlightFlash,
+      padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '前回の続きがあります（$turns回ぶん）',
+              style: t.textTheme.bodyMedium,
+            ),
+          ),
+          // 破棄は「捨てる」と分かる文言にする。取り消せない操作なので
+          TextButton(onPressed: onDiscard, child: const Text('捨てる')),
+          FilledButton(onPressed: onResume, child: const Text('続きから')),
+        ],
       ),
     );
   }
