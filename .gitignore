@@ -66,6 +66,12 @@ tools/type-survey/font_b64.txt
 # 実機計測の生ログ
 tools/*/measurements/
 
+# ---- Node / Vercel（server/） ----
+node_modules/
+.vercel/
+.turbo/
+# lock ファイルは追跡する（依存の再現性のため）
+
 # ---- Python ----
 __pycache__/
 *.py[cod]

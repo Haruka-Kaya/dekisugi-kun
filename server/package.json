@@ -1,0 +1,17 @@
+{
+  "name": "dekisugi-server",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.ts\"",
+    "test:live": "node --test test/director.live.test.ts",
+    "dev": "vercel dev",
+    "deploy": "vercel deploy --prod"
+  },
+  "dependencies": {
+    "@google/genai": "^2.13.0"
+  }
+}

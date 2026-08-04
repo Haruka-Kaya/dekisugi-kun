@@ -14,6 +14,9 @@
 param(
   [ValidateSet('', 'light', 'dark')][string]$Brightness = '',
   [string]$Device = '',
+  # ディレクター（進行役）の置き場。省略すると会話はできるが進行しない
+  [string]$DirectorUrl = $env:DEKISUGI_DIRECTOR_URL,
+  [string]$DirectorToken = $env:DEKISUGI_DIRECTOR_TOKEN,
   [switch]$Release
 )
 
@@ -55,6 +58,13 @@ if ($Release) { $flutterArgs += '--release' }
 if ($Device) { $flutterArgs += @('-d', $Device) }
 $flutterArgs += "--dart-define=GEMINI_API_KEY=$key"
 if ($Brightness) { $flutterArgs += "--dart-define=FORCE_BRIGHTNESS=$Brightness" }
+if ($DirectorUrl) {
+  $flutterArgs += "--dart-define=DIRECTOR_URL=$($DirectorUrl.TrimEnd('/'))"
+  Write-Host "ディレクター: $($DirectorUrl.TrimEnd('/'))" -ForegroundColor Green
+} else {
+  Write-Host 'ディレクター: 未設定（会話はできるが進行しません）' -ForegroundColor Yellow
+}
+if ($DirectorToken) { $flutterArgs += "--dart-define=DIRECTOR_TOKEN=$DirectorToken" }
 
 Push-Location $appDir
 try {

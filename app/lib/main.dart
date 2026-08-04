@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'config/app_theme.dart';
 import 'config/env.dart';
 import 'screens/talk_screen.dart';
+import 'services/director_client.dart';
 import 'services/live_session.dart';
 import 'ui/_material.dart';
 
@@ -32,7 +33,15 @@ class DekisugiApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => LiveSessionController(apiKey: Env.geminiApiKey),
+          create: (_) => LiveSessionController(
+            apiKey: Env.geminiApiKey,
+            // 段階2 はまず力学1単元。単元の選択画面は段階4
+            unitId: 'force-motion',
+            director: DirectorClient(
+              baseUrl: Env.directorUrl,
+              token: Env.directorToken,
+            ),
+          ),
         ),
       ],
       child: MaterialApp(

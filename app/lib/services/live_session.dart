@@ -5,12 +5,14 @@ import 'package:flutter/foundation.dart';
 import 'package:gemini_live/gemini_live.dart';
 
 import '../config/live_config.dart';
+import '../models/dossier.dart';
+import 'director_client.dart';
 import 'director_queue.dart';
 import 'mic_stream.dart';
 import 'pcm_player.dart';
 import 'speech_gate.dart';
 
-/// 会話の見え方。**画面はこの4つだけを描き分ける。**
+/// 会話の見え方。**画面はこの6つだけを描き分ける。**
 enum LiveState {
   /// まだ始まっていない
   idle,
@@ -27,6 +29,9 @@ enum LiveState {
   /// AI が喋っている
   speaking,
 
+  /// 一通り終わった
+  done,
+
   /// 続けられない
   failed,
 }
@@ -37,28 +42,39 @@ enum LiveFailure { noPermission, network, auth, unknown }
 /// Gemini Live との会話ぜんぶ。
 ///
 /// - 音声は端末とモデルの間を直接流れる。**サーバは経由しない**
-/// - 何を喋ったかの記録（逐語・理解カルテ）は端末が持つ。サーバは状態を持たない
-/// - ディレクターの指示は [injectDirector] で外から積む（段階2でサーバから来る）
+/// - 逐語と理解カルテは**端末が持つ**。サーバは状態を持たない
+/// - ディレクターは1ターンごとに呼ぶが、**await しない**（実測6秒かかる）
 class LiveSessionController extends ChangeNotifier {
   LiveSessionController({
     required this.apiKey,
+    required this.unitId,
+    DirectorClient? director,
     MicStream? mic,
     PcmPlayer? player,
     SpeechGate? gate,
-    DirectorQueue? director,
-  })  : _mic = mic ?? MicStream(),
+    DirectorQueue? queue,
+    this.sessionBudget = const Duration(minutes: 10),
+  })  : _director = director,
+        _mic = mic ?? MicStream(),
         _player = player ?? PcmPlayer(),
         _gate = gate ?? SpeechGate(),
-        _director = director ?? DirectorQueue();
+        _queue = queue ?? DirectorQueue();
 
   /// 段階5 でサーバ発行の ephemeral token に差し替える。
   /// **本番の APK に生キーを焼かないこと。**
   final String apiKey;
 
+  /// どの単元を教えてもらうか。
+  final String unitId;
+
+  /// 1回の会話の持ち時間。ディレクターの終了判断に渡す。
+  final Duration sessionBudget;
+
+  final DirectorClient? _director;
   final MicStream _mic;
   final PcmPlayer _player;
   final SpeechGate _gate;
-  final DirectorQueue _director;
+  final DirectorQueue _queue;
 
   LiveSession? _session;
   StreamSubscription<Uint8List>? _micSub;
@@ -71,11 +87,18 @@ class LiveSessionController extends ChangeNotifier {
   String? _resumptionHandle;
   bool _closing = false;
 
-  /// 生徒が言ったこと（確定ぶん）。
-  final List<String> studentTurns = [];
+  /// ディレクターは1つずつ。重ねて呼ぶと古い結果が新しいカルテを上書きする
+  bool _directorBusy = false;
 
-  /// AI が言ったこと（確定ぶん）。誤概念を口にしたかの観測はここを見る。
-  final List<String> aiTurns = [];
+  /// 会話の逐語。**時系列で1本。** 記録も画面もこれを見る。
+  final List<Utterance> transcript = [];
+  int _seq = 0;
+
+  /// いま分かっている理解カルテ。ディレクターが返すたびに置き換わる。
+  Dossier? dossier;
+
+  /// 直近で誘発を指示した誤概念。AI が実際に口にしたかの突き合わせに使う。
+  String? lastLureId;
 
   final StringBuffer _aiBuf = StringBuffer();
   final StringBuffer _studentBuf = StringBuffer();
@@ -89,6 +112,13 @@ class LiveSessionController extends ChangeNotifier {
   LiveState get state => _state;
   LiveFailure? get failure => _failure;
   bool get isRunning => _session != null && !_session!.isClosed;
+
+  /// 何往復目か。ディレクターの終了判断に渡す。
+  int get turnCount => transcript.where((u) => u.isStudent).length;
+
+  Duration get elapsed => _clock.elapsed;
+  double get secondsLeft =>
+      (sessionBudget - _clock.elapsed).inMilliseconds / 1000.0;
 
   /// 直近の録音が変なら理由を返す。「聞こえていない」を黙って進めないため。
   RecordingIssue? get recordingIssue => diagnose(_peaks);
@@ -104,7 +134,11 @@ class LiveSessionController extends ChangeNotifier {
   // ── 開始と終了 ─────────────────────────────────────────────
 
   Future<void> start() async {
-    if (_state != LiveState.idle && _state != LiveState.failed) return;
+    if (_state != LiveState.idle &&
+        _state != LiveState.failed &&
+        _state != LiveState.done) {
+      return;
+    }
     _setState(LiveState.connecting);
     _failure = null;
 
@@ -129,13 +163,17 @@ class LiveSessionController extends ChangeNotifier {
       _drainTimer =
           Timer.periodic(const Duration(milliseconds: 120), (_) => _syncState());
       _setState(LiveState.listening);
+
+      // 口火はディレクターに切らせる。AI から「教えて」と頼ませないと
+      // 生徒は何を話せばいいか分からない（C1）
+      _kickDirector();
     } catch (e, s) {
       debugPrint('Live 接続に失敗: $e\n$s');
       _fail(_classify(e));
     }
   }
 
-  Future<void> stop() async {
+  Future<void> stop({LiveState to = LiveState.idle}) async {
     _closing = true;
     _drainTimer?.cancel();
     _drainTimer = null;
@@ -149,7 +187,7 @@ class LiveSessionController extends ChangeNotifier {
     await _session?.close();
     _session = null;
     _flushTurns();
-    _setState(LiveState.idle);
+    _setState(to);
     _closing = false;
   }
 
@@ -165,7 +203,7 @@ class LiveSessionController extends ChangeNotifier {
 
   /// 進行の指示を積む。AI が黙るまで送らない。
   void injectDirector(String instruction) {
-    final dropped = _director.add(instruction);
+    final dropped = _queue.add(instruction);
     if (dropped != null) {
       debugPrint('ディレクターの指示を捨てた（溜まりすぎ）: $dropped');
     }
@@ -176,7 +214,7 @@ class LiveSessionController extends ChangeNotifier {
     if (_session == null || _session!.isClosed) return;
     // 「静か」= AI が喋っておらず、生徒も喋っていない
     final quiet = _state == LiveState.listening && !_gate.isSpeaking;
-    final text = _director.takeIfQuiet(quiet);
+    final text = _queue.takeIfQuiet(quiet);
     if (text == null) return;
 
     // **sendRealtimeText を使わないこと。**
@@ -188,6 +226,56 @@ class LiveSessionController extends ChangeNotifier {
       turns: [Content(role: 'user', parts: [Part(text: text)])],
       turnComplete: true,
     );
+  }
+
+  /// カルテを更新して次の一手をもらう。**await しない。**
+  ///
+  /// 1回あたり実測6秒。待つと会話が止まる。
+  /// 返ってきた時点で注入し、AI が黙っていればそのまま流れる。
+  void _kickDirector() {
+    final client = _director;
+    if (client == null || !client.isConfigured || _directorBusy) return;
+    _directorBusy = true;
+
+    unawaited(client
+        .run(
+      unitId: unitId,
+      dossier: dossier,
+      utterances: List.of(transcript),
+      secondsLeft: secondsLeft,
+      turnCount: turnCount,
+    )
+        .then((result) {
+      _directorBusy = false;
+      if (result == null || _closing) return;
+      _applyDirector(result);
+    }).catchError((Object e) {
+      _directorBusy = false;
+      debugPrint('ディレクターで例外: $e');
+    }));
+  }
+
+  void _applyDirector(DirectorResult result) {
+    // 文字起こしの校正を逐語へ反映する。記録は校正後を使う
+    if (result.corrections.isNotEmpty) {
+      for (var i = 0; i < transcript.length; i++) {
+        final fixed = result.corrections[transcript[i].id];
+        if (fixed != null) transcript[i] = transcript[i].withCorrection(fixed);
+      }
+    }
+
+    dossier = result.dossier;
+    lastLureId = result.lureId;
+    notifyListeners();
+
+    if (result.shouldEnd) {
+      debugPrint('ディレクターが終了を指示: ${result.endReason}');
+      unawaited(stop(to: LiveState.done));
+      return;
+    }
+    if (result.nextInstruction.isNotEmpty) {
+      injectDirector(result.nextInstruction);
+    }
   }
 
   // ── 接続 ──────────────────────────────────────────────────
@@ -205,7 +293,9 @@ class LiveSessionController extends ChangeNotifier {
         onClose: (code, reason) {
           debugPrint('Live 切断: $code $reason');
           // 意図した停止でなければ、ハンドルを使って張り直す
-          if (!_closing && _state != LiveState.failed) unawaited(_reconnect());
+          if (!_closing && _state != LiveState.failed && _state != LiveState.done) {
+            unawaited(_reconnect());
+          }
         },
       ),
     ));
@@ -269,25 +359,36 @@ class LiveSessionController extends ChangeNotifier {
     if (aiText != null && aiText.isNotEmpty) _aiBuf.write(aiText);
 
     if (sc?.turnComplete ?? false) {
-      _flushTurns();
+      final hadStudentTurn = _flushTurns();
       _pumpDirector();
+      // 生徒が喋ったターンの後だけ呼ぶ。AI の独り言では状況が変わらない
+      if (hadStudentTurn) _kickDirector();
     }
   }
 
   void _flushAiTurn() {
     final t = _aiBuf.toString().trim();
     _aiBuf.clear();
-    if (t.isNotEmpty) aiTurns.add(t);
+    if (t.isEmpty) return;
+    transcript.add(Utterance(id: _nextId(), isStudent: false, text: t));
   }
 
-  void _flushTurns() {
+  /// 溜まっている発話を逐語へ移す。生徒の発話があったら true。
+  bool _flushTurns() {
     final s = _studentBuf.toString().trim();
     _studentBuf.clear();
-    if (s.isNotEmpty) studentTurns.add(s);
+    final hadStudent = s.isNotEmpty;
+    if (hadStudent) {
+      transcript.add(Utterance(id: _nextId(), isStudent: true, text: s));
+    }
     interimStudentText = '';
     _flushAiTurn();
     notifyListeners();
+    return hadStudent;
   }
+
+  /// 発話IDはディレクターが根拠として引用する。**連番で、使い回さない。**
+  String _nextId() => 'u${(++_seq).toString().padLeft(2, '0')}';
 
   // ── 送信 ──────────────────────────────────────────────────
 

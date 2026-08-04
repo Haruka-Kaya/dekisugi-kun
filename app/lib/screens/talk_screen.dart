@@ -6,6 +6,7 @@ import '../config/env.dart';
 import '../services/live_session.dart';
 import '../services/mic_stream.dart';
 import '../ui/_material.dart';
+import '../widgets/dossier_bar.dart';
 
 /// 段階1 の会話画面。
 ///
@@ -38,6 +39,7 @@ class TalkScreen extends StatelessWidget {
                 _StateBanner(state: live.state, failure: live.failure),
                 if (live.recordingIssue != null)
                   _IssueBanner(issue: live.recordingIssue!),
+                if (live.dossier != null) DossierBar(dossier: live.dossier!),
                 Expanded(child: _TurnLog(live: live)),
                 _Composer(live: live),
               ],
@@ -117,6 +119,12 @@ class _StateBanner extends StatelessWidget {
           '話しています',
           t.colorScheme.primary,
           t.colorScheme.primaryContainer
+        ),
+      LiveState.done => (
+          Icons.check_circle,
+          'ひととおり終わりました',
+          c.gotItFg,
+          c.gotItChip
         ),
       LiveState.failed => (
           Icons.bookmark,
@@ -199,19 +207,10 @@ class _TurnLog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 生徒と AI を交互に並べる。片方が続くこともあるので、単純に時系列で持たず
-    // それぞれの列を突き合わせる（段階2 で1本の逐語に置き換える）
-    final rows = <(bool isStudent, String text)>[];
-    final n = live.studentTurns.length > live.aiTurns.length
-        ? live.studentTurns.length
-        : live.aiTurns.length;
-    for (var i = 0; i < n; i++) {
-      if (i < live.studentTurns.length) rows.add((true, live.studentTurns[i]));
-      if (i < live.aiTurns.length) rows.add((false, live.aiTurns[i]));
-    }
-    if (live.interimStudentText.isNotEmpty) {
-      rows.add((true, live.interimStudentText));
-    }
+    final rows = [
+      for (final u in live.transcript) (u.isStudent, u.display),
+      if (live.interimStudentText.isNotEmpty) (true, live.interimStudentText),
+    ];
 
     if (rows.isEmpty) {
       return Center(
