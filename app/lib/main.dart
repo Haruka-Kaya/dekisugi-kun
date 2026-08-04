@@ -2,6 +2,7 @@ import 'package:provider/provider.dart';
 
 import 'config/app_theme.dart';
 import 'config/env.dart';
+import 'config/motion.dart';
 import 'screens/talk_screen.dart';
 import 'services/director_client.dart';
 import 'services/live_session.dart';
@@ -56,7 +57,9 @@ class DekisugiApp extends StatelessWidget {
         builder: (context, child) => MediaQuery.withClampedTextScaling(
           minScaleFactor: 1.0,
           maxScaleFactor: 1.6,
-          child: child ?? const SizedBox.shrink(),
+          // 「動きを減らす」設定は Android と iOS で出所が違う。
+          // ここで両方を1つにまとめて配る
+          child: ReduceMotionScope(child: child ?? const SizedBox.shrink()),
         ),
         home: const TalkScreen(),
       ),

@@ -128,6 +128,10 @@ class LiveSessionController extends ChangeNotifier {
   /// ここだけは Stream で受け渡して再構築の範囲を音量バーに閉じる。
   Stream<double> get micLevel => _mic.level;
 
+  /// AI の声の大きさ。キャラクターの動きを駆動する。
+  /// **口の動きには使わない**（音素タイミングが無いので作れない）。
+  Stream<double> get voiceLevel => _player.level;
+
   /// 割り込みで鳴り残る最大時間。画面の説明に使う。
   Duration get maxResidualAudio => PcmPlayer.maxResidual;
 

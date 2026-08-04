@@ -87,6 +87,9 @@ enum ExplainStatus {
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
   const AppColors({
+    required this.charBody,
+    required this.charFace,
+    required this.charAccent,
     required this.borderStrong,
     required this.highlightFlash,
     required this.gotItFg,
@@ -98,6 +101,18 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.untouchedFg,
     required this.untouchedChip,
   });
+
+  /// デキすぎ君の体。
+  ///
+  /// 4つの状態色（緑・橙・赤・灰）のどれとも重ならない色を使う。
+  /// 重なると「キャラの色」と「理解の状態」の意味が混ざる。
+  final Color charBody;
+
+  /// 目。[charBody] の上で 3:1 以上（SC 1.4.11 — 意味を持つ図形）。
+  final Color charFace;
+
+  /// 房・耳など、状態を形で示す部分。
+  final Color charAccent;
 
   /// 入力欄など「どこが操作対象か」を境界線で伝えるコントロール用。
   /// 装飾的な区切り線 (ColorScheme.outlineVariant) は 3:1 不要だが、
@@ -115,6 +130,9 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color untouchedFg, untouchedChip;
 
   static const light = AppColors(
+    charBody: Color(0xFF5B62D6),
+    charFace: Color(0xFFFFFFFF), // 体の上で 5.00:1
+    charAccent: Color(0xFFFFC46B), // 体の上で 3.17:1
     borderStrong: Color(0xFF8D8F93), // 白背景に対し 3.24:1
     highlightFlash: Color(0xFFD8EBFB),
     gotItFg: Color(0xFF207F40), gotItChip: Color(0xFFE9F6EB),
@@ -124,6 +142,9 @@ class AppColors extends ThemeExtension<AppColors> {
   );
 
   static const dark = AppColors(
+    charBody: Color(0xFF6068DC),
+    charFace: Color(0xFF14151A), // 体の上で 4.01:1
+    charAccent: Color(0xFFFFD08A), // 体の上で 3.20:1
     borderStrong: Color(0xFF6D6F72), // カード面 #1E1F22 に対し 3.27:1
     highlightFlash: Color(0xFF233849),
     gotItFg: Color(0xFF419B5A), gotItChip: Color(0xFF18271B),
@@ -153,6 +174,9 @@ class AppColors extends ThemeExtension<AppColors> {
 
   @override
   AppColors copyWith({
+    Color? charBody,
+    Color? charFace,
+    Color? charAccent,
     Color? borderStrong,
     Color? highlightFlash,
     Color? gotItFg,
@@ -165,6 +189,9 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? untouchedChip,
   }) =>
       AppColors(
+        charBody: charBody ?? this.charBody,
+        charFace: charFace ?? this.charFace,
+        charAccent: charAccent ?? this.charAccent,
         borderStrong: borderStrong ?? this.borderStrong,
         highlightFlash: highlightFlash ?? this.highlightFlash,
         gotItFg: gotItFg ?? this.gotItFg,
@@ -181,6 +208,9 @@ class AppColors extends ThemeExtension<AppColors> {
   AppColors lerp(ThemeExtension<AppColors>? other, double t) {
     if (other is! AppColors) return this;
     return AppColors(
+      charBody: Color.lerp(charBody, other.charBody, t)!,
+      charFace: Color.lerp(charFace, other.charFace, t)!,
+      charAccent: Color.lerp(charAccent, other.charAccent, t)!,
       borderStrong: Color.lerp(borderStrong, other.borderStrong, t)!,
       highlightFlash: Color.lerp(highlightFlash, other.highlightFlash, t)!,
       gotItFg: Color.lerp(gotItFg, other.gotItFg, t)!,

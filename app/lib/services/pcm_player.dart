@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:typed_data';
 
@@ -39,9 +40,19 @@ class PcmPlayer {
           ((_thresholdFrames + _chunkFrames) * 1000000 / sampleRate).round());
 
   final Queue<Uint8List> _pending = Queue<Uint8List>();
+  final _level = StreamController<double>.broadcast();
   int _pendingBytes = 0;
   bool _ready = false;
   bool _disposed = false;
+
+  /// いま native へ渡した音の大きさ（0.0〜1.0）。
+  ///
+  /// キャラクターの動きをこれで駆動する。**口は動かさない** —
+  /// Gemini Live は音素タイミングを返さないので、口の形は作れない。
+  /// 体の上下は振幅の包絡でよく、音素の精度を主張しない。
+  ///
+  /// 50ms 先読みで渡しているので、実際に鳴る音より 50〜100ms 早い。
+  Stream<double> get level => _level.stream;
 
   /// 再生待ちのバイト数。テストと画面の状態表示に使う。
   int get pendingBytes => _pendingBytes;
@@ -77,23 +88,47 @@ class PcmPlayer {
   void stopNow() {
     _pending.clear();
     _pendingBytes = 0;
+    // 捨てた瞬間に静かになったことを伝える。
+    // 伝えないと、割り込んだのにキャラが揺れ続ける
+    if (!_disposed) _level.add(0);
   }
 
   Future<void> dispose() async {
     if (_disposed) return;
-    _disposed = true;
     stopNow();
+    _disposed = true;
     _sink.setFeedCallback(null);
     if (_ready) await _sink.release();
     _ready = false;
+    await _level.close();
   }
 
   /// native から「キューが減った」と呼ばれる。要求量だけ渡す。
   void _onFeed(int remainingFrames) {
     if (_disposed) return;
     final chunk = _take(_chunkFrames * 2);
-    if (chunk == null) return; // 渡すものが無い。次の enqueue で start() が掛かる
+    if (chunk == null) {
+      // 渡すものが無い＝鳴り終わる。次の enqueue で start() が掛かる
+      _level.add(0);
+      return;
+    }
+    _level.add(_peakOf(chunk));
     _sink.feed(PcmArrayInt16(bytes: ByteData.sublistView(chunk)));
+  }
+
+  /// PCM16 リトルエンディアンのピークを 0.0〜1.0 で返す。
+  static double _peakOf(Uint8List pcm) {
+    final view = ByteData.sublistView(pcm);
+    final samples = pcm.length ~/ 2;
+    var peak = 0;
+    // 全サンプルは見ない。50ms ぶんを 8点まで間引いても包絡は十分取れる
+    final step = samples <= 8 ? 1 : samples ~/ 8;
+    for (var i = 0; i < samples; i += step) {
+      final v = view.getInt16(i * 2, Endian.little).abs();
+      if (v > peak) peak = v;
+    }
+    // -32768 の絶対値は 32768。32767 で割ると 1.0 を超える
+    return (peak / 32768).clamp(0.0, 1.0);
   }
 
   /// 先頭から最大 [maxBytes] を切り出す。チャンク境界をまたいで詰める。

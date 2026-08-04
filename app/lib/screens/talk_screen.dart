@@ -7,12 +7,13 @@ import '../services/live_session.dart';
 import '../services/mic_stream.dart';
 import '../ui/_material.dart';
 import '../widgets/dossier_bar.dart';
+import '../widgets/stage.dart';
 
-/// 段階1 の会話画面。
+/// 会話画面。
 ///
-/// **これは仕上げではない。** キャラクターと演出は段階3。
-/// いまは「音声が往復し、割り込めて、切れずに続く」ことを実機で確かめるための画面で、
-/// そのために状態・文字起こし・音量・異常を全部見えるようにしてある。
+/// キャラクターを中心に置き、その下に理解カルテ、逐語、操作を並べる。
+/// **状態は「キャラの見た目」と「文字」の両方で出す** — 動きが止まっている
+/// 端末（Reduce Motion / 古い端末）でも、いま何が起きているか分かる必要がある。
 class TalkScreen extends StatelessWidget {
   const TalkScreen({super.key});
 
@@ -36,7 +37,8 @@ class TalkScreen extends StatelessWidget {
           ? const _MissingKey()
           : Column(
               children: [
-                _StateBanner(state: live.state, failure: live.failure),
+                Stage(live: live),
+                if (live.failure != null) _FailureBanner(failure: live.failure!),
                 if (live.recordingIssue != null)
                   _IssueBanner(issue: live.recordingIssue!),
                 if (live.dossier != null) DossierBar(dossier: live.dossier!),
@@ -77,90 +79,40 @@ class _MissingKey extends StatelessWidget {
   }
 }
 
-/// いまどの状態かを、色・アイコン・文言の3点セットで出す (SC 1.4.1)。
-class _StateBanner extends StatelessWidget {
-  const _StateBanner({required this.state, required this.failure});
+/// 続けられなくなった理由。**色だけでなくアイコンと文言で出す**（SC 1.4.1）。
+class _FailureBanner extends StatelessWidget {
+  const _FailureBanner({required this.failure});
 
-  final LiveState state;
-  final LiveFailure? failure;
+  final LiveFailure failure;
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     final c = context.appColors;
-
-    final (IconData icon, String label, Color fg, Color bg) = switch (state) {
-      LiveState.idle => (
-          Icons.circle_outlined,
-          'まだ始まっていません',
-          c.untouchedFg,
-          c.untouchedChip
-        ),
-      LiveState.connecting => (
-          Icons.sync,
-          'つないでいます',
-          c.untouchedFg,
-          c.untouchedChip
-        ),
-      LiveState.listening => (
-          Icons.hearing,
-          '聞いています',
-          c.gotItFg,
-          c.gotItChip
-        ),
-      LiveState.thinking => (
-          Icons.more_horiz,
-          '考えています',
-          c.shakyFg,
-          c.shakyChip
-        ),
-      LiveState.speaking => (
-          Icons.graphic_eq,
-          '話しています',
-          t.colorScheme.primary,
-          t.colorScheme.primaryContainer
-        ),
-      LiveState.done => (
-          Icons.check_circle,
-          'ひととおり終わりました',
-          c.gotItFg,
-          c.gotItChip
-        ),
-      LiveState.failed => (
-          Icons.bookmark,
-          _failureText(failure),
-          c.weakFg,
-          c.weakChip
-        ),
+    final text = switch (failure) {
+      LiveFailure.noPermission => 'マイクを使う許可がありません',
+      LiveFailure.network => 'ネットワークにつながりません',
+      LiveFailure.auth => 'APIキーが受け付けられませんでした',
+      LiveFailure.unknown => '続けられませんでした',
     };
 
     return Container(
       width: double.infinity,
-      color: bg,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: c.weakChip,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          Icon(icon, color: fg, size: 20),
+          // 失敗の合図には ✗ を使ってよい。ここは生徒の理解の話ではない
+          Icon(Icons.error_outline, size: 18, color: c.weakFg),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              label,
-              style: t.textTheme.titleSmall
-                  ?.copyWith(color: fg, height: 1.3)
-                  .jaWeight(FontWeight.w600),
-            ),
+            child: Text(text,
+                style: t.textTheme.bodyMedium?.copyWith(color: c.weakFg)),
           ),
         ],
       ),
     );
   }
-
-  static String _failureText(LiveFailure? f) => switch (f) {
-        LiveFailure.noPermission => 'マイクを使う許可がありません',
-        LiveFailure.network => 'ネットワークにつながりません',
-        LiveFailure.auth => 'APIキーが受け付けられませんでした',
-        _ => '続けられませんでした',
-      };
 }
 
 /// 録音がおかしいときに出す。**黙って進めない。**
@@ -213,11 +165,13 @@ class _TurnLog extends StatelessWidget {
     ];
 
     if (rows.isEmpty) {
-      return Center(
+      // 上寄せにする。中央寄せだと、キャラとの間が不自然に空く
+      return Align(
+        alignment: Alignment.topCenter,
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
           child: Text(
-            'マイクのボタンを押して、教えたいことを声で説明してください。',
+            'ボタンを押して、教えたいことを声で説明してください。',
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
@@ -230,9 +184,8 @@ class _TurnLog extends StatelessWidget {
       itemCount: rows.length,
       itemBuilder: (context, i) {
         final (isStudent, text) = rows[i];
-        final interim = i == rows.length - 1 &&
-            live.interimStudentText.isNotEmpty &&
-            isStudent;
+        final interim =
+            i == rows.length - 1 && live.interimStudentText.isNotEmpty && isStudent;
         return _Bubble(isStudent: isStudent, text: text, interim: interim);
       },
     );
@@ -273,8 +226,8 @@ class _Bubble extends StatelessWidget {
           children: [
             Text(
               isStudent ? 'あなた' : 'デキすぎ君',
-              style: t.textTheme.labelSmall
-                  ?.copyWith(color: scheme.onSurfaceVariant),
+              style:
+                  t.textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: 2),
             Text(
@@ -312,8 +265,10 @@ class _Composer extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (running) _MicLevel(live: live),
-            const SizedBox(height: 8),
+            // 音量は「聞こえている」を音より先に目で返す層。
+            // 高さぶんの場所は常に確保して、出たり消えたりで行が跳ねないようにする
+            SizedBox(height: 6, child: running ? _MicLevel(live: live) : null),
+            const SizedBox(height: 10),
             FilledButton.icon(
               onPressed: busy ? null : (running ? live.stop : live.start),
               icon: Icon(running ? Icons.stop : Icons.mic),
@@ -326,7 +281,6 @@ class _Composer extends StatelessWidget {
   }
 }
 
-/// 音量。「聞こえている」ことを音より先に目で返す。
 class _MicLevel extends StatelessWidget {
   const _MicLevel({required this.live});
 

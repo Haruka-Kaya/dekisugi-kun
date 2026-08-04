@@ -44,6 +44,29 @@ void main() {
           });
         }
 
+        test('キャラの目は体の上で 3:1 以上 (SC 1.4.11)', () {
+          // 目は装飾ではなく状態を伝える図形。まばたきも表情も読めなくなる
+          expect(_contrast(c.charFace, c.charBody), greaterThanOrEqualTo(3.0));
+        });
+
+        test('キャラの装飾は体の上で 3:1 以上', () {
+          // 耳・声のバー・考え中の点は**状態を伝える唯一の形**なので、
+          // 見えないと4状態が区別できなくなる
+          expect(_contrast(c.charAccent, c.charBody), greaterThanOrEqualTo(3.0));
+        });
+
+        test('キャラの体は背景から浮く（1.5:1 以上）', () {
+          expect(_contrast(c.charBody, scheme.surface), greaterThanOrEqualTo(1.5));
+        });
+
+        test('キャラの色が状態色と重ならない', () {
+          // 重なると「キャラの色」と「理解の状態」の意味が混ざる
+          for (final s in ExplainStatus.values) {
+            expect(c.charBody, isNot(c.fgFor(s)));
+            expect(c.charAccent, isNot(c.fgFor(s)));
+          }
+        });
+
         test('borderStrong は操作対象の枠として 3:1 以上 (SC 1.4.11)', () {
           // 入力欄の枠。ライトは地の白、ダークはカード面に対して測る
           final bg = brightness == Brightness.light

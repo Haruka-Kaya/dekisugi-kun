@@ -139,6 +139,67 @@ void main() {
     });
   });
 
+  group('声の大きさ', () {
+    /// PCM16 リトルエンディアンを組み立てる
+    Uint8List pcm(List<int> samples) {
+      final b = ByteData(samples.length * 2);
+      for (var i = 0; i < samples.length; i++) {
+        b.setInt16(i * 2, samples[i], Endian.little);
+      }
+      return b.buffer.asUint8List();
+    }
+
+    test('渡した音の大きさを流す', () async {
+      final seen = <double>[];
+      final sub = player.level.listen(seen.add);
+
+      player.enqueue(pcm(List.filled(1200, 16384)));
+      sink.requestFeed();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(seen, isNotEmpty);
+      expect(seen.first, closeTo(0.5, 0.01));
+      await sub.cancel();
+    });
+
+    test('鳴り終わったら 0 を流す', () async {
+      final seen = <double>[];
+      final sub = player.level.listen(seen.add);
+
+      sink.requestFeed(); // 渡すものが無い
+      await Future<void>.delayed(Duration.zero);
+
+      expect(seen, [0.0]);
+      await sub.cancel();
+    });
+
+    test('割り込んだ瞬間に 0 を流す', () async {
+      // 伝えないと、割り込んだのにキャラが揺れ続ける
+      final seen = <double>[];
+      final sub = player.level.listen(seen.add);
+
+      player.enqueue(pcm(List.filled(2400, 30000)));
+      sink.requestFeed();
+      player.stopNow();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(seen.last, 0.0);
+      await sub.cancel();
+    });
+
+    test('最大振幅でも 1.0 を超えない', () async {
+      final seen = <double>[];
+      final sub = player.level.listen(seen.add);
+
+      player.enqueue(pcm(List.filled(1200, -32768)));
+      sink.requestFeed();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(seen.first, lessThanOrEqualTo(1.0));
+      await sub.cancel();
+    });
+  });
+
   group('後始末', () {
     test('dispose 後は積んでも渡さない', () async {
       await player.dispose();
