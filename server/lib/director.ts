@@ -407,6 +407,11 @@ function decideInstruction(
   if (probe) {
     const m = misconceptionById(probe.misconceptionId)
     if (m) {
+      // **口にしたことをここで記録する。** notTried のまま返すと、
+      // 次回 buildPrompt の「すでに口にした誤概念」が空になって判定が来ず、
+      // mergeProbe も notTried の更新を捨て、nextProbe が同じものを選び直す。
+      // → 生徒が訂正しても永久に蒸し返される（実機で再現）
+      markVoiced(dossier, probe.conceptKey, m.id)
       return {
         instruction:
           `次の一言を、あなた自身がそう思い込んでいるかのように、確認する形で言って: 「${m.lure}」` +
@@ -419,4 +424,18 @@ function decideInstruction(
 
   // ③ それ以外は、次の概念を引き出す
   return { instruction: fallback, lureId: null }
+}
+
+/**
+ * 誤概念を口にしたことをカルテに刻む。
+ *
+ * `unclear` は「口にしたが、生徒の反応から判断がつかない」という意味で、
+ * この時点の状態そのもの。**復習には回らない**（[toReview] が除外する）ので、
+ * 指示を出したのに AI が言い損ねても、生徒に濡れ衣は着せない。
+ */
+function markVoiced(dossier: Dossier, conceptKey: string, misconceptionId: string): void {
+  const probe = dossier.slots
+    .find((s) => s.key === conceptKey)
+    ?.probes.find((p) => p.id === misconceptionId)
+  if (probe && probe.result === 'notTried') probe.result = 'unclear'
 }

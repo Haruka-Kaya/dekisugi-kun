@@ -65,8 +65,12 @@ class _ConsentScreenState extends State<ConsentScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('はじめる前に')),
+      // **下のシステム余白を自分で足す。** ListView に padding を渡すと
+      // Flutter は MediaQuery の余白を足さなくなるので、
+      // 最後の「はじめる」がナビゲーションバーの下に潜る（実機で確認）
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: EdgeInsets.fromLTRB(
+            16, 8, 16, 24 + MediaQuery.paddingOf(context).bottom),
         children: [
           Text('あなたのことを教えてください', style: t.textTheme.titleMedium),
           const SizedBox(height: 4),

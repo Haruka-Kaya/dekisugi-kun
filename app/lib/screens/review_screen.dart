@@ -60,8 +60,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
       appBar: AppBar(title: const Text('もう一度見るところ')),
       body: items == null
           ? const Center(child: CircularProgressIndicator())
+          // padding を渡すと下のシステム余白が入らない。自分で足す
           : ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: EdgeInsets.fromLTRB(
+                  0, 8, 0, 8 + MediaQuery.paddingOf(context).bottom),
               children: [
                 _ExamCard(exam: _exam, onTap: _pickExamDate),
                 if (items.isEmpty)

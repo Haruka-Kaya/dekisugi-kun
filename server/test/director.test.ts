@@ -166,9 +166,12 @@ describe('誘発の判定', () => {
       status: 'explained',
       evidence: ['u02'],
     })
+    // shouldEnd で誘発を止め、mergeProbe の判断だけを見る
+    // （終了しないと、このターンで M01 を口にして unclear が入ってしまう）
     const out = await runDirector(input(before), {
       generate: fixed({
         ...EMPTY_RAW,
+        shouldEnd: true,
         probeUpdates: [{ id: 'M01', result: 'corrected', evidence: ['u04'] }],
       }),
     })
@@ -202,6 +205,45 @@ describe('次の指示', () => {
 
     assert.equal(out.lureId, 'M01')
     assert.ok(out.nextInstruction.includes(misconceptionById('M01')!.lure))
+    // 口にしたことをカルテに刻む。刻まないと下の「蒸し返し」が起きる
+    assert.equal(slot(out.dossier, 'fall').probes[0]!.result, 'unclear')
+  })
+
+  it('同じ誤概念を続けて蒸し返さない', async () => {
+    // 実機で出た症状: 生徒が訂正した直後に、同じ誤概念をもう一度口にした。
+    // 誘発を notTried のまま返していたため、
+    //   ① buildPrompt の「すでに口にした誤概念」が空 → 判定が来ない
+    //   ② mergeProbe が notTried の更新を捨てる
+    //   ③ nextProbe が同じものを選び直す
+    // の3つが重なって、訂正しても永久に繰り返された
+    const before = patch(emptyDossier('force-motion'), 'fall', {
+      status: 'explained',
+      evidence: ['u02'],
+    })
+    const first = await runDirector(input(before), { generate: fixed(EMPTY_RAW) })
+    assert.equal(first.lureId, 'M01')
+
+    // 1回目のカルテをそのまま返してくる（サーバはステートレス）
+    const second = await runDirector(input(first.dossier), {
+      generate: fixed({ ...EMPTY_RAW, nextInstruction: '次の概念へ' }),
+    })
+    assert.notEqual(second.lureId, 'M01')
+    assert.ok(!second.nextInstruction.includes(misconceptionById('M01')!.lure))
+  })
+
+  it('口にしたあとなら生徒の訂正を受け取れる', async () => {
+    const before = patch(emptyDossier('force-motion'), 'fall', {
+      status: 'explained',
+      evidence: ['u02'],
+    })
+    const first = await runDirector(input(before), { generate: fixed(EMPTY_RAW) })
+    const second = await runDirector(input(first.dossier), {
+      generate: fixed({
+        ...EMPTY_RAW,
+        probeUpdates: [{ id: 'M01', result: 'corrected', evidence: ['u04'] }],
+      }),
+    })
+    assert.equal(slot(second.dossier, 'fall').probes[0]!.result, 'corrected')
   })
 
   it('説明前は誘発せず、モデルの指示をそのまま使う', async () => {
