@@ -120,6 +120,47 @@ class LiveSessionController extends ChangeNotifier {
   /// 文字で送った生徒の発話がターン確定を待っている
   bool _pendingStudentTurn = false;
 
+  /// AI の再生が終わった時刻。エコーの尾を待つのに使う
+  Duration? _playbackEndedAt;
+
+  /// 再生が終わってからマイクを開けるまで。
+  ///
+  /// スピーカーが鳴りやんでも部屋の反射は少し残る。
+  /// [PcmPlayer.maxResidual]（≤100ms）に余裕を足した値。
+  static const Duration echoTail = Duration(milliseconds: 250);
+
+  /// いまマイクを聞かないか。**AI が喋っている間は閉じる（半二重）。**
+  ///
+  /// この端末では AEC が効かず、AI の声を自分で拾って
+  /// 「内容をを」のような文字列が**生徒の発話として記録された**（実機で確認）。
+  /// 体験が悪くなるだけでなく、カルテとディレクターがそれを読むので
+  /// 測定そのものが壊れる。
+  ///
+  /// 代わりに割り込みができなくなるが、この製品では AI の発話が
+  /// 1〜2文・40字ほどなので失うものは小さい。
+  /// 止めたいときは画面をタップする（[silenceAi]）。
+  bool get _micMuted {
+    if (_player.hasPending) return true;
+    final ended = _playbackEndedAt;
+    return ended != null && _clock.elapsed - ended < echoTail;
+  }
+
+  /// マイクを聞いているか。画面の表示に使う。
+  bool get isListeningToMic => isRunning && !_micMuted;
+
+  /// AI の発話を途中で止める。**タップから呼ぶ。**
+  ///
+  /// マイクでの割り込みは AEC が無いと成立しないので、
+  /// 止める手段は音ではなく操作で持つ。会話は終わらせない。
+  void silenceAi() {
+    if (!isRunning) return;
+    if (!_player.hasPending && _state != LiveState.speaking) return;
+    _player.stopNow();
+    _playbackEndedAt = _clock.elapsed;
+    _note('AI の発話をタップで止めた');
+    _setState(LiveState.listening);
+  }
+
   LiveState get state => _state;
   LiveFailure? get failure => _failure;
   bool get isRunning => _session != null && !_session!.isClosed;
@@ -442,10 +483,14 @@ class LiveSessionController extends ChangeNotifier {
   }
 
   void _onLevel(double peak) {
-    _peaks.add(peak);
-    if (_peaks.length > 300) _peaks.removeAt(0);
+    // 記録する音量は AI の再生ぶんを除く。混ぜると
+    // 「マイクが拾えていない」の判定が AI の声で埋まって出なくなる
+    if (!_micMuted) {
+      _peaks.add(peak);
+      if (_peaks.length > 300) _peaks.removeAt(0);
+    }
 
-    if (!_gate.update(peak, _clock.elapsed)) return;
+    if (!_gate.update(peak, _clock.elapsed, muted: _micMuted)) return;
 
     final s = _session;
     if (s == null || s.isClosed) return;
@@ -580,6 +625,8 @@ class LiveSessionController extends ChangeNotifier {
 
   void _syncState() {
     if (_state == LiveState.speaking && !_player.hasPending) {
+      // エコーの尾を待ってからマイクを開ける
+      _playbackEndedAt = _clock.elapsed;
       _setState(LiveState.listening);
       _pumpDirector();
     }

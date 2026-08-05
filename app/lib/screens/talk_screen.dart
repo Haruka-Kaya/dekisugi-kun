@@ -502,10 +502,13 @@ class _MicLevel extends StatelessWidget {
       stream: live.micLevel,
       initialData: 0,
       builder: (context, snap) {
-        final v = (snap.data ?? 0).clamp(0.0, 1.0);
+        // AI が喋っている間はマイクを閉じている（半二重）。
+        // **バーが動いていると「聞こえている」と誤解する**ので 0 で止める
+        final listening = live.isListeningToMic;
+        final v = listening ? (snap.data ?? 0).clamp(0.0, 1.0) : 0.0;
         return Semantics(
           label: '入力音量',
-          value: '${(v * 100).round()}パーセント',
+          value: listening ? '${(v * 100).round()}パーセント' : '聞いていません',
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.pill),
             child: LinearProgressIndicator(

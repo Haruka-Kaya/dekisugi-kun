@@ -11,6 +11,44 @@ void main() {
       expect(g.isSpeaking, isTrue);
     });
 
+    group('AI が喋っている間は閉じる（半二重）', () {
+      test('大きな音でも開かない', () {
+        // この端末では AEC が効かず、AI の声を自分で拾って
+        // 「内容をを」が生徒の発話として記録された（実機で確認）。
+        // しきい値を上げるのでは分離できない — スピーカーは端末上、
+        // 生徒は数十センチ先で、AI の声のほうが大きい
+        final g = SpeechGate();
+        expect(g.update(1.0, ms(0), muted: true), isFalse);
+        expect(g.isSpeaking, isFalse);
+      });
+
+      test('喋っている途中で塞がれたら閉じたことを伝える', () {
+        // 状態変化を返さないと activityEnd が送られず、
+        // モデルは生徒の発話が続いていると思って待ち続ける
+        final g = SpeechGate();
+        g.update(0.5, ms(0));
+        expect(g.isSpeaking, isTrue);
+
+        expect(g.update(0.5, ms(100), muted: true), isTrue);
+        expect(g.isSpeaking, isFalse);
+      });
+
+      test('塞がれ続けても変化は1回だけ', () {
+        final g = SpeechGate();
+        g.update(0.5, ms(0));
+        expect(g.update(0.5, ms(100), muted: true), isTrue);
+        expect(g.update(0.5, ms(200), muted: true), isFalse);
+      });
+
+      test('開いたら普通に判定に戻る', () {
+        final g = SpeechGate();
+        g.update(0.5, ms(0));
+        g.update(0.5, ms(100), muted: true);
+        expect(g.update(0.5, ms(200)), isTrue);
+        expect(g.isSpeaking, isTrue);
+      });
+    });
+
     test('静かになっても hangover のあいだは終わらせない', () {
       // 句読点の「間」で切ると、説明の途中でキャラが反応してしまう
       final g = SpeechGate(hangover: ms(400));

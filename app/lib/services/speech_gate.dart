@@ -8,8 +8,11 @@
 /// キャラが反応する層を先に出し、音声は後から乗せる。
 ///
 /// そのためには「終わった」を**サーバの応答を待たずに**知る必要がある。
-/// ここは表示を切り替えるためだけの判定で、**何を送るかには一切関与しない**
-/// （送信の可否はサーバ側 VAD が決める）。誤判定しても会話は壊れない。
+///
+/// > [!warning] ここは表示だけの仕組みではない
+/// > Vertex は自動VADが働かず、`activityStart` / `activityEnd` で囲まないと
+/// > 音声を黙って捨てる。つまりこの判定が**何を送るかも決めている。**
+/// > 狂うと会話そのものが成立しない。
 ///
 /// しきい値は AEC / ノイズ抑制の効き方で端末ごとに変わる。実機で詰めること。
 class SpeechGate {
@@ -38,7 +41,22 @@ class SpeechGate {
   ///
   /// [now] は単調増加する時刻。`Stopwatch.elapsed` を渡す想定で、
   /// テストから時間を進められるように外から与える。
-  bool update(double peak, Duration now) {
+  ///
+  /// [muted] は「いまマイクを聞かない」— AI が喋っている間に立てる。
+  /// **しきい値を上げるのではなく閉じる。** スピーカーは端末上にあり
+  /// 生徒は数十センチ先なので、AI の声のほうが大きいのが普通で、
+  /// どこにしきい値を置いても AI を通すか生徒を切るかのどちらかになる
+  /// （AEC が存在するのはこれが解けないため）。
+  bool update(double peak, Duration now, {bool muted = false}) {
+    if (muted) {
+      // 閉じるときは必ず状態変化を返す。返さないと `activityEnd` が送られず、
+      // モデルは生徒の発話がまだ続いていると思って待ち続ける
+      if (!_speaking) return false;
+      _speaking = false;
+      _quietSince = null;
+      return true;
+    }
+
     if (_speaking) {
       if (peak >= offThreshold) {
         _quietSince = null;

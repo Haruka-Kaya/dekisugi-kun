@@ -28,17 +28,31 @@ class Stage extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
 
+    final speaking = live.state == LiveState.speaking;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          StreamBuilder<double>(
-            stream: live.voiceLevel,
-            initialData: 0,
-            builder: (context, snap) => Character(
-              state: live.state,
-              voiceLevel: snap.data ?? 0,
+          // 話しているあいだはタップで止められる。
+          // **声で割り込ませない**（AEC が無い端末では AI の声を自分で拾い、
+          // それが生徒の発話として記録される）ので、止める手段は操作で持つ
+          Semantics(
+            button: speaking,
+            label: speaking ? 'デキすぎ君の話を止める' : null,
+            child: GestureDetector(
+              onTap: speaking ? live.silenceAi : null,
+              // 透明な部分もタップを受ける
+              behavior: HitTestBehavior.opaque,
+              child: StreamBuilder<double>(
+                stream: live.voiceLevel,
+                initialData: 0,
+                builder: (context, snap) => Character(
+                  state: live.state,
+                  voiceLevel: snap.data ?? 0,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -51,6 +65,19 @@ class Stage extends StatelessWidget {
               key: ValueKey(live.state),
               style: t.textTheme.titleSmall
                   ?.copyWith(color: t.colorScheme.onSurfaceVariant),
+            ),
+          ),
+          // 見えない操作は無いのと同じ。話している間だけ出す
+          SizedBox(
+            height: 20,
+            child: AnimatedOpacity(
+              opacity: speaking ? 1 : 0,
+              duration: Motion.state,
+              child: Text(
+                'タップで止められます',
+                style: t.textTheme.bodySmall
+                    ?.copyWith(color: t.colorScheme.onSurfaceVariant),
+              ),
             ),
           ),
         ],
