@@ -1,20 +1,51 @@
-# 年齢制限 — いまの構成は規約上使えない
+# 未成年に使わせてよいか — 規約と法令の確認
 
-**確認日: 2026-08-05**
+初回調査: 2026-08-05（Developer API で詰まっていることが判明）
+**再調査・確定: 2026-08-06**（Vertex への移行後、一次ソースで裏取り）
 
-## 何が問題か
+> [!warning] これは法務の判断ではない
+> 一次ソースにあたって**書いてあること／書いていないこと**を整理したもの。
+> 「禁止条項が見つからない」は「許されている」ではない。
+> 学校など第三者を巻き込む前に、専門家の確認を通すこと。
 
-Gemini API（`ai.google.dev` のキーで叩くもの）の追加利用規約、「Age Requirements」より:
+---
 
-> You must be 18 years of age or older to use the APIs. You also will not use the
-> Services as part of a website, application, or other service (collectively, "API
-> Clients") that is **directed towards or is likely to be accessed by individuals
-> under the age of 18**.
+## 結論（先に）
 
-デキすぎ君は**中高生向けだと明言している製品**なので、後半に真正面から当たる。
-この条項は有料/無料の区別より前に置かれているので、**課金しても外れない**。
+| 論点 | 状態 |
+|---|---|
+| Gemini Developer API の18歳未満禁止 | **Vertex AI には適用されない**（規約に明示の除外あり） |
+| Google Cloud / Vertex AI の年齢条項 | **見当たらない**（無いことの証明ではない） |
+| 越境移転の同意（個情法28条） | **必要。**同意画面で3点を表示済み |
+| 16歳未満の法定代理人同意 | 改正法で明文化。遅くとも2028年7月施行。**現行でもQ&Aで運用**されている |
+| 未成年の最善の利益への配慮 | 改正法58条の3。**設計に効く** |
 
-出典: https://ai.google.dev/gemini-api/terms
+---
+
+## 1. Developer API の18歳未満禁止は、Vertex には及ばない
+
+### 何が書いてあるか
+
+[Gemini API Additional Terms of Service](https://ai.google.dev/gemini-api/terms) より:
+
+> "You must be 18 years of age or older to use the APIs. You also will not use the Services
+> as part of a website, application, or other service (collectively, "API Clients") that is
+> **directed towards or is likely to be accessed by individuals under the age of 18**."
+
+これが、Developer API を使っていたときに**製品が成立しない**と判断した根拠。
+中高生向けなので「likely to be accessed by individuals under 18」に真正面から当たる。
+この条項は有料/無料より前に置かれているので、課金しても外れない。
+
+### 適用範囲に明示の除外がある
+
+同じ規約に、こうある。
+
+> "For clarity, these Terms **do not govern your direct use of any Google Cloud Platform
+> service** (including those listed on the Google Cloud Services Summary)."
+
+Vertex AI は Google Cloud Platform のサービスなので、**この18歳条項は Vertex には及ばない。**
+
+移行の判断は正しかった、というのがここで裏づけられた。
 
 > [!caution] 見落とした経緯
 > 調査フェーズでロイヤリティ・著作権・保護者同意は掘ったが、
@@ -22,87 +53,122 @@ Gemini API（`ai.google.dev` のキーで叩くもの）の追加利用規約、
 > 段階5 で保護者同意まで実装したあとに出てくる話ではなかった。
 > **外部サービスに乗るときは、対象年齢と利用規約を先に突き合わせる。**
 
-## Vertex AI なら通るのか
+### 移行が済んでいることの確認
 
-Vertex AI は Google Cloud Platform 規約の下にあり、次のどちらにも
-**同じ年齢条項が見当たらない**:
+- 端末に API キーが無い（リリース APK に `AIza` 文字列ゼロを確認済み）
+- 会話は `*-aiplatform.googleapis.com` へ、サービスアカウントのアクセストークンで繋ぐ
+- ディレクターも Vertex 経由
 
-- Google Cloud Platform Terms of Service
-- Service Specific Terms（Vertex AI / Generative AI の節）
+**Developer API の経路は残っていない。** 残っていると、この整理は無効になる。
 
-ただし**「条項が見当たらない」は「使ってよい」の証明ではない。**
-K-12 向けの製品が GCP 上に多数あることは傍証だが、
-公開前に一次情報で裏を取るか、Google に確認すること。
+---
 
-## 移行すると壊れるもの
+## 2. Google Cloud 側に年齢条項は見当たらない
 
-**認証方式が違う。**
+次の2つを読んで、年齢・未成年・18歳・児童に関する条項を探した。**見つからなかった。**
 
-| | Gemini API（いま） | Vertex AI |
-|---|---|---|
-| 端末が持つもの | ephemeral token | OAuth 2.0 bearer token |
-| 発行元 | `authTokens.create()` | サービスアカウント |
-| 寿命の指定 | **分単位で自由** | OAuth の既定に従う |
-| 期限切れの挙動 | **セッションごと切れる**（実測 `code=1011`） | **未確認** |
+- [Google Cloud Platform Terms of Service](https://cloud.google.com/terms/)
+- [Service Specific Terms](https://cloud.google.com/terms/service-terms)
 
-いまの「1日15分」は、**トークンの寿命がそのまま会話時間になる**ことに
-乗っている（`server/lib/quota.ts` 参照）。Vertex では同じ手が使えるか分からない。
+[Generative AI Prohibited Use Policy](https://policies.google.com/terms/generative-ai/use-policy) にも、
+未成年の利用そのものを禁じる条項は無い（児童性的虐待コンテンツの禁止はあるが別の話）。
 
-### 取りうる形
+### ただし、責任の所在がこちらに来る
 
-| 案 | 中身 | 効く上限 | 要るもの |
-|---|---|---|---|
-| A | 短命の OAuth トークンを端末へ渡す | **期限切れでセッションが切れるかに依存（未測定）** | GCP プロジェクト |
-| B | **音声をサーバで中継する** | 完全に効く（こちらが全バイトを見る） | 常時接続を保てるホスト（Cloud Run 等）。Vercel の関数では持てない |
+Cloud の規約は**事業者向け**に書かれていて、こういう構造になっている。
 
-B なら端末は Gemini の資格情報を一切持たないので、上限も鍵の秘匿も同時に解ける。
-代わりに、会話の音声がサーバを通るぶん遅延とホスティング費用が増える。
+- 契約する「Customer」は賀屋さん
+- 生徒は「End User」
+- Customer は **End User の利用についても責任を負う**（4.1）
 
-**A が成立するかは測れば分かる。** 短命トークンで繋いで、期限後に発話が通るかを見る。
-`server/test/live-token.live.test.ts` と同じやり方。
+Google が年齢で線を引いていないぶん、**適法性の判断はこちら側の責任**になる。
+「規約に書いていないからよい」ではなく「こちらで判断しろ」と言われている状態。
 
-## 測った結果（2026-08-05）
+### 未解決
 
-`server/_probe-vertex-life.mts` で、2分おきに一言送りながら観察した。
+- Google に**直接確認していない**。学校で使うなら、問い合わせて記録を残すのが望ましい
+- 学校が Google Workspace for Education を使っている場合、**学校側の契約に別の制約**があるかもしれない。
+  学校の情報担当に確認が要る
 
-```
-00分 トークン取得。期限まで 60 分
-00分 接続 OK
-00分 生きている（音声 20714 B）
-02分 生きている（音声 22634 B）
-...
-08分 生きている（音声 24554 B）
-09分 ★ 切断: code=1000 reason=The operation was cancelled.
-```
+---
 
-**トークンの期限（60分）ではなく、Vertex 自身が約10分でセッションを打ち切る。**
+## 3. 越境移転（個人情報保護法28条）
 
-### これで決まること
+生徒の声と発話内容が米国の Google のサーバーへ渡るので、外国にある第三者への提供にあたる。
 
-| 分かったこと | 設計への影響 |
+本人（16歳未満なら法定代理人）に、**次の3点を伝えたうえで**同意を得る必要がある。
+
+1. 移転先の**国の名前**
+2. その国の**個人情報保護制度**
+3. 移転先が講じている**保護措置**
+
+「海外に送信されることがあります」だけでは足りない。
+
+### 実装
+
+`app/lib/services/consent.dart` の `kTransferDisclosure` に3点を持ち、
+同意画面で**実際に表示している**。文面は `docs/school-pack/` の説明資料と揃えてある。
+
+---
+
+## 4. 16歳未満の法定代理人同意
+
+### 改正法（2026年7月17日公布）
+
+16歳未満の個人情報を扱う場合、利用目的の通知・第三者提供の同意などにおける「本人」を
+**「本人の法定代理人」に読み替える**（改正法40条の2）。
+
+施行は公布から2年以内の政令で定める日で、**遅くとも2028年7月**。
+
+あわせて次も入った。
+
+- 16歳未満の本人は、要件を満たさなくても利用停止・消去・第三者提供停止を請求できる（35条9項・10項）
+- 事業者は**年齢および発達の程度に応じて、その最善の利益を優先して考慮する**（58条の3第1項）
+
+### 現行法でも
+
+Q&A の運用として、**一般に12〜15歳以下は法定代理人等の同意取得が求められる**とされている。
+「施行前だから中学生に直接同意させてよい」とはならない。
+
+### 実装
+
+同意画面で年齢帯（15歳以下 / 16〜17歳 / 18歳以上）を選ばせ、
+**15歳以下なら保護者の確認を必須**にしている。誕生日は集めない。
+
+> [!note] 学校で使うなら形が変わる
+> 生徒一人ひとりに保護者確認をさせるのは現実的でない。
+> 学校が保護者から一括で同意を取る形になる。**誰が同意を取るのかを先に決める**こと。
+> 資料は `docs/school-pack/` に用意した。
+
+---
+
+## 5. 「最善の利益を優先して考慮」は設計に効く
+
+改正法58条の3は努力義務だが、この製品では実装に落ちている部分がある。
+
+| 条文の趣旨 | この製品での形 |
 |---|---|
-| セッションは**約10分で必ず終わる** | 1接続で無限に話せない。**上限の土台にできる** |
-| トークンの期限は会話時間を縛らない | 「渡す寿命＝会話時間」はそのままでは使えない |
+| 年齢・発達に応じた配慮 | 断定しない（C9）。「弱点」と言わず「もう一度見るところ」 |
+| 最善の利益 | 答えを教えない。説明させる。役を降ろす脱獄への守り |
+| 収集を必要最小限に | 名前・メール・誕生日を集めない。端末IDのみ |
 
-→ **上限は「分」ではなく「セッション数」で数える。**
-1セッション ≒ 10分なので、無料15分は「**1日2セッション**」に読み替える。
+**主張の材料になるが、免罪符ではない。**
 
-端末にアクセストークンを渡す形（案A）で成立する。**中継（案B）は要らない。**
+---
 
-> [!warning] トークンは60分有効で、権限も広い
-> セッション上限は Vertex 側が守ってくれるが、**トークン自体は60分間、
-> サービスアカウントの権限で何でもできる。**
-> 端末に渡す以上、サービスアカウントの権限は
-> `roles/aiplatform.user` だけに絞っておくこと（設定済み）。
->
-> より厳しくするなら、`iamcredentials.generateAccessToken` で
-> 寿命を短くしたトークンを配る。**これは未実装。**
+## 6. まだ確認していないこと
 
-## 残っている確認
+- **Google への直接確認**（Vertex を未成年向けサービスに使ってよいか）
+- 学校が Google Workspace for Education を使っている場合の、学校側契約の制約
+- 生徒の発話が Google 側でどれだけ保持されるか（Vertex の abuse monitoring の保持期間）
+- 学校での実施が「研究」にあたる場合の倫理審査の要否
 
-- 本番の会話設定一式（システム指示・VAD・文字起こし・セッション再開）が
-  Vertex でも通るか。**Developer API では「音だけ出ない」壊れ方をした**ので、
-  同じ確認をやる
-- Vertex では ephemeral token が無いため、**会話設定を端末が送る**ことになる。
-  つまりペルソナと `[DIRECTOR]` の約束を端末から改変できてしまう。
-  中継しない限りこれは避けられない
+---
+
+## 出典
+
+- [Gemini API Additional Terms of Service](https://ai.google.dev/gemini-api/terms)
+- [Google Cloud Platform Terms of Service](https://cloud.google.com/terms/)
+- [Google Cloud Service Specific Terms](https://cloud.google.com/terms/service-terms)
+- [Generative AI Prohibited Use Policy](https://policies.google.com/terms/generative-ai/use-policy)
+- [2026年（令和8年）改正個人情報保護法の概要 — のぞみ総合法律事務所](https://www.nozomisogo.gr.jp/newsletter/13819)

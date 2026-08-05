@@ -10,6 +10,8 @@ ConsentRecord record({
   bool? guardian,
   bool transfer = true,
   int version = kConsentVersion,
+  ConsentRoute route = ConsentRoute.self,
+  String? schoolCode,
 }) =>
     ConsentRecord(
       ageBand: band,
@@ -17,9 +19,68 @@ ConsentRecord record({
       transferAgreed: transfer,
       agreedAt: DateTime(2026, 8, 5),
       version: version,
+      route: route,
+      schoolCode: schoolCode,
     );
 
 void main() {
+  group('学校経由の同意', () {
+    test('合言葉があれば、端末での保護者確認を求めない', () {
+      // 保護者は紙に署名していて、学校がそれを保管している。
+      // 生徒の端末で「保護者に確認しました」を押させても、
+      // 押したのは生徒であって保護者ではない
+      final r = record(
+        band: AgeBand.under16,
+        guardian: null,
+        route: ConsentRoute.school,
+        schoolCode: 'sakura-2026',
+      );
+      expect(r.isValid, isTrue);
+    });
+
+    test('合言葉が無ければ学校経由として通さない', () {
+      // 誰でも「学校から配られた」と言えてしまうと、
+      // 15歳以下の保護者確認を素通りできる
+      final r = record(
+        band: AgeBand.under16,
+        route: ConsentRoute.school,
+        schoolCode: null,
+      );
+      expect(r.isValid, isFalse);
+      expect(record(route: ConsentRoute.school, schoolCode: '').isValid, isFalse);
+    });
+
+    test('学校経由でも越境移転の同意は要る', () {
+      // 学校が取るのは「保護者の同意」であって、
+      // 生徒がこの画面を素通りしてよいという意味ではない
+      final r = record(
+        route: ConsentRoute.school,
+        schoolCode: 'sakura-2026',
+        transfer: false,
+      );
+      expect(r.isValid, isFalse);
+    });
+
+    test('保存して読み戻せる', () {
+      final r = record(
+        band: AgeBand.under16,
+        route: ConsentRoute.school,
+        schoolCode: 'sakura-2026',
+      );
+      final back = ConsentRecord.fromJson(r.toJson())!;
+      expect(back.route, ConsentRoute.school);
+      expect(back.schoolCode, 'sakura-2026');
+      expect(back.isValid, isTrue);
+    });
+
+    test('知らない経路は個人扱いに落とす', () {
+      // **保護が要る側に倒す。** 学校扱いに落とすと保護者確認を飛ばせる
+      final json = record(band: AgeBand.under16, guardian: true).toJson()
+        ..['route'] = 'なにか';
+      expect(ConsentRecord.fromJson(json)!.route, ConsentRoute.self);
+    });
+  });
+
   group('越境移転の説明', () {
     test('3点すべてを持つ', () {
       // 「海外に送信されることがあります」だけでは足りない。

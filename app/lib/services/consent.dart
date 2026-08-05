@@ -6,7 +6,34 @@ import 'session_store.dart';
 ///
 /// 上げると、すでに同意した人にもう一度出る。
 /// 上げ忘れると、古い文面にしか同意していない人を「同意済み」として扱うことになる。
-const int kConsentVersion = 1;
+const int kConsentVersion = 2;
+
+/// 同意を**誰が**与えたか。
+///
+/// ## なぜ分けるのか
+///
+/// 生徒が自分で使う場合と、学校が配って使う場合とで、
+/// 同意を取る相手も、取る手段も違う。
+///
+/// - 個人利用: 端末の前にいる本人（16歳未満なら保護者が横にいる前提）
+/// - 学校利用: **保護者が紙に署名し、学校が保管している。**
+///   生徒の端末で「保護者に確認しました」を押させるのは意味がない。
+///   押したのは生徒であって保護者ではないし、学校はすでに書面を持っている
+///
+/// 学校経由のときに端末で自己申告させると、**紙の同意より弱い記録で上書きしてしまう。**
+/// だから経路そのものを分ける。
+enum ConsentRoute {
+  /// 生徒（または保護者）が端末で同意した
+  self,
+
+  /// 学校が保護者から書面で同意を取り、学校が配布した
+  school;
+
+  static ConsentRoute parse(Object? v) =>
+      v == 'school' ? ConsentRoute.school : ConsentRoute.self;
+
+  String get wire => name;
+}
 
 /// 越境移転で伝えるべき3点（個人情報保護法 28条／規則17条）。
 ///
@@ -69,16 +96,26 @@ class ConsentRecord {
     required this.transferAgreed,
     required this.agreedAt,
     required this.version,
+    this.route = ConsentRoute.self,
+    this.schoolCode,
   });
 
   final AgeBand ageBand;
 
-  /// 16歳未満のときだけ意味がある。それ以外は null
+  /// 16歳未満のときだけ意味がある。それ以外は null。
+  /// **学校経由では使わない**（紙の同意があるので端末で自己申告させない）
   final bool? guardianPresent;
 
   final bool transferAgreed;
   final DateTime agreedAt;
   final int version;
+
+  /// 誰が同意を与えたか
+  final ConsentRoute route;
+
+  /// 学校経由のときの合言葉。**どの学校かを識別するためのものではない。**
+  /// 「学校から配られた人だけが学校の経路に入る」ための鍵
+  final String? schoolCode;
 
   /// この記録で先へ進んでよいか。
   ///
@@ -87,7 +124,14 @@ class ConsentRecord {
   bool get isValid {
     if (!transferAgreed) return false;
     if (version != kConsentVersion) return false;
-    if (ageBand == AgeBand.under16 && guardianPresent != true) return false;
+    switch (route) {
+      case ConsentRoute.self:
+        // 15歳以下は保護者の確認が要る（改正個情法40条の2／現行もQ&Aの運用）
+        if (ageBand == AgeBand.under16 && guardianPresent != true) return false;
+      case ConsentRoute.school:
+        // 保護者の同意書は学校が持っている。端末側では合言葉だけを見る
+        if (schoolCode == null || schoolCode!.isEmpty) return false;
+    }
     return true;
   }
 
@@ -97,6 +141,8 @@ class ConsentRecord {
         'transferAgreed': transferAgreed,
         'agreedAt': agreedAt.toIso8601String(),
         'version': version,
+        'route': route.wire,
+        'schoolCode': schoolCode,
       };
 
   static ConsentRecord? fromJson(Map<String, dynamic> json) {
@@ -110,6 +156,8 @@ class ConsentRecord {
       transferAgreed: json['transferAgreed'] == true,
       agreedAt: at,
       version: (json['version'] as num?)?.toInt() ?? 0,
+      route: ConsentRoute.parse(json['route']),
+      schoolCode: json['schoolCode'] as String?,
     );
   }
 }

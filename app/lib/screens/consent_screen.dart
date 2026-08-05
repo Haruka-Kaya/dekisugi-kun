@@ -39,23 +39,37 @@ class _ConsentScreenState extends State<ConsentScreen> {
   bool _agreedTransfer = false;
   bool _busy = false;
 
-  bool get _needsGuardian => _band == AgeBand.under16;
+  /// 学校から配られた合言葉。入っていれば学校経由として扱う
+  final _schoolCode = TextEditingController();
+  bool _viaSchool = false;
+
+  bool get _needsGuardian => _band == AgeBand.under16 && !_viaSchool;
 
   bool get _canProceed =>
       _band != null &&
       _agreedTransfer &&
       (!_needsGuardian || _guardianPresent) &&
+      (!_viaSchool || _schoolCode.text.trim().isNotEmpty) &&
       !_busy;
+
+  @override
+  void dispose() {
+    _schoolCode.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
     if (!_canProceed) return;
     setState(() => _busy = true);
     await widget.onAgreed(ConsentRecord(
       ageBand: _band!,
+      // 学校経由では端末で自己申告させない（保護者の同意書は学校が持っている）
       guardianPresent: _needsGuardian ? _guardianPresent : null,
       transferAgreed: true,
       agreedAt: DateTime.now(),
       version: kConsentVersion,
+      route: _viaSchool ? ConsentRoute.school : ConsentRoute.self,
+      schoolCode: _viaSchool ? _schoolCode.text.trim() : null,
     ));
   }
 
@@ -93,6 +107,18 @@ class _ConsentScreenState extends State<ConsentScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 8),
+          _SchoolCard(
+            on: _viaSchool,
+            controller: _schoolCode,
+            onToggle: (v) => setState(() {
+              _viaSchool = v;
+              // 学校経由に切り替えたら、端末での保護者確認は捨てる。
+              // 残したままだと、戻したときに押した覚えのないチェックが生きる
+              if (v) _guardianPresent = false;
+            }),
+            onChanged: () => setState(() {}),
+          ),
           if (_needsGuardian) ...[
             const SizedBox(height: 8),
             _GuardianCard(
@@ -128,6 +154,72 @@ class _ConsentScreenState extends State<ConsentScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// 学校から配られた場合の入口。
+///
+/// **端末で「保護者に確認しました」を押させない。**
+/// 押すのは生徒であって保護者ではないし、学校はすでに保護者の同意書を持っている。
+/// 紙の同意より弱い記録で上書きしないよう、経路そのものを分ける。
+///
+/// 合言葉は学校を識別するためのものではなく、
+/// 「学校から配られた人だけがこの経路に入る」ための鍵。
+class _SchoolCard extends StatelessWidget {
+  const _SchoolCard({
+    required this.on,
+    required this.controller,
+    required this.onToggle,
+    required this.onChanged,
+  });
+
+  final bool on;
+  final TextEditingController controller;
+  final ValueChanged<bool> onToggle;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 4, 16, on ? 16 : 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CheckboxListTile(
+              value: on,
+              onChanged: (v) => onToggle(v ?? false),
+              title: const Text('学校からもらって使います'),
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
+            if (on) ...[
+              Text(
+                '学校から教えてもらった合言葉を入れてください。',
+                style: t.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: controller,
+                onChanged: (_) => onChanged(),
+                autocorrect: false,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'あいことば',
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'おうちの人の同意は、学校が用紙で受け取っています。',
+                style: t.textTheme.bodySmall
+                    ?.copyWith(color: t.colorScheme.onSurfaceVariant),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
