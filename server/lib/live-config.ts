@@ -74,17 +74,15 @@ export function liveSessionConfig(): Record<string, unknown> {
     // 不明瞭な発話が韓国語として文字起こしされる事故があった
     outputAudioTranscription: { languageHints: { languageCodes: ['ja-JP'] } },
     inputAudioTranscription: { languageHints: { languageCodes: ['ja-JP'] } },
+    // **自動VADを切る。** Vertex では自動VADが働かず、音声を送っても
+    // エラーも出ずに黙って捨てられる（実測: 聞き取り0・返答0バイト）。
+    // `activityStart` / `activityEnd` で囲むと通る（同じ音声で聞き取り成功）。
+    //
+    // → 発話の開始と終了を**端末が判断する**ことになった。
+    //   `SpeechGate` は表示のためだけの仕組みだったが、
+    //   ここから先は**何を送るかも決める**ので、外すと会話が成立しない。
     realtimeInputConfig: {
-      automaticActivityDetection: {
-        // 生徒は説明の途中で言い淀む。始まりを敏感にすると
-        // 「えーと」で発話開始と誤検知して、こちらの番を奪う
-        startOfSpeechSensitivity: 'START_SENSITIVITY_LOW',
-        endOfSpeechSensitivity: 'END_SENSITIVITY_LOW',
-        // 検知前の音も含めて送る。語頭が欠けると内容が変わる
-        prefixPaddingMs: 600,
-        // 説明の途中の「間」で打ち切られないだけの長さ
-        silenceDurationMs: 1200,
-      },
+      automaticActivityDetection: { disabled: true },
     },
   }
 }

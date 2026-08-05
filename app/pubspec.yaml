@@ -14,7 +14,6 @@ dependencies:
   cupertino_icons: ^1.0.8
   provider: ^6.1.5+1
   dio: ^5.11.0
-  gemini_live: ^2026.7.24
   record: ^6.2.1
   flutter_pcm_sound: ^3.3.3
   sqflite: ^2.4.2+1

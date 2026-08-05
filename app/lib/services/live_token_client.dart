@@ -3,14 +3,13 @@ import 'package:flutter/foundation.dart';
 
 import 'device_identity.dart';
 
-/// 会話を始めるための一時トークンをサーバから受け取る。
+/// 会話を始めるための資格情報をサーバから受け取る。
 ///
-/// **APIキーは端末に無い。** 持つのは短命で使い切りのトークンだけで、
-/// その期限が来るとセッションごと切られる
-/// （実測: `code=1011 auth token has expired`、発行58秒後）。
+/// **Vertex の鍵は端末に無い。** 持つのは期限つきのアクセストークンだけで、
+/// それで始められる会話は **Vertex 自身が約10分で打ち切る**
+/// （実測 `code=1000 The operation was cancelled.`）。
 ///
-/// つまり**サーバが渡した分数を端末側では伸ばせない**。
-/// これが「1日15分の無料枠」を成り立たせている。
+/// つまり1回もらう＝約10分ぶん。だから枠は**セッション数**で数える。
 class LiveTokenClient {
   LiveTokenClient({
     required this.baseUrl,
@@ -30,7 +29,7 @@ class LiveTokenClient {
 
   bool get isConfigured => baseUrl.isNotEmpty;
 
-  /// 会話時間を確保してトークンを受け取る。
+  /// 会話を1回ぶん確保して資格情報を受け取る。
   ///
   /// 枠を使い切っていたら [QuotaExhausted] を投げる。
   /// **これは失敗ではなく仕様**なので、画面はエラーではなく案内を出す。
@@ -48,29 +47,36 @@ class LiveTokenClient {
       );
     }
     if (res.statusCode != 200 || data == null) {
-      throw LiveTokenUnavailable('トークンを受け取れませんでした（HTTP ${res.statusCode}）');
+      throw LiveTokenUnavailable('資格情報を受け取れませんでした（HTTP ${res.statusCode}）');
     }
 
     final token = data['token'] as String?;
+    final wsUrl = data['wsUrl'] as String?;
     final model = data['model'] as String?;
-    if (token == null || token.isEmpty || model == null || model.isEmpty) {
-      throw const LiveTokenUnavailable('トークンの中身が足りません');
+    final setup = (data['setupConfig'] as Map?)?.cast<String, dynamic>();
+    // **中身が足りないまま繋ぎにいかない。** 原因の分からない接続失敗になる
+    if (token == null || token.isEmpty ||
+        wsUrl == null || !wsUrl.startsWith('wss://') ||
+        model == null || model.isEmpty ||
+        setup == null || setup.isEmpty) {
+      throw const LiveTokenUnavailable('資格情報の中身が足りません');
     }
 
     return LiveGrant(
       token: token,
+      wsUrl: wsUrl,
       model: model,
-      apiVersion: data['apiVersion'] as String? ?? 'v1alpha',
+      setupConfig: setup,
       expiresAt: DateTime.tryParse(data['expiresAt'] as String? ?? '') ??
-          DateTime.now().add(const Duration(minutes: 5)),
-      grantedMinutes: (data['grantedMinutes'] as num?)?.toInt() ?? 0,
-      remainingMinutes: (data['remainingMinutes'] as num?)?.toInt(),
+          DateTime.now().add(const Duration(minutes: 30)),
+      sessionMinutes: (data['sessionMinutes'] as num?)?.toInt() ?? 10,
+      remainingSessions: (data['remainingSessions'] as num?)?.toInt(),
       entitled: data['entitled'] == true,
       resetsAt: DateTime.tryParse(data['resetsAt'] as String? ?? ''),
     );
   }
 
-  /// 今日あと何分使えるか。**枠を引かない。**
+  /// 今日あと何回始められるか。**枠を引かない。**
   ///
   /// 見るだけなので、失敗しても null を返して画面は黙って先へ進める。
   Future<QuotaStatus?> peek() async {
@@ -82,12 +88,13 @@ class LiveTokenClient {
       final data = (res.data as Map?)?.cast<String, dynamic>();
       if (res.statusCode != 200 || data == null) return null;
       return QuotaStatus(
-        remainingMinutes: (data['remainingMinutes'] as num?)?.toInt(),
+        remainingSessions: (data['remainingSessions'] as num?)?.toInt(),
+        minutesPerSession: (data['minutesPerSession'] as num?)?.toInt() ?? 10,
         entitled: data['entitled'] == true,
         resetsAt: DateTime.tryParse(data['resetsAt'] as String? ?? ''),
       );
     } catch (e) {
-      debugPrint('残り時間の取得に失敗: $e');
+      debugPrint('残り回数の取得に失敗: $e');
       return null;
     }
   }
@@ -109,57 +116,59 @@ class LiveTokenClient {
       token == null ? null : {'Authorization': 'Bearer $token'};
 }
 
-/// サーバが確保してくれた会話1ブロック。
+/// サーバが確保してくれた会話1回ぶん。
 class LiveGrant {
   const LiveGrant({
     required this.token,
+    required this.wsUrl,
     required this.model,
-    required this.apiVersion,
+    required this.setupConfig,
     required this.expiresAt,
-    required this.grantedMinutes,
-    required this.remainingMinutes,
+    required this.sessionMinutes,
+    required this.remainingSessions,
     required this.entitled,
     required this.resetsAt,
   });
 
-  /// Gemini Live に繋ぐための一時トークン
+  /// Vertex のアクセストークン
   final String token;
 
-  /// 繋ぐモデル。**サーバが決める**（端末では選べない）
+  /// 接続先。サーバが決める（端末では組み立てない）
+  final String wsUrl;
+
+  /// setup に入れるモデルのフルパス
   final String model;
 
-  /// 一時トークンは v1alpha でしか通らない
-  final String apiVersion;
+  /// **そのまま送る会話設定。** 端末で組み立てない。
+  /// ペルソナと `[DIRECTOR]` の約束はここに入っている
+  final Map<String, dynamic> setupConfig;
 
-  /// この時刻を過ぎるとセッションごと切られる
   final DateTime expiresAt;
 
-  final int grantedMinutes;
+  /// 1セッションのおおよその上限（分）。**Vertex 側が切る**
+  final int sessionMinutes;
 
-  /// 今日の残り。課金済みなら null
-  final int? remainingMinutes;
+  /// 今日の残り回数。課金済みなら null
+  final int? remainingSessions;
   final bool entitled;
   final DateTime? resetsAt;
-
-  Duration remaining(DateTime now) {
-    final d = expiresAt.difference(now);
-    return d.isNegative ? Duration.zero : d;
-  }
 }
 
 class QuotaStatus {
   const QuotaStatus({
-    required this.remainingMinutes,
+    required this.remainingSessions,
+    required this.minutesPerSession,
     required this.entitled,
     required this.resetsAt,
   });
 
   /// 課金済みなら null（上限が無い）
-  final int? remainingMinutes;
+  final int? remainingSessions;
+  final int minutesPerSession;
   final bool entitled;
   final DateTime? resetsAt;
 
-  bool get isExhausted => !entitled && (remainingMinutes ?? 1) <= 0;
+  bool get isExhausted => !entitled && (remainingSessions ?? 1) <= 0;
 }
 
 /// 今日の無料枠を使い切った。**エラーではなく仕様。**
@@ -171,7 +180,7 @@ class QuotaExhausted implements Exception {
   String toString() => 'QuotaExhausted(resetsAt: $resetsAt)';
 }
 
-/// トークンが取れなかった。こちらは本当の失敗。
+/// 資格情報が取れなかった。こちらは本当の失敗。
 class LiveTokenUnavailable implements Exception {
   const LiveTokenUnavailable(this.messageJa);
   final String messageJa;

@@ -3,7 +3,7 @@ import '../config/app_theme.dart';
 import '../services/live_session.dart';
 import '../ui/_material.dart';
 
-/// 今日あと何分話せるか。
+/// 今日あと何回話せるか。
 ///
 /// **残りが減ってから知らせない。** 会話の途中で急に切れると、
 /// 生徒には何が起きたか分からない。最初から見えるところに出しておく。
@@ -16,12 +16,12 @@ class QuotaChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     final c = context.appColors;
-    final left = live.remainingMinutes;
+    final left = live.remainingSessions;
 
     // 課金済み（上限なし）か、まだ分からないときは出さない
     if (left == null) return const SizedBox.shrink();
 
-    final low = left <= 5;
+    final low = left <= 1;
     final fg = low ? c.shakyFg : c.untouchedFg;
 
     return Container(
@@ -36,7 +36,7 @@ class QuotaChip extends StatelessWidget {
           // 色だけで伝えない (SC 1.4.1)
           Icon(low ? Icons.hourglass_bottom : Icons.schedule, size: 16, color: fg),
           const SizedBox(width: 4),
-          Text('のこり$left分',
+          Text('あと$left回',
               style: t.textTheme.bodySmall?.copyWith(color: fg, height: 1.0)),
         ],
       ),
@@ -73,7 +73,7 @@ class OutOfTimeCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '無料で話せるのは1日15分までです。'
+              '無料で話せるのは1日2回までです。1回はおよそ10分です。'
               '${_resetText(resetsAt)}に、またいちから話せるようになります。',
               style: t.textTheme.bodyMedium,
             ),

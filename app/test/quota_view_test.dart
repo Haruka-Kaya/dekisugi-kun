@@ -53,7 +53,7 @@ LiveSessionController controller({int? remaining, DateTime? resetsAt}) {
       identity: DeviceIdentity(baseUrl: '', store: store),
     ),
   );
-  c.remainingMinutes = remaining;
+  c.remainingSessions = remaining;
   c.quotaResetsAt = resetsAt;
   return c;
 }
@@ -64,24 +64,24 @@ Widget wrap(Widget child) => MaterialApp(
     );
 
 void main() {
-  group('のこり時間の表示', () {
-    testWidgets('分数を出す', (tester) async {
-      await tester.pumpWidget(wrap(QuotaChip(live: controller(remaining: 12))));
-      expect(find.text('のこり12分'), findsOneWidget);
+  group('のこり回数の表示', () {
+    testWidgets('回数を出す', (tester) async {
+      await tester.pumpWidget(wrap(QuotaChip(live: controller(remaining: 2))));
+      expect(find.text('あと2回'), findsOneWidget);
     });
 
-    testWidgets('少なくなったらアイコンが変わる（色だけで伝えない）', (tester) async {
-      await tester.pumpWidget(wrap(QuotaChip(live: controller(remaining: 3))));
+    testWidgets('残り1回でアイコンが変わる（色だけで伝えない）', (tester) async {
+      await tester.pumpWidget(wrap(QuotaChip(live: controller(remaining: 1))));
       expect(find.byIcon(Icons.hourglass_bottom), findsOneWidget);
 
-      await tester.pumpWidget(wrap(QuotaChip(live: controller(remaining: 12))));
+      await tester.pumpWidget(wrap(QuotaChip(live: controller(remaining: 2))));
       expect(find.byIcon(Icons.schedule), findsOneWidget);
     });
 
     testWidgets('分からないうちは何も出さない', (tester) async {
-      // 「0分」と誤解させない
+      // 「0回」と誤解させない
       await tester.pumpWidget(wrap(QuotaChip(live: controller())));
-      expect(find.textContaining('のこり'), findsNothing);
+      expect(find.textContaining('あと'), findsNothing);
     });
   });
 
@@ -119,15 +119,15 @@ void main() {
     test('確保できたら中身を読む', () async {
       final c = client({
         'POST https://example.test/api/live-token': () => json(200, '''
-{"token":"auth_tokens/abc","model":"m","apiVersion":"v1alpha",
- "expiresAt":"2099-01-01T00:00:00Z","grantedMinutes":10,
- "remainingMinutes":5,"entitled":false,"resetsAt":"2099-01-02T00:00:00Z"}'''),
+{"token":"ya29.abc","wsUrl":"wss://x.googleapis.com/ws/y","model":"projects/p/locations/l/publishers/google/models/m","setupConfig":{"generationConfig":{"responseModalities":["AUDIO"]}},
+ "expiresAt":"2099-01-01T00:00:00Z","sessionMinutes":10,
+ "remainingSessions":1,"entitled":false,"resetsAt":"2099-01-02T00:00:00Z"}'''),
       });
       final g = await c.reserve();
-      expect(g.token, 'auth_tokens/abc');
-      expect(g.grantedMinutes, 10);
-      expect(g.remainingMinutes, 5);
-      expect(g.apiVersion, 'v1alpha');
+      expect(g.token, 'ya29.abc');
+      expect(g.sessionMinutes, 10);
+      expect(g.remainingSessions, 1);
+      expect(g.setupConfig.isNotEmpty, isTrue);
     });
 
     test('402 は QuotaExhausted（エラーにしない）', () async {
@@ -142,7 +142,7 @@ void main() {
       // 空のトークンで繋ぎにいくと、原因の分からない接続失敗になる
       final c = client({
         'POST https://example.test/api/live-token': () =>
-            json(200, '{"model":"m","apiVersion":"v1alpha"}'),
+            json(200, '{"model":"m"}'),
       });
       await expectLater(c.reserve(), throwsA(isA<LiveTokenUnavailable>()));
     });
@@ -157,17 +157,17 @@ void main() {
     test('peek は残りと戻る時刻を読む', () async {
       final c = client({
         'GET https://example.test/api/live-token': () => json(200,
-            '{"remainingMinutes":0,"entitled":false,"resetsAt":"2099-01-02T00:00:00Z"}'),
+            '{"remainingSessions":0,"minutesPerSession":10,"entitled":false,"resetsAt":"2099-01-02T00:00:00Z"}'),
       });
       final q = await c.peek();
-      expect(q!.remainingMinutes, 0);
+      expect(q!.remainingSessions, 0);
       expect(q.isExhausted, isTrue);
     });
 
     test('課金済みは残りが null でも使い切り扱いにしない', () async {
       final c = client({
         'GET https://example.test/api/live-token': () =>
-            json(200, '{"remainingMinutes":null,"entitled":true}'),
+            json(200, '{"remainingSessions":null,"entitled":true}'),
       });
       final q = await c.peek();
       expect(q!.isExhausted, isFalse);
