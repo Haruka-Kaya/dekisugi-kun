@@ -80,6 +80,20 @@ describe('教材', () => {
     }
   })
 
+  it('強調の印が閉じている', () => {
+    // 端末は `**…**` だけを太字にする。閉じ忘れると記号が画面に出る
+    // （実機で `**落ちる速さは重さによらない**` がそのまま表示された）
+    for (const u of UNITS) {
+      for (const s of u.sections) {
+        for (const line of [...s.body, s.tryIt]) {
+          const marks = (line.match(/\*\*/g) ?? []).length
+          assert.equal(marks % 2, 0, `${u.id}/${s.conceptKey}: 強調が閉じていない: ${line}`)
+          assert.ok(!line.includes('****'), `${u.id}/${s.conceptKey}: 空の強調がある`)
+        }
+      }
+    }
+  })
+
   it('教材が存在しない概念を指していない', () => {
     for (const u of UNITS) {
       const keys = new Set(u.concepts.map((c) => c.key))

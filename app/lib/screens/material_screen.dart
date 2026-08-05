@@ -2,6 +2,7 @@ import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../models/unit.dart';
 import '../ui/_material.dart';
+import '../widgets/emphasis_text.dart';
 
 /// 教材を読む画面。**コア体験の1歩目。**
 ///
@@ -208,7 +209,7 @@ class _SectionView extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             // 和文の行間は本文スタイル側で確保してある（M3 の 1.43 では足りない）
-            child: Text(p, style: t.textTheme.bodyLarge),
+            child: EmphasisText(p, style: t.textTheme.bodyLarge),
           ),
         if (section.tryIt.isNotEmpty) ...[
           const SizedBox(height: 4),
@@ -233,7 +234,7 @@ class _SectionView extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(section.tryIt, style: t.textTheme.bodyMedium),
+                EmphasisText(section.tryIt, style: t.textTheme.bodyMedium),
               ],
             ),
           ),
