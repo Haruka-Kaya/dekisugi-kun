@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>理科の考え方 調査</title>
+<style>
+:root{
+  --bg:#F2F3F5; --card:#fff; --line:#DCDFE5; --ink:#1A1F27; --muted:#5D6675;
+  --accent:#2F5FA8; --accent-soft:#E8EEF8; --ai:#7A4FA8; --ai-soft:#F0EAF8; --ok:#1E6B52;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#12161D;--card:#1A2029;--line:#2C3541;--ink:#E6EAF0;--muted:#98A2B2;
+        --accent:#86A9E4;--accent-soft:#1E293B;--ai:#B79BE0;--ai-soft:#241C33;--ok:#57BE9B;}
+}
+*{box-sizing:border-box;-webkit-text-size-adjust:100%}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);
+  font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+  font-size:16px;line-height:1.8;padding:0 16px calc(40px + env(safe-area-inset-bottom))}
+.wrap{max-width:560px;margin:0 auto}
+header{padding:28px 0 14px}
+h1{font-size:20px;line-height:1.5;margin:0 0 8px;font-weight:600}
+.sub{color:var(--muted);font-size:14px;margin:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 16px;margin-bottom:16px}
+.q{font-size:16px;line-height:1.8;margin:0 0 14px}
+.q strong{background:var(--accent-soft);padding:2px 5px;border-radius:3px;font-weight:600}
+textarea.ans{width:100%;min-height:110px;font-family:inherit;font-size:16px;line-height:1.8;
+  padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical}
+textarea.ans:focus{outline:2px solid var(--accent);outline-offset:1px}
+.bubble{background:var(--ai-soft);border:1px solid var(--line);border-radius:14px;
+  border-bottom-left-radius:4px;padding:14px 16px;margin:0 0 14px;position:relative}
+.bubble .who{font-size:12px;color:var(--ai);font-weight:700;margin:0 0 6px;letter-spacing:.04em}
+.bubble p{margin:0;font-size:16.5px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:left;padding:13px 14px;border:1px solid var(--line);border-radius:8px;
+  background:var(--card);color:var(--ink);font-family:inherit;font-size:15.5px;line-height:1.6;cursor:pointer}
+.opt[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft)}
+.opt:focus-visible,.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btn{display:inline-block;padding:13px 24px;font-family:inherit;font-size:16px;border-radius:8px;
+  border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:default}
+.bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden;margin:16px 0 20px}
+.bar>i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+.count{font-size:13px;color:var(--muted);margin:0}
+.note{font-size:13px;color:var(--muted);line-height:1.8}
+.hidden{display:none}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+code,textarea.code{font-family:ui-monospace,monospace}
+textarea.code{width:100%;min-height:120px;font-size:12px;line-height:1.5;padding:10px;
+  border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);word-break:break-all}
+.rev{border-left:3px solid var(--ok);padding-left:14px;margin:14px 0}
+.rev h3{font-size:15px;margin:0 0 4px}
+.rev p{margin:0 0 4px;font-size:14.5px;line-height:1.75}
+fieldset{border:none;margin:0 0 18px;padding:0}
+legend{font-size:15px;margin-bottom:10px;padding:0}
+.grid{display:flex;flex-wrap:wrap;gap:8px}
+.grid .opt{flex:1 1 auto;min-width:88px;text-align:center}
+</style>
+</head>
+<body><div class="wrap">
+
+<section id="s-intro">
+  <header>
+    <h1>理科の考え方 調査</h1>
+    <p class="sub">中学理科「力と運動」について聞きます。5分ほどです。</p>
+  </header>
+  <div class="card">
+    <p class="q">正解・不正解を採点するテストでは<strong>ありません</strong>。<br>
+      「いまどう考えているか」をそのまま知りたい調査です。</p>
+    <p class="q">わからなくても、<strong>思ったとおりに書いてください</strong>。<br>
+      きれいに書く必要はありません。話し言葉で大丈夫です。</p>
+    <p class="note"><strong>集めるのは学年・理科の好き嫌い・あなたが書いた答えだけです。</strong>
+      名前やメールアドレスなど、あなたが誰かが分かる情報は一切取りません。<br>
+      答え終わると自動で送信されます。最後に、正しい考え方の解説を出します。</p>
+  </div>
+  <button class="btn" id="go-meta">はじめる</button>
+</section>
+
+<section id="s-meta" class="hidden">
+  <header><h1>あなたについて</h1></header>
+  <div class="card">
+    <fieldset>
+      <legend>学年</legend>
+      <div class="grid" id="opt-grade"></div>
+    </fieldset>
+    <fieldset>
+      <legend>理科は好きですか</legend>
+      <div class="grid" id="opt-like"></div>
+    </fieldset>
+  </div>
+  <button class="btn" id="go-task" disabled>つぎへ</button>
+</section>
+
+<!-- ① 説明（自由記述） -->
+<section id="s-explain" class="hidden">
+  <p class="count" id="c1"></p><div class="bar"><i id="b1"></i></div>
+  <div class="card">
+    <p class="q" id="explain-q"></p>
+    <textarea class="ans" id="explain-a" placeholder="ここに書いてください"></textarea>
+    <p class="note" id="explain-hint"></p>
+  </div>
+  <button class="btn" id="explain-next" disabled>つぎへ</button>
+</section>
+
+<!-- ② 誘導文への返事（自由記述） -->
+<section id="s-lure" class="hidden">
+  <p class="count" id="c2"></p><div class="bar"><i id="b2"></i></div>
+  <div class="card">
+    <p class="q">あなたの説明を聞いた<strong>後輩</strong>が、こう言いました。</p>
+    <div class="bubble"><p class="who">後輩</p><p id="lure-t"></p></div>
+    <p class="q">なんと返しますか。</p>
+    <textarea class="ans" id="lure-a" placeholder="ここに書いてください"></textarea>
+  </div>
+  <button class="btn" id="lure-next" disabled>つぎへ</button>
+</section>
+
+<!-- ③ 選択式（ground truth） -->
+<section id="s-mc" class="hidden">
+  <p class="count" id="c3"></p><div class="bar"><i id="b3"></i></div>
+  <div class="card">
+    <p class="q" id="mc-q"></p>
+    <div class="opts" id="mc-opts"></div>
+    <hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
+    <p class="q" style="margin-bottom:10px">この単元、学校でもう習いましたか。</p>
+    <div class="grid" id="learned-opts"></div>
+  </div>
+  <button class="btn" id="mc-next" disabled>つぎへ</button>
+</section>
+
+<section id="s-done" class="hidden">
+  <header>
+    <h1>おわりです。ありがとうございました</h1>
+  </header>
+  <div class="card" id="send-status-card">
+    <p class="q" id="send-status">送信しています…</p>
+  </div>
+  <div class="card hidden" id="fallback-card">
+    <p class="q">自動送信できませんでした。<strong>下のコードをコピーして渡してください。</strong></p>
+    <textarea class="code" id="code" readonly></textarea>
+    <div class="row">
+      <button class="btn" id="copy">コピーする</button>
+      <button class="btn ghost" id="dl">ダウンロード</button>
+    </div>
+    <p class="note" id="copied"></p>
+  </div>
+  <div class="card">
+    <h1 style="font-size:17px">正しい考え方</h1>
+    <div id="reveal"></div>
+  </div>
+</section>
+
+</div>
+<script>
+"use strict";
+const ITEMS = [{"id": "M01", "topic": "落下", "grade3": true, "explain": "物が落ちる速さは何で決まると思いますか。友達に教えるつもりで説明してください。", "lure": "えっと、じゃあ重いものの方が速く落ちるってこと？", "q": "空気の抵抗が無視できるとき、重い鉄球と軽い鉄球を同じ高さから同時に落とすと、どうなりますか。", "options": ["重い方が先に地面に着く", "軽い方が先に地面に着く", "同時に地面に着く", "落とす高さによって変わる"], "correct": 2, "trap": 0}, {"id": "M02", "topic": "慣性", "grade3": true, "explain": "なめらかな氷の上を物がすべっているとき、その物にはどんな力がはたらいていると思いますか。友達に教えるつもりで説明してください。", "lure": "動いてるってことは、ずっと前向きに力がかかってるんだよね？", "q": "まさつのないなめらかな氷の上を、一定の速さですべり続けている物体があります。この物体に、進む向きの力ははたらいていますか。", "options": ["はたらき続けている", "はたらいていない", "だんだん大きくなっている", "速さに応じて変わる"], "correct": 1, "trap": 0}, {"id": "M03", "topic": "摩擦と静止", "grade3": true, "explain": "動いている物が、やがて止まるのはなぜだと思いますか。友達に教えるつもりで説明してください。", "lure": "ものって、ほっとけば自然に止まるものなんじゃないの？", "q": "床の上をすべらせた物体が、やがて止まりました。止まった理由として正しいものはどれですか。", "options": ["止まっているのが物体の本来の状態だから", "動くための力を使い切ったから", "まさつや空気の抵抗の力がはたらいたから", "力がはたらかなくなったから"], "correct": 2, "trap": 0}, {"id": "M04", "topic": "作用・反作用", "grade3": true, "explain": "トラックと自転車がぶつかったとき、それぞれが相手におよぼす力について、思うことを説明してください。", "lure": "えっと、トラックと自転車がぶつかったら、トラックの方が大きい力を出してるんでしょ？", "q": "走ってきたトラックと自転車が衝突しました。おたがいに およぼし合う力の大きさは、どうなっていますか。", "options": ["トラックの方が大きい", "自転車の方が大きい", "同じ大きさ", "速く走っていた方が大きい"], "correct": 2, "trap": 0}, {"id": "M05", "topic": "力のつり合い", "grade3": true, "explain": "「物体にはたらく力がつり合っている」とは、どういう状態のことだと思いますか。友達に教えるつもりで説明してください。", "lure": "力がつり合ってるってことは、止まってるってことだよね？", "q": "ある物体にはたらく力が、すべてつり合っています。このとき物体はどうなっていますか。", "options": ["かならず止まっている", "止まっているか、一定の速さで動き続けている", "だんだん遅くなっていく", "少しずつ動き出す"], "correct": 1, "trap": 0}, {"id": "M06", "topic": "圧力", "grade3": false, "explain": "圧力とは何か、そして何によって決まるかを、友達に教えるつもりで説明してください。", "lure": "押す力が同じなら、面積が違っても圧力は同じだよね？", "q": "同じ大きさの力で押すとき、押す面積を半分にすると、圧力はどうなりますか。", "options": ["変わらない", "半分になる", "2倍になる", "4倍になる"], "correct": 2, "trap": 0}, {"id": "M07", "topic": "浮力", "grade3": false, "explain": "水の中にある物が受ける浮力は、何によって決まると思いますか。友達に教えるつもりで説明してください。", "lure": "重いものほど浮力も大きくなるんだよね？", "q": "同じ体積の鉄のかたまりとアルミのかたまりを、どちらも水中にすべて しずめました。受ける浮力はどうなりますか。", "options": ["重い鉄の方が大きい", "軽いアルミの方が大きい", "同じ大きさ", "しずめる深さによって変わる"], "correct": 2, "trap": 0}, {"id": "M08", "topic": "投げ上げ", "grade3": true, "explain": "真上に投げたボールが上がっているとき、ボールにどんな力がはたらいていると思いますか。友達に教えるつもりで説明してください。", "lure": "上に投げてる間は、上向きの力がはたらいてるってことだよね？", "q": "真上に投げ上げたボールが、まだ上がっている とちゅうです。このボールにはたらいている力はどれですか。（空気の抵抗は考えない）", "options": ["上向きの力", "下向きの重力だけ", "力ははたらいていない", "上向きと下向きがつり合っている"], "correct": 1, "trap": 0}];
+
+// 1人あたり2問だけ出す。全項目は回答者をまたいでカバーする
+const N_PER = 2;
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const assigned = shuffle(ITEMS.slice()).slice(0, N_PER);
+
+// 選択肢の並びは毎回シャッフルする（位置バイアスを消す）
+assigned.forEach(it => {
+  const idx = it.options.map((_, i) => i);
+  shuffle(idx);
+  it._order = idx;                       // 表示順 -> 元の添字
+  it._correctPos = idx.indexOf(it.correct);
+  it._trapPos = idx.indexOf(it.trap);
+});
+
+const GRADE = ["中学1年","中学2年","中学3年","高校1年","高校2年","高校3年","その他"];
+const LIKE  = ["好き","ふつう","苦手"];
+const LEARNED = ["習った","まだ","おぼえてない"];
+const ENDPOINT = "/api/survey";
+const meta = {grade:null, like:null};
+const answers = [];
+let k = 0, cur = null, t0 = 0;
+const $ = id => document.getElementById(id);
+
+function opts(host, list, key){
+  const h = $(host);
+  list.forEach(label=>{
+    const b=document.createElement("button");
+    b.type="button"; b.className="opt"; b.textContent=label; b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{[...h.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true"); meta[key]=label;
+      $("go-task").disabled = !(meta.grade && meta.like);};
+    h.appendChild(b);
+  });
+}
+opts("opt-grade", GRADE, "grade");
+opts("opt-like", LIKE, "like");
+
+function show(id){
+  ["s-intro","s-meta","s-explain","s-lure","s-mc","s-done"].forEach(s=>$(s).classList.add("hidden"));
+  $(id).classList.remove("hidden"); window.scrollTo(0,0);
+}
+$("go-meta").onclick=()=>show("s-meta");
+$("go-task").onclick=()=>{startItem();};
+
+function progress(step){
+  // 1問につき3ステップ
+  const done = k*3 + step;
+  const total = N_PER*3;
+  ["c1","c2","c3"].forEach(id=>$(id).textContent = `${k+1}問目 / 全${N_PER}問`);
+  ["b1","b2","b3"].forEach(id=>$(id).style.width = (done/total*100)+"%");
+}
+
+function startItem(){
+  cur = assigned[k];
+  answers[k] = {id:cur.id, topic:cur.topic};
+  $("explain-q").innerHTML = cur.explain;
+  $("explain-hint").textContent = "うまく言えなくても大丈夫です。思いついたことを書いてください。";
+  $("explain-a").value = "";
+  $("explain-next").disabled = true;
+  progress(0); show("s-explain"); t0 = performance.now();
+}
+$("explain-a").oninput = e => { $("explain-next").disabled = e.target.value.trim().length < 5; };
+$("explain-next").onclick = ()=>{
+  answers[k].explain = $("explain-a").value.trim();
+  answers[k].explainMs = Math.round(performance.now()-t0);
+  $("lure-t").textContent = cur.lure;
+  $("lure-a").value=""; $("lure-next").disabled = true;
+  progress(1); show("s-lure"); t0 = performance.now();
+};
+$("lure-a").oninput = e => { $("lure-next").disabled = e.target.value.trim().length < 2; };
+$("lure-next").onclick = ()=>{
+  answers[k].lureReply = $("lure-a").value.trim();
+  answers[k].lureMs = Math.round(performance.now()-t0);
+  $("mc-q").textContent = cur.q;
+  const h = $("mc-opts"); h.innerHTML = "";
+  cur._order.forEach((orig, pos)=>{
+    const b=document.createElement("button");
+    b.type="button"; b.className="opt"; b.textContent = cur.options[orig];
+    b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{[...h.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      answers[k].pick = orig;                       // 元の添字で記録する
+      answers[k].pickPos = pos;
+      gateMc();};
+    h.appendChild(b);
+  });
+  // 「習った？」— 中3内容の項目を中1・中2が答えると
+  // 「誤概念を持っている」ではなく「習っていない」になるため、分けて解析できるようにする
+  const lh = $("learned-opts"); lh.innerHTML = "";
+  answers[k].learned = null;
+  LEARNED.forEach(label=>{
+    const b=document.createElement("button");
+    b.type="button"; b.className="opt"; b.textContent=label; b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{[...lh.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true"); answers[k].learned = label; gateMc();};
+    lh.appendChild(b);
+  });
+  $("mc-next").disabled = true;
+  progress(2); show("s-mc"); t0 = performance.now();
+};
+$("mc-next").onclick = ()=>{
+  answers[k].mcMs = Math.round(performance.now()-t0);
+  answers[k].correct = (answers[k].pick === cur.correct);
+  answers[k].heldMisconception = (answers[k].pick === cur.trap);
+  k++;
+  if (k < assigned.length) startItem(); else finish();
+};
+
+function gateMc(){
+  const a = answers[k];
+  $("mc-next").disabled = !(a.pick !== undefined && a.learned);
+}
+
+async function submit(json){
+  const st = $("send-status");
+  try {
+    const r = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: json,
+    });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    st.textContent = "送信しました。ありがとうございました。";
+    return true;
+  } catch (e) {
+    // 自動送信に失敗しても回答を失わせない
+    st.textContent = "";
+    $("send-status-card").classList.add("hidden");
+    $("fallback-card").classList.remove("hidden");
+    return false;
+  }
+}
+
+function finish(){
+  const payload = {
+    v:1, kind:"misconception", ts:new Date().toISOString(),
+    meta, env:{w:innerWidth,h:innerHeight,ua:navigator.userAgent.slice(0,190),lang:navigator.language},
+    ans: answers
+  };
+  const json = JSON.stringify(payload);
+  $("code").value = btoa(unescape(encodeURIComponent(json)));
+  ["b1","b2","b3"].forEach(id=>$(id).style.width="100%");
+  submit(json);
+
+  // 学習アプリの調査なので、終わったら正しい考え方を返す
+  const rev = $("reveal");
+  assigned.forEach(it=>{
+    const d=document.createElement("div"); d.className="rev";
+    d.innerHTML = `<h3>${it.topic}</h3><p>${it.q}</p><p><strong>→ ${it.options[it.correct]}</strong></p>`;
+    rev.appendChild(d);
+  });
+  show("s-done");
+
+  $("copy").onclick = async ()=>{
+    try { await navigator.clipboard.writeText($("code").value); $("copied").textContent="コピーしました"; }
+    catch(e){ $("code").select(); $("copied").textContent="選択しました。長押しでコピーしてください"; }
+  };
+  $("dl").onclick = ()=>{
+    const b=new Blob([json],{type:"application/json"}); const a=document.createElement("a");
+    a.href=URL.createObjectURL(b); a.download="dekisugi-misconception-"+Date.now()+".json"; a.click();
+    URL.revokeObjectURL(a.href);
+  };
+}
+</script>
+</body>
+</html>

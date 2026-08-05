@@ -27,7 +27,11 @@ def load(paths):
         for p in pathlib.Path().glob(pat) if "*" in pat else [pathlib.Path(pat)]:
             raw = p.read_text(encoding="utf-8")
             if p.suffix == ".json":
-                out.append(json.loads(raw)); continue
+                got = json.loads(raw)
+                # サーバから引いたものは配列で来る（fetch-survey.ps1）。
+                # 1件だけの JSON も従来どおり読める
+                out.extend(got) if isinstance(got, list) else out.append(got)
+                continue
             for line in raw.splitlines():
                 line = line.strip()
                 if not line:
@@ -136,13 +140,22 @@ def main():
 
     recs = load(args.paths)
     rows = []
+    skipped = 0
     for r in recs:
-        for a in r.get("ans", []):
-            if a.get("id") not in ITEMS:
+        # 保存先は追記式で、後から形を直せない。**壊れた1件で全体を落とさない**
+        ans = r.get("ans") if isinstance(r, dict) else None
+        if not isinstance(ans, list):
+            skipped += 1
+            continue
+        for a in ans:
+            if not isinstance(a, dict) or a.get("id") not in ITEMS:
                 continue
             rows.append({**a, "grade": r.get("meta", {}).get("grade"),
                          "like": r.get("meta", {}).get("like")})
-    print(f"回答者 {len(recs)} 人 / 回答 {len(rows)} 件\n")
+    print(f"回答者 {len(recs) - skipped} 人 / 回答 {len(rows)} 件")
+    if skipped:
+        print(f"  （形が違う {skipped} 件は除いた）")
+    print()
     if not rows:
         return
 
