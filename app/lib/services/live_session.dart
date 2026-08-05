@@ -255,7 +255,7 @@ class LiveSessionController extends ChangeNotifier {
   // ── 接続 ──────────────────────────────────────────────────
 
   Future<void> _connect() async {
-    final g = await tokens.reserve();
+    final g = await tokens.reserve(unitId);
     grant = g;
     remainingSessions = g.remainingSessions;
     minutesPerSession = g.sessionMinutes;

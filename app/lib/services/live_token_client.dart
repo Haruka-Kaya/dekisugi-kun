@@ -31,13 +31,17 @@ class LiveTokenClient {
 
   /// 会話を1回ぶん確保して資格情報を受け取る。
   ///
+  /// [unitId] は**必ず渡す。** サーバはこれを見てシステム指示に単元を埋める。
+  /// 渡さないと、デキすぎ君は何を教わるのか知らないまま喋りはじめる。
+  ///
   /// 枠を使い切っていたら [QuotaExhausted] を投げる。
   /// **これは失敗ではなく仕様**なので、画面はエラーではなく案内を出す。
-  Future<LiveGrant> reserve() async {
+  Future<LiveGrant> reserve(String unitId) async {
     if (!isConfigured) throw const LiveTokenUnavailable('接続先が設定されていません');
 
     final res = await _send(
-      (h) => _dio.post<Object?>('$baseUrl/api/live-token', options: Options(headers: h)),
+      (h) => _dio.post<Object?>('$baseUrl/api/live-token',
+          data: {'unitId': unitId}, options: Options(headers: h)),
     );
     final data = (res.data as Map?)?.cast<String, dynamic>();
 

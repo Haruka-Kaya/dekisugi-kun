@@ -1,4 +1,5 @@
 import { LIVE_MODEL, liveSessionConfig } from './live-config.js'
+import { unitById } from './units.js'
 import { VERTEX_LOCATION, VERTEX_PROJECT, vertexAccessToken } from './vertex.js'
 
 /**
@@ -41,7 +42,15 @@ export type LiveGrant = {
   sessionMinutes: number
 }
 
-export async function createLiveGrant(): Promise<LiveGrant> {
+/**
+ * [unitId] は**必ず渡す。** 渡さないと、モデルは何を教わるのか
+ * 知らないまま会話を始め、単元と無関係な話題を持ち出す（実機で確認）。
+ * 知らない ID なら単元なしで作らず、呼び出し側に落とさせる。
+ */
+export async function createLiveGrant(unitId: string): Promise<LiveGrant> {
+  const unit = unitById(unitId)
+  if (!unit) throw new Error(`未知の単元: ${unitId}`)
+
   const { token, expiresAt } = await vertexAccessToken()
 
   return {
@@ -52,7 +61,7 @@ export async function createLiveGrant(): Promise<LiveGrant> {
     model:
       `projects/${VERTEX_PROJECT}/locations/${VERTEX_LOCATION}` +
       `/publishers/google/models/${LIVE_MODEL}`,
-    setupConfig: liveSessionConfig(),
+    setupConfig: liveSessionConfig(unit),
     expiresAt: expiresAt.toISOString(),
     // 実測: 9分時点で code=1000 "The operation was cancelled."
     sessionMinutes: 10,

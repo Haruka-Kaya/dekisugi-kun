@@ -155,18 +155,46 @@ describe('/api/live-token', () => {
     )
   })
 
+  const unit = { unitId: 'force-motion' }
+
   it('使い切ったら 402 を返す', async () => {
     const h = authed()
     // 資格情報の発行は失敗しうる（環境変数が無い等）が、枠は先に引かれる
     for (let i = 0; i < FREE_SESSIONS_PER_DAY; i++) {
       const { res } = fakeRes()
-      await liveToken({ method: 'POST', headers: h }, res)
+      await liveToken({ method: 'POST', headers: h, body: unit }, res)
     }
     const { res, out } = fakeRes()
-    await liveToken({ method: 'POST', headers: h }, res)
+    await liveToken({ method: 'POST', headers: h, body: unit }, res)
     assert.equal(out.code, 402)
     assert.equal((out.body as { error: string }).error, 'quota_exhausted')
     assert.ok((out.body as { resetsAt: string }).resetsAt)
+  })
+
+  it('単元が無ければ 400。**枠を引かない**', async () => {
+    // 単元を渡さないと、デキすぎ君は何を教わるのか知らないまま喋りはじめる
+    // （実機で「力と運動」の会話が酸化銀の話で始まった）。
+    // ここで弾く。引いてから弾くと、会話していないのに1回減る
+    const h = authed()
+    for (const body of [undefined, {}, { unitId: 'no-such-unit' }, { unitId: 42 }]) {
+      const { res, out } = fakeRes()
+      await liveToken({ method: 'POST', headers: h, body }, res)
+      assert.equal(out.code, 400)
+      assert.equal((out.body as { error: string }).error, 'unknown_unit')
+    }
+
+    const after = fakeRes()
+    await liveToken({ method: 'GET', headers: h }, after.res)
+    assert.equal(
+      (after.out.body as { remainingSessions: number }).remainingSessions,
+      FREE_SESSIONS_PER_DAY,
+    )
+  })
+
+  it('本文が文字列でも読む', async () => {
+    const { res, out } = fakeRes()
+    await liveToken({ method: 'POST', headers: authed(), body: JSON.stringify(unit) }, res)
+    assert.notEqual(out.code, 400)
   })
 
   it('DELETE は 405', async () => {

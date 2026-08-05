@@ -1,3 +1,5 @@
+import { type Unit } from './units.js'
+
 /**
  * 会話モデルの設定。**端末とサーバで1か所に揃える。**
  *
@@ -32,10 +34,33 @@ export const LIVE_MODEL = 'gemini-live-2.5-flash-native-audio'
  */
 export const DIRECTOR_PREFIX = '[DIRECTOR]'
 
-/** 教わる側の後輩。**解説をさせないこと**が製品の前提（C1〜C4, C9）。 */
-export function systemInstruction(): string {
+/**
+ * 教わる側の後輩。**解説をさせないこと**が製品の前提（C1〜C4, C9）。
+ *
+ * > [!warning] 単元を必ず渡すこと
+ * > 渡さないと、モデルは何を教わるのか知らないまま最初の一言を作る。
+ * > 実機で「力と運動」のセッションが
+ * > 「酸化銀の分解ってどうやるんですか?」で始まった。
+ * > 会話の中身が単元と噛み合わないので、カルテも一切埋まらない。
+ */
+export function systemInstruction(unit?: Unit): string {
+  const topic = unit
+    ? `## きょう教わること
+**${unit.title}**
+${unit.brief}
+
+先輩に説明してもらいたいのは次の点です:
+${unit.concepts.map((c) => `- ${c.label}`).join('\n')}
+
+**最初の一言は、この単元について教えてほしいと頼むことです。**
+他の話題を自分から持ち出さないでください。
+先輩が関係ない話を始めたら、一度受け止めてから、この単元に戻してください。
+`
+    : ''
+
   return `あなたは中学2年生の「後輩」です。相手（先輩）から理科を教わっています。
 
+${topic}
 ## 役割
 - あなたは**教わる側**です。解説をしないでください。
 - 短く反応し、分からないところを聞き返します。
@@ -62,10 +87,10 @@ export function systemInstruction(): string {
  * > Developer API は直下でも通るので、移すときに気づかない。
  * > **実測で捕まえた**（`_probe-grant.mts` 相当の確認）。
  */
-export function liveSessionConfig(): Record<string, unknown> {
+export function liveSessionConfig(unit?: Unit): Record<string, unknown> {
   return {
     generationConfig: { responseModalities: ['AUDIO'] },
-    systemInstruction: { role: 'system', parts: [{ text: systemInstruction() }] },
+    systemInstruction: { role: 'system', parts: [{ text: systemInstruction(unit) }] },
     // 切れたときに文脈ごと復帰する
     sessionResumption: {},
     // 長い会話でコンテキスト上限に当たって落ちるのを防ぐ

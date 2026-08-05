@@ -2,6 +2,16 @@ import { verifyToken } from '../lib/auth.js'
 import { createLiveGrant } from '../lib/live-token.js'
 import { MINUTES_PER_SESSION, peekRemaining, reserveSession } from '../lib/quota.js'
 import { checkRate } from '../lib/ratelimit.js'
+import { unitById } from '../lib/units.js'
+
+/** 本文が文字列で来ることがある。壊れていても 500 にしない */
+function safeJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return undefined
+  }
+}
 
 /**
  * 会話を始めるための資格情報を渡す。
@@ -18,6 +28,7 @@ import { checkRate } from '../lib/ratelimit.js'
 type Req = {
   method?: string
   headers?: Record<string, string | string[] | undefined>
+  body?: unknown
 }
 type Res = {
   status: (code: number) => Res
@@ -60,6 +71,15 @@ export default async function handler(req: Req, res: Res) {
     return
   }
 
+  // **単元は枠を引く前に確かめる。** 引いてから弾くと、
+  // 会話していないのに1回ぶん減る
+  const body = typeof req.body === 'string' ? safeJson(req.body) : req.body
+  const unitId = (body as { unitId?: unknown } | undefined)?.unitId
+  if (typeof unitId !== 'string' || !unitById(unitId)) {
+    res.status(400).json({ error: 'unknown_unit' })
+    return
+  }
+
   // 濫用の歯止め。**Vertex を呼ぶ前に落とす**
   const rate = await checkRate(deviceId)
   res.setHeader('X-RateLimit-Backend', rate.backend)
@@ -83,7 +103,7 @@ export default async function handler(req: Req, res: Res) {
   }
 
   try {
-    const grant = await createLiveGrant()
+    const grant = await createLiveGrant(unitId)
     res.status(200).json({
       ...grant,
       remainingSessions: Number.isFinite(quota.remainingSessions)

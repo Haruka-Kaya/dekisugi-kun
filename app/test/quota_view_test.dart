@@ -123,7 +123,7 @@ void main() {
  "expiresAt":"2099-01-01T00:00:00Z","sessionMinutes":10,
  "remainingSessions":1,"entitled":false,"resetsAt":"2099-01-02T00:00:00Z"}'''),
       });
-      final g = await c.reserve();
+      final g = await c.reserve('force-motion');
       expect(g.token, 'ya29.abc');
       expect(g.sessionMinutes, 10);
       expect(g.remainingSessions, 1);
@@ -135,7 +135,7 @@ void main() {
         'POST https://example.test/api/live-token': () =>
             json(402, '{"error":"quota_exhausted","resetsAt":"2099-01-02T00:00:00Z"}'),
       });
-      await expectLater(c.reserve(), throwsA(isA<QuotaExhausted>()));
+      await expectLater(c.reserve('force-motion'), throwsA(isA<QuotaExhausted>()));
     });
 
     test('中身が足りないトークンを受け取らない', () async {
@@ -144,7 +144,7 @@ void main() {
         'POST https://example.test/api/live-token': () =>
             json(200, '{"model":"m"}'),
       });
-      await expectLater(c.reserve(), throwsA(isA<LiveTokenUnavailable>()));
+      await expectLater(c.reserve('force-motion'), throwsA(isA<LiveTokenUnavailable>()));
     });
 
     test('peek は失敗しても null（画面を止めない）', () async {
