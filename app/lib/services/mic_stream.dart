@@ -16,9 +16,17 @@ import 'package:record/record.dart';
 /// 切るとスピーカーから出た AI の声を自分のマイクが拾い、
 /// 自分の発話で自分を割り込ませて会話が壊れる。
 class MicStream {
-  MicStream({AudioRecorder? recorder}) : _rec = recorder ?? AudioRecorder();
+  MicStream({AudioRecorder? recorder}) : _given = recorder;
 
-  final AudioRecorder _rec;
+  final AudioRecorder? _given;
+  AudioRecorder? _created;
+
+  /// 録音の実体は**使うまで作らない。**
+  ///
+  /// コンストラクタで作ると、その場でプラットフォームチャネルを叩く。
+  /// 差し替えた偽物を使うテストでも本物が生まれて
+  /// `MissingPluginException` で落ちるので、遅延させる。
+  AudioRecorder get _rec => _given ?? (_created ??= AudioRecorder());
   StreamSubscription<Uint8List>? _sub;
   final _out = StreamController<Uint8List>.broadcast();
   final _level = StreamController<double>.broadcast();
@@ -88,14 +96,16 @@ class MicStream {
     // 端数を出し切る。切り捨てると語尾が落ちる
     final tail = _chunker.flush();
     if (tail != null) _out.add(tail);
-    if (await _rec.isRecording()) await _rec.stop();
+    // 一度も録音していないなら実体を作らない
+    final rec = _given ?? _created;
+    if (rec != null && await rec.isRecording()) await rec.stop();
   }
 
   Future<void> dispose() async {
     await stop();
     await _out.close();
     await _level.close();
-    await _rec.dispose();
+    await (_given ?? _created)?.dispose();
   }
 }
 

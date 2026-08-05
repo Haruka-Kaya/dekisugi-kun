@@ -1,67 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:dekisugi/services/live_token_client.dart';
 import 'package:dekisugi/services/vertex_live.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// 本物の WebSocket を1本立てる。閉じ方の順序を再現したいので、
-/// モックではなく実物を使う（この不具合は順序でしか出ない）。
-class FakeLive {
-  FakeLive(this._server, this.port);
-
-  final HttpServer _server;
-  final int port;
-  final _sockets = <WebSocket>[];
-  final _received = <Map<String, dynamic>>[];
-
-  List<Map<String, dynamic>> get received => _received;
-
-  static Future<FakeLive> start() async {
-    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    final live = FakeLive(server, server.port);
-    unawaited(live._accept());
-    return live;
-  }
-
-  Future<void> _accept() async {
-    await for (final req in _server) {
-      final ws = await WebSocketTransformer.upgrade(req);
-      _sockets.add(ws);
-      ws.listen((raw) {
-        _received.add(jsonDecode(raw as String) as Map<String, dynamic>);
-        ws.add(jsonEncode({'setupComplete': {}}));
-      }, onError: (_) {});
-    }
-  }
-
-  /// サーバ側から切る。**閉じる順序を作るためのもの。**
-  Future<void> hangUp() async {
-    for (final ws in _sockets) {
-      await ws.close(1000, 'done');
-    }
-  }
-
-  Future<void> dispose() async {
-    await hangUp();
-    await _server.close(force: true);
-  }
-}
-
-LiveGrant grantFor(int port) => LiveGrant(
-      directorPrefix: '[D:test]',
-      token: 'test',
-      wsUrl: 'ws://127.0.0.1:$port',
-      model: 'projects/p/locations/l/publishers/google/models/m',
-      setupConfig: const {'generationConfig': {}},
-      expiresAt: DateTime.now().add(const Duration(minutes: 30)),
-      sessionMinutes: 10,
-      remainingSessions: 1,
-      entitled: false,
-      resetsAt: null,
-    );
+import 'support/fake_live.dart';
 
 void main() {
   late FakeLive server;
