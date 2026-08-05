@@ -5,7 +5,6 @@ import 'package:dekisugi/services/live_token_client.dart';
 import 'package:dekisugi/services/session_store.dart';
 import 'package:dekisugi/ui/_material.dart';
 import 'package:dekisugi/widgets/quota_view.dart';
-import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';

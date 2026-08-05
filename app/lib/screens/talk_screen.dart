@@ -65,10 +65,53 @@ class _TalkScreenState extends State<TalkScreen> {
     setState(() => _unfinished = null);
   }
 
+  /// 会話中に画面を離れようとしたときの確認。
+  ///
+  /// ここを離れると会話は終わり、**教材を読み直せる場所に戻れてしまう**（C2 の抜け道）。
+  /// 塞ぎきることはできないが、うっかり出てしまうのは防ぐ。
+  Future<bool> _confirmLeave() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('話すのをやめますか？'),
+        content: const Text(
+          'ここを出ると会話は終わります。'
+          'いま話したところまでは残るので、あとから続きにできます。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('つづける'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('やめる'),
+          ),
+        ],
+      ),
+    );
+    return ok ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final live = context.watch<LiveSessionController>();
 
+    return PopScope(
+      canPop: !live.isRunning,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop || !mounted) return;
+        // 先に Navigator を掴んでおく。await をまたいで context を触らない
+        final navigator = Navigator.of(context);
+        if (!await _confirmLeave()) return;
+        await live.stop();
+        navigator.pop();
+      },
+      child: _build(context, live),
+    );
+  }
+
+  Widget _build(BuildContext context, LiveSessionController live) {
     return Scaffold(
       appBar: AppBar(
         title: Column(
