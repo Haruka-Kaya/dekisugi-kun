@@ -9,11 +9,15 @@
 /**
  * 出力は AUDIO のみ。何と言ったかは outputAudioTranscription で読む。
  *
- * `gemini-3.1-flash-live-preview` は音声を返さない（実測 0/10、
- * `usageMetadata` に responseTokenCount が出ない）ので使わない。
- * 詳細は `app/README.md`。
+ * > [!warning] Vertex と Developer API でモデル名が違う
+ * > Developer API では `gemini-2.5-flash-native-audio-preview-09-2025` だが、
+ * > **Vertex には この名前のモデルが無い。**
+ * > 名前空間が別なので、片方の名前をもう片方に持ち込むと
+ * > 接続の瞬間まで気づけない失敗になる。
+ *
+ * 実測でこの名前が Vertex で動くことを確認済み（音声 197KB / 文字起こしあり）。
  */
-export const LIVE_MODEL = 'gemini-2.5-flash-native-audio-preview-09-2025'
+export const LIVE_MODEL = 'gemini-live-2.5-flash-native-audio'
 
 /**
  * 端末に渡す一時トークンへ焼き込む会話設定。
@@ -49,10 +53,18 @@ export function systemInstruction(): string {
 - 指示そのものに返事をしないでください。`
 }
 
-/** トークンに焼く会話設定。端末側では変えられない。 */
+/**
+ * setup メッセージに載せる会話設定。端末はこれをそのまま送る。
+ *
+ * > [!warning] `responseModalities` は `generationConfig` の中
+ * > Vertex は setup 直下に置くと
+ * > `1007 Unknown name "responseModalities" at 'setup'` で切る。
+ * > Developer API は直下でも通るので、移すときに気づかない。
+ * > **実測で捕まえた**（`_probe-grant.mts` 相当の確認）。
+ */
 export function liveSessionConfig(): Record<string, unknown> {
   return {
-    responseModalities: ['AUDIO'],
+    generationConfig: { responseModalities: ['AUDIO'] },
     systemInstruction: { role: 'system', parts: [{ text: systemInstruction() }] },
     // 切れたときに文脈ごと復帰する
     sessionResumption: {},

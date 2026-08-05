@@ -1,44 +1,46 @@
 /**
- * 無料で使える1日の会話時間。
+ * 無料で使える1日の会話量。
  *
- * ## なぜ時間で数えるか
+ * ## なぜ「セッション数」で数えるか
  *
- * Gemini Live の費用は**話した時間**にほぼ比例する。回数で数えると、
- * 1回で延々話す人と何度も短く話す人で実費が桁違いになる。
+ * 当初は分で数えていた。Gemini Developer API では
+ * **渡すトークンの寿命がそのまま会話時間の上限**になり
+ * （実測: 期限の58秒後に `code=1011 auth token has expired` でセッションごと切断）、
+ * 分単位で正確に配れたため。
+ *
+ * Vertex へ移って、それが使えなくなった。アクセストークンは60分有効で、
+ * 期限は会話時間を縛らない。代わりに**Vertex 自身がセッションを約10分で打ち切る**
+ * （実測: 9分時点で `code=1000 The operation was cancelled.`）。
+ *
+ * → 縛れる単位が「分」から「セッション」に変わった。
+ *   1セッション ≒ 10分なので、無料枠はセッション数で配る。
  *
  * ## なぜ端末に回避されないか
  *
- * 会話は一時トークンでしか繋げない（APIキーは端末に無い）。
- * そしてトークンの期限が来ると**セッションごと切られる**
- * （実測: `code=1011 reason=auth token has expired`、発行58秒後）。
+ * 会話はサーバが発行するアクセストークンでしか始められない（資格情報は端末に無い）。
+ * そして1本のトークンで何時間も話すことはできない —
+ * **セッションは Vertex 側が約10分で切る。**
  *
- * だから「発行するトークンの寿命 ＝ 与える会話時間」になり、
- * 端末が何を申告しようと超えられない。
+ * > [!warning] トークン自体は60分有効
+ * > セッションの長さは Vertex が守るが、**60分のあいだ何度でも新しい
+ * > セッションを張れる**。だから枠は「トークンを配った回数」で数え、
+ * > 配ったら即座に引く。1回配る = 1セッション分。
  */
 
 const kvUrl = () => process.env.KV_REST_API_URL
 const kvToken = () => process.env.KV_REST_API_TOKEN
 
-/** 1日の無料枠。 */
-export const FREE_MINUTES_PER_DAY = 15
+/** 1セッションの実測上限（分）。表示と見積もりに使う。 */
+export const MINUTES_PER_SESSION = 10
 
-/**
- * 1回に渡す最大の時間。
- *
- * 長くすると途中の張り直しが減って会話が途切れにくいが、
- * 使い切らずに終わったぶんも消費として引くので短いほど無駄が少ない。
- * 会話1回の実測が数分なので10分にしてある。
- */
-export const MAX_BLOCK_MINUTES = 10
-
-/** 意味のある会話にならない長さは渡さない。 */
-export const MIN_BLOCK_MINUTES = 2
+/** 1日の無料枠（セッション数）。10分 × 2 = 約20分ぶん。 */
+export const FREE_SESSIONS_PER_DAY = 2
 
 export type QuotaVerdict = {
-  /** 今回渡してよい分数。0 なら渡さない */
-  grantedMinutes: number
-  /** 今日あと何分使えるか（この発行を引いたあと） */
-  remainingMinutes: number
+  /** 会話を始めてよいか */
+  granted: boolean
+  /** 今日あと何回始められるか（この確保を引いたあと） */
+  remainingSessions: number
   /** 課金して上限が外れているか */
   entitled: boolean
   /** 枠が戻る時刻（ISO 8601, UTC） */
@@ -79,100 +81,78 @@ function nextResetAt(now: number): string {
 }
 
 /**
- * 会話時間を1ブロック確保する。**確保できた分だけ返す。**
+ * 会話を1回ぶん確保する。
  *
- * 引いてから渡す（先に引く）。渡してから引くと、途中で落ちたときに
- * 使われたのに引かれていない時間が残る。
+ * **先に引いてから渡す。** 渡してから引くと、途中で落ちたときに
+ * 使われたのに引かれていない回数が残る。
  */
-export async function reserveMinutes(
+export async function reserveSession(
   deviceId: string,
   now = Date.now(),
 ): Promise<QuotaVerdict> {
   const mode = backend()
-  const entitled = await isEntitled(deviceId, now)
   const resetsAt = nextResetAt(now)
 
-  if (entitled) {
+  if (await isEntitled(deviceId, now)) {
     return {
-      grantedMinutes: MAX_BLOCK_MINUTES,
-      remainingMinutes: Number.POSITIVE_INFINITY,
+      granted: true,
+      remainingSessions: Number.POSITIVE_INFINITY,
       entitled: true,
       resetsAt,
       backend: mode,
     }
   }
 
-  const key = `q:${deviceId}:${dayKey(now)}`
-  let used = 0
+  const key = `s:${deviceId}:${dayKey(now)}`
+  let used: number
   try {
     if (mode === 'kv') {
-      const [v] = await kv([['GET', key]])
-      used = Number(v ?? 0)
-    } else {
-      used = local.get(key) ?? 0
-    }
-  } catch (e) {
-    // KV が読めないときは**無料枠を渡す**。締めると障害がそのまま全滅になる。
-    // 費用側は全体の1日上限（ratelimit.ts）が別に見ている
-    console.error('枠の読み出しに失敗（無料枠を渡す）', e)
-    return {
-      grantedMinutes: MIN_BLOCK_MINUTES,
-      remainingMinutes: MIN_BLOCK_MINUTES,
-      entitled: false,
-      resetsAt,
-      backend: mode,
-    }
-  }
-
-  const left = Math.max(0, FREE_MINUTES_PER_DAY - used)
-  if (left < MIN_BLOCK_MINUTES) {
-    return { grantedMinutes: 0, remainingMinutes: left, entitled: false, resetsAt, backend: mode }
-  }
-
-  const granted = Math.min(left, MAX_BLOCK_MINUTES)
-  try {
-    if (mode === 'kv') {
-      await kv([
-        ['INCRBY', key, String(granted)],
-        // 日付キーなので、翌々日には消えていてよい
+      const [v] = await kv([
+        ['INCR', key],
         ['EXPIRE', key, '172800', 'NX'],
       ])
+      used = Number(v ?? 1)
     } else {
-      local.set(key, used + granted)
+      used = (local.get(key) ?? 0) + 1
+      local.set(key, used)
     }
   } catch (e) {
-    console.error('枠の記録に失敗（渡すが引けていない）', e)
+    // KV が読めないときは**通す**。締めると障害がそのまま全滅になる。
+    // 費用側は全体の1日上限（ratelimit.ts）が別に見ている
+    console.error('枠の記録に失敗（通す）', e)
+    return { granted: true, remainingSessions: 0, entitled: false, resetsAt, backend: mode }
   }
 
+  const over = used > FREE_SESSIONS_PER_DAY
   return {
-    grantedMinutes: granted,
-    remainingMinutes: left - granted,
+    granted: !over,
+    remainingSessions: Math.max(0, FREE_SESSIONS_PER_DAY - used),
     entitled: false,
     resetsAt,
     backend: mode,
   }
 }
 
-/** 今日あと何分使えるか。**引かずに見るだけ**（画面表示用）。 */
+/** 今日あと何回始められるか。**引かずに見るだけ**（画面表示用）。 */
 export async function peekRemaining(
   deviceId: string,
   now = Date.now(),
-): Promise<{ remainingMinutes: number; entitled: boolean; resetsAt: string }> {
+): Promise<{ remainingSessions: number; entitled: boolean; resetsAt: string }> {
   const resetsAt = nextResetAt(now)
   if (await isEntitled(deviceId, now)) {
-    return { remainingMinutes: Number.POSITIVE_INFINITY, entitled: true, resetsAt }
+    return { remainingSessions: Number.POSITIVE_INFINITY, entitled: true, resetsAt }
   }
-  const key = `q:${deviceId}:${dayKey(now)}`
+  const key = `s:${deviceId}:${dayKey(now)}`
   try {
     const used =
       backend() === 'kv' ? Number((await kv([['GET', key]]))[0] ?? 0) : (local.get(key) ?? 0)
     return {
-      remainingMinutes: Math.max(0, FREE_MINUTES_PER_DAY - used),
+      remainingSessions: Math.max(0, FREE_SESSIONS_PER_DAY - used),
       entitled: false,
       resetsAt,
     }
   } catch {
-    return { remainingMinutes: FREE_MINUTES_PER_DAY, entitled: false, resetsAt }
+    return { remainingSessions: FREE_SESSIONS_PER_DAY, entitled: false, resetsAt }
   }
 }
 
@@ -188,8 +168,7 @@ export async function peekRemaining(
 export async function isEntitled(deviceId: string, now = Date.now()): Promise<boolean> {
   const key = `ent:${deviceId}`
   try {
-    const v =
-      backend() === 'kv' ? (await kv([['GET', key]]))[0] : local.get(key)
+    const v = backend() === 'kv' ? (await kv([['GET', key]]))[0] : local.get(key)
     if (v == null) return false
     return Number(v) > now
   } catch {

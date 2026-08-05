@@ -1,17 +1,18 @@
 import { verifyToken } from '../lib/auth.js'
-import { createLiveToken } from '../lib/live-token.js'
-import { peekRemaining, reserveMinutes } from '../lib/quota.js'
+import { createLiveGrant } from '../lib/live-token.js'
+import { MINUTES_PER_SESSION, peekRemaining, reserveSession } from '../lib/quota.js'
 import { checkRate } from '../lib/ratelimit.js'
 
 /**
- * 会話を始めるための一時トークンを渡す。
+ * 会話を始めるための資格情報を渡す。
  *
- * **APIキーはここにしか無い。** 端末が持つのは短命で使い切りのトークンだけ。
- * トークンの期限が来るとセッションごと切られるので、
- * **渡す寿命がそのまま「与えた会話時間」になる**（端末側で伸ばせない）。
+ * **Vertex の鍵はここにしか無い。** 端末が持つのは期限つきのアクセストークンだけ。
  *
- * GET  … 今日あと何分使えるか（引かずに見るだけ。画面表示用）
- * POST … 1ブロック確保してトークンを渡す
+ * 1セッションは **Vertex 自身が約10分で打ち切る**（実測 `code=1000`）ので、
+ * 1回渡す = 約10分の会話。枠は**セッション数**で数える。
+ *
+ * GET  … 今日あと何回始められるか（引かずに見るだけ。画面表示用）
+ * POST … 1回ぶん確保して資格情報を渡す
  */
 
 type Req = {
@@ -49,14 +50,17 @@ export default async function handler(req: Req, res: Res) {
   if (req.method === 'GET') {
     const left = await peekRemaining(deviceId)
     res.status(200).json({
-      remainingMinutes: Number.isFinite(left.remainingMinutes) ? left.remainingMinutes : null,
+      remainingSessions: Number.isFinite(left.remainingSessions)
+        ? left.remainingSessions
+        : null,
+      minutesPerSession: MINUTES_PER_SESSION,
       entitled: left.entitled,
       resetsAt: left.resetsAt,
     })
     return
   }
 
-  // 濫用の歯止め。**Gemini を呼ぶ前に落とす**
+  // 濫用の歯止め。**Vertex を呼ぶ前に落とす**
   const rate = await checkRate(deviceId)
   res.setHeader('X-RateLimit-Backend', rate.backend)
   if (!rate.ok) {
@@ -66,32 +70,31 @@ export default async function handler(req: Req, res: Res) {
   }
 
   // **先に引いてから渡す。** 渡してから引くと、途中で落ちたときに
-  // 使われたのに引かれていない時間が残る
-  const quota = await reserveMinutes(deviceId)
+  // 使われたのに引かれていない回数が残る
+  const quota = await reserveSession(deviceId)
   res.setHeader('X-Quota-Backend', quota.backend)
-  if (quota.grantedMinutes <= 0) {
+  if (!quota.granted) {
     res.status(402).json({
       error: 'quota_exhausted',
-      remainingMinutes: 0,
+      remainingSessions: 0,
       resetsAt: quota.resetsAt,
     })
     return
   }
 
   try {
-    const issued = await createLiveToken(Date.now(), quota.grantedMinutes)
+    const grant = await createLiveGrant()
     res.status(200).json({
-      ...issued,
-      grantedMinutes: quota.grantedMinutes,
-      remainingMinutes: Number.isFinite(quota.remainingMinutes)
-        ? quota.remainingMinutes
+      ...grant,
+      remainingSessions: Number.isFinite(quota.remainingSessions)
+        ? quota.remainingSessions
         : null,
       entitled: quota.entitled,
       resetsAt: quota.resetsAt,
     })
   } catch (e) {
-    // 中身は返さない。キーの断片が混ざりうる
-    console.error('一時トークンの発行に失敗', e)
-    res.status(502).json({ error: 'token_failed' })
+    // 中身は返さない。資格情報の断片が混ざりうる
+    console.error('会話の資格情報を作れなかった', e)
+    res.status(502).json({ error: 'grant_failed' })
   }
 }

@@ -4,12 +4,11 @@ import { beforeEach, describe, it } from 'node:test'
 import liveToken from '../api/live-token.js'
 import { issueToken } from '../lib/auth.js'
 import {
-  FREE_MINUTES_PER_DAY,
-  MAX_BLOCK_MINUTES,
-  MIN_BLOCK_MINUTES,
+  FREE_SESSIONS_PER_DAY,
+  MINUTES_PER_SESSION,
   grantEntitlement,
   peekRemaining,
-  reserveMinutes,
+  reserveSession,
 } from '../lib/quota.js'
 
 const NOW = Date.UTC(2026, 7, 5, 3, 0) // JST 12:00
@@ -41,50 +40,45 @@ beforeEach(() => {
   delete process.env.KV_REST_API_TOKEN
 })
 
-describe('無料枠', () => {
-  it('初回は最大ブロックを渡す', async () => {
-    const v = await reserveMinutes(device(), NOW)
-    assert.equal(v.grantedMinutes, MAX_BLOCK_MINUTES)
-    assert.equal(v.remainingMinutes, FREE_MINUTES_PER_DAY - MAX_BLOCK_MINUTES)
+describe('セッション数で数える', () => {
+  // 分で数えるのをやめた理由:
+  // Vertex ではトークンの寿命が会話時間を縛らない。代わりに Vertex 自身が
+  // セッションを約10分で打ち切る（実測 code=1000）。縛れる単位が変わった。
+
+  it('1セッションの想定は約10分', () => {
+    assert.equal(MINUTES_PER_SESSION, 10)
   })
 
-  it('残りが少なければ残りぶんだけ渡す', async () => {
+  it('無料枠のぶんだけ通す', async () => {
     const id = device()
-    await reserveMinutes(id, NOW) // 10分
-    const v = await reserveMinutes(id, NOW)
-    assert.equal(v.grantedMinutes, FREE_MINUTES_PER_DAY - MAX_BLOCK_MINUTES) // 5分
-    assert.equal(v.remainingMinutes, 0)
+    for (let i = 1; i <= FREE_SESSIONS_PER_DAY; i++) {
+      const v = await reserveSession(id, NOW)
+      assert.equal(v.granted, true, `${i}回目で止まった`)
+      assert.equal(v.remainingSessions, FREE_SESSIONS_PER_DAY - i)
+    }
   })
 
-  it('使い切ったら渡さない', async () => {
+  it('使い切ったら通さない', async () => {
     const id = device()
-    await reserveMinutes(id, NOW)
-    await reserveMinutes(id, NOW)
-    const v = await reserveMinutes(id, NOW)
-    assert.equal(v.grantedMinutes, 0)
-  })
-
-  it('会話にならない長さは渡さない', async () => {
-    // 残り1分でトークンを渡しても、繋いだ瞬間に切れて体験が壊れるだけ
-    assert.ok(MIN_BLOCK_MINUTES >= 2)
+    for (let i = 0; i < FREE_SESSIONS_PER_DAY; i++) await reserveSession(id, NOW)
+    const over = await reserveSession(id, NOW)
+    assert.equal(over.granted, false)
+    assert.equal(over.remainingSessions, 0)
   })
 
   it('先に引いてから渡す（渡してから引かない）', async () => {
-    // 渡してから引くと、途中で落ちたときに使われたのに引かれていない時間が残る
+    // 渡してから引くと、途中で落ちたときに使われたのに引かれていない回数が残る
     const id = device()
-    await reserveMinutes(id, NOW)
+    await reserveSession(id, NOW)
     const left = await peekRemaining(id, NOW)
-    assert.equal(left.remainingMinutes, FREE_MINUTES_PER_DAY - MAX_BLOCK_MINUTES)
+    assert.equal(left.remainingSessions, FREE_SESSIONS_PER_DAY - 1)
   })
 
   it('日付が変われば戻る', async () => {
     const id = device()
-    await reserveMinutes(id, NOW)
-    await reserveMinutes(id, NOW)
-    assert.equal((await reserveMinutes(id, NOW)).grantedMinutes, 0)
-
-    const tomorrow = NOW + 24 * 3600_000
-    assert.equal((await reserveMinutes(id, tomorrow)).grantedMinutes, MAX_BLOCK_MINUTES)
+    for (let i = 0; i < FREE_SESSIONS_PER_DAY; i++) await reserveSession(id, NOW)
+    assert.equal((await reserveSession(id, NOW)).granted, false)
+    assert.equal((await reserveSession(id, NOW + 24 * 3600_000)).granted, true)
   })
 
   it('日本時間の0時で切る（UTC で切らない）', async () => {
@@ -92,28 +86,27 @@ describe('無料枠', () => {
     const jstEvening = Date.UTC(2026, 7, 5, 12, 0) // JST 21:00
     const jstNextMorning = Date.UTC(2026, 7, 5, 16, 0) // JST 翌 01:00
     const id = device()
-    await reserveMinutes(id, jstEvening)
-    await reserveMinutes(id, jstEvening)
-    assert.equal((await reserveMinutes(id, jstEvening)).grantedMinutes, 0)
+    for (let i = 0; i < FREE_SESSIONS_PER_DAY; i++) await reserveSession(id, jstEvening)
+    assert.equal((await reserveSession(id, jstEvening)).granted, false)
     assert.equal(
-      (await reserveMinutes(id, jstNextMorning)).grantedMinutes,
-      MAX_BLOCK_MINUTES,
+      (await reserveSession(id, jstNextMorning)).granted,
+      true,
       'JST の日付が変わっても戻っていない',
     )
   })
 
   it('別の端末は互いに影響しない', async () => {
     const a = device()
-    await reserveMinutes(a, NOW)
-    await reserveMinutes(a, NOW)
-    assert.equal((await reserveMinutes(device(), NOW)).grantedMinutes, MAX_BLOCK_MINUTES)
+    for (let i = 0; i <= FREE_SESSIONS_PER_DAY; i++) await reserveSession(a, NOW)
+    assert.equal((await reserveSession(device(), NOW)).granted, true)
   })
 
   it('peek は引かない', async () => {
     const id = device()
     await peekRemaining(id, NOW)
     await peekRemaining(id, NOW)
-    assert.equal((await reserveMinutes(id, NOW)).grantedMinutes, MAX_BLOCK_MINUTES)
+    assert.equal((await reserveSession(id, NOW)).remainingSessions,
+      FREE_SESSIONS_PER_DAY - 1)
   })
 })
 
@@ -121,17 +114,17 @@ describe('課金済み', () => {
   it('上限にかからない', async () => {
     const id = device()
     await grantEntitlement(id, NOW + 30 * 24 * 3600_000)
-    for (let i = 0; i < 5; i++) {
-      assert.equal((await reserveMinutes(id, NOW)).grantedMinutes, MAX_BLOCK_MINUTES)
+    for (let i = 0; i < FREE_SESSIONS_PER_DAY + 5; i++) {
+      assert.equal((await reserveSession(id, NOW)).granted, true)
     }
-    assert.equal((await reserveMinutes(id, NOW)).entitled, true)
+    assert.equal((await reserveSession(id, NOW)).entitled, true)
   })
 
   it('期限が切れたら無料枠に戻る', async () => {
     const id = device()
     await grantEntitlement(id, NOW + 1000)
-    assert.equal((await reserveMinutes(id, NOW)).entitled, true)
-    assert.equal((await reserveMinutes(id, NOW + 2000)).entitled, false)
+    assert.equal((await reserveSession(id, NOW)).entitled, true)
+    assert.equal((await reserveSession(id, NOW + 2000)).entitled, false)
   })
 })
 
@@ -149,26 +142,30 @@ describe('/api/live-token', () => {
     const a = fakeRes()
     await liveToken({ method: 'GET', headers: h }, a.res)
     assert.equal(a.out.code, 200)
-    assert.equal((a.out.body as { remainingMinutes: number }).remainingMinutes,
-      FREE_MINUTES_PER_DAY)
+    const body = a.out.body as { remainingSessions: number; minutesPerSession: number }
+    assert.equal(body.remainingSessions, FREE_SESSIONS_PER_DAY)
+    assert.equal(body.minutesPerSession, MINUTES_PER_SESSION)
 
     const b = fakeRes()
     await liveToken({ method: 'GET', headers: h }, b.res)
-    assert.equal((b.out.body as { remainingMinutes: number }).remainingMinutes,
-      FREE_MINUTES_PER_DAY, 'GET が枠を消費している')
+    assert.equal(
+      (b.out.body as { remainingSessions: number }).remainingSessions,
+      FREE_SESSIONS_PER_DAY,
+      'GET が枠を消費している',
+    )
   })
 
   it('使い切ったら 402 を返す', async () => {
     const h = authed()
-    // 2回で 15分を使い切る（GEMINI_API_KEY が無いので発行は 502 になるが、枠は引かれる）
-    for (let i = 0; i < 2; i++) {
+    // 資格情報の発行は失敗しうる（環境変数が無い等）が、枠は先に引かれる
+    for (let i = 0; i < FREE_SESSIONS_PER_DAY; i++) {
       const { res } = fakeRes()
       await liveToken({ method: 'POST', headers: h }, res)
     }
     const { res, out } = fakeRes()
     await liveToken({ method: 'POST', headers: h }, res)
     assert.equal(out.code, 402)
-    assert.deepEqual((out.body as { error: string }).error, 'quota_exhausted')
+    assert.equal((out.body as { error: string }).error, 'quota_exhausted')
     assert.ok((out.body as { resetsAt: string }).resetsAt)
   })
 
