@@ -3,6 +3,7 @@ import '../config/app_theme.dart';
 import '../models/unit.dart';
 import '../ui/_material.dart';
 import '../widgets/emphasis_text.dart';
+import '../widgets/readable_width.dart';
 
 /// 教材を読む画面。**コア体験の1歩目。**
 ///
@@ -81,23 +82,28 @@ class _MaterialScreenState extends State<MaterialScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.unit.title)),
-      body: ListView(
-        controller: _scroll,
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-        children: [
-          if (!_isReview) _Intro(unit: widget.unit),
-          for (final s in sections) ...[
-            const SizedBox(height: 20),
-            _SectionView(section: s),
+      // iPad は横に広い。読み物は行が長くなりすぎないよう止める
+      body: ReadableWidth(
+        child: ListView(
+          controller: _scroll,
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          children: [
+            if (!_isReview) _Intro(unit: widget.unit),
+            for (final s in sections) ...[
+              const SizedBox(height: 20),
+              _SectionView(section: s),
+            ],
           ],
-        ],
+        ),
       ),
       // **操作はスクロールの外に置く。**
       // 中に入れると読み終わるまで組み立てられず、
       // 「押せるようになった」ことに気づけない
       bottomNavigationBar: SafeArea(
         top: false,
-        child: Padding(
+        child: ReadableWidth(
+          tight: true,
+          child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
           child: _isReview
               ? OutlinedButton(
@@ -128,6 +134,7 @@ class _MaterialScreenState extends State<MaterialScreen> {
                     ),
                   ],
                 ),
+          ),
         ),
       ),
     );

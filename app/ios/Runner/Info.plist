@@ -66,5 +66,17 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+
+	<!-- マイクの利用理由。**これが無いと iOS は起動直後に落とす。**
+	     文言はそのまま生徒に表示されるので、何に使うかを具体的に書く
+	     （「マイクを使用します」だけだと審査で差し戻されることがある） -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>デキすぎ君に声で説明するために、マイクを使います。文字で説明することもできます。</string>
+
+	<!-- 音声認識の API は使っていない（文字起こしは Google 側で行う）。
+	     NSSpeechRecognitionUsageDescription は不要 -->
+
+	<!-- 会話中に画面が暗くならないようにする設定は
+	     コード側（WakelockPlus 等）で行う。ここでは宣言しない -->
 </dict>
 </plist>

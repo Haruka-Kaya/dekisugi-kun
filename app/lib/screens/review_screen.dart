@@ -4,6 +4,7 @@ import '../models/review.dart';
 import '../services/session_store.dart';
 import '../services/units_client.dart';
 import '../ui/_material.dart';
+import '../widgets/readable_width.dart';
 import 'material_screen.dart';
 
 /// 復習の画面。
@@ -97,7 +98,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
       body: items == null
           ? const Center(child: CircularProgressIndicator())
           // padding を渡すと下のシステム余白が入らない。自分で足す
-          : ListView(
+          : ReadableWidth(
+              child: ListView(
               padding: EdgeInsets.fromLTRB(
                   0, 8, 0, 8 + MediaQuery.paddingOf(context).bottom),
               children: [
@@ -118,6 +120,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     ),
               ],
             ),
+          ),
     );
   }
 }

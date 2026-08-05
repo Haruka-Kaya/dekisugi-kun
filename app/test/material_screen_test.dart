@@ -81,6 +81,33 @@ void main() {
     });
   });
 
+  group('iPad の広い画面', () {
+    // 学校が配っているのは iPad。スマホ前提のまま広げると
+    // 1行が長くなりすぎて、折り返したときに次の行頭を見失う
+    Future<void> pumpWide(WidgetTester tester, Widget child) async {
+      tester.view.physicalSize = const Size(2048, 1536); // iPad 横向き相当
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(wrap(child));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('本文の幅を広げすぎない', (tester) async {
+      await pumpWide(tester, MaterialScreen(unit: unit(), onDone: () {}));
+      final box = tester.getSize(find.byType(ListView));
+      expect(box.width, lessThanOrEqualTo(640),
+          reason: '1行が長くなりすぎる');
+    });
+
+    testWidgets('広い画面でも操作が消えない', (tester) async {
+      // ReadableWidth の Align が高さいっぱいに広がって
+      // 下のバーが画面を占領し、本文が消えたことがある
+      await pumpWide(tester, MaterialScreen(unit: unit(), onDone: () {}));
+      expect(find.textContaining('説明してもらいます'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'デキすぎ君に教える'), findsOneWidget);
+    });
+  });
+
   group('復習から開いたとき', () {
     testWidgets('その節だけを出す', (tester) async {
       await tester.pumpWidget(wrap(MaterialScreen(

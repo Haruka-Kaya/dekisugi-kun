@@ -2,6 +2,7 @@ import '../config/app_radius.dart';
 import '../models/unit.dart';
 import '../services/units_client.dart';
 import '../ui/_material.dart';
+import '../widgets/readable_width.dart';
 
 /// どの単元を教えるか選ぶ。
 ///
@@ -83,7 +84,9 @@ class _UnitPickerScreenState extends State<UnitPickerScreen> {
       ),
       body: list == null
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
+          // iPad は横に広い。カードを画面いっぱいに伸ばさない
+          : ReadableWidth(
+              child: RefreshIndicator(
               onRefresh: _load,
               child: ListView(
                 padding: EdgeInsets.fromLTRB(
@@ -108,6 +111,7 @@ class _UnitPickerScreenState extends State<UnitPickerScreen> {
                 ],
               ),
             ),
+          ),
     );
   }
 }
