@@ -43,6 +43,29 @@ def load(paths):
     return out
 
 
+def dedupe(recs):
+    """同じ回答者の追記を1件にまとめる。
+
+    アンケートは1問終わるごとに送る（途中でやめた人のぶんを残すため）ので、
+    同じ sessionId が何度も届く。**いちばん進んだものだけ**を採る。
+
+    sessionId が無いのは旧版（v1）。そのまま残す。
+    """
+    best, plain = {}, []
+    for r in recs:
+        if not isinstance(r, dict):
+            continue
+        sid = r.get("sessionId")
+        if not sid:
+            plain.append(r)
+            continue
+        cur = best.get(sid)
+        n = len(r.get("ans") or [])
+        if cur is None or n > len(cur.get("ans") or []):
+            best[sid] = r
+    return plain + list(best.values())
+
+
 def kappa(tp, fp, fn, tn):
     n = tp + fp + fn + tn
     if n == 0:
@@ -138,7 +161,7 @@ def main():
     ap.add_argument("--judge", action="store_true", help="LLM を呼んで経路A/Bの精度を測る")
     args = ap.parse_args()
 
-    recs = load(args.paths)
+    recs = dedupe(load(args.paths))
     rows = []
     skipped = 0
     for r in recs:
@@ -160,12 +183,38 @@ def main():
         return
 
     # --- ground truth の分布 ---
+    # v2 は選択式2問。**2問そろったときだけ**確かなものとして数え、
+    # 食い違い（inconsistent）は陽性にも陰性にも入れない。
+    # 判断がついていないのにどちらかへ寄せると、そのぶんが測定の誤差になる
     print("=== 選択式（ground truth）===")
     band = defaultdict(int)
     for r in rows:
-        band["正解" if r["correct"] else ("対象の誤概念" if r["heldMisconception"] else "その他の誤答")] += 1
+        gt = r.get("groundTruth")
+        if gt == "inconsistent":
+            band["2問が食い違い（判定に使わない）"] += 1
+        elif r["correct"]:
+            band["正解"] += 1
+        elif r["heldMisconception"]:
+            band["対象の誤概念"] += 1
+        else:
+            band["その他の誤答"] += 1
     for k, v in sorted(band.items(), key=lambda x: -x[1]):
-        print(f"  {k:<12} {v:>3} 件 ({v/len(rows):.0%})")
+        print(f"  {k:<24} {v:>3} 件 ({v/len(rows):.0%})")
+
+    # 2問式がどれだけ効いたか。1問だけの判定と突き合わせる
+    two = [r for r in rows if r.get("groundTruth")]
+    if two:
+        flipped = sum(1 for r in two
+                      if r.get("correct1") != r["correct"]
+                      or r.get("heldMisconception1") != r["heldMisconception"])
+        print(f"\n  1問だけなら別の判定になっていた: {flipped}/{len(two)} 件"
+              f"（{flipped/len(two):.0%}）")
+
+    # ここから先の精度は**確かなものだけ**で測る
+    rows = [r for r in rows if r.get("groundTruth") != "inconsistent"]
+    if not rows:
+        print("\n判定に使える回答がありません。")
+        return
 
     print("\n=== 項目別 ===")
     per = defaultdict(lambda: [0, 0, 0])

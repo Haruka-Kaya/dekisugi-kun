@@ -29,7 +29,13 @@ export type SurveyKind = (typeof SURVEY_KINDS)[number]
 /** 1件の上限。自由記述2問なので十分すぎる */
 export const MAX_BYTES = 64 * 1024
 
-/** 1つの種類あたりの保存上限。**超えたら受けない**（青天井にしない） */
+/**
+ * 1つの種類あたりの保存上限。**超えたら受けない**（青天井にしない）。
+ *
+ * 数えるのは**人数ではなく件数**。アンケートは1問終わるごとに送るので、
+ * 4問なら1人あたり5件（各問＋最後）貯まる。5000件 ≒ 1000人ぶん。
+ * 集計側は sessionId でいちばん進んだ1件にまとめる。
+ */
 export const MAX_RESPONSES = 5000
 
 export function isSurveyKind(v: unknown): v is SurveyKind {

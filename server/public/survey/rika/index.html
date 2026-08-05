@@ -64,7 +64,7 @@ legend{font-size:15px;margin-bottom:10px;padding:0}
 <section id="s-intro">
   <header>
     <h1>理科の考え方 調査</h1>
-    <p class="sub">中学理科「力と運動」について聞きます。5分ほどです。</p>
+    <p class="sub">中学理科「力と運動」について聞きます。10分ほどです。</p>
   </header>
   <div class="card">
     <p class="q">正解・不正解を採点するテストでは<strong>ありません</strong>。<br>
@@ -73,7 +73,7 @@ legend{font-size:15px;margin-bottom:10px;padding:0}
       きれいに書く必要はありません。話し言葉で大丈夫です。</p>
     <p class="note"><strong>集めるのは学年・理科の好き嫌い・あなたが書いた答えだけです。</strong>
       名前やメールアドレスなど、あなたが誰かが分かる情報は一切取りません。<br>
-      答え終わると自動で送信されます。最後に、正しい考え方の解説を出します。</p>
+      答えは1問ごとに自動で送信されます。途中でやめても、そこまでは残ります。最後に、正しい考え方の解説を出します。</p>
   </div>
   <button class="btn" id="go-meta">はじめる</button>
 </section>
@@ -116,12 +116,18 @@ legend{font-size:15px;margin-bottom:10px;padding:0}
   <button class="btn" id="lure-next" disabled>つぎへ</button>
 </section>
 
-<!-- ③ 選択式（ground truth） -->
+<!-- ③ 選択式（ground truth）。**2問聞く。**
+     1問だとまぐれ当たりや不注意がそのまま ground truth の誤りになり、
+     測れる一致率に天井ができる。別の場面で同じ考え方を聞いて、
+     そろったときだけ「分かっている / 誤解している」と数える -->
 <section id="s-mc" class="hidden">
   <p class="count" id="c3"></p><div class="bar"><i id="b3"></i></div>
   <div class="card">
     <p class="q" id="mc-q"></p>
     <div class="opts" id="mc-opts"></div>
+    <hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
+    <p class="q" id="mc-q2"></p>
+    <div class="opts" id="mc-opts2"></div>
     <hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
     <p class="q" style="margin-bottom:10px">この単元、学校でもう習いましたか。</p>
     <div class="grid" id="learned-opts"></div>
@@ -154,10 +160,12 @@ legend{font-size:15px;margin-bottom:10px;padding:0}
 </div>
 <script>
 "use strict";
-const ITEMS = [{"id": "M01", "topic": "落下", "grade3": true, "explain": "物が落ちる速さは何で決まると思いますか。友達に教えるつもりで説明してください。", "lure": "えっと、じゃあ重いものの方が速く落ちるってこと？", "q": "空気の抵抗が無視できるとき、重い鉄球と軽い鉄球を同じ高さから同時に落とすと、どうなりますか。", "options": ["重い方が先に地面に着く", "軽い方が先に地面に着く", "同時に地面に着く", "落とす高さによって変わる"], "correct": 2, "trap": 0}, {"id": "M02", "topic": "慣性", "grade3": true, "explain": "なめらかな氷の上を物がすべっているとき、その物にはどんな力がはたらいていると思いますか。友達に教えるつもりで説明してください。", "lure": "動いてるってことは、ずっと前向きに力がかかってるんだよね？", "q": "まさつのないなめらかな氷の上を、一定の速さですべり続けている物体があります。この物体に、進む向きの力ははたらいていますか。", "options": ["はたらき続けている", "はたらいていない", "だんだん大きくなっている", "速さに応じて変わる"], "correct": 1, "trap": 0}, {"id": "M03", "topic": "摩擦と静止", "grade3": true, "explain": "動いている物が、やがて止まるのはなぜだと思いますか。友達に教えるつもりで説明してください。", "lure": "ものって、ほっとけば自然に止まるものなんじゃないの？", "q": "床の上をすべらせた物体が、やがて止まりました。止まった理由として正しいものはどれですか。", "options": ["止まっているのが物体の本来の状態だから", "動くための力を使い切ったから", "まさつや空気の抵抗の力がはたらいたから", "力がはたらかなくなったから"], "correct": 2, "trap": 0}, {"id": "M04", "topic": "作用・反作用", "grade3": true, "explain": "トラックと自転車がぶつかったとき、それぞれが相手におよぼす力について、思うことを説明してください。", "lure": "えっと、トラックと自転車がぶつかったら、トラックの方が大きい力を出してるんでしょ？", "q": "走ってきたトラックと自転車が衝突しました。おたがいに およぼし合う力の大きさは、どうなっていますか。", "options": ["トラックの方が大きい", "自転車の方が大きい", "同じ大きさ", "速く走っていた方が大きい"], "correct": 2, "trap": 0}, {"id": "M05", "topic": "力のつり合い", "grade3": true, "explain": "「物体にはたらく力がつり合っている」とは、どういう状態のことだと思いますか。友達に教えるつもりで説明してください。", "lure": "力がつり合ってるってことは、止まってるってことだよね？", "q": "ある物体にはたらく力が、すべてつり合っています。このとき物体はどうなっていますか。", "options": ["かならず止まっている", "止まっているか、一定の速さで動き続けている", "だんだん遅くなっていく", "少しずつ動き出す"], "correct": 1, "trap": 0}, {"id": "M06", "topic": "圧力", "grade3": false, "explain": "圧力とは何か、そして何によって決まるかを、友達に教えるつもりで説明してください。", "lure": "押す力が同じなら、面積が違っても圧力は同じだよね？", "q": "同じ大きさの力で押すとき、押す面積を半分にすると、圧力はどうなりますか。", "options": ["変わらない", "半分になる", "2倍になる", "4倍になる"], "correct": 2, "trap": 0}, {"id": "M07", "topic": "浮力", "grade3": false, "explain": "水の中にある物が受ける浮力は、何によって決まると思いますか。友達に教えるつもりで説明してください。", "lure": "重いものほど浮力も大きくなるんだよね？", "q": "同じ体積の鉄のかたまりとアルミのかたまりを、どちらも水中にすべて しずめました。受ける浮力はどうなりますか。", "options": ["重い鉄の方が大きい", "軽いアルミの方が大きい", "同じ大きさ", "しずめる深さによって変わる"], "correct": 2, "trap": 0}, {"id": "M08", "topic": "投げ上げ", "grade3": true, "explain": "真上に投げたボールが上がっているとき、ボールにどんな力がはたらいていると思いますか。友達に教えるつもりで説明してください。", "lure": "上に投げてる間は、上向きの力がはたらいてるってことだよね？", "q": "真上に投げ上げたボールが、まだ上がっている とちゅうです。このボールにはたらいている力はどれですか。（空気の抵抗は考えない）", "options": ["上向きの力", "下向きの重力だけ", "力ははたらいていない", "上向きと下向きがつり合っている"], "correct": 1, "trap": 0}];
+const ITEMS = [{"id": "M01", "topic": "落下", "grade3": true, "explain": "物が落ちる速さは何で決まると思いますか。友達に教えるつもりで説明してください。", "lure": "えっと、じゃあ重いものの方が速く落ちるってこと？", "q": "空気の抵抗が無視できるとき、重い鉄球と軽い鉄球を同じ高さから同時に落とすと、どうなりますか。", "options": ["重い方が先に地面に着く", "軽い方が先に地面に着く", "同時に地面に着く", "落とす高さによって変わる"], "correct": 2, "trap": 0, "q2": "空気の抵抗を考えないとき、10kg の石と 1kg の石を同じ高さから同時に落とすと、地面に着くのはどちらが先ですか。", "options2": ["10kg の石", "1kg の石", "どちらも同時", "落とす場所による"], "correct2": 2, "trap2": 0}, {"id": "M02", "topic": "慣性", "grade3": true, "explain": "なめらかな氷の上を物がすべっているとき、その物にはどんな力がはたらいていると思いますか。友達に教えるつもりで説明してください。", "lure": "動いてるってことは、ずっと前向きに力がかかってるんだよね？", "q": "まさつのないなめらかな氷の上を、一定の速さですべり続けている物体があります。この物体に、進む向きの力ははたらいていますか。", "options": ["はたらき続けている", "はたらいていない", "だんだん大きくなっている", "速さに応じて変わる"], "correct": 1, "trap": 0, "q2": "宇宙空間で、まわりに何もないところを一定の速さで進んでいる探査機があります。エンジンは止めてあります。この探査機はどうなりますか。", "options2": ["だんだん遅くなって止まる", "同じ速さで進み続ける", "だんだん速くなる", "すぐに止まる"], "correct2": 1, "trap2": 0}, {"id": "M03", "topic": "摩擦と静止", "grade3": true, "explain": "動いている物が、やがて止まるのはなぜだと思いますか。友達に教えるつもりで説明してください。", "lure": "ものって、ほっとけば自然に止まるものなんじゃないの？", "q": "床の上をすべらせた物体が、やがて止まりました。止まった理由として正しいものはどれですか。", "options": ["止まっているのが物体の本来の状態だから", "動くための力を使い切ったから", "まさつや空気の抵抗の力がはたらいたから", "力がはたらかなくなったから"], "correct": 2, "trap": 0, "q2": "同じ力ではじいたコインを、つるつるの机の上と、タオルの上ですべらせました。机の上の方が遠くまで進みました。この違いは何から来ていますか。", "options2": ["コインの重さの違い", "はじいた力の違い", "まさつの大きさの違い", "止まろうとする性質の違い"], "correct2": 2, "trap2": 3}, {"id": "M04", "topic": "作用・反作用", "grade3": true, "explain": "トラックと自転車がぶつかったとき、それぞれが相手におよぼす力について、思うことを説明してください。", "lure": "えっと、トラックと自転車がぶつかったら、トラックの方が大きい力を出してるんでしょ？", "q": "走ってきたトラックと自転車が衝突しました。おたがいに およぼし合う力の大きさは、どうなっていますか。", "options": ["トラックの方が大きい", "自転車の方が大きい", "同じ大きさ", "速く走っていた方が大きい"], "correct": 2, "trap": 0, "q2": "大人と子どもが、氷の上で向かい合って手を押し合いました。おたがいが相手におよぼす力の大きさはどうなりますか。", "options2": ["大人の方が大きい", "子どもの方が大きい", "同じ大きさ", "体重の比で決まる"], "correct2": 2, "trap2": 0}, {"id": "M05", "topic": "力のつり合い", "grade3": true, "explain": "「物体にはたらく力がつり合っている」とは、どういう状態のことだと思いますか。友達に教えるつもりで説明してください。", "lure": "力がつり合ってるってことは、止まってるってことだよね？", "q": "ある物体にはたらく力が、すべてつり合っています。このとき物体はどうなっていますか。", "options": ["かならず止まっている", "止まっているか、一定の速さで動き続けている", "だんだん遅くなっていく", "少しずつ動き出す"], "correct": 1, "trap": 0, "q2": "車が高速道路を一定の速さでまっすぐ走っています。この車にはたらく力はどうなっていますか。", "options2": ["前向きの力の方が大きい", "すべてつり合っている", "後ろ向きの力の方が大きい", "力ははたらいていない"], "correct2": 1, "trap2": 0}, {"id": "M06", "topic": "圧力", "grade3": false, "explain": "圧力とは何か、そして何によって決まるかを、友達に教えるつもりで説明してください。", "lure": "押す力が同じなら、面積が違っても圧力は同じだよね？", "q": "同じ大きさの力で押すとき、押す面積を半分にすると、圧力はどうなりますか。", "options": ["変わらない", "半分になる", "2倍になる", "4倍になる"], "correct": 2, "trap": 0, "q2": "同じ人が、細いヒールの靴と、平らなスニーカーで やわらかい地面に立ちました。地面が受ける圧力はどうなりますか。", "options2": ["どちらも同じ", "ヒールの方が大きい", "スニーカーの方が大きい", "体重が同じなら変わらない"], "correct2": 1, "trap2": 0}, {"id": "M07", "topic": "浮力", "grade3": false, "explain": "水の中にある物が受ける浮力は、何によって決まると思いますか。友達に教えるつもりで説明してください。", "lure": "重いものほど浮力も大きくなるんだよね？", "q": "同じ体積の鉄のかたまりとアルミのかたまりを、どちらも水中にすべて しずめました。受ける浮力はどうなりますか。", "options": ["重い鉄の方が大きい", "軽いアルミの方が大きい", "同じ大きさ", "しずめる深さによって変わる"], "correct": 2, "trap": 0, "q2": "同じ重さの粘土を、丸めた形と、舟の形にして水に入れました。舟の形だけが浮きました。なぜですか。", "options2": ["舟の形の方が軽いから", "舟の形の方が押しのけた水が多いから", "舟の形の方が水の抵抗が小さいから", "形は関係なく偶然"], "correct2": 1, "trap2": 0}, {"id": "M08", "topic": "投げ上げ", "grade3": true, "explain": "真上に投げたボールが上がっているとき、ボールにどんな力がはたらいていると思いますか。友達に教えるつもりで説明してください。", "lure": "上に投げてる間は、上向きの力がはたらいてるってことだよね？", "q": "真上に投げ上げたボールが、まだ上がっている とちゅうです。このボールにはたらいている力はどれですか。（空気の抵抗は考えない）", "options": ["上向きの力", "下向きの重力だけ", "力ははたらいていない", "上向きと下向きがつり合っている"], "correct": 1, "trap": 0, "q2": "真上に投げたボールが、いちばん高いところに来た瞬間です。このボールにはたらく力はどうなっていますか。", "options2": ["力はゼロになっている", "下向きの重力がはたらいている", "上向きの力がはたらいている", "上下がつり合っている"], "correct2": 1, "trap2": 0}];
 
-// 1人あたり2問だけ出す。全項目は回答者をまたいでカバーする
-const N_PER = 2;
+// 1人あたり4問。**8問全部は出さない。**
+// 自由記述が2つ付くので、6問を超えると後半が「わからない」で埋まり、
+// 測りたいものが壊れる。4問がほぼ頭打ち（人数は3割しか減らず時間は倍になる）
+const N_PER = 4;
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 const assigned = shuffle(ITEMS.slice()).slice(0, N_PER);
 
@@ -166,8 +174,9 @@ assigned.forEach(it => {
   const idx = it.options.map((_, i) => i);
   shuffle(idx);
   it._order = idx;                       // 表示順 -> 元の添字
-  it._correctPos = idx.indexOf(it.correct);
-  it._trapPos = idx.indexOf(it.trap);
+  const idx2 = it.options2.map((_, i) => i);
+  shuffle(idx2);
+  it._order2 = idx2;
 });
 
 const GRADE = ["中学1年","中学2年","中学3年","高校1年","高校2年","高校3年","その他"];
@@ -229,19 +238,10 @@ $("lure-a").oninput = e => { $("lure-next").disabled = e.target.value.trim().len
 $("lure-next").onclick = ()=>{
   answers[k].lureReply = $("lure-a").value.trim();
   answers[k].lureMs = Math.round(performance.now()-t0);
-  $("mc-q").textContent = cur.q;
-  const h = $("mc-opts"); h.innerHTML = "";
-  cur._order.forEach((orig, pos)=>{
-    const b=document.createElement("button");
-    b.type="button"; b.className="opt"; b.textContent = cur.options[orig];
-    b.setAttribute("aria-pressed","false");
-    b.onclick=()=>{[...h.children].forEach(c=>c.setAttribute("aria-pressed","false"));
-      b.setAttribute("aria-pressed","true");
-      answers[k].pick = orig;                       // 元の添字で記録する
-      answers[k].pickPos = pos;
-      gateMc();};
-    h.appendChild(b);
-  });
+  // 選択式は2問。**同じ考え方を別の場面で聞く。**
+  // 同じ場面の言い換えだと、まぐれ当たりも一緒に再現される
+  mcQuestion("mc-q", "mc-opts", cur.q, cur.options, cur._order, "pick", "pickPos");
+  mcQuestion("mc-q2", "mc-opts2", cur.q2, cur.options2, cur._order2, "pick2", "pickPos2");
   // 「習った？」— 中3内容の項目を中1・中2が答えると
   // 「誤概念を持っている」ではなく「習っていない」になるため、分けて解析できるようにする
   const lh = $("learned-opts"); lh.innerHTML = "";
@@ -256,17 +256,84 @@ $("lure-next").onclick = ()=>{
   $("mc-next").disabled = true;
   progress(2); show("s-mc"); t0 = performance.now();
 };
+function mcQuestion(qId, hostId, text, options, order, pickKey, posKey){
+  $(qId).textContent = text;
+  const h = $(hostId); h.innerHTML = "";
+  order.forEach((orig, pos)=>{
+    const b=document.createElement("button");
+    b.type="button"; b.className="opt"; b.textContent = options[orig];
+    b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{[...h.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      answers[k][pickKey] = orig;                   // 元の添字で記録する
+      answers[k][posKey] = pos;
+      gateMc();};
+    h.appendChild(b);
+  });
+}
+
 $("mc-next").onclick = ()=>{
-  answers[k].mcMs = Math.round(performance.now()-t0);
-  answers[k].correct = (answers[k].pick === cur.correct);
-  answers[k].heldMisconception = (answers[k].pick === cur.trap);
+  const a = answers[k];
+  a.mcMs = Math.round(performance.now()-t0);
+
+  const c1 = (a.pick === cur.correct),  c2 = (a.pick2 === cur.correct2);
+  const t1 = (a.pick === cur.trap),     t2 = (a.pick2 === cur.trap2);
+
+  // **2問そろったときだけ確かなものとして数える。**
+  // 食い違いは陽性にも陰性にも入れない（判断がついていないのに
+  // どちらかに寄せると、そのぶんがそのまま測定の誤差になる）
+  a.correct = c1 && c2;
+  a.heldMisconception = t1 && t2;
+  a.groundTruth = a.correct ? "understood"
+                : a.heldMisconception ? "misconception"
+                : (c1 !== c2 || t1 !== t2) ? "inconsistent" : "other";
+  // 1問目だけの判定も残す。2問式の効き目を後から比べられるように
+  a.correct1 = c1;
+  a.heldMisconception1 = t1;
+
   k++;
+  sendProgress();                                   // ここまでを先に送る
   if (k < assigned.length) startItem(); else finish();
 };
 
 function gateMc(){
   const a = answers[k];
-  $("mc-next").disabled = !(a.pick !== undefined && a.learned);
+  $("mc-next").disabled =
+    !(a.pick !== undefined && a.pick2 !== undefined && a.learned);
+}
+
+// 回答者を通しで表す番号。**同じ人の追記だと分かるようにする。**
+// 個人を特定するものではなく、この1回の回答をまとめるだけ
+const sessionId = (crypto.randomUUID ? crypto.randomUUID()
+  : String(Date.now()) + Math.random().toString(36).slice(2));
+
+function payload(done){
+  return {
+    v:2, kind:"misconception", sessionId, done,
+    ts:new Date().toISOString(),
+    meta, env:{w:innerWidth,h:innerHeight,ua:navigator.userAgent.slice(0,190),lang:navigator.language},
+    ans: answers.slice(0, k)
+  };
+}
+
+/**
+ * 1問終わるごとに送る。**最後まで行かなくても残す。**
+ *
+ * 4問で10分ほどかかるので、最後にまとめて送ると途中でやめた人のぶんが
+ * 丸ごと消える。同じ sessionId で上書きしていくので、
+ * 集計側は最後の1件だけを見ればよい。
+ */
+function sendProgress(){
+  const body = JSON.stringify(payload(false));
+  // 画面を閉じられても届くように。使えない環境では普通の fetch に落ちる
+  if (navigator.sendBeacon) {
+    try {
+      navigator.sendBeacon(ENDPOINT, new Blob([body], {type:"application/json"}));
+      return;
+    } catch (e) { /* 下の fetch へ */ }
+  }
+  fetch(ENDPOINT, {method:"POST", headers:{"Content-Type":"application/json"},
+                   body, keepalive:true}).catch(()=>{});
 }
 
 async function submit(json){
@@ -290,12 +357,7 @@ async function submit(json){
 }
 
 function finish(){
-  const payload = {
-    v:1, kind:"misconception", ts:new Date().toISOString(),
-    meta, env:{w:innerWidth,h:innerHeight,ua:navigator.userAgent.slice(0,190),lang:navigator.language},
-    ans: answers
-  };
-  const json = JSON.stringify(payload);
+  const json = JSON.stringify(payload(true));
   $("code").value = btoa(unescape(encodeURIComponent(json)));
   ["b1","b2","b3"].forEach(id=>$(id).style.width="100%");
   submit(json);
