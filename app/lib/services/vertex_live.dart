@@ -64,40 +64,52 @@ class VertexLiveSession {
         }
       },
       onError: (Object e) {
-        _events.add(LiveEvent.failed('$e'));
+        _emit(LiveEvent.failed('$e'));
         _finish();
       },
       onDone: () {
         // 1000 は正常終了。**Vertex は約10分でここに来る**（セッション上限）
-        _events.add(LiveEvent.closed(_socket.closeCode, _socket.closeReason));
+        _emit(LiveEvent.closed(_socket.closeCode, _socket.closeReason));
         _finish();
       },
       cancelOnError: false,
     );
   }
 
+  /// 閉じたあとに届いたものは捨てる。
+  ///
+  /// `cancelOnError: false` なので、エラーのあとに `onDone` も来る。
+  /// エラー側で閉じたストリームへ `onDone` が書き込むと
+  /// `Bad state: Cannot add new events after calling close` で
+  /// **未処理例外**になり、本当の失敗理由がその陰に隠れる（実機で発生）。
+  /// 自分で `close()` したときも、ソケットの `onDone` は後から届く。
+  void _emit(LiveEvent e) {
+    if (_events.isClosed) return;
+    _events.add(e);
+  }
+
   void _handle(Map<String, dynamic> m) {
     if (m['setupComplete'] != null) {
-      _events.add(const LiveEvent.ready());
+      _emit(const LiveEvent.ready());
       return;
     }
     if (m['error'] != null) {
-      _events.add(LiveEvent.failed(jsonEncode(m['error'])));
+      _emit(LiveEvent.failed(jsonEncode(m['error'])));
       return;
     }
 
     final handle = (m['sessionResumptionUpdate'] as Map?)?['newHandle'] as String?;
     if (handle != null && handle.isNotEmpty) {
-      _events.add(LiveEvent.resumptionHandle(handle));
+      _emit(LiveEvent.resumptionHandle(handle));
     }
-    if (m['goAway'] != null) _events.add(const LiveEvent.goingAway());
+    if (m['goAway'] != null) _emit(const LiveEvent.goingAway());
 
     final sc = m['serverContent'] as Map?;
     if (sc == null) return;
 
     // 割り込み。**最優先で伝える**
     if (sc['interrupted'] == true) {
-      _events.add(const LiveEvent.interrupted());
+      _emit(const LiveEvent.interrupted());
       return;
     }
 
@@ -106,20 +118,20 @@ class VertexLiveSession {
       for (final p in parts.whereType<Map>()) {
         final b64 = (p['inlineData'] as Map?)?['data'] as String?;
         if (b64 == null || b64.isEmpty) continue;
-        _events.add(LiveEvent.audio(base64Decode(b64)));
+        _emit(LiveEvent.audio(base64Decode(b64)));
       }
     }
 
     final interim = (sc['interimInputTranscription'] as Map?)?['text'] as String?;
     if (interim != null && interim.isNotEmpty) {
-      _events.add(LiveEvent.interimStudent(interim));
+      _emit(LiveEvent.interimStudent(interim));
     }
     final input = (sc['inputTranscription'] as Map?)?['text'] as String?;
-    if (input != null && input.isNotEmpty) _events.add(LiveEvent.studentText(input));
+    if (input != null && input.isNotEmpty) _emit(LiveEvent.studentText(input));
     final output = (sc['outputTranscription'] as Map?)?['text'] as String?;
-    if (output != null && output.isNotEmpty) _events.add(LiveEvent.aiText(output));
+    if (output != null && output.isNotEmpty) _emit(LiveEvent.aiText(output));
 
-    if (sc['turnComplete'] == true) _events.add(const LiveEvent.turnComplete());
+    if (sc['turnComplete'] == true) _emit(const LiveEvent.turnComplete());
   }
 
   // ── 送信 ──────────────────────────────────────────────────

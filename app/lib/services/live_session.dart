@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
 
@@ -110,6 +111,9 @@ class LiveSessionController extends ChangeNotifier {
 
   /// いま喋っている途中の文字起こし。確定前なので記録には使わない。
   String interimStudentText = '';
+
+  /// 直近の出来事。**画面に出せる形で持つ。** release でも消えない
+  final List<String> notes = [];
 
   final List<double> _peaks = [];
   int _selfInterruptions = 0;
@@ -307,16 +311,27 @@ class LiveSessionController extends ChangeNotifier {
         break;
 
       case LiveGoingAway():
-        debugPrint('Live から goAway');
+        _note('Live から goAway');
 
       case LiveClosed(:final code, :final reason):
-        debugPrint('Live 切断: $code $reason');
+        _note('Live 切断: code=$code reason=$reason');
         if (!_closing) unawaited(_onSessionEnded());
 
       case LiveFailed(:final detail):
-        debugPrint('Live エラー: $detail');
+        _note('Live エラー: $detail');
         if (!_closing) _fail(_classify(detail));
     }
+  }
+
+  /// 会話が終わった・落ちたときの記録。**release でも残す。**
+  ///
+  /// `debugPrint` は release build で消える。実機で会話が18秒で切れたとき、
+  /// 理由を書いた行が1つも残っておらず、原因の特定に丸ごと1周かかった。
+  /// `developer.log` なら release でも logcat に出る。
+  void _note(String message) {
+    notes.add(message);
+    if (notes.length > 50) notes.removeAt(0);
+    developer.log(message, name: 'dekisugi.live');
   }
 
   /// セッションが終わった（Vertex が約10分で切る）。
@@ -334,7 +349,7 @@ class LiveSessionController extends ChangeNotifier {
     }
     _selfInterruptions++;
     if (_selfInterruptions == 3) {
-      debugPrint('自己割り込みの疑い（エコーキャンセルが効いていない可能性）');
+      _note('自己割り込みの疑い（エコーキャンセルが効いていない可能性）');
       notifyListeners();
     }
   }
@@ -455,7 +470,7 @@ class LiveSessionController extends ChangeNotifier {
     unawaited(_persist());
 
     if (result.shouldEnd) {
-      debugPrint('ディレクターが終了を指示: ${result.endReason}');
+      _note('ディレクターが終了を指示: ${result.endReason}');
       unawaited(stop(to: LiveState.done));
       return;
     }
