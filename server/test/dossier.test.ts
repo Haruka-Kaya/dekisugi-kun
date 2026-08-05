@@ -11,7 +11,7 @@ import {
   type Slot,
 } from '../lib/dossier.js'
 import { MISCONCEPTIONS, misconceptionsFor } from '../lib/misconceptions.js'
-import { UNITS, unitById, validateCatalog } from '../lib/units.js'
+import { UNITS, sectionFor, unitById, validateCatalog } from '../lib/units.js'
 
 const UNIT = unitById('force-motion')!
 
@@ -43,6 +43,50 @@ describe('カタログ', () => {
   it('単元IDが重複していない', () => {
     const ids = UNITS.map((u) => u.id)
     assert.equal(new Set(ids).size, ids.length)
+  })
+})
+
+describe('教材', () => {
+  it('すべての概念に読む教材がある', () => {
+    // 無いと、復習が「ここが薄い」と言えても読み直す先を出せない
+    for (const u of UNITS) {
+      for (const c of u.concepts) {
+        assert.ok(
+          sectionFor(u, c.key),
+          `${u.id}/${c.key} に教材が無い`,
+        )
+      }
+    }
+  })
+
+  it('教材に AI が言うセリフがそのまま入っていない', () => {
+    // 端末に配るので、覗ける。lure が読めると誘発が成立しない
+    const all = UNITS.flatMap((u) => u.sections.flatMap((s) => [...s.body, s.tryIt])).join('\n')
+    for (const m of MISCONCEPTIONS) {
+      assert.ok(!all.includes(m.lure), `${m.id} の lure が教材に載っている`)
+    }
+  })
+
+  it('読み物として最低限の量がある', () => {
+    for (const u of UNITS) {
+      for (const s of u.sections) {
+        assert.ok(s.body.length >= 3, `${u.id}/${s.conceptKey} の段落が少なすぎる`)
+        const chars = s.body.join('').length
+        assert.ok(chars >= 150, `${u.id}/${s.conceptKey} が短すぎる（${chars}字）`)
+        // 長すぎると説明フェーズの前に読み切れない。1節2分をめやすにする
+        assert.ok(chars <= 700, `${u.id}/${s.conceptKey} が長すぎる（${chars}字）`)
+        assert.ok(s.tryIt.length > 10, `${u.id}/${s.conceptKey} に tryIt が無い`)
+      }
+    }
+  })
+
+  it('教材が存在しない概念を指していない', () => {
+    for (const u of UNITS) {
+      const keys = new Set(u.concepts.map((c) => c.key))
+      for (const s of u.sections) {
+        assert.ok(keys.has(s.conceptKey), `${u.id}: ${s.conceptKey} は概念に無い`)
+      }
+    }
   })
 })
 

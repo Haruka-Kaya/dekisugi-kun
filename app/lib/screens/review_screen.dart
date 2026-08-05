@@ -2,7 +2,9 @@ import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../models/review.dart';
 import '../services/session_store.dart';
+import '../services/units_client.dart';
 import '../ui/_material.dart';
+import 'material_screen.dart';
 
 /// 復習の画面。
 ///
@@ -10,9 +12,15 @@ import '../ui/_material.dart';
 /// 聞き流しただけでも「訂正しなかった」に見える。
 /// 出すのは「もう一度たしかめたいところ」までで、誤解していると断定しない。
 class ReviewScreen extends StatefulWidget {
-  const ReviewScreen({super.key, required this.store});
+  const ReviewScreen({super.key, required this.store, this.units});
 
   final SessionStore store;
+
+  /// 教材の取り出し口。**あると「読み直す」が押せる。**
+  ///
+  /// 無いと、どこを見直すかは出せても**見直す中身が出せない**。
+  /// 通信が無くても保存したぶんは読めるので、電車の中でも開ける。
+  final UnitsClient? units;
 
   @override
   State<ReviewScreen> createState() => _ReviewScreenState();
@@ -52,6 +60,34 @@ class _ReviewScreenState extends State<ReviewScreen> {
     if (mounted) setState(() => _exam = picked);
   }
 
+  /// その概念の教材を開く。
+  ///
+  /// **保存したものを先に見る。** 通信を待たせると、
+  /// 電車の中で開いたときに読めないまま終わる。
+  Future<void> _read(ReviewItem item) async {
+    final units = widget.units;
+    if (units == null) return;
+
+    var unit = await units.cachedDetail(item.unitId);
+    unit ??= await units.detail(item.unitId);
+    if (!mounted) return;
+
+    final section = unit?.sectionFor(item.conceptKey);
+    if (unit == null || section == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('この教材をまだ読み込めていません。')),
+      );
+      return;
+    }
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => MaterialScreen(
+        unit: unit!,
+        focusConceptKey: item.conceptKey,
+        onDone: () {},
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final items = _items;
@@ -73,6 +109,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     _ReviewTile(
                       item: item,
                       exam: _exam,
+                      onRead: widget.units == null ? null : () => _read(item),
                       onDone: () async {
                         await widget.store
                             .clearReview(item.unitId, item.conceptKey);
@@ -143,11 +180,15 @@ class _ReviewTile extends StatelessWidget {
     required this.item,
     required this.exam,
     required this.onDone,
+    this.onRead,
   });
 
   final ReviewItem item;
   final DateTime? exam;
   final VoidCallback onDone;
+
+  /// 教材を読み直す。取り出せないときは null（ボタンを出さない）
+  final VoidCallback? onRead;
 
   @override
   Widget build(BuildContext context) {
@@ -187,12 +228,22 @@ class _ReviewTile extends StatelessWidget {
             Text(item.reason.label,
                 style: t.textTheme.bodyMedium?.copyWith(color: fg)),
             const SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton(
-                onPressed: onDone,
-                child: const Text('もう覚えた'),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // **読み直す先を出す。** 「ここが薄い」だけでは行き場が無い
+                if (onRead != null)
+                  FilledButton.tonalIcon(
+                    onPressed: onRead,
+                    icon: const Icon(Icons.menu_book, size: 18),
+                    label: const Text('読み直す'),
+                  ),
+                const SizedBox(width: 8),
+                OutlinedButton(
+                  onPressed: onDone,
+                  child: const Text('もう覚えた'),
+                ),
+              ],
             ),
           ],
         ),

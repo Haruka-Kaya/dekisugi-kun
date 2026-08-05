@@ -10,38 +10,8 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// 応答を固定した Dio。ネットワークを使わない。
-Dio fakeDio(Map<String, Response<Object?> Function()> routes) {
-  final dio = Dio(BaseOptions(validateStatus: (_) => true));
-  dio.httpClientAdapter = _StubAdapter(routes);
-  return dio;
-}
+import 'support/stub_dio.dart';
 
-class _StubAdapter implements HttpClientAdapter {
-  _StubAdapter(this.routes);
-  final Map<String, Response<Object?> Function()> routes;
-
-  @override
-  void close({bool force = false}) {}
-
-  @override
-  Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
-    final key = '${options.method} ${options.path}';
-    final make = routes[key];
-    if (make == null) return ResponseBody.fromString('{}', 404);
-    final res = make();
-    return ResponseBody.fromString(
-      res.data is String ? res.data! as String : '',
-      res.statusCode ?? 200,
-      headers: {
-        Headers.contentTypeHeader: [Headers.jsonContentType],
-      },
-    );
-  }
-}
-
-Response<Object?> json(int code, String body) =>
-    Response<Object?>(requestOptions: RequestOptions(), statusCode: code, data: body);
 
 LiveSessionController controller({int? remaining, DateTime? resetsAt}) {
   final store = MemorySessionStore();
@@ -118,7 +88,7 @@ void main() {
 
     test('確保できたら中身を読む', () async {
       final c = client({
-        'POST https://example.test/api/live-token': () => json(200, '''
+        'POST https://example.test/api/live-token': () => json200('''
 {"token":"ya29.abc","wsUrl":"wss://x.googleapis.com/ws/y","model":"projects/p/locations/l/publishers/google/models/m","setupConfig":{"generationConfig":{"responseModalities":["AUDIO"]}},
  "expiresAt":"2099-01-01T00:00:00Z","sessionMinutes":10,
  "remainingSessions":1,"entitled":false,"resetsAt":"2099-01-02T00:00:00Z"}'''),
@@ -133,7 +103,7 @@ void main() {
     test('402 は QuotaExhausted（エラーにしない）', () async {
       final c = client({
         'POST https://example.test/api/live-token': () =>
-            json(402, '{"error":"quota_exhausted","resetsAt":"2099-01-02T00:00:00Z"}'),
+            jsonRes(402, '{"error":"quota_exhausted","resetsAt":"2099-01-02T00:00:00Z"}'),
       });
       await expectLater(c.reserve('force-motion'), throwsA(isA<QuotaExhausted>()));
     });
@@ -142,21 +112,21 @@ void main() {
       // 空のトークンで繋ぎにいくと、原因の分からない接続失敗になる
       final c = client({
         'POST https://example.test/api/live-token': () =>
-            json(200, '{"model":"m"}'),
+            json200('{"model":"m"}'),
       });
       await expectLater(c.reserve('force-motion'), throwsA(isA<LiveTokenUnavailable>()));
     });
 
     test('peek は失敗しても null（画面を止めない）', () async {
       final c = client({
-        'GET https://example.test/api/live-token': () => json(500, '{}'),
+        'GET https://example.test/api/live-token': () => jsonRes(500, '{}'),
       });
       expect(await c.peek(), isNull);
     });
 
     test('peek は残りと戻る時刻を読む', () async {
       final c = client({
-        'GET https://example.test/api/live-token': () => json(200,
+        'GET https://example.test/api/live-token': () => json200(
             '{"remainingSessions":0,"minutesPerSession":10,"entitled":false,"resetsAt":"2099-01-02T00:00:00Z"}'),
       });
       final q = await c.peek();
@@ -167,7 +137,7 @@ void main() {
     test('課金済みは残りが null でも使い切り扱いにしない', () async {
       final c = client({
         'GET https://example.test/api/live-token': () =>
-            json(200, '{"remainingSessions":null,"entitled":true}'),
+            json200('{"remainingSessions":null,"entitled":true}'),
       });
       final q = await c.peek();
       expect(q!.isExhausted, isFalse);

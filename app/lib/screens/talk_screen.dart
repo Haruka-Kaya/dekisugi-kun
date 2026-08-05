@@ -6,6 +6,7 @@ import '../config/env.dart';
 import '../services/live_session.dart';
 import '../services/mic_stream.dart';
 import '../services/session_store.dart';
+import '../services/units_client.dart';
 import '../ui/_material.dart';
 import '../widgets/dossier_bar.dart';
 import '../widgets/quota_view.dart';
@@ -18,7 +19,11 @@ import 'review_screen.dart';
 /// **状態は「キャラの見た目」と「文字」の両方で出す** — 動きが止まっている
 /// 端末（Reduce Motion / 古い端末）でも、いま何が起きているか分かる必要がある。
 class TalkScreen extends StatefulWidget {
-  const TalkScreen({super.key});
+  const TalkScreen({super.key, required this.unitTitle});
+
+  /// いま教えている単元。**画面に出す。**
+  /// 教材を隠しているので、何について話しているかの手がかりが要る
+  final String unitTitle;
 
   @override
   State<TalkScreen> createState() => _TalkScreenState();
@@ -66,7 +71,19 @@ class _TalkScreenState extends State<TalkScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('デキすぎ君に教える'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('デキすぎ君に教える'),
+            Text(
+              widget.unitTitle,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
         actions: [
           // 残りは**最初から見せる**。減ってから知らせると、
           // 会話の途中で急に切れて何が起きたか分からなくなる
@@ -77,8 +94,10 @@ class _TalkScreenState extends State<TalkScreen> {
           IconButton(
             tooltip: 'もう一度見るところ',
             onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
-              builder: (_) =>
-                  ReviewScreen(store: context.read<SessionStore>()),
+              builder: (_) => ReviewScreen(
+                store: context.read<SessionStore>(),
+                units: context.read<UnitsClient>(),
+              ),
             )),
             icon: const Icon(Icons.bookmarks_outlined),
           ),
