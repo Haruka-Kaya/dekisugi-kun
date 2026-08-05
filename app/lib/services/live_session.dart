@@ -11,6 +11,7 @@ import 'mic_stream.dart';
 import 'pcm_player.dart';
 import 'session_store.dart';
 import 'speech_gate.dart';
+import 'transcript_text.dart';
 import 'vertex_live.dart';
 
 /// 会話の見え方。**画面はこれだけを描き分ける。**
@@ -284,7 +285,7 @@ class LiveSessionController extends ChangeNotifier {
         _setState(LiveState.listening);
 
       case LiveInterimStudent(:final text):
-        interimStudentText = text;
+        interimStudentText = tidyJa(text);
         notifyListeners();
 
       case LiveStudentText(:final text):
@@ -339,14 +340,16 @@ class LiveSessionController extends ChangeNotifier {
   }
 
   void _flushAiTurn() {
-    final t = _aiBuf.toString().trim();
+    // 和文の切れ目に入る空白を落としてから記録する。
+    // ここで直しておくとディレクターに渡す逐語も揃う
+    final t = tidyJa(_aiBuf.toString());
     _aiBuf.clear();
     if (t.isEmpty) return;
     transcript.add(Utterance(id: _nextId(), isStudent: false, text: t));
   }
 
   bool _flushTurns() {
-    final s = _studentBuf.toString().trim();
+    final s = tidyJa(_studentBuf.toString());
     _studentBuf.clear();
     final hadStudent = s.isNotEmpty;
     if (hadStudent) {
