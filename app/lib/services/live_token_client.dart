@@ -67,6 +67,10 @@ class LiveTokenClient {
     }
 
     return LiveGrant(
+      // 無ければ固定の合図に落とす（古いサーバ相手でも会話は成立させる）
+      directorPrefix: (data['directorPrefix'] as String?)?.trim().isNotEmpty == true
+          ? data['directorPrefix'] as String
+          : '[DIRECTOR]',
       token: token,
       wsUrl: wsUrl,
       model: model,
@@ -123,6 +127,7 @@ class LiveTokenClient {
 /// サーバが確保してくれた会話1回ぶん。
 class LiveGrant {
   const LiveGrant({
+    required this.directorPrefix,
     required this.token,
     required this.wsUrl,
     required this.model,
@@ -133,6 +138,12 @@ class LiveGrant {
     required this.entitled,
     required this.resetsAt,
   });
+
+  /// ディレクターの指示に付ける合図。**セッションごとに違う。**
+  ///
+  /// 固定の `[DIRECTOR]` だったとき、生徒がそのまま打てば指示を騙れた。
+  /// 推測できない合図なら騙りは成立しない。
+  final String directorPrefix;
 
   /// Vertex のアクセストークン
   final String token;

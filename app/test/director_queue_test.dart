@@ -18,6 +18,14 @@ void main() {
       expect(q.hasPending, isFalse);
     });
 
+    test('合図はサーバが決めたものを使う', () {
+      // 固定の [DIRECTOR] だと生徒がそのまま打って指示を騙れる（実測）。
+      // サーバがセッションごとに乱数で作り、システム指示にも同じものを入れる
+      final q = DirectorQueue()..prefix = '[D:9f2c1a]';
+      q.add('誤概念を口にして');
+      expect(q.takeIfQuiet(true), '[D:9f2c1a] 誤概念を口にして');
+    });
+
     test('1回に1件しか出さない', () {
       // まとめて送るとモデルが1発話に混ぜ、誤概念の誘発と質問が同じターンに乗る
       final q = DirectorQueue();

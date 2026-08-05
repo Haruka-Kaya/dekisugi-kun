@@ -1,4 +1,4 @@
-import { LIVE_MODEL, liveSessionConfig } from './live-config.js'
+import { LIVE_MODEL, liveSessionConfig, newDirectorPrefix } from './live-config.js'
 import { unitById } from './units.js'
 import { VERTEX_LOCATION, VERTEX_PROJECT, vertexAccessToken } from './vertex.js'
 
@@ -28,6 +28,12 @@ import { VERTEX_LOCATION, VERTEX_PROJECT, vertexAccessToken } from './vertex.js'
  */
 
 export type LiveGrant = {
+  /**
+   * ディレクターの指示に付ける合図。**セッションごとに違う。**
+   * 端末はこれを使って注入する。固定だと生徒が騙れる
+   */
+  directorPrefix: string
+
   /** Vertex のアクセストークン */
   token: string
   /** 接続先の WebSocket URL */
@@ -52,8 +58,11 @@ export async function createLiveGrant(unitId: string): Promise<LiveGrant> {
   if (!unit) throw new Error(`未知の単元: ${unitId}`)
 
   const { token, expiresAt } = await vertexAccessToken()
+  // **毎回作り直す。** 使い回すと、1度知られた合図がずっと通る
+  const directorPrefix = newDirectorPrefix()
 
   return {
+    directorPrefix,
     token,
     wsUrl:
       `wss://${VERTEX_LOCATION}-aiplatform.googleapis.com` +
@@ -61,7 +70,7 @@ export async function createLiveGrant(unitId: string): Promise<LiveGrant> {
     model:
       `projects/${VERTEX_PROJECT}/locations/${VERTEX_LOCATION}` +
       `/publishers/google/models/${LIVE_MODEL}`,
-    setupConfig: liveSessionConfig(unit),
+    setupConfig: liveSessionConfig(unit, directorPrefix),
     expiresAt: expiresAt.toISOString(),
     // 実測: 9分時点で code=1000 "The operation was cancelled."
     sessionMinutes: 10,

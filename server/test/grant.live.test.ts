@@ -40,7 +40,8 @@ async function getGrant(): Promise<Grant | 'exhausted'> {
 
   const res = await fetch(`${BASE}/api/live-token`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${reg.token}` },
+    headers: { Authorization: `Bearer ${reg.token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ unitId: 'force-motion' }),
   })
   if (res.status === 402) return 'exhausted'
   // body は一度しか読めない。**失敗メッセージ用に先に読んでおく**

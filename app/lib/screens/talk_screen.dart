@@ -413,6 +413,7 @@ class _Composer extends StatelessWidget {
             // 音量は「聞こえている」を音より先に目で返す層。
             // 高さぶんの場所は常に確保して、出たり消えたりで行が跳ねないようにする
             SizedBox(height: 6, child: running ? _MicLevel(live: live) : null),
+            if (kTextInputEnabled && running) _TextInput(live: live),
             const SizedBox(height: 10),
             FilledButton.icon(
               onPressed: busy ? null : (running ? live.stop : live.start),
@@ -421,6 +422,69 @@ class _Composer extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 検証用の文字入力。**既定では出ない。**
+///
+/// `flutter build apk --dart-define=DEKISUGI_TEXT_INPUT=true` で出る。
+/// 音声だと部屋の音・マイクの当たり外れ・読み上げの手間が混ざって、
+/// 何を試したのか再現できない。文字なら同じ入力を何度でも通せる。
+const bool kTextInputEnabled =
+    bool.fromEnvironment('DEKISUGI_TEXT_INPUT');
+
+class _TextInput extends StatefulWidget {
+  const _TextInput({required this.live});
+
+  final LiveSessionController live;
+
+  @override
+  State<_TextInput> createState() => _TextInputState();
+}
+
+class _TextInputState extends State<_TextInput> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _send() {
+    final text = _controller.text;
+    if (text.trim().isEmpty) return;
+    widget.live.sendStudentText(text);
+    _controller.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => _send(),
+              decoration: const InputDecoration(
+                isDense: true,
+                border: OutlineInputBorder(),
+                hintText: '検証用: 文字で送る',
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton.filled(
+            onPressed: _send,
+            icon: const Icon(Icons.send),
+            tooltip: '送る',
+          ),
+        ],
       ),
     );
   }

@@ -51,6 +51,7 @@ class FakeLive {
 }
 
 LiveGrant grantFor(int port) => LiveGrant(
+      directorPrefix: '[D:test]',
       token: 'test',
       wsUrl: 'ws://127.0.0.1:$port',
       model: 'projects/p/locations/l/publishers/google/models/m',
