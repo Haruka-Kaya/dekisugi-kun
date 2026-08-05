@@ -8,6 +8,7 @@ import '../services/mic_stream.dart';
 import '../services/session_store.dart';
 import '../ui/_material.dart';
 import '../widgets/dossier_bar.dart';
+import '../widgets/quota_view.dart';
 import '../widgets/stage.dart';
 import 'review_screen.dart';
 
@@ -31,6 +32,9 @@ class _TalkScreenState extends State<TalkScreen> {
   void initState() {
     super.initState();
     _lookForUnfinished();
+    // 残りは会話を始める前に見せる（枠は引かない）
+    WidgetsBinding.instance.addPostFrameCallback(
+        (_) => context.read<LiveSessionController>().refreshQuota());
   }
 
   Future<void> _lookForUnfinished() async {
@@ -64,6 +68,12 @@ class _TalkScreenState extends State<TalkScreen> {
       appBar: AppBar(
         title: const Text('デキすぎ君に教える'),
         actions: [
+          // 残りは**最初から見せる**。減ってから知らせると、
+          // 会話の途中で急に切れて何が起きたか分からなくなる
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: QuotaChip(live: live),
+          ),
           IconButton(
             tooltip: 'もう一度見るところ',
             onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
@@ -80,8 +90,8 @@ class _TalkScreenState extends State<TalkScreen> {
             ),
         ],
       ),
-      body: !Env.hasGeminiKey
-          ? const _MissingKey()
+      body: !Env.hasServer
+          ? const _MissingServer()
           : Column(
               children: [
                 Stage(live: live),
@@ -96,6 +106,11 @@ class _TalkScreenState extends State<TalkScreen> {
                   _IssueBanner(issue: live.recordingIssue!),
                 if (live.suspectsSelfInterruption) const _EchoBanner(),
                 if (live.dossier != null) DossierBar(dossier: live.dossier!),
+                if (live.state == LiveState.outOfTime)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                    child: OutOfTimeCard(resetsAt: live.quotaResetsAt),
+                  ),
                 Expanded(child: _TurnLog(live: live)),
                 _Composer(live: live),
               ],
@@ -104,8 +119,8 @@ class _TalkScreenState extends State<TalkScreen> {
   }
 }
 
-class _MissingKey extends StatelessWidget {
-  const _MissingKey();
+class _MissingServer extends StatelessWidget {
+  const _MissingServer();
 
   @override
   Widget build(BuildContext context) {
@@ -118,11 +133,10 @@ class _MissingKey extends StatelessWidget {
           children: [
             Icon(Icons.key_off, size: 40, color: t.colorScheme.onSurfaceVariant),
             const SizedBox(height: 12),
-            Text('APIキーが渡されていません', style: t.textTheme.titleMedium),
+            Text('接続先が設定されていません', style: t.textTheme.titleMedium),
             const SizedBox(height: 8),
             Text(
-              'tools\\run-dev.ps1 から起動するか、'
-              '--dart-define=GEMINI_API_KEY=... を付けてビルドしてください。',
+              '--dart-define=SERVER_URL=... を付けてビルドしてください。',
               style: t.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),

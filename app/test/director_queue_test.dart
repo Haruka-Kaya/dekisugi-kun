@@ -1,4 +1,3 @@
-import 'package:dekisugi/config/live_config.dart';
 import 'package:dekisugi/services/director_queue.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -60,10 +59,12 @@ void main() {
       expect(q.takeIfQuiet(true), isNull);
     });
 
-    test('接頭辞はシステム指示と一致している', () {
-      // ここがずれると、モデルは指示をそのまま読み上げる
-      final q = DirectorQueue();
-      expect(LiveConfig.systemInstruction(), contains(q.prefix));
+    test('接頭辞はサーバの取り決めと一致している', () {
+      // システム指示はサーバが一時トークンに焼き込むようになったので、
+      // 突き合わせ先は `server/lib/live-config.ts` の DIRECTOR_PREFIX。
+      // ここがずれると、モデルは指示をそのまま読み上げる。
+      // **両方を1か所から生成する仕組みは無い**ので、値でしか縛れない
+      expect(DirectorQueue().prefix, '[DIRECTOR]');
     });
   });
 }

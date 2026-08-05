@@ -9,6 +9,7 @@ import 'services/consent.dart';
 import 'services/device_identity.dart';
 import 'services/director_client.dart';
 import 'services/live_session.dart';
+import 'services/live_token_client.dart';
 import 'services/session_store.dart';
 import 'ui/_material.dart';
 
@@ -51,9 +52,12 @@ class DekisugiApp extends StatelessWidget {
         Provider<ConsentStore>.value(value: ConsentStore(store)),
         ChangeNotifierProvider(
           create: (_) => LiveSessionController(
-            apiKey: Env.geminiApiKey,
             unitId: kUnitId,
             store: store,
+            // **APIキーは端末に無い。** 会話ごとにサーバから
+            // 時間つきの一時トークンをもらう
+            tokens:
+                LiveTokenClient(baseUrl: Env.directorUrl, identity: identity),
             director:
                 DirectorClient(baseUrl: Env.directorUrl, identity: identity),
           ),

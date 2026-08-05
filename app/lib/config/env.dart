@@ -1,29 +1,19 @@
 /// ビルド時に埋め込む設定。
 ///
-/// **キーをソースに書かないこと。** `--dart-define` で渡す:
+/// **APIキーはもう入っていない。**
+/// 会話は、サーバが発行する時間つきの一時トークンでしか繋げない。
+/// これで APK を覗いても Gemini を直接叩けなくなり、無料枠の上限が成立する。
 ///
-/// ```powershell
-/// flutter run --dart-define=GEMINI_API_KEY=xxxx
-/// # tools\run-dev.ps1 が .env.local から読んで渡してくれる
-/// ```
-///
-/// 段階5 で、端末に生キーを置かない形（サーバが ephemeral token を発行）に差し替える。
-/// `--dart-define` は APK の中に平文で残るので、**配布ビルドでは使えない**。
+/// ここに残っているのは公開してよい接続先だけ。
 abstract final class Env {
-  static const String geminiApiKey =
-      String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
+  /// サーバの置き場。**これが無いと会話そのものができない。**
+  ///
+  /// 会話用の一時トークンもここから取る。
+  /// 例: `--dart-define=SERVER_URL=https://dekisugi-director.vercel.app`
+  static const String directorUrl = String.fromEnvironment(
+    'SERVER_URL',
+    defaultValue: 'https://dekisugi-director.vercel.app',
+  );
 
-  static bool get hasGeminiKey => geminiApiKey.isNotEmpty;
-
-  /// ディレクター（進行役）の置き場。空なら会話はできるが進行しない。
-  /// 例: `--dart-define=DIRECTOR_URL=https://dekisugi.vercel.app`
-  static const String directorUrl =
-      String.fromEnvironment('DIRECTOR_URL', defaultValue: '');
-
-  static bool get hasDirector => directorUrl.isNotEmpty;
-
-  /// ディレクターの門を通すトークン。**認証ではない**（APK から取り出せる）。
-  /// 段階5 で本物の認証に入れ替える。
-  static const String directorToken =
-      String.fromEnvironment('DIRECTOR_TOKEN', defaultValue: '');
+  static bool get hasServer => directorUrl.isNotEmpty;
 }

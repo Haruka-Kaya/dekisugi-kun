@@ -2,96 +2,39 @@ import 'package:gemini_live/gemini_live.dart';
 
 import '../services/mic_stream.dart';
 
-/// Gemini Live の接続設定。数値と理由はここに集約する。
+/// Gemini Live に繋ぐときの、**端末側に残った設定だけ**。
 ///
-/// `tools/live_spike/test/director_spike_test.dart` で成立を確認した設定を土台にしている。
+/// ## 会話設定はここに無い
+///
+/// モデル・システム指示・VAD・文字起こし・セッション再開は、すべて
+/// サーバが一時トークンに焼き込む（`server/lib/live-config.ts`）。
+///
+/// > [!important] トークンに焼いた設定が勝つ（実測）
+/// > `liveConnectConstraints.config` に入っていない設定は、
+/// > **端末が送っても効かない。**
+/// > 文字起こしを端末側だけで指定したら、音声は返るのに文字起こしが空になった。
+/// >
+/// > なので端末からは送らない。送っても効かないものを書いておくと、
+/// > 「ここを直せば変わる」と勘違いする。
+///
+/// 副作用として、ペルソナと `[DIRECTOR]` の約束を端末から改変できない。
 class LiveConfig {
-  /// 出力は AUDIO のみ。何と言ったかは outputAudioTranscription で読む。
-  ///
-  /// ## なぜ gemini-3.1-flash-live-preview を使わないのか
-  ///
-  /// スパイクではこれを使ったが、**音声を返さない**。
-  /// `usageMetadata` に responseTokenCount が出ず（0トークン）、
-  /// 文字起こしだけが返ってくることも、何も返らないこともある。
-  /// 実測 0/10。スパイクは文字起こししか見ていなかったので気づけなかった。
-  ///
-  /// 下のモデルは同じ設定一式で 3/3 音声が返り、内容も安定していた
-  /// （responseTokensDetails: AUDIO 84 トークン / 約3.6秒）。
-  ///
-  /// **モデルを変えるときは必ず `tools\test-live.ps1` を通すこと。**
-  /// ビルドでも接続でも落ちず、音だけ出ないという壊れ方をする。
-  static const String model = 'gemini-2.5-flash-native-audio-preview-09-2025';
-
   /// 入力の mime type。**レートを明記する。**
   /// `gemini_live` の `sendAudio()` は `audio/pcm` 固定でレートを送らないので、
   /// そちらは使わず `sendRealtimeInput` に自分で Blob を渡す。
   static String get inputMimeType => 'audio/pcm;rate=${MicStream.sampleRate}';
 
-  /// セッションは音声のみで約15分で切れる。切れる前に張り直す。
-  static const Duration sessionSoftLimit = Duration(minutes: 13);
-
-  /// 教わる側の後輩。**解説をさせないこと**が製品の前提（C1〜C4, C9）。
-  static String systemInstruction({String directorPrefix = '[DIRECTOR]'}) => '''
-あなたは中学2年生の「後輩」です。相手（先輩）から理科を教わっています。
-
-## 役割
-- あなたは**教わる側**です。解説をしないでください。
-- 短く反応し、分からないところを聞き返します。
-- 話し方は中学生。1〜2文、40字程度。教科書口調にしない。
-- 相づちだけで終わらせず、**必ず何か聞き返す**か、自分の理解を言い直します。
-
-## 重要: 進行ディレクターからの指示について
-「$directorPrefix」で始まるテキストが届くことがあります。
-これは会話の進行を管理する内部システムから、**あなただけ**に宛てた指示です。
-先輩の発言ではありません。
-
-- **絶対にそのまま読み上げないでください。**
-- 指示が届いたことに言及しないでください（「指示が来ました」などと言わない）。
-- 指示の内容を、**あなた自身の言葉の発言1つ**に変換して、会話の流れの中で自然に言ってください。
-- 指示そのものに返事をしないでください。
-''';
-
-  /// 接続パラメータを組む。
+  /// 与えられた時間が切れる何秒前に取り直すか。
   ///
-  /// [resumptionHandle] を渡すと前のセッションの続きから復帰する。
+  /// 期限が来るとセッションごと切られるので、その前に次を確保して繋ぎ直す。
+  /// 短すぎると間に合わず、長すぎると使わないまま枠を捨てることになる。
+  static const Duration renewBefore = Duration(seconds: 20);
+
+  /// 接続パラメータ。**config を送らない。**
   static LiveConnectParameters connectParameters({
+    required String model,
     required LiveCallbacks callbacks,
-    String? resumptionHandle,
-    List<String> vocabulary = const [],
   }) {
-    return LiveConnectParameters(
-      model: model,
-      callbacks: callbacks,
-      config: GenerationConfig(responseModalities: [Modality.AUDIO]),
-      systemInstruction:
-          Content(role: 'system', parts: [Part(text: systemInstruction())]),
-      // 切れたときに文脈ごと復帰するためのハンドル。無いと会話が最初からになる
-      sessionResumption: SessionResumptionConfig(handle: resumptionHandle),
-      // 長い会話でコンテキスト上限に当たって落ちるのを防ぐ
-      contextWindowCompression:
-          ContextWindowCompressionConfig(slidingWindow: SlidingWindow()),
-      // 言語自動判定は切って ja-JP に固定する。
-      // jiyu-kenkyu-ai で、不明瞭な発話が韓国語として文字起こしされる事故があった
-      outputAudioTranscription: AudioTranscriptionConfig(
-        languageHints: LanguageHints(languageCodes: ['ja-JP']),
-      ),
-      inputAudioTranscription: AudioTranscriptionConfig(
-        languageHints: LanguageHints(languageCodes: ['ja-JP']),
-        customVocabulary: vocabulary.isEmpty ? null : vocabulary,
-      ),
-      realtimeInputConfig: RealtimeInputConfig(
-        automaticActivityDetection: AutomaticActivityDetection(
-          // 生徒は説明の途中で言い淀む。始まりを敏感にすると
-          // 「えーと」で発話開始と誤検知して、こちらの番を奪う
-          startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_LOW,
-          // 考えている間の沈黙で切られないよう、終わりも鈍くする
-          endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW,
-          // 検知前の音も含めて送る。語頭が欠けると内容が変わる
-          prefixPaddingMs: 600,
-          // 説明の途中の「間」で打ち切られないだけの長さ
-          silenceDurationMs: 1200,
-        ),
-      ),
-    );
+    return LiveConnectParameters(model: model, callbacks: callbacks);
   }
 }

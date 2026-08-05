@@ -88,6 +88,7 @@ class _CharacterState extends State<Character> with TickerProviderStateMixin {
       case LiveState.idle:
       case LiveState.connecting:
       case LiveState.done:
+      case LiveState.outOfTime:
       case LiveState.failed:
         _think.stop();
         _think.value = 0;

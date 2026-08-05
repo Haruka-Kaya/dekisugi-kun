@@ -65,6 +65,7 @@ class Stage extends StatelessWidget {
         LiveState.thinking => '考えています',
         LiveState.speaking => '話しています',
         LiveState.done => 'ひととおり終わりました',
+        LiveState.outOfTime => 'きょうのぶんは終わりです',
         LiveState.failed => '続けられませんでした',
       };
 }

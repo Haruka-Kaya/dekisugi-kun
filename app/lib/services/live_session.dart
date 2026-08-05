@@ -9,6 +9,7 @@ import '../models/dossier.dart';
 import '../models/review.dart';
 import 'director_client.dart';
 import 'director_queue.dart';
+import 'live_token_client.dart';
 import 'mic_stream.dart';
 import 'pcm_player.dart';
 import 'session_store.dart';
@@ -34,6 +35,9 @@ enum LiveState {
   /// 一通り終わった
   done,
 
+  /// 今日の無料ぶんを使い切った。**失敗ではなく仕様**
+  outOfTime,
+
   /// 続けられない
   failed,
 }
@@ -48,7 +52,7 @@ enum LiveFailure { noPermission, network, auth, unknown }
 /// - ディレクターは1ターンごとに呼ぶが、**await しない**（実測6秒かかる）
 class LiveSessionController extends ChangeNotifier {
   LiveSessionController({
-    required this.apiKey,
+    required this.tokens,
     required this.unitId,
     DirectorClient? director,
     SessionStore? store,
@@ -64,9 +68,11 @@ class LiveSessionController extends ChangeNotifier {
         _gate = gate ?? SpeechGate(),
         _queue = queue ?? DirectorQueue();
 
-  /// 段階5 でサーバ発行の ephemeral token に差し替える。
-  /// **本番の APK に生キーを焼かないこと。**
-  final String apiKey;
+  /// 会話時間を確保して一時トークンをもらう先。
+  ///
+  /// **APIキーは端末に無い。** トークンの期限が来るとセッションごと切られるので、
+  /// 期限の手前で取り直して繋ぎ直す（[_renewTimer]）。
+  final LiveTokenClient tokens;
 
   /// どの単元を教えてもらうか。
   final String unitId;
@@ -85,11 +91,23 @@ class LiveSessionController extends ChangeNotifier {
   StreamSubscription<Uint8List>? _micSub;
   StreamSubscription<double>? _levelSub;
   Timer? _drainTimer;
+
+  /// 与えられた時間が切れる前に取り直すための予約
+  Timer? _renewTimer;
+
   final Stopwatch _clock = Stopwatch();
+
+  /// いま使っている会話ブロック。残り時間の表示にも使う
+  LiveGrant? grant;
+
+  /// 今日の残り。課金済みなら null
+  int? remainingMinutes;
+
+  /// 無料枠が戻る時刻
+  DateTime? quotaResetsAt;
 
   LiveState _state = LiveState.idle;
   LiveFailure? _failure;
-  String? _resumptionHandle;
   bool _closing = false;
 
   /// ディレクターは1つずつ。重ねて呼ぶと古い結果が新しいカルテを上書きする
@@ -183,10 +201,24 @@ class LiveSessionController extends ChangeNotifier {
     return true;
   }
 
+  /// 今日あと何分使えるかを見る。**枠を引かない。**
+  Future<void> refreshQuota() async {
+    final q = await tokens.peek();
+    if (q == null) return;
+    remainingMinutes = q.remainingMinutes;
+    quotaResetsAt = q.resetsAt;
+    if (q.isExhausted && _state == LiveState.idle) {
+      _setState(LiveState.outOfTime);
+    } else {
+      notifyListeners();
+    }
+  }
+
   Future<void> start() async {
     if (_state != LiveState.idle &&
         _state != LiveState.failed &&
-        _state != LiveState.done) {
+        _state != LiveState.done &&
+        _state != LiveState.outOfTime) {
       return;
     }
     _setState(LiveState.connecting);
@@ -221,6 +253,11 @@ class LiveSessionController extends ChangeNotifier {
       // 口火はディレクターに切らせる。AI から「教えて」と頼ませないと
       // 生徒は何を話せばいいか分からない（C1）
       _kickDirector();
+    } on QuotaExhausted catch (e) {
+      // **失敗ではなく仕様。** 画面もエラーではなく案内を出す
+      quotaResetsAt = e.resetsAt;
+      remainingMinutes = 0;
+      _setState(LiveState.outOfTime);
     } catch (e, s) {
       debugPrint('Live 接続に失敗: $e\n$s');
       _fail(_classify(e));
@@ -234,6 +271,8 @@ class LiveSessionController extends ChangeNotifier {
     if (to == LiveState.done) await _finishRecord();
     _drainTimer?.cancel();
     _drainTimer = null;
+    _renewTimer?.cancel();
+    _renewTimer = null;
     await _micSub?.cancel();
     await _levelSub?.cancel();
     _micSub = null;
@@ -371,10 +410,20 @@ class LiveSessionController extends ChangeNotifier {
 
   // ── 接続 ──────────────────────────────────────────────────
 
+  /// 会話時間を確保し、そのトークンで繋ぐ。
+  ///
+  /// 枠を使い切っていたら [QuotaExhausted] が飛ぶ（呼び出し元で拾う）。
   Future<void> _connect() async {
-    final genAI = GoogleGenAI(apiKey: apiKey);
-    _session = await genAI.live.connect(LiveConfig.connectParameters(
-      resumptionHandle: _resumptionHandle,
+    final g = await tokens.reserve();
+    grant = g;
+    remainingMinutes = g.remainingMinutes;
+    quotaResetsAt = g.resetsAt;
+
+    // **APIキーではなくトークンで、v1alpha で繋ぐ。**
+    // 一時トークンは v1beta では通らない（docs の記述は誤り）
+    final live = LiveService(apiKey: g.token, apiVersion: g.apiVersion);
+    _session = await live.connect(LiveConfig.connectParameters(
+      model: g.model,
       callbacks: LiveCallbacks(
         onMessage: _onMessage,
         onError: (e, s) {
@@ -383,29 +432,59 @@ class LiveSessionController extends ChangeNotifier {
         },
         onClose: (code, reason) {
           debugPrint('Live 切断: $code $reason');
-          // 意図した停止でなければ、ハンドルを使って張り直す
-          if (!_closing && _state != LiveState.failed && _state != LiveState.done) {
-            unawaited(_reconnect());
+          if (_closing || _state == LiveState.failed || _state == LiveState.done) {
+            return;
           }
+          // 1011 = トークンの期限切れ。**張り直せば続けられる**
+          unawaited(_reconnect());
         },
       ),
     ));
+
+    _scheduleRenew(g);
   }
 
-  /// 約15分で切られる。ハンドルを持って繋ぎ直せば会話は続く。
+  /// 期限が来るとセッションごと切られるので、**その手前で取り直す。**
+  ///
+  /// 切れてから動くと、生徒の発話が丸ごと1つ落ちる。
+  void _scheduleRenew(LiveGrant g) {
+    _renewTimer?.cancel();
+    final lead = g.remaining(DateTime.now()) - LiveConfig.renewBefore;
+    if (lead.isNegative) return; // もう間に合わない。切れたら onClose で拾う
+    _renewTimer = Timer(lead, () {
+      if (_closing || !isRunning) return;
+      debugPrint('会話時間の期限が近い。取り直す');
+      unawaited(_reconnect());
+    });
+  }
+
+  /// 繋ぎ直す。**逐語と理解カルテは端末が持っている**ので会話は続く。
   Future<void> _reconnect() async {
-    if (_closing) return;
+    if (_closing || _reconnecting) return;
+    _reconnecting = true;
+    _renewTimer?.cancel();
     _setState(LiveState.connecting);
     _player.stopNow();
+    await _session?.close();
+    _session = null;
     try {
       await _connect();
       _setState(LiveState.listening);
       _pumpDirector();
+    } on QuotaExhausted catch (e) {
+      quotaResetsAt = e.resetsAt;
+      remainingMinutes = 0;
+      // 会話を閉じる。**中途半端に繋がったまま残さない**
+      await stop(to: LiveState.outOfTime);
     } catch (e) {
       debugPrint('再接続に失敗: $e');
       _fail(_classify(e));
+    } finally {
+      _reconnecting = false;
     }
   }
+
+  bool _reconnecting = false;
 
   // ── 受信 ──────────────────────────────────────────────────
 
@@ -420,10 +499,6 @@ class LiveSessionController extends ChangeNotifier {
       _setState(LiveState.listening);
       return;
     }
-
-    // 再接続用のハンドル。届くたびに最新へ差し替える
-    final handle = m.sessionResumptionUpdate?.newHandle;
-    if (handle != null && handle.isNotEmpty) _resumptionHandle = handle;
 
     // 上限が近いことの予告。切られる前にこちらから張り直す
     if (m.goAway != null) unawaited(_reconnect());
