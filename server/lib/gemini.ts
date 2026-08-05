@@ -1,20 +1,24 @@
-import { GoogleGenAI, type Schema } from '@google/genai'
+import { type Schema } from '@google/genai'
+
+import { vertex } from './vertex.js'
 
 /**
  * ディレクター（会話の裏方）用のテキストモデル。
- * 会話そのものは端末が Gemini Live と直接やりとりするので、ここは通らない。
+ * 会話そのものは端末が Live と直接やりとりするので、ここは通らない。
+ *
+ * > [!important] Developer API ではなく Vertex を使う
+ * > `ai.google.dev` のキーで叩く Gemini API は、
+ * > **18歳未満向けのアプリで使ってはいけない**と規約に明記されている。
+ * > 会話だけ移しても、ディレクターが同じ API を叩いていたら意味がない。
+ * > 詳細は `docs/age-restriction.md`。
+ *
+ * モデル名は Vertex の名前空間。Developer API とは別物なので、
+ * 変えるときは Vertex に在ることを確かめること。
  */
-export const TEXT_MODEL = process.env.GEMINI_TEXT_MODEL ?? 'gemini-3.6-flash'
+export const TEXT_MODEL = process.env.VERTEX_TEXT_MODEL ?? 'gemini-2.5-flash'
 
-let cached: GoogleGenAI | undefined
-
-export function gemini(): GoogleGenAI {
-  if (!cached) {
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) throw new Error('GEMINI_API_KEY が未設定')
-    cached = new GoogleGenAI({ apiKey })
-  }
-  return cached
+export function gemini() {
+  return vertex()
 }
 
 const RETRYABLE = /429|500|502|503|504|UNAVAILABLE|RESOURCE_EXHAUSTED|DEADLINE_EXCEEDED|fetch failed/i
