@@ -70,6 +70,7 @@
   │ 会話の記録   │  │  /api/live-token 資格情報+枠  │
   └──────┬───────┘  │  /api/director   次の一手     │
          │          │  /api/survey     調査の回答   │
+         │          │  /api/team/*     チームの合計 │
          │          └───────────┬──────────────────┘
          │                      │
          │  音声は端末と直結     │  Upstash Redis（枠・調査）
@@ -284,7 +285,7 @@ DEKISUGI_LIVE=1 npx tsx --test test/jailbreak.live.test.ts  # 役を降ろせる
 
 ```
 app     339 件   flutter test
-server  184 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
+server  201 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
 ```
 
 **実機でしか出ない不具合を、実機なしで捕まえる**ようにしてある。

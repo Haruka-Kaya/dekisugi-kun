@@ -2,12 +2,16 @@ import assert from 'node:assert/strict'
 import { afterEach, beforeEach, describe, it } from 'node:test'
 
 import admin from '../api/team/admin.js'
+import contribution from '../api/team/contribution.js'
 import join from '../api/team/join.js'
 import leave from '../api/team/leave.js'
+import summary from '../api/team/summary.js'
 import { issueToken } from '../lib/auth.js'
 import {
   CODE_ALPHABET,
   CODE_LENGTH,
+  MAX_DAILY_CONTRIBUTION,
+  MAX_DAYS_PER_REQUEST,
   MAX_MEMBERS,
   MIN_MEMBERS_FOR_TOTAL,
   memberId,
@@ -329,6 +333,197 @@ describe('POST /api/team/leave', () => {
     const { code } = await makeTeam()
     const r = await joinAs(code)
     assert.equal(r.code, 200)
+  })
+})
+
+describe('貢献の記録', () => {
+  const TODAY = '2026-08-06'
+
+  async function send(
+    did: string,
+    days: { day: string; conceptsExplained: number; sessions?: number }[],
+  ) {
+    const { res, out } = fakeRes()
+    await contribution(
+      {
+        method: 'POST',
+        headers: { authorization: `Bearer ${issueToken(did)}` },
+        body: { days: days.map((d) => ({ sessions: 1, ...d })) },
+      },
+      res,
+    )
+    return out
+  }
+
+  async function summaryOf(did: string) {
+    const { res, out } = fakeRes()
+    await summary({ method: 'GET', headers: { authorization: `Bearer ${issueToken(did)}` } }, res)
+    return out
+  }
+
+  /** 合計が読めるところまで人数を埋める。 */
+  async function readyTeam() {
+    const t = await makeTeam()
+    const { did } = await joinAs(t.code)
+    for (let i = 0; i < MIN_MEMBERS_FOR_TOTAL; i++) {
+      fake.run(['SADD', keys.members(t.teamId), `filler-${i}`])
+    }
+    return { ...t, did }
+  }
+
+  it('送ると合計に乗る', async () => {
+    const { did } = await readyTeam()
+    await send(did, [{ day: TODAY, conceptsExplained: 2 }])
+    const s = await summaryOf(did)
+    assert.equal(s.body.teamTotal, 2)
+    assert.equal(s.body.myTotal, 2)
+  })
+
+  it('同じ日を3回送っても増えない（冪等）', async () => {
+    const { did } = await readyTeam()
+    for (let i = 0; i < 3; i++) await send(did, [{ day: TODAY, conceptsExplained: 2 }])
+    assert.equal((await summaryOf(did)).body.teamTotal, 2)
+  })
+
+  it('増やして送れば差分だけ増える', async () => {
+    const { did } = await readyTeam()
+    await send(did, [{ day: TODAY, conceptsExplained: 1 }])
+    await send(did, [{ day: TODAY, conceptsExplained: 3 }])
+    assert.equal((await summaryOf(did)).body.teamTotal, 3)
+  })
+
+  it('減らして送っても減らない', async () => {
+    // 端末が古い控えを再送しても総和を巻き戻さない
+    const { did } = await readyTeam()
+    await send(did, [{ day: TODAY, conceptsExplained: 3 }])
+    await send(did, [{ day: TODAY, conceptsExplained: 1 }])
+    assert.equal((await summaryOf(did)).body.teamTotal, 3)
+  })
+
+  it('sessions をいくら盛っても合計は1も動かない', async () => {
+    // **この1行が TSLW の教訓の機械的な表現。**
+    // 回数は開閉するだけで増え、学びと無関係に積み上がる
+    const { did } = await readyTeam()
+    await send(did, [{ day: TODAY, conceptsExplained: 0, sessions: 99999 }])
+    assert.equal((await summaryOf(did)).body.teamTotal, 0)
+  })
+
+  it('1日の上限で切る', async () => {
+    const { did } = await readyTeam()
+    await send(did, [{ day: TODAY, conceptsExplained: 99999 }])
+    assert.equal((await summaryOf(did)).body.teamTotal, MAX_DAILY_CONTRIBUTION)
+  })
+
+  it('未来の日を受けない', async () => {
+    const { did } = await readyTeam()
+    const out = await send(did, [{ day: '2099-01-01', conceptsExplained: 3 }])
+    assert.deepEqual(out.body.applied, [])
+    assert.equal(out.body.rejected[0].reason, 'future')
+  })
+
+  it('古すぎる日を受けない', async () => {
+    const { did } = await readyTeam()
+    const out = await send(did, [{ day: '2020-01-01', conceptsExplained: 3 }])
+    assert.equal(out.body.rejected[0].reason, 'out_of_range')
+  })
+
+  it('壊れた日付を受けない', async () => {
+    const { did } = await readyTeam()
+    const out = await send(did, [{ day: '2026-02-31', conceptsExplained: 3 }])
+    assert.equal(out.body.rejected[0].reason, 'invalid_day')
+  })
+
+  it('1日だめでも他は通す', async () => {
+    // オフラインで溜めたぶんが1件のせいで全滅しない
+    const { did } = await readyTeam()
+    const out = await send(did, [
+      { day: '2099-01-01', conceptsExplained: 3 },
+      { day: TODAY, conceptsExplained: 2 },
+    ])
+    assert.deepEqual(out.body.applied, [TODAY])
+    assert.equal((await summaryOf(did)).body.teamTotal, 2)
+  })
+
+  it('日数が多すぎたら 413', async () => {
+    const { did } = await readyTeam()
+    const days = Array.from({ length: MAX_DAYS_PER_REQUEST + 1 }, (_, i) => ({
+      day: TODAY,
+      conceptsExplained: 1,
+    }))
+    const { res, out } = fakeRes()
+    await contribution(
+      { method: 'POST', headers: { authorization: `Bearer ${issueToken(did)}` }, body: { days } },
+      res,
+    )
+    assert.equal(out.code, 413)
+  })
+
+  it('チームに入っていなければ 404', async () => {
+    const out = await send(device(), [{ day: TODAY, conceptsExplained: 1 }])
+    assert.equal(out.code, 404)
+  })
+
+  it('退出しても合計は残り、入り直しで二重に乗らない', async () => {
+    // 退出は合計を減らさず個人の記録だけ消す。
+    // クールダウンが無ければ、ここで二重加算の道が開く
+    const { did, code } = await readyTeam()
+    await send(did, [{ day: TODAY, conceptsExplained: 3 }])
+    assert.equal((await summaryOf(did)).body.teamTotal, 3)
+
+    const { res } = fakeRes()
+    await leave(
+      { method: 'POST', headers: { authorization: `Bearer ${issueToken(did)}` }, body: {} },
+      res,
+    )
+    const again = await joinAs(code, did)
+    assert.equal(again.code, 429, 'クールダウンが効いていない')
+  })
+})
+
+describe('GET /api/team/summary', () => {
+  it('5人未満なら合計を出さない', async () => {
+    const t = await makeTeam()
+    const { did } = await joinAs(t.code)
+    const { res, out } = fakeRes()
+    await summary({ method: 'GET', headers: { authorization: `Bearer ${issueToken(did)}` } }, res)
+    assert.equal(out.body.teamTotal, null)
+    assert.equal(out.body.state, 'pending')
+  })
+
+  it('チームに入っていなければ 404', async () => {
+    const { res, out } = fakeRes()
+    await summary(
+      { method: 'GET', headers: { authorization: `Bearer ${issueToken(device())}` } },
+      res,
+    )
+    assert.equal(out.code, 404)
+  })
+
+  it('保存先が無ければ 503。**0 を返さない**', async () => {
+    // 0 は「誰もやっていない」に見える。出さないことより悪い
+    restore()
+    const { res, out } = fakeRes()
+    await summary(
+      { method: 'GET', headers: { authorization: `Bearer ${issueToken(device())}` } },
+      res,
+    )
+    assert.equal(out.code, 503)
+    restore = () => {}
+  })
+
+  it('名簿も個人別の内訳も返さない', async () => {
+    const t = await makeTeam()
+    const { did } = await joinAs(t.code)
+    for (let i = 0; i < MIN_MEMBERS_FOR_TOTAL; i++) {
+      fake.run(['SADD', keys.members(t.teamId), `filler-${i}`])
+    }
+    const { res, out } = fakeRes()
+    await summary({ method: 'GET', headers: { authorization: `Bearer ${issueToken(did)}` } }, res)
+
+    const json = JSON.stringify(out.body)
+    assert.ok(!json.includes('filler-'), '他人のIDが漏れている')
+    assert.ok(!json.includes(did), '端末IDが漏れている')
+    assert.ok(!json.includes(memberId(did)), 'メンバーIDが漏れている')
   })
 })
 

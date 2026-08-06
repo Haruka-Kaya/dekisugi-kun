@@ -53,10 +53,17 @@ export class FakeKv {
     switch (op?.toUpperCase()) {
       case 'GET':
         return this.alive(k) ? (this.data.get(k) as string) : null
-      case 'SET':
+      case 'SET': {
+        // `SET k v NX EX 5` のような修飾を実装する。
+        // 無視すると、ロックが常に取れてしまい**競合のテストが素通りする**
+        const opts = rest.slice(1).map((x) => x.toUpperCase())
+        if (opts.includes('NX') && this.alive(k)) return null
         this.data.set(k, String(rest[0]))
         this.expires.delete(k)
+        const ex = opts.indexOf('EX')
+        if (ex >= 0) this.expires.set(k, this.now + Number(rest[1 + ex + 1]) * 1000)
         return 'OK'
+      }
       case 'DEL': {
         const had = this.alive(k)
         this.data.delete(k)

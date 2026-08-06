@@ -279,6 +279,88 @@ export async function leaveTeam(mid: string, teamId: string, now = Date.now()): 
   return true
 }
 
+// ── 貢献 ────────────────────────────────────────────────────
+
+export type Applied = { day: string; value: number; added: number }
+export type Rejected = { day: string; reason: string }
+
+/**
+ * その日の寄与を記録する。**冪等。**
+ *
+ * ## 差分だけ足す
+ *
+ * 同じ日を何度送っても総和は動かない。値を**減らして**送っても動かない。
+ * これがないと、端末がオフラインぶんをまとめて再送するたびに合計が膨らむ。
+ *
+ * ## `kv()` はトランザクションではない
+ *
+ * パイプラインは「まとめて送る」だけで、途中に他の書き込みが割り込みうる。
+ * 読んで書くあいだを短いロックで守る。取れなければ何もしない（次回でよい）。
+ *
+ * 競合の被害は**同一端末・同一日で最大3点**に有界なので、
+ * Lua まで持ち出さずロックで足りる。
+ */
+export async function contribute(
+  mid: string,
+  team: Team,
+  entries: { day: string; value: number }[],
+  now = Date.now(),
+): Promise<{ applied: Applied[]; rejected: Rejected[] }> {
+  need()
+  const applied: Applied[] = []
+  const rejected: Rejected[] = []
+
+  for (const e of entries) {
+    const lock = keys.lock(mid, e.day)
+    const got = (await kv([['SET', lock, '1', 'NX', 'EX', '5']]))[0]
+    if (got == null) {
+      // 端末は冪等に再送できるので、取れなかった日は次回に回す
+      rejected.push({ day: e.day, reason: 'busy' })
+      continue
+    }
+    try {
+      const prev = Number((await kv([['HGET', keys.memberDays(team.id, mid), e.day]]))[0] ?? 0)
+      const delta = e.value - prev
+      if (delta <= 0) {
+        // **減らして送っても減らさない。** 単調増加を保つ
+        applied.push({ day: e.day, value: prev, added: 0 })
+        continue
+      }
+      await kv([
+        ['HSET', keys.memberDays(team.id, mid), e.day, String(e.value)],
+        ['HINCRBY', keys.sum(team.id, team.periodId), 'total', String(delta)],
+        ['EXPIRE', keys.memberDays(team.id, mid), String(400 * 86400)],
+        ['EXPIRE', keys.sum(team.id, team.periodId), String(400 * 86400)],
+      ])
+      applied.push({ day: e.day, value: e.value, added: delta })
+    } finally {
+      await kv([['DEL', lock]])
+    }
+  }
+  return { applied, rejected }
+}
+
+/** 期間内の自分のぶん。**他人のぶんは読まない。** */
+export async function myTotalIn(
+  mid: string,
+  team: Team,
+): Promise<number> {
+  need()
+  const h = toHash((await kv([['HGETALL', keys.memberDays(team.id, mid)]]))[0])
+  let sum = 0
+  for (const [day, v] of Object.entries(h)) {
+    if (day < team.periodStart || day > team.periodEnd) continue
+    sum += Number(v) || 0
+  }
+  return sum
+}
+
+export async function teamTotal(team: Team): Promise<number> {
+  need()
+  const v = (await kv([['HGET', keys.sum(team.id, team.periodId), 'total']]))[0]
+  return Number(v ?? 0)
+}
+
 /** いま入っているチーム。 */
 export async function myTeamId(mid: string): Promise<string | undefined> {
   need()
