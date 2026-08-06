@@ -14,6 +14,7 @@ import { describe, it } from 'node:test'
 
 import { runDirector, type Utterance } from '../lib/director.js'
 import { emptyDossier } from '../lib/dossier.js'
+import { liveSkip } from './support/live.js'
 
 function loadKey(): string | undefined {
   if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY
@@ -40,7 +41,7 @@ const UTTERANCES: Utterance[] = [
   },
 ]
 
-describe('ディレクターを実際の Gemini に通す', { skip: key ? false : 'GEMINI_API_KEY が無い' }, () => {
+describe('ディレクターを実際の Gemini に通す', { skip: liveSkip || (key ? false : 'GEMINI_API_KEY が無い') }, () => {
   it('スキーマが通り、説明した概念が埋まる', async () => {
     const out = await runDirector({
       dossier: emptyDossier('force-motion'),

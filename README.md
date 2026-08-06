@@ -265,12 +265,17 @@ iOS / iPadOS は `docs/ios-build.md` を読むこと。**Mac が要る。**
 
 ### 通信するテスト
 
-Vertex を実際に叩くので**料金がかかる**。既定では走らない。
+Vertex を実際に叩くので**料金がかかる**。**`DEKISUGI_LIVE=1` を付けたときだけ走る。**
+
+> [!warning] 以前は既定で走っていた
+> `npm test` の glob `test/*.test.ts` は `*.live.test.ts` にも一致する。
+> 「既定では走らない」と書いてあったが**嘘で**、テストのたびに本番へ繋いで
+> 課金していた（1回 220秒かかっていたのはこれ。いまは 2.6秒）。
 
 ```bash
 cd server
-node --import tsx --test test/grant.live.test.ts      # 接続と設定
-node --import tsx --test test/jailbreak.live.test.ts  # 役を降ろせるか
+DEKISUGI_LIVE=1 npx tsx --test test/grant.live.test.ts      # 接続と設定
+DEKISUGI_LIVE=1 npx tsx --test test/jailbreak.live.test.ts  # 役を降ろせるか
 ```
 
 ---
@@ -279,7 +284,7 @@ node --import tsx --test test/jailbreak.live.test.ts  # 役を降ろせるか
 
 ```
 app     339 件   flutter test
-server  136 件   通信しないぶん（+8件は Vertex を叩くので既定では走らない）
+server  154 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
 ```
 
 **実機でしか出ない不具合を、実機なしで捕まえる**ようにしてある。

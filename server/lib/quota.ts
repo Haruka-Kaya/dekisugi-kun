@@ -1,3 +1,5 @@
+import { jstDayKey, nextJstMidnight } from './day.js'
+
 /**
  * 無料で使える1日の会話量。
  *
@@ -99,16 +101,12 @@ async function kv(commands: string[][]): Promise<unknown[]> {
   return out.map((o) => o.result)
 }
 
-/** 日本時間の「今日」で切る。UTC で切ると夜9時に枠が戻って不自然。 */
-function dayKey(now: number): string {
-  return new Date(now + 9 * 3600_000).toISOString().slice(0, 10)
-}
-
-function nextResetAt(now: number): string {
-  const jst = new Date(now + 9 * 3600_000)
-  jst.setUTCHours(0, 0, 0, 0)
-  return new Date(jst.getTime() + 24 * 3600_000 - 9 * 3600_000).toISOString()
-}
+/**
+ * 日本時間の「今日」で切る。**定義は `day.ts` の1本だけ。**
+ * ここに写経すると、チームの集計と食い違ったときに気づけない。
+ */
+const dayKey = jstDayKey
+const nextResetAt = nextJstMidnight
 
 /**
  * 会話を1回ぶん確保する。

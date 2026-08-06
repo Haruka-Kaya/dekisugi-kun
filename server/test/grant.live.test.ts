@@ -18,7 +18,9 @@ import { describe, it } from 'node:test'
 
 import WebSocket from 'ws'
 
-const BASE = process.env.DEKISUGI_BASE ?? 'https://rika-chousa.vercel.app'
+import { LIVE_BASE, liveSkip } from './support/live.js'
+
+const BASE = LIVE_BASE
 
 type Grant = {
   token: string
@@ -50,7 +52,7 @@ async function getGrant(): Promise<Grant | 'exhausted'> {
   return JSON.parse(text) as Grant
 }
 
-describe('端末と同じ経路で会話が成立する', () => {
+describe('端末と同じ経路で会話が成立する', { skip: liveSkip }, () => {
   it('サーバが返した設定をそのまま送って音声が返る', async () => {
     const grant = await getGrant()
     if (grant === 'exhausted') {

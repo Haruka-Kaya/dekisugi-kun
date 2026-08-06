@@ -1,3 +1,4 @@
+import { type Req, type Res } from '../lib/http.js'
 import { isValidDeviceId, issueToken, TOKEN_TTL_SECONDS } from '../lib/auth.js'
 
 /**
@@ -9,12 +10,6 @@ import { isValidDeviceId, issueToken, TOKEN_TTL_SECONDS } from '../lib/auth.js'
  * アカウントを作る段階になったら、ここにユーザーIDを載せて本物の認証にする。
  */
 
-type Req = { method?: string; body?: unknown }
-type Res = {
-  status: (code: number) => Res
-  json: (body: unknown) => void
-  setHeader: (name: string, value: string) => void
-}
 
 export default function handler(req: Req, res: Res) {
   if (req.method !== 'POST') {

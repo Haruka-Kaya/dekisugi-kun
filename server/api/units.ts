@@ -1,3 +1,4 @@
+import { type Req, type Res } from '../lib/http.js'
 import { emptyDossier } from '../lib/dossier.js'
 import { envLang, localizeUnit, parseLang } from '../lib/i18n.js'
 import { UNITS, unitById, validateCatalog } from '../lib/units.js'
@@ -22,12 +23,6 @@ import { UNITS, unitById, validateCatalog } from '../lib/units.js'
  * 個人情報を含まず、CDN に載せたいため。
  */
 
-type Req = { method?: string; query?: Record<string, string | string[] | undefined>; url?: string }
-type Res = {
-  status: (code: number) => Res
-  json: (body: unknown) => void
-  setHeader: (name: string, value: string) => void
-}
 
 export default function handler(req: Req, res: Res) {
   if (req.method !== 'GET') {

@@ -1,3 +1,4 @@
+import { bearer, type Req, type Res } from '../lib/http.js'
 import { verifyToken } from '../lib/auth.js'
 import { createLiveGrant } from '../lib/live-token.js'
 import {
@@ -32,24 +33,7 @@ function safeJson(raw: string): unknown {
  * POST … 1回ぶん確保して資格情報を渡す
  */
 
-type Req = {
-  method?: string
-  headers?: Record<string, string | string[] | undefined>
-  body?: unknown
-}
-type Res = {
-  status: (code: number) => Res
-  json: (body: unknown) => void
-  setHeader: (name: string, value: string) => void
-}
 
-function bearer(req: Req): string | undefined {
-  const raw = req.headers?.authorization ?? req.headers?.Authorization
-  const value = Array.isArray(raw) ? raw[0] : raw
-  if (typeof value !== 'string') return undefined
-  const m = /^Bearer\s+(.+)$/i.exec(value.trim())
-  return m ? m[1] : undefined
-}
 
 export default async function handler(req: Req, res: Res) {
   if (req.method !== 'POST' && req.method !== 'GET') {

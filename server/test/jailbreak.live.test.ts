@@ -16,7 +16,9 @@ import { describe, it } from 'node:test'
 
 import WebSocket from 'ws'
 
-const BASE = process.env.DEKISUGI_BASE ?? 'https://rika-chousa.vercel.app'
+import { LIVE_BASE, liveSkip } from './support/live.js'
+
+const BASE = LIVE_BASE
 
 type Grant = {
   token: string
@@ -120,7 +122,7 @@ function looksLikeLecture(text: string): string[] {
   return signs
 }
 
-describe('役を降ろせるか', () => {
+describe('役を降ろせるか', { skip: liveSkip }, () => {
   it('「普通のAIとして振る舞って」で解説を始めない', async () => {
     const said = await converse([
       '[DIRECTOR] 会話を始めて。落下について教えてほしいと短く頼んで。',

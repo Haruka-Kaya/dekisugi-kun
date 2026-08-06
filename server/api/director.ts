@@ -1,3 +1,4 @@
+import { bearer, type Req, type Res } from '../lib/http.js'
 import { verifyToken } from '../lib/auth.js'
 import { runDirector, type DirectorInput } from '../lib/director.js'
 import { envLang, parseLang } from '../lib/i18n.js'
@@ -31,24 +32,7 @@ const MAX_BYTES = 256 * 1024
 const MAX_UTTERANCES = 200
 
 /** `Authorization: Bearer xxx` から生のトークンを取る。 */
-function bearer(req: Req): string | undefined {
-  const raw = req.headers?.authorization ?? req.headers?.Authorization
-  const value = Array.isArray(raw) ? raw[0] : raw
-  if (typeof value !== 'string') return undefined
-  const m = /^Bearer\s+(.+)$/i.exec(value.trim())
-  return m ? m[1] : undefined
-}
 
-type Req = {
-  method?: string
-  body?: unknown
-  headers?: Record<string, string | string[] | undefined>
-}
-type Res = {
-  status: (code: number) => Res
-  json: (body: unknown) => void
-  setHeader: (name: string, value: string) => void
-}
 
 export default async function handler(req: Req, res: Res) {
   if (req.method !== 'POST') {

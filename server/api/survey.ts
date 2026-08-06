@@ -1,3 +1,4 @@
+import { callerIp, header, queryOf, type Req, type Res } from '../lib/http.js'
 import {
   MAX_BYTES,
   clearResponses,
@@ -19,37 +20,10 @@ import {
  * GET  /api/survey?kind=… … 集計用に取り出す（**管理トークンが要る**）
  */
 
-type Req = {
-  method?: string
-  headers?: Record<string, string | string[] | undefined>
-  body?: unknown
-  query?: Record<string, string | string[] | undefined>
-  url?: string
-}
-type Res = {
-  status: (code: number) => Res
-  json: (body: unknown) => void
-  setHeader: (name: string, value: string) => void
-}
 
-function header(req: Req, name: string): string | undefined {
-  const raw = req.headers?.[name] ?? req.headers?.[name.toLowerCase()]
-  return Array.isArray(raw) ? raw[0] : raw
-}
 
 /** 呼び出し元。**特定のためではなく連投を抑えるためだけに使う。** */
-function callerIp(req: Req): string {
-  const fwd = header(req, 'x-forwarded-for') ?? ''
-  return fwd.split(',')[0]!.trim() || (header(req, 'x-real-ip') ?? '')
-}
 
-function queryOf(req: Req, key: string): string | undefined {
-  const q = req.query?.[key]
-  const fromQuery = Array.isArray(q) ? q[0] : q
-  if (typeof fromQuery === 'string' && fromQuery) return fromQuery
-  const m = new RegExp(`[?&]${key}=([^&]+)`).exec(req.url ?? '')
-  return m ? decodeURIComponent(m[1]!) : undefined
-}
 
 export default async function handler(req: Req, res: Res) {
   // アンケートは別オリジンから開かれることもある（配布のしかたを縛らない）
