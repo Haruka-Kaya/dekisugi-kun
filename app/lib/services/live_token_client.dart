@@ -36,12 +36,22 @@ class LiveTokenClient {
   ///
   /// 枠を使い切っていたら [QuotaExhausted] を投げる。
   /// **これは失敗ではなく仕様**なので、画面はエラーではなく案内を出す。
-  Future<LiveGrant> reserve(String unitId) async {
+  ///
+  /// [resumeHandle] を渡すと、**枠を消費せずに**同じ会話の続きを取り直す。
+  /// Vertex は約10分でセッションを切るので、渡さないと10分ごとに
+  /// 生徒の残り回数が1つずつ減っていく。
+  /// ハンドルは `setupConfig` に焼き込むのがサーバの仕事で、端末は渡すだけ。
+  Future<LiveGrant> reserve(String unitId, {String? resumeHandle}) async {
     if (!isConfigured) throw const LiveTokenUnavailable('接続先が設定されていません');
 
     final res = await _send(
       (h) => _dio.post<Object?>('$baseUrl/api/live-token',
-          data: {'unitId': unitId}, options: Options(headers: h)),
+          data: {
+            'unitId': unitId,
+            // null なら項目ごと落ちる
+            'resumeHandle': ?resumeHandle,
+          },
+          options: Options(headers: h)),
     );
     final data = (res.data as Map?)?.cast<String, dynamic>();
 
@@ -81,6 +91,9 @@ class LiveTokenClient {
       remainingSessions: (data['remainingSessions'] as num?)?.toInt(),
       entitled: data['entitled'] == true,
       resetsAt: DateTime.tryParse(data['resetsAt'] as String? ?? ''),
+      // **無ければ false。** 再開に未対応の古いサーバ相手に
+      // 繋ぎ直すと、会話を忘れた状態で途中から再開してしまう
+      resumed: data['resumed'] == true,
     );
   }
 
@@ -137,6 +150,7 @@ class LiveGrant {
     required this.remainingSessions,
     required this.entitled,
     required this.resetsAt,
+    this.resumed = false,
   });
 
   /// ディレクターの指示に付ける合図。**セッションごとに違う。**
@@ -167,6 +181,13 @@ class LiveGrant {
   final int? remainingSessions;
   final bool entitled;
   final DateTime? resetsAt;
+
+  /// 前の会話の続きとして繋ぎ直すものか。
+  ///
+  /// **サーバが再開を受け入れたときだけ true。** 窓の外で送ったハンドルや、
+  /// 再開に未対応のサーバでは false になる。
+  /// false のまま繋ぎ直すと、会話を忘れた状態で途中から再開してしまう
+  final bool resumed;
 }
 
 class QuotaStatus {

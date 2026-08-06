@@ -1,96 +1,11 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:typed_data';
-
-import 'package:dekisugi/services/device_identity.dart';
 import 'package:dekisugi/services/live_session.dart';
-import 'package:dekisugi/services/live_token_client.dart';
-import 'package:dekisugi/services/mic_stream.dart';
 import 'package:dekisugi/services/pcm_player.dart';
 import 'package:dekisugi/services/session_store.dart';
-import 'package:flutter_pcm_sound/flutter_pcm_sound.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/fake_live.dart';
+import 'support/live_fakes.dart';
 
-/// マイクの代わり。音量とチャンクを外から流し込む。
-class FakeMic extends MicStream {
-  final _chunks = StreamController<Uint8List>.broadcast();
-  final _levels = StreamController<double>.broadcast();
-  bool started = false;
-
-  @override
-  Stream<Uint8List> get chunks => _chunks.stream;
-  @override
-  Stream<double> get level => _levels.stream;
-  @override
-  bool get isRecording => started;
-
-  @override
-  Future<bool> hasPermission() async => true;
-  @override
-  Future<bool> start({bool speakerphone = true}) async => started = true;
-  @override
-  Future<void> stop() async => started = false;
-  @override
-  Future<void> dispose() async {
-    await _chunks.close();
-    await _levels.close();
-  }
-
-  /// 音量を1つ流す。**先に音量、次にチャンク**の順で届く実機と同じにする。
-  void hear(double peak, Uint8List chunk) {
-    _levels.add(peak);
-    _chunks.add(chunk);
-  }
-}
-
-/// スピーカーの代わり。**補充を要求しない**ので、積んだ音は減らない
-/// ＝「AI が喋り続けている」状態を作れる。
-class FakeSink implements PcmSink {
-  bool started = false;
-  final fed = <int>[];
-
-  @override
-  Future<void> setLogLevel(LogLevel level) async {}
-  @override
-  Future<void> setup({required int sampleRate, required int channelCount}) async {}
-  @override
-  Future<void> setFeedThreshold(int frames) async {}
-  @override
-  void setFeedCallback(void Function(int remainingFrames)? cb) {}
-  @override
-  void feed(PcmArrayInt16 buffer) => fed.add(buffer.bytes.lengthInBytes);
-  @override
-  void start() => started = true;
-  @override
-  Future<void> release() async {}
-}
-
-/// 資格情報は偽サーバを指す。
-/// `reserve` は wss:// しか受け付けないので、**本番の検査を緩めずに**差し替える。
-class FakeTokens extends LiveTokenClient {
-  FakeTokens(this.grant)
-      : super(baseUrl: 'https://example.test', identity: _NoIdentity());
-
-  final LiveGrant grant;
-
-  @override
-  Future<LiveGrant> reserve(String unitId) async => grant;
-  @override
-  Future<QuotaStatus?> peek() async => null;
-}
-
-class _NoIdentity extends DeviceIdentity {
-  _NoIdentity() : super(baseUrl: '', store: MemorySessionStore());
-  @override
-  Future<String?> token({bool force = false}) async => 'x';
-}
-
-Uint8List pcm(int bytes) => Uint8List(bytes);
-
-/// 24kHz PCM16 を base64 で。サーバが音声を返したことにする
-String audioB64(int bytes) => base64Encode(Uint8List(bytes));
 
 void main() {
   // MicStream のコンストラクタが AudioRecorder を作り、

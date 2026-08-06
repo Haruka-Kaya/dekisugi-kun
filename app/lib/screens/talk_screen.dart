@@ -475,12 +475,14 @@ class _Composer extends StatelessWidget {
             // 音量は「聞こえている」を音より先に目で返す層。
             // 高さぶんの場所は常に確保して、出たり消えたりで行が跳ねないようにする
             SizedBox(height: 6, child: running ? _MicLevel(live: live) : null),
-            if (kTextInputEnabled && running) _TextInput(live: live),
+            // **文字は音声と対等（C8）。** トグルで排他にしない。
+            // 切替式にすると「既定は音声」が残り、結局こちらが二級になる
+            _TextInput(live: live),
             const SizedBox(height: 10),
             FilledButton.icon(
               onPressed: busy ? null : (running ? live.stop : live.start),
               icon: Icon(running ? Icons.stop : Icons.mic),
-              label: Text(running ? 'おわる' : 'はなしかける'),
+              label: Text(running ? 'おわる' : '声ではなす'),
             ),
           ],
         ),
@@ -489,14 +491,14 @@ class _Composer extends StatelessWidget {
   }
 }
 
-/// 検証用の文字入力。**既定では出ない。**
+/// 文字で説明する経路。**常に出る（C8）。**
 ///
-/// `flutter build apk --dart-define=DEKISUGI_TEXT_INPUT=true` で出る。
-/// 音声だと部屋の音・マイクの当たり外れ・読み上げの手間が混ざって、
-/// 何を試したのか再現できない。文字なら同じ入力を何度でも通せる。
-const bool kTextInputEnabled =
-    bool.fromEnvironment('DEKISUGI_TEXT_INPUT');
-
+/// 人前での音声利用を恥ずかしいと答えた日本人が 71.1%。
+/// 電車・教室・家族のいる部屋で声を出せない生徒にとって、
+/// 音声しか無いアプリは存在しないのと同じになる。
+///
+/// 未接続でも送れる（`sendStudentText` が自分で繋ぐ）。
+/// 「先にマイクを押す」を要求しないのが、対等であることの実質。
 class _TextInput extends StatefulWidget {
   const _TextInput({required this.live});
 
@@ -515,11 +517,24 @@ class _TextInputState extends State<_TextInput> {
     super.dispose();
   }
 
-  void _send() {
+  /// 送信中。**繋ぐところから始まる場合があるので数秒かかる。**
+  /// この間に二重送信されると、同じ説明が2回逐語に入る
+  bool _sending = false;
+
+  Future<void> _send() async {
+    if (_sending) return;
     final text = _controller.text;
     if (text.trim().isEmpty) return;
-    widget.live.sendStudentText(text);
+
+    setState(() => _sending = true);
+    // 先に消す。送信が遅いあいだ入力欄に残っていると、
+    // 生徒が「送れていない」と思ってもう一度押す
     _controller.clear();
+    try {
+      await widget.live.sendStudentText(text);
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
   }
 
   @override
@@ -531,20 +546,27 @@ class _TextInputState extends State<_TextInput> {
           Expanded(
             child: TextField(
               controller: _controller,
+              enabled: !_sending,
               textInputAction: TextInputAction.send,
+              minLines: 1,
+              maxLines: 4,
               onSubmitted: (_) => _send(),
               decoration: const InputDecoration(
-                isDense: true,
+                // 48dp を割らせない（DESIGN.md: 主要操作は 48dp 以上）。
+                // isDense を外して既定の高さに戻すのではなく、明示して固定する
+                constraints: BoxConstraints(minHeight: 48),
                 border: OutlineInputBorder(),
-                hintText: '検証用: 文字で送る',
+                hintText: '文字で説明する',
               ),
             ),
           ),
           const SizedBox(width: 8),
           IconButton.filled(
-            onPressed: _send,
+            onPressed: _sending ? null : _send,
             icon: const Icon(Icons.send),
             tooltip: '送る',
+            // 既定は 40dp なので明示して広げる
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
           ),
         ],
       ),

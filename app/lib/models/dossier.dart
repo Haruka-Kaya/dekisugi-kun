@@ -104,6 +104,9 @@ class Slot {
   bool get hasAcceptedMisconception =>
       probes.any((p) => p.result == ProbeResult.accepted);
 
+  /// 説明しきれたか。**根拠が無ければ status を信じない。**
+  bool get isExplained => !isEmpty && status == SlotStatus.explained;
+
   factory Slot.fromJson(Map<String, dynamic> json) => Slot(
         key: json['key'] as String? ?? '',
         label: json['label'] as String? ?? '',
@@ -141,6 +144,10 @@ class Dossier {
 
   /// 0〜100。サーバが計算した重み付き充足度
   final int coverage;
+
+  /// 説明しきれた概念のキー。
+  Set<String> get explainedKeys =>
+      {for (final s in slots) if (s.isExplained) s.key};
 
   factory Dossier.fromJson(Map<String, dynamic> json) => Dossier(
         unitId: json['unitId'] as String? ?? '',
@@ -229,3 +236,15 @@ class DirectorResult {
 
 List<String> _strings(Object? v) =>
     (v as List?)?.whereType<String>().toList() ?? const [];
+
+/// 前のカルテには無く、いま「説明できた」に上がった概念。
+///
+/// 継続の判定と、画面の祝う演出の**両方がこれを見る**。
+/// 別々に数えると、片方だけ祝って記録が付かない（あるいはその逆）が起きる。
+///
+/// **すでに説明できていたものは数えない。** 同じ概念を何度説明しても
+/// 積み上がるようにすると、水増しが構造的に可能になる。
+Set<String> newlyExplained(Dossier? before, Dossier after) {
+  final had = before?.explainedKeys ?? const <String>{};
+  return after.explainedKeys.difference(had);
+}

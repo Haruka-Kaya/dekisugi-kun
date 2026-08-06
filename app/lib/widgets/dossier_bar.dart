@@ -19,8 +19,8 @@ class DossierBar extends StatefulWidget {
 }
 
 class _DossierBarState extends State<DossierBar> {
-  /// 前回の状態。**達成の瞬間を捕まえるために持つ。**
-  Map<String, ExplainStatus> _previous = const {};
+  /// 前回のカルテ。**達成の瞬間を捕まえるためだけに持つ。**
+  Dossier? _previous;
 
   /// いま祝っている概念。演出が終わったら消す
   final Set<String> _celebrating = {};
@@ -28,23 +28,17 @@ class _DossierBarState extends State<DossierBar> {
   @override
   void initState() {
     super.initState();
-    _previous = _snapshot(widget.dossier);
+    _previous = widget.dossier;
   }
 
   @override
   void didUpdateWidget(DossierBar old) {
     super.didUpdateWidget(old);
-    final now = _snapshot(widget.dossier);
-    final improved = <String>{};
-    for (final e in now.entries) {
-      final before = _previous[e.key];
-      if (before == null) continue;
-      // 「説明できた」に**上がった**ときだけ祝う。下がったときは何もしない
-      if (e.value == ExplainStatus.gotIt && before != ExplainStatus.gotIt) {
-        improved.add(e.key);
-      }
-    }
-    _previous = now;
+    // **記録と同じ根拠で数える**（`newlyExplained`）。
+    // 別々に数えると、祝ったのに連続に付かない（逆も）が起きる。
+    // 下がったときは何もしない
+    final improved = newlyExplained(_previous, widget.dossier);
+    _previous = widget.dossier;
     if (improved.isEmpty) return;
 
     setState(() => _celebrating.addAll(improved));
@@ -55,9 +49,6 @@ class _DossierBarState extends State<DossierBar> {
       if (mounted) setState(() => _celebrating.removeAll(improved));
     });
   }
-
-  Map<String, ExplainStatus> _snapshot(Dossier d) =>
-      {for (final s in d.slots) s.key: statusOf(s)};
 
   @override
   Widget build(BuildContext context) {

@@ -45,22 +45,31 @@ class FakeLive {
         final m = jsonDecode(raw as String) as Map<String, dynamic>;
         _received.add(m);
         if (m.containsKey('setup')) ws.add(jsonEncode({'setupComplete': {}}));
-      }, onError: (_) {});
+        // **閉じたソケットを溜めない。** 繋ぎ直しを何度も試すテストで、
+        // 古いソケットに書こうとして StreamSink is closed で落ちる
+      }, onError: (_) {}, onDone: () => _sockets.remove(ws));
     }
   }
 
-  /// サーバから何か言わせる。
+  /// サーバから何か言わせる。開いているものにだけ。
   void say(Map<String, dynamic> message) {
-    for (final ws in _sockets) {
+    for (final ws in [..._sockets]) {
+      if (ws.readyState != WebSocket.open) {
+        _sockets.remove(ws);
+        continue;
+      }
       ws.add(jsonEncode(message));
     }
   }
 
   /// サーバ側から切る。**閉じる順序を作るためのもの。**
+  ///
+  /// Vertex がセッション上限で切るとき（実測 `code=1000`）の再現にも使う。
   Future<void> hangUp() async {
-    for (final ws in _sockets) {
+    for (final ws in [..._sockets]) {
       await ws.close(1000, 'done');
     }
+    _sockets.clear();
   }
 
   Future<void> dispose() async {

@@ -28,6 +28,8 @@ class ReviewItem {
     required this.label,
     required this.reason,
     required this.lastSeen,
+    this.timesSeen = 0,
+    this.lastReviewedAt,
   });
 
   final String unitId;
@@ -35,11 +37,36 @@ class ReviewItem {
   final String label;
   final ReviewReason reason;
 
-  /// 最後にこの概念を扱った日時
+  /// 最後にこの概念を**会話で扱った**日時。
+  ///
+  /// [lastReviewedAt] とは別物。会話するたびに新しくなるので、
+  /// これを「見直した回数」の根拠にはできない。
   final DateTime lastSeen;
+
+  /// 何回**見直した**か。間隔はこれで伸びる。
+  ///
+  /// > [!warning] 会話のたびにゼロへ戻してはいけない
+  /// > 以前は `reviews` にこの列が無く、画面が `timesSeen: 0` を
+  /// > 直に渡していた。結果として間隔は常に1日目に固定され、
+  /// > **階段が1段も上がらなかった**。`upsertReviews` は
+  /// > この値を更新句に入れないこと。
+  final int timesSeen;
+
+  /// 最後に見直した日時。まだ一度も見直していなければ null。
+  final DateTime? lastReviewedAt;
 
   /// 何日後に見直すか（[nextGap] の結果）を足した日。
   DateTime dueAt(Duration gap) => lastSeen.add(gap);
+
+  ReviewItem copyWith({int? timesSeen, DateTime? lastReviewedAt}) => ReviewItem(
+        unitId: unitId,
+        conceptKey: conceptKey,
+        label: label,
+        reason: reason,
+        lastSeen: lastSeen,
+        timesSeen: timesSeen ?? this.timesSeen,
+        lastReviewedAt: lastReviewedAt ?? this.lastReviewedAt,
+      );
 
   Map<String, Object?> toRow() => {
         'unit_id': unitId,
@@ -47,6 +74,8 @@ class ReviewItem {
         'label': label,
         'reason': reason.wire,
         'last_seen': lastSeen.millisecondsSinceEpoch,
+        'times_seen': timesSeen,
+        'last_reviewed_at': lastReviewedAt?.millisecondsSinceEpoch,
       };
 
   factory ReviewItem.fromRow(Map<String, Object?> row) => ReviewItem(
@@ -56,6 +85,11 @@ class ReviewItem {
         reason: ReviewReason.parse(row['reason']),
         lastSeen: DateTime.fromMillisecondsSinceEpoch(
             (row['last_seen'] as int?) ?? 0),
+        timesSeen: (row['times_seen'] as int?) ?? 0,
+        lastReviewedAt: row['last_reviewed_at'] == null
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(
+                row['last_reviewed_at'] as int),
       );
 }
 

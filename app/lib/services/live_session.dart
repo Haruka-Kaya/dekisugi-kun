@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../models/day_key.dart';
 import '../models/dossier.dart';
 import '../models/review.dart';
 import 'director_client.dart';
@@ -95,6 +96,15 @@ class LiveSessionController extends ChangeNotifier {
   LiveFailure? _failure;
   bool _closing = false;
   bool _directorBusy = false;
+
+  /// Vertex が配る「続きから繋ぎ直す」ための札。**最後の1つだけ持つ。**
+  ///
+  /// サーバは一度もこれを見ない（Vertex から端末へ直接届く）ので、
+  /// サーバ側で中身を検証することはできない。
+  String? _resumeHandle;
+
+  /// 連続で繋ぎ直した回数。会話が始まるたびに 0 に戻す
+  int _resumeAttempts = 0;
 
   /// 会話の逐語。**時系列で1本。** 記録も画面もこれを見る。
   final List<Utterance> transcript = [];
@@ -230,6 +240,9 @@ class LiveSessionController extends ChangeNotifier {
     _setState(LiveState.connecting);
     _failure = null;
     _closing = false;
+    // 前の会話の札を持ち越さない。持ち越すと、別の会話の続きに繋ぎにいく
+    _resumeHandle = null;
+    _resumeAttempts = 0;
 
     // 記録の行を先に作る。途中で落ちても発話が行き場を失わないように
     _sessionId ??= await _store?.startSession(unitId);
@@ -257,6 +270,9 @@ class LiveSessionController extends ChangeNotifier {
       _setState(LiveState.listening);
 
       _note('開始: 残り $remainingSessions 回 / $minutesPerSession 分');
+      // **会話したこと自体は連続の条件にしない**（C5）。
+      // 後から「文字だけで済ませた生徒がどれくらいいるか」を見るために取る
+      unawaited(_store?.recordActivity(dayKeyOf(DateTime.now()), sessions: 1));
       // 口火はディレクターに切らせる（C1）
       _kickDirector();
     } on QuotaExhausted catch (e) {
@@ -307,8 +323,8 @@ class LiveSessionController extends ChangeNotifier {
 
   // ── 接続 ──────────────────────────────────────────────────
 
-  Future<void> _connect() async {
-    final g = await tokens.reserve(unitId);
+  Future<void> _connect({String? resumeHandle}) async {
+    final g = await tokens.reserve(unitId, resumeHandle: resumeHandle);
     grant = g;
     remainingSessions = g.remainingSessions;
     minutesPerSession = g.sessionMinutes;
@@ -358,17 +374,22 @@ class LiveSessionController extends ChangeNotifier {
         // 生徒が喋ったターンの後だけ呼ぶ。AI の独り言では状況が変わらない
         if (hadStudentTurn) _kickDirector();
 
-      case LiveResumptionHandle():
-        // 受け取るだけ。セッションは Vertex 側が約10分で切り、
-        // そのたびに新しい枠を確保する設計なので、ここでは使わない
-        break;
+      case LiveResumptionHandle(:final handle):
+        // **最後の1つだけ持つ。** 切れたときにこれで続きから繋ぎ直す
+        _resumeHandle = handle;
 
       case LiveGoingAway():
+        // まもなく切る、という予告。ハンドルはこの前後に届いている
         _note('Live から goAway');
 
-      case LiveClosed(:final code, :final reason):
-        _note('Live 切断: code=$code reason=$reason');
-        if (!_closing) unawaited(_onSessionEnded());
+      case final LiveClosed closed:
+        _note('Live 切断: code=${closed.code} reason=${closed.reason}');
+        if (_closing) break;
+        if (_canResume(closed)) {
+          unawaited(_reconnect());
+        } else {
+          unawaited(_onSessionEnded());
+        }
 
       case LiveFailed(:final detail):
         _note('Live エラー: $detail');
@@ -397,6 +418,63 @@ class LiveSessionController extends ChangeNotifier {
     notes.add(message);
     if (notes.length > 50) notes.removeAt(0);
     debugPrint('[live] $message');
+  }
+
+  /// 続きから繋ぎ直してよいか。
+  ///
+  /// Vertex は約9分でセッションを切る（実測 `code=1000`）。
+  /// そこで会話を終わらせると、生徒には
+  /// 「10分と言われたのに9分で打ち切られた」ように見える。
+  ///
+  /// **枠を伸ばすためのものではない。** 残り時間が尽きていれば繋ぎ直さない。
+  bool _canResume(LiveClosed closed) =>
+      closed.isSessionLimit &&
+      _resumeHandle != null &&
+      secondsLeft > _resumeFloorSeconds &&
+      _resumeAttempts < maxResumeAttempts;
+
+  /// 連続で繋ぎ直す上限。**無いと失敗のたびに繋ぎ直して枠と請求を焼く。**
+  static const int maxResumeAttempts = 2;
+
+  /// これ以下しか残っていなければ繋ぎ直さない。
+  /// 数秒のために接続し直しても、生徒には途切れとしか映らない
+  static const double _resumeFloorSeconds = 20;
+
+  /// 切れ目を見せずに繋ぎ直す。
+  ///
+  /// **`stop()` を呼ばない。** マイク・スピーカー・時計・逐語・カルテは
+  /// そのままにして、WebSocket と購読だけ差し替える。
+  /// 時計を止めないので `secondsLeft` とディレクターの終了判断は継続する。
+  Future<void> _reconnect() async {
+    final handle = _resumeHandle;
+    if (handle == null) return;
+    _resumeAttempts++;
+    _note('セッション上限。続きから繋ぎ直す（$_resumeAttempts 回目 / '
+        '残り ${secondsLeft.round()}秒）');
+
+    try {
+      await _eventSub?.cancel();
+      _eventSub = null;
+      await _session?.close();
+      _session = null;
+
+      await _connect(resumeHandle: handle);
+
+      if (grant?.resumed != true) {
+        // サーバが再開を受け入れなかった。ここで会話を続けると、
+        // **いままでの話を忘れたデキすぎ君**が途中から現れることになる
+        _note('サーバが再開を受け入れなかった。会話を終える');
+        await stop(to: LiveState.done);
+        return;
+      }
+
+      // 生徒には何も出さない。切れ目を見せるとそこで気が散る
+      _setState(LiveState.listening);
+      _gate.reset();
+    } catch (e) {
+      _note('繋ぎ直しに失敗: $e');
+      await stop(to: LiveState.done);
+    }
   }
 
   /// セッションが終わった（Vertex が約10分で切る）。
@@ -509,18 +587,29 @@ class LiveSessionController extends ChangeNotifier {
 
   // ── ディレクター ───────────────────────────────────────────
 
-  /// 生徒の発話を**文字で**送る。検証用。
+  /// 生徒の発話を**文字で**送る。音声と対等な第一級の経路（C8）。
   ///
-  /// 音声だと、部屋の音・マイクの当たり外れ・読み上げる手間が全部混ざり、
-  /// 何を試したのか再現できない。文字で送れると、
-  /// 同じ入力を何度でも通せる（脱獄の検証など）。
+  /// 人前での音声利用を恥ずかしいと答えた日本人が 71.1%。
+  /// 電車・教室・家族のいる部屋で使えないなら、その生徒にとっては
+  /// アプリごと存在しないのと同じになる。
+  ///
+  /// **未接続なら自分で繋いでから送る。** 「先にマイクを押してから文字を打つ」を
+  /// 要求すると音声が既定＝一級のままになり、C8 を満たさない。
+  /// 画面側に分岐を作らず、ここに寄せてテストできるようにしている。
   ///
   /// 生徒の発話として扱うので、逐語にもディレクターにも普通に流れる。
-  void sendStudentText(String text) {
-    final s = _session;
-    if (s == null || s.isClosed) return;
+  Future<void> sendStudentText(String text) async {
     final t = text.trim();
     if (t.isEmpty) return;
+
+    if (!isRunning) {
+      await start();
+      // 繋がらなかった。`_failure` は start が立てているのでここでは触らない
+      if (!isRunning) return;
+    }
+
+    final s = _session;
+    if (s == null || s.isClosed) return;
 
     transcript.add(Utterance(id: _nextId(), isStudent: true, text: t));
     // ターンの区切りで「生徒が喋った」と判定させる。
@@ -529,6 +618,7 @@ class LiveSessionController extends ChangeNotifier {
     _setState(LiveState.thinking);
     notifyListeners();
     s.sendText(t);
+    unawaited(_store?.recordActivity(dayKeyOf(DateTime.now()), textTurns: 1));
   }
 
   void injectDirector(String instruction) {
@@ -580,10 +670,17 @@ class LiveSessionController extends ChangeNotifier {
       }
     }
 
+    // **祝う演出と同じ根拠で数える**（`newlyExplained`）。
+    // 別々に数えると、祝ったのに記録が付かない（逆も）が起きる
+    final fresh = newlyExplained(dossier, result.dossier);
     dossier = result.dossier;
     lastLureId = result.lureId;
     notifyListeners();
     unawaited(_persist());
+    if (fresh.isNotEmpty) {
+      unawaited(_store?.recordActivity(dayKeyOf(DateTime.now()),
+          done: fresh.length));
+    }
 
     if (result.shouldEnd) {
       _note('ディレクターが終了を指示: ${result.endReason}');

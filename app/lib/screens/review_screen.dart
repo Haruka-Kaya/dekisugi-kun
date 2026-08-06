@@ -1,10 +1,12 @@
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../models/review.dart';
+import '../models/streak.dart';
 import '../services/session_store.dart';
 import '../services/units_client.dart';
 import '../ui/_material.dart';
 import '../widgets/readable_width.dart';
+import '../widgets/streak_line.dart';
 import 'material_screen.dart';
 
 /// 復習の画面。
@@ -30,6 +32,7 @@ class ReviewScreen extends StatefulWidget {
 class _ReviewScreenState extends State<ReviewScreen> {
   List<ReviewItem>? _items;
   DateTime? _exam;
+  StreakView? _streak;
 
   @override
   void initState() {
@@ -40,10 +43,14 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Future<void> _load() async {
     final items = await widget.store.reviewItems();
     final exam = await widget.store.examDate();
+    final days = await widget.store.days();
     if (!mounted) return;
     setState(() {
       _items = items;
       _exam = exam;
+      // **連続日数は保存しない。** 毎回ここで数える
+      _streak = computeStreak(
+          records: days, now: DateTime.now(), examDate: exam);
     });
   }
 
@@ -87,6 +94,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
         onDone: () {},
       ),
     ));
+    // 読み終えて戻ってきた＝1回見直した。**次の間隔はここで伸びる**
+    await widget.store.markReviewed(item.unitId, item.conceptKey);
+    await _load();
   }
 
   @override
@@ -104,6 +114,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   0, 8, 0, 8 + MediaQuery.paddingOf(context).bottom),
               children: [
                 _ExamCard(exam: _exam, onTap: _pickExamDate),
+                // 継続は**主役にしない**。考査の下に小さく置く
+                if (_streak case final s?) StreakLine(streak: s),
                 if (items.isEmpty)
                   const _Empty()
                 else
@@ -205,7 +217,9 @@ class _ReviewTile extends StatelessWidget {
         : ExplainStatus.shaky;
     final fg = c.fgFor(status);
 
-    final gap = nextGap(now: now, examDate: exam, timesSeen: 0);
+    // **見直した回数を渡す。** ここを 0 に固定していたせいで、
+    // 考査日が未設定のときの階段が常に1日目から動かなかった
+    final gap = nextGap(now: now, examDate: exam, timesSeen: item.timesSeen);
     final due = item.dueAt(gap);
     final ready = !due.isAfter(now);
 
