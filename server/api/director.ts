@@ -1,5 +1,6 @@
 import { verifyToken } from '../lib/auth.js'
 import { runDirector, type DirectorInput } from '../lib/director.js'
+import { envLang, parseLang } from '../lib/i18n.js'
 import { emptyDossier } from '../lib/dossier.js'
 import { checkRate } from '../lib/ratelimit.js'
 import { unitById } from '../lib/units.js'
@@ -139,6 +140,8 @@ export function parseInput(body: unknown): DirectorInput | { error: string; deta
 
   const secondsLeft = typeof b.secondsLeft === 'number' ? b.secondsLeft : 600
   const turnCount = typeof b.turnCount === 'number' ? b.turnCount : 0
+  // 端末が明示していればそれが勝つ。無ければ環境変数の既定
+  const lang = b.lang == null ? envLang() : parseLang(b.lang)
 
-  return { dossier, utterances, secondsLeft, turnCount }
+  return { dossier, utterances, secondsLeft, turnCount, lang }
 }

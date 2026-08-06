@@ -1,4 +1,5 @@
 import { emptyDossier } from '../lib/dossier.js'
+import { envLang, localizeUnit, parseLang } from '../lib/i18n.js'
 import { UNITS, unitById, validateCatalog } from '../lib/units.js'
 
 /**
@@ -49,14 +50,26 @@ export default function handler(req: Req, res: Res) {
   // query を組み立てない実行環境でも読めるようにする
   const id = fromQuery || /[?&]id=([^&]+)/.exec(req.url ?? '')?.[1]
 
+  // 明示があればそれが勝つ。無ければ環境変数の既定
+  const rawLang = req.query?.lang
+  const langParam =
+    (Array.isArray(rawLang) ? rawLang[0] : rawLang) ??
+    /[?&]lang=([^&]+)/.exec(req.url ?? '')?.[1]
+  const lang = langParam == null ? envLang() : parseLang(langParam)
+  const local = (u: (typeof UNITS)[number]) => localizeUnit(u, lang)
+
   if (id) {
-    const unit = unitById(decodeURIComponent(id))
-    if (!unit) {
+    const found = unitById(decodeURIComponent(id))
+    if (!found) {
       res.status(404).json({ error: 'unknown_unit' })
       return
     }
-    // カタログは滅多に変わらない。端末と CDN に持たせる
+    const unit = local(found)
+    // カタログは滅多に変わらない。端末と CDN に持たせる。
+    // **言語ごとに別のものを配るので Vary を付ける** —
+    // 付けないと CDN が日本語を英語の要求に返す
     res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600')
+    res.setHeader('Vary', 'Accept-Language')
     res.status(200).json({
       unit: { ...publicUnit(unit), sections: unit.sections },
       dossier: emptyDossier(unit.id),
@@ -66,7 +79,8 @@ export default function handler(req: Req, res: Res) {
 
   // 一覧に教材の本文は載せない。選ぶのに要らないぶんを運ばない
   res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600')
-  res.status(200).json({ units: UNITS.map(publicUnit) })
+  res.setHeader('Vary', 'Accept-Language')
+  res.status(200).json({ units: UNITS.map(local).map(publicUnit) })
 }
 
 /** 端末に出してよい形。intent（判定基準）も出さない */

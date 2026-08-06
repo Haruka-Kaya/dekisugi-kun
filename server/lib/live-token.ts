@@ -1,3 +1,4 @@
+import { type Lang, localizeUnit } from './i18n.js'
 import { LIVE_MODEL, liveSessionConfig, newDirectorPrefix } from './live-config.js'
 import { unitById } from './units.js'
 import { VERTEX_LOCATION, VERTEX_PROJECT, vertexAccessToken } from './vertex.js'
@@ -67,9 +68,14 @@ export type LiveGrant = {
 export async function createLiveGrant(
   unitId: string,
   resumeHandle?: string,
+  lang: Lang = 'ja',
 ): Promise<LiveGrant> {
-  const unit = unitById(unitId)
-  if (!unit) throw new Error(`未知の単元: ${unitId}`)
+  const raw = unitById(unitId)
+  if (!raw) throw new Error(`未知の単元: ${unitId}`)
+  // **システム指示に入る単元名と概念も訳す。**
+  // ここが日本語のままだと、英語で話しているのに
+  // 概念の名前だけ日本語で出てくる
+  const unit = localizeUnit(raw, lang)
 
   const { token, expiresAt } = await vertexAccessToken()
   // **毎回作り直す。** 使い回すと、1度知られた合図がずっと通る
@@ -84,7 +90,7 @@ export async function createLiveGrant(
     model:
       `projects/${VERTEX_PROJECT}/locations/${VERTEX_LOCATION}` +
       `/publishers/google/models/${LIVE_MODEL}`,
-    setupConfig: liveSessionConfig(unit, directorPrefix, resumeHandle),
+    setupConfig: liveSessionConfig(unit, directorPrefix, resumeHandle, lang),
     expiresAt: expiresAt.toISOString(),
     // 実測: 9分時点で code=1000 "The operation was cancelled."
     sessionMinutes: 10,

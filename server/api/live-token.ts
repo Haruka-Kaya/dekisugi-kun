@@ -7,6 +7,7 @@ import {
   peekRemaining,
   reserveSession,
 } from '../lib/quota.js'
+import { envLang, parseLang } from '../lib/i18n.js'
 import { checkRate } from '../lib/ratelimit.js'
 import { unitById } from '../lib/units.js'
 
@@ -95,6 +96,10 @@ export default async function handler(req: Req, res: Res) {
       ? rawHandle
       : undefined
 
+  // 端末が明示していればそれが勝つ。無ければ環境変数の既定（デモ用の逃げ道）
+  const body2 = body as { lang?: unknown } | undefined
+  const lang = body2?.lang == null ? envLang() : parseLang(body2.lang)
+
   // 濫用の歯止め。**Vertex を呼ぶ前に落とす**
   const rate = await checkRate(deviceId)
   res.setHeader('X-RateLimit-Backend', rate.backend)
@@ -143,7 +148,7 @@ export default async function handler(req: Req, res: Res) {
   try {
     // 窓の外で送られたハンドルは**使わない**。
     // 使うと「枠は引いたのに前の会話の続き」という中途半端な状態になる
-    const grant = await createLiveGrant(unitId, resuming ? resumeHandle : undefined)
+    const grant = await createLiveGrant(unitId, resuming ? resumeHandle : undefined, lang)
     res.status(200).json({
       ...grant,
       remainingSessions: Number.isFinite(quota.remainingSessions)

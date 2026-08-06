@@ -11,6 +11,7 @@ import {
   nextProbe,
 } from './dossier.js'
 import { generateJson, isolate } from './gemini.js'
+import { type Lang, envLang, localizeMisconception, localizeUnit } from './i18n.js'
 import { misconceptionById } from './misconceptions.js'
 import { type Unit, unitById } from './units.js'
 
@@ -30,6 +31,8 @@ export type DirectorInput = {
   secondsLeft: number
   /** 何往復目か */
   turnCount?: number
+  /** 会話の言語。無ければ環境変数の既定 */
+  lang?: Lang
 }
 
 export type DirectorOutput = {
@@ -186,7 +189,7 @@ shouldEnd = true にする条件（いずれか）:
 生徒が説明できないことは、何度聞いても説明できません。
 薄いまま残っていても、他が埋まっているなら終わらせてよいです。`
 
-function buildPrompt(input: DirectorInput, unit: Unit): string {
+function buildPrompt(input: DirectorInput, unit: Unit, lang: Lang = 'ja'): string {
   const { dossier, utterances, secondsLeft } = input
 
   const transcript = utterances
@@ -214,7 +217,8 @@ function buildPrompt(input: DirectorInput, unit: Unit): string {
     .flatMap((s) => s.probes)
     .filter((p) => p.result !== 'notTried')
     .map((p) => {
-      const m = misconceptionById(p.id)
+      const raw = misconceptionById(p.id)
+      const m = raw && localizeMisconception(raw, lang)
       return m ? `- ${p.id}: AI後輩は「${m.lure}」と言った（現在の判定: ${p.result}）` : null
     })
     .filter(Boolean)
@@ -276,12 +280,15 @@ export async function runDirector(
   input: DirectorInput,
   deps: { generate?: Generate } = {},
 ): Promise<DirectorOutput> {
-  const unit = unitById(input.dossier.unitId)
-  if (!unit) throw new Error(`未知の単元: ${input.dossier.unitId}`)
+  const found = unitById(input.dossier.unitId)
+  if (!found) throw new Error(`未知の単元: ${input.dossier.unitId}`)
+  const lang = input.lang ?? envLang()
+  // **概念名も訳す。** 訳さないとカルテのラベルだけ日本語で画面に出る
+  const unit = localizeUnit(found, lang)
 
   const generate = deps.generate ?? (generateJson as Generate)
   const raw = await generate<RawOutput>({
-    prompt: buildPrompt(input, unit),
+    prompt: buildPrompt(input, unit, lang),
     schema: SCHEMA,
     systemInstruction: SYSTEM,
     temperature: 0.3,
@@ -337,7 +344,8 @@ export async function runDirector(
   const tooLong = (input.turnCount ?? 0) >= limit
   const shouldEnd = Boolean(raw.shouldEnd) || outOfTime || tooLong
 
-  const { instruction, lureId } = decideInstruction(dossier, unit, raw.nextInstruction ?? '', shouldEnd)
+  const { instruction, lureId } =
+    decideInstruction(dossier, unit, raw.nextInstruction ?? '', shouldEnd, lang)
 
   return {
     corrections: (raw.corrections ?? []).filter((c) => studentIds.has(c.id)),
@@ -382,6 +390,7 @@ function decideInstruction(
   unit: Unit,
   fallback: string,
   shouldEnd: boolean,
+  lang: Lang = 'ja',
 ): { instruction: string; lureId: string | null } {
   if (shouldEnd) return { instruction: '', lureId: null }
 
@@ -390,14 +399,19 @@ function decideInstruction(
   for (const slot of dossier.slots) {
     const stuck = slot.probes.find((p) => p.result === 'accepted' && !p.countered)
     if (!stuck) continue
-    const m = misconceptionById(stuck.id)
-    if (!m) continue
+    const found = misconceptionById(stuck.id)
+    if (!found) continue
+    const m = localizeMisconception(found, lang)
     stuck.countered = true
     return {
       instruction:
-        `先輩は「${m.misconception}」を否定しなかった。` +
-        `そこで、あなたが授業で聞きかじった話として「${m.correct}」を持ち出し、` +
-        `どっちが正しいのか先輩に確かめて。**先輩が間違っていると言わないこと。**`,
+        lang === 'en'
+          ? `They did not push back on "${m.misconception}". ` +
+            `Bring up "${m.correct}" as something you half-remember hearing in class, ` +
+            `and ask them which one is right. **Do not tell them they are wrong.**`
+          : `先輩は「${m.misconception}」を否定しなかった。` +
+            `そこで、あなたが授業で聞きかじった話として「${m.correct}」を持ち出し、` +
+            `どっちが正しいのか先輩に確かめて。**先輩が間違っていると言わないこと。**`,
       lureId: null,
     }
   }
@@ -405,7 +419,8 @@ function decideInstruction(
   // ② 説明が済んだ概念があれば、誤概念を1つ口にする。**文言はカタログのまま**
   const probe = nextProbe(dossier, unit)
   if (probe) {
-    const m = misconceptionById(probe.misconceptionId)
+    const found = misconceptionById(probe.misconceptionId)
+    const m = found && localizeMisconception(found, lang)
     if (m) {
       // **口にしたことをここで記録する。** notTried のまま返すと、
       // 次回 buildPrompt の「すでに口にした誤概念」が空になって判定が来ず、
