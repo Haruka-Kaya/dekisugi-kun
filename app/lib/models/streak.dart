@@ -65,6 +65,54 @@ class DayRecord {
   bool get accomplished => done > 0;
 }
 
+/// 言えるようになったこと1件。
+///
+/// **これが報酬の本体**（C5）。
+///
+/// C5 の下では、行動と切り離された報酬（ポイント・XP・レベル）を
+/// 主動線に置けない。従事随伴報酬は内発動機を d = −0.40 で毀損する。
+/// 出せるのは**行動の成果そのもの**で、この製品ではそれが
+/// 「生徒が自分の言葉で言えた内容」になる。
+///
+/// 積み上がるのが XP ではなく**自分が言った文**なので、
+/// 既存のループ（教える）に直結し、外的報酬としては働かない。
+class ExplainedItem {
+  const ExplainedItem({
+    required this.unitId,
+    required this.conceptKey,
+    required this.label,
+    required this.said,
+    required this.at,
+  });
+
+  final String unitId;
+  final String conceptKey;
+
+  /// 概念の名前（「落下の速さ」）
+  final String label;
+
+  /// **生徒自身の説明**（校正済み）。ここが主役
+  final String said;
+
+  final DateTime at;
+
+  Map<String, Object?> toRow() => {
+        'unit_id': unitId,
+        'concept_key': conceptKey,
+        'label': label,
+        'said': said,
+        'at': at.millisecondsSinceEpoch,
+      };
+
+  factory ExplainedItem.fromRow(Map<String, Object?> row) => ExplainedItem(
+        unitId: row['unit_id'] as String? ?? '',
+        conceptKey: row['concept_key'] as String? ?? '',
+        label: row['label'] as String? ?? '',
+        said: row['said'] as String? ?? '',
+        at: DateTime.fromMillisecondsSinceEpoch((row['at'] as int?) ?? 0),
+      );
+}
+
 /// 画面に出す継続の状態。
 class StreakView {
   const StreakView({

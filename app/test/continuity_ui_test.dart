@@ -41,15 +41,25 @@ void main() {
       for (final path in [
         'lib/widgets/streak_line.dart',
         'lib/models/streak.dart',
+        'lib/screens/home_screen.dart',
+        'lib/models/exam_plan.dart',
       ]) {
-        final src = File(path).readAsStringSync();
+        // **コメントを先に落とす。** 画面に出るのは文字列だけで、
+        // 「ポイントを作らない」という説明まで違反にすると、
+        // 理由を書けなくなる（実際に誤検知した）。
+        //
+        // 行ごとに見るのは、引用符が行をまたいで
+        // 別の行のコメントを巻き込むのを防ぐため
+        final lines = File(path)
+            .readAsLinesSync()
+            .where((l) => !l.trimLeft().startsWith('//'));
+
         for (final word in banned) {
-          // コメントでの言及（「ポイントを作らない」等）は許す。
-          // 禁じたいのは**画面に出す文字列**なので、引用符の中だけ見る
-          final inStrings = RegExp("'[^']*${RegExp.escape(word)}[^']*'")
-              .allMatches(src);
-          expect(inStrings, isEmpty,
-              reason: '$path が「$word」を画面に出そうとしている（C5違反）');
+          final re = RegExp("'[^']*${RegExp.escape(word)}[^']*'");
+          final hits = lines.where(re.hasMatch);
+          expect(hits, isEmpty,
+              reason: '$path が「$word」を画面に出そうとしている（C5違反）: '
+                  '${hits.isEmpty ? '' : hits.first.trim()}');
         }
       }
     });

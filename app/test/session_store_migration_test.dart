@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dekisugi/models/review.dart';
+import 'package:dekisugi/models/streak.dart';
 import 'package:dekisugi/services/session_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -126,6 +127,22 @@ void main() {
 
       await store.recordActivity('2026-08-06', done: 1);
       expect((await store.days()).single.done, 1);
+    });
+
+    test('v1 から更新しても「言えるようになったこと」が使える', () async {
+      // v4 で足した表も onUpgrade でしか作られない
+      final path = await makeV1(withRow: true);
+      final store = await SqfliteSessionStore.open(path: path);
+      addTearDown(store.close);
+
+      await store.recordExplained(ExplainedItem(
+        unitId: 'force-motion',
+        conceptKey: 'fall',
+        label: '落下の速さ',
+        said: '重さによらない',
+        at: DateTime(2026, 8, 6),
+      ));
+      expect((await store.explained()).single.said, '重さによらない');
     });
 
     test('更新済みの DB を開き直しても記録が残る', () async {

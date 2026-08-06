@@ -278,7 +278,7 @@ node --import tsx --test test/jailbreak.live.test.ts  # 役を降ろせるか
 ## 検証
 
 ```
-app     278 件   flutter test
+app     339 件   flutter test
 server  136 件   通信しないぶん（+8件は Vertex を叩くので既定では走らない）
 ```
 

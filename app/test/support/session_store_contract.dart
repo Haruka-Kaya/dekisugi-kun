@@ -1,5 +1,6 @@
 import 'package:dekisugi/models/dossier.dart';
 import 'package:dekisugi/models/review.dart';
+import 'package:dekisugi/models/streak.dart';
 import 'package:dekisugi/services/session_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -143,6 +144,45 @@ void runSessionStoreContract(
           await store.recordActivity('2026-08-0$i', done: 1);
         }
         expect(await store.days(limit: 2), hasLength(2));
+      });
+    });
+
+    group('言えるようになったこと', () {
+      ExplainedItem said(String key, String text, DateTime at) => ExplainedItem(
+            unitId: 'force-motion',
+            conceptKey: key,
+            label: '概念$key',
+            said: text,
+            at: at,
+          );
+
+      test('生徒の言葉がそのまま残る', () async {
+        await store.recordExplained(
+            said('fall', '空気の抵抗を無視すれば重さによらない', DateTime(2026, 8, 6)));
+        final e = (await store.explained()).single;
+        expect(e.said, '空気の抵抗を無視すれば重さによらない');
+        expect(e.conceptKey, 'fall');
+      });
+
+      test('同じ概念は最後の1件だけ残る', () async {
+        // 言い直すたびに増えると、積み上がった数が水増しになる
+        await store.recordExplained(said('fall', '古い説明', DateTime(2026, 8, 5)));
+        await store.recordExplained(said('fall', '新しい説明', DateTime(2026, 8, 6)));
+        final all = await store.explained();
+        expect(all, hasLength(1));
+        expect(all.single.said, '新しい説明');
+      });
+
+      test('新しい順に返る', () async {
+        await store.recordExplained(said('a', 'A', DateTime(2026, 8, 4)));
+        await store.recordExplained(said('c', 'C', DateTime(2026, 8, 6)));
+        await store.recordExplained(said('b', 'B', DateTime(2026, 8, 5)));
+        expect((await store.explained()).map((e) => e.said).toList(),
+            ['C', 'B', 'A']);
+      });
+
+      test('記録が無ければ空', () async {
+        expect(await store.explained(), isEmpty);
       });
     });
 

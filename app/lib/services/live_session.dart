@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../models/day_key.dart';
 import '../models/dossier.dart';
 import '../models/review.dart';
+import '../models/streak.dart';
 import 'director_client.dart';
 import 'director_queue.dart';
 import 'live_token_client.dart';
@@ -678,8 +679,23 @@ class LiveSessionController extends ChangeNotifier {
     notifyListeners();
     unawaited(_persist());
     if (fresh.isNotEmpty) {
-      unawaited(_store?.recordActivity(dayKeyOf(DateTime.now()),
-          done: fresh.length));
+      final now = DateTime.now();
+      unawaited(_store?.recordActivity(dayKeyOf(now), done: fresh.length));
+      // **生徒自身の言葉を残す。** ここが報酬の本体（C5）。
+      // ポイントではなく「言えるようになったこと」が積み上がる
+      for (final key in fresh) {
+        final matches = result.dossier.slots.where((s) => s.key == key);
+        if (matches.isEmpty) continue;
+        final slot = matches.first;
+        if (slot.content.trim().isEmpty) continue;
+        unawaited(_store?.recordExplained(ExplainedItem(
+          unitId: result.dossier.unitId,
+          conceptKey: slot.key,
+          label: slot.label,
+          said: slot.content.trim(),
+          at: now,
+        )));
+      }
     }
 
     if (result.shouldEnd) {

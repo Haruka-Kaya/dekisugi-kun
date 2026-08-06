@@ -89,6 +89,16 @@ abstract class SessionStore {
   /// 日ごとの記録。新しい順。連続日数はこれを数えて出す。
   Future<List<DayRecord>> days({int limit = 400});
 
+  /// 「言えるようになったこと」を1件残す。
+  ///
+  /// **これが報酬の本体**（C5）。ポイントのような行動と切り離された報酬ではなく、
+  /// 行動の成果そのもの＝生徒が自分の言葉で言えた内容を積む。
+  /// 同じ概念は最後の1件だけ残す（言い直すたびに増えると水増しになる）。
+  Future<void> recordExplained(ExplainedItem item);
+
+  /// 言えるようになったこと。新しい順。
+  Future<List<ExplainedItem>> explained({int limit = 50});
+
   /// 概念を見直した。もう出さない
   Future<void> clearReview(String unitId, String conceptKey);
 
@@ -162,6 +172,19 @@ class SqfliteSessionStore implements SessionStore {
           sessions INTEGER NOT NULL DEFAULT 0,
           done INTEGER NOT NULL DEFAULT 0,
           text_turns INTEGER NOT NULL DEFAULT 0
+        )''');
+    },
+    // v4 — 言えるようになったこと。**報酬の本体。**
+    // ポイントではなく生徒自身の言葉を積む（C5）
+    (db) async {
+      await db.execute('''
+        CREATE TABLE explained(
+          unit_id TEXT NOT NULL,
+          concept_key TEXT NOT NULL,
+          label TEXT NOT NULL,
+          said TEXT NOT NULL,
+          at INTEGER NOT NULL,
+          PRIMARY KEY(unit_id, concept_key)
         )''');
     },
   ];
@@ -336,6 +359,18 @@ class SqfliteSessionStore implements SessionStore {
       );
 
   @override
+  Future<void> recordExplained(ExplainedItem item) async {
+    await _db.insert('explained', item.toRow(),
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  @override
+  Future<List<ExplainedItem>> explained({int limit = 50}) async {
+    final rows = await _db.query('explained', orderBy: 'at DESC', limit: limit);
+    return rows.map(ExplainedItem.fromRow).toList();
+  }
+
+  @override
   Future<DateTime?> examDate() async {
     final v = int.tryParse(await getSetting('exam_date') ?? '');
     return v == null ? null : DateTime.fromMillisecondsSinceEpoch(v);
@@ -416,6 +451,7 @@ class MemorySessionStore implements SessionStore {
   final _reviews = <String, ReviewItem>{};
   final _settings = <String, String>{};
   final _days = <String, DayRecord>{};
+  final _explained = <String, ExplainedItem>{};
   DateTime? _exam;
   int _seq = 0;
 
@@ -545,6 +581,18 @@ class MemorySessionStore implements SessionStore {
   Future<List<DayRecord>> days({int limit = 400}) async {
     final all = _days.values.toList()
       ..sort((a, b) => b.day.compareTo(a.day));
+    return all.take(limit).toList();
+  }
+
+  @override
+  Future<void> recordExplained(ExplainedItem item) async {
+    _explained['${item.unitId}/${item.conceptKey}'] = item;
+  }
+
+  @override
+  Future<List<ExplainedItem>> explained({int limit = 50}) async {
+    final all = _explained.values.toList()
+      ..sort((a, b) => b.at.compareTo(a.at));
     return all.take(limit).toList();
   }
 

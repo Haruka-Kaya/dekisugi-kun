@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import 'config/app_theme.dart';
 import 'config/env.dart';
 import 'config/motion.dart';
+import 'models/unit.dart';
 import 'screens/consent_screen.dart';
+import 'screens/home_screen.dart';
 import 'screens/material_screen.dart';
 import 'screens/review_screen.dart';
 import 'screens/unit_picker_screen.dart';
@@ -143,30 +145,72 @@ class _GateState extends State<_Gate> {
 class _Home extends StatelessWidget {
   const _Home();
 
+  /// 教材を読む → 教える へ入る。**この導線を1か所に閉じる。**
+  ///
+  /// ホームからも単元一覧からも同じ経路を通す。
+  /// 経路が2つあると、片方だけ C2（教材を残さない）を破る形になりやすい。
+  static Future<void> _read(
+    BuildContext context,
+    UnitDetail unit, {
+    String? focusConceptKey,
+  }) {
+    return Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => MaterialScreen(
+        unit: unit,
+        focusConceptKey: focusConceptKey,
+        onDone: () {
+          // **教材の画面を残さない**（C2）。戻れると音読になる
+          Navigator.of(context).pushReplacement(MaterialPageRoute<void>(
+            builder: (ctx2) => ChangeNotifierProvider(
+              create: (ctx) => _controllerFor(ctx, unit.summary.id),
+              child: TalkScreen(unitTitle: unit.summary.title),
+            ),
+          ));
+        },
+      ),
+    ));
+  }
+
+  static void _openReview(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => ReviewScreen(
+        store: context.read<SessionStore>(),
+        units: context.read<UnitsClient>(),
+      ),
+    ));
+  }
+
+  static void _openPicker(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => UnitPickerScreen(
+        units: context.read<UnitsClient>(),
+        onOpenReview: () => _openReview(context),
+        onPick: (unit) => _read(context, unit),
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return UnitPickerScreen(
+    return HomeScreen(
+      store: context.read<SessionStore>(),
       units: context.read<UnitsClient>(),
-      onOpenReview: () => Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (_) => ReviewScreen(
-          store: context.read<SessionStore>(),
-          units: context.read<UnitsClient>(),
-        ),
-      )),
-      onPick: (unit) => Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (_) => MaterialScreen(
-          unit: unit,
-          onDone: () {
-            // **教材の画面を残さない**（C2）。戻れると音読になる
-            Navigator.of(context).pushReplacement(MaterialPageRoute<void>(
-              builder: (_) => ChangeNotifierProvider(
-                create: (ctx) => _controllerFor(ctx, unit.id),
-                child: TalkScreen(unitTitle: unit.title),
-              ),
-            ));
-          },
-        ),
-      )),
+      onOpenReview: () => _openReview(context),
+      onPickUnit: () => _openPicker(context),
+      onStart: (summary, conceptKey) async {
+        final client = context.read<UnitsClient>();
+        final detail = await client.detail(summary.id);
+        if (!context.mounted) return;
+        if (detail == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('この教材をまだ読み込めていません。')),
+          );
+          return;
+        }
+        // **きょうの1件の概念に焦点を当てて読ませる。**
+        // 単元まるごと読ませると、1件だけやりたい日に重すぎる
+        await _read(context, detail, focusConceptKey: conceptKey);
+      },
     );
   }
 }
