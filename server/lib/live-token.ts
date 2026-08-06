@@ -46,14 +46,28 @@ export type LiveGrant = {
   expiresAt: string
   /** 1セッションのおおよその上限（分）。**Vertex 側が切る** */
   sessionMinutes: number
+
+  /**
+   * 前の会話の続きとして繋ぎ直すものか。
+   *
+   * 端末はこれが `true` のときだけ「切れ目を見せない再接続」をする。
+   * `false` のまま繋ぎ直すと、**いままでの会話を忘れた状態**で
+   * 途中から再開してしまい、生徒には別人が現れたように見える。
+   */
+  resumed: boolean
 }
 
 /**
  * [unitId] は**必ず渡す。** 渡さないと、モデルは何を教わるのか
  * 知らないまま会話を始め、単元と無関係な話題を持ち出す（実機で確認）。
  * 知らない ID なら単元なしで作らず、呼び出し側に落とさせる。
+ *
+ * [resumeHandle] があれば、その会話の続きとして繋ぐ。
  */
-export async function createLiveGrant(unitId: string): Promise<LiveGrant> {
+export async function createLiveGrant(
+  unitId: string,
+  resumeHandle?: string,
+): Promise<LiveGrant> {
   const unit = unitById(unitId)
   if (!unit) throw new Error(`未知の単元: ${unitId}`)
 
@@ -70,9 +84,10 @@ export async function createLiveGrant(unitId: string): Promise<LiveGrant> {
     model:
       `projects/${VERTEX_PROJECT}/locations/${VERTEX_LOCATION}` +
       `/publishers/google/models/${LIVE_MODEL}`,
-    setupConfig: liveSessionConfig(unit, directorPrefix),
+    setupConfig: liveSessionConfig(unit, directorPrefix, resumeHandle),
     expiresAt: expiresAt.toISOString(),
     // 実測: 9分時点で code=1000 "The operation was cancelled."
     sessionMinutes: 10,
+    resumed: Boolean(resumeHandle),
   }
 }

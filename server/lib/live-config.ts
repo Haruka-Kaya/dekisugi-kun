@@ -127,12 +127,18 @@ ${topic}
  * > Developer API は直下でも通るので、移すときに気づかない。
  * > **実測で捕まえた**（`_probe-grant.mts` 相当の確認）。
  */
-export function liveSessionConfig(unit?: Unit, directorPrefix?: string): Record<string, unknown> {
+export function liveSessionConfig(
+  unit?: Unit,
+  directorPrefix?: string,
+  resumeHandle?: string,
+): Record<string, unknown> {
   return {
     generationConfig: { responseModalities: ['AUDIO'] },
     systemInstruction: { role: 'system', parts: [{ text: systemInstruction(unit, directorPrefix) }] },
-    // 切れたときに文脈ごと復帰する
-    sessionResumption: {},
+    // 切れたときに文脈ごと復帰する。
+    // **ハンドルを埋めるのはサーバの仕事。** 端末は受け取ったものを渡すだけで、
+    // setup を自分で組み立てさせない（ペルソナごと差し替えられる）
+    sessionResumption: resumeHandle ? { handle: resumeHandle } : {},
     // 長い会話でコンテキスト上限に当たって落ちるのを防ぐ
     contextWindowCompression: { slidingWindow: {} },
     // 言語自動判定は切って ja-JP に固定する。

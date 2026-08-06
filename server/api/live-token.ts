@@ -1,6 +1,12 @@
 import { verifyToken } from '../lib/auth.js'
 import { createLiveGrant } from '../lib/live-token.js'
-import { MINUTES_PER_SESSION, peekRemaining, reserveSession } from '../lib/quota.js'
+import {
+  MINUTES_PER_SESSION,
+  openResumeWindow,
+  peekRemaining,
+  reserveSession,
+  withinResumeWindow,
+} from '../lib/quota.js'
 import { checkRate } from '../lib/ratelimit.js'
 import { unitById } from '../lib/units.js'
 
@@ -80,6 +86,15 @@ export default async function handler(req: Req, res: Res) {
     return
   }
 
+  // 続きから繋ぎ直したいという申し出。
+  // **ハンドルの中身は検証できない**（Vertex が端末へ直接渡すので
+  // サーバは一度も見ていない）。信じてよいのは「窓の中かどうか」だけ
+  const rawHandle = (body as { resumeHandle?: unknown } | undefined)?.resumeHandle
+  const resumeHandle =
+    typeof rawHandle === 'string' && rawHandle.length > 0 && rawHandle.length <= 4096
+      ? rawHandle
+      : undefined
+
   // 濫用の歯止め。**Vertex を呼ぶ前に落とす**
   const rate = await checkRate(deviceId)
   res.setHeader('X-RateLimit-Backend', rate.backend)
@@ -89,10 +104,28 @@ export default async function handler(req: Req, res: Res) {
     return
   }
 
-  // **先に引いてから渡す。** 渡してから引くと、途中で落ちたときに
-  // 使われたのに引かれていない回数が残る
-  const quota = await reserveSession(deviceId)
+  // 窓の中の繋ぎ直しは枠を引かない。
+  // **窓は時間で閉じる**ので、偽のハンドルを何度送っても
+  // 1枠で話せる総時間は変わらない（`RESUME_WINDOW_MINUTES`）
+  const resuming = resumeHandle != null && (await withinResumeWindow(deviceId))
+
+  let quota
+  if (resuming) {
+    const left = await peekRemaining(deviceId)
+    quota = {
+      granted: true,
+      remainingSessions: left.remainingSessions,
+      entitled: left.entitled,
+      resetsAt: left.resetsAt,
+      backend: 'kv' as const,
+    }
+  } else {
+    // **先に引いてから渡す。** 渡してから引くと、途中で落ちたときに
+    // 使われたのに引かれていない回数が残る
+    quota = await reserveSession(deviceId)
+  }
   res.setHeader('X-Quota-Backend', quota.backend)
+  res.setHeader('X-Resumed', resuming ? '1' : '0')
   if (!quota.granted) {
     res.status(402).json({
       error: 'quota_exhausted',
@@ -102,8 +135,15 @@ export default async function handler(req: Req, res: Res) {
     return
   }
 
+  // **枠を引いた時点で窓を開ける。**
+  // 資格情報の作成に失敗しても開ける — 引かれたのに繋ぎ直せないのは理不尽。
+  // 繋ぎ直しでは開け直さない。開け直すと窓が閉じなくなり、時間の縛りが消える
+  if (!resuming) await openResumeWindow(deviceId)
+
   try {
-    const grant = await createLiveGrant(unitId)
+    // 窓の外で送られたハンドルは**使わない**。
+    // 使うと「枠は引いたのに前の会話の続き」という中途半端な状態になる
+    const grant = await createLiveGrant(unitId, resuming ? resumeHandle : undefined)
     res.status(200).json({
       ...grant,
       remainingSessions: Number.isFinite(quota.remainingSessions)

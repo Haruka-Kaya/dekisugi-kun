@@ -36,6 +36,22 @@ export const MINUTES_PER_SESSION = 10
 /** 1日の無料枠（セッション数）。10分 × 2 = 約20分ぶん。 */
 export const FREE_SESSIONS_PER_DAY = 2
 
+/**
+ * 1枠で話せる時間（分）。**再開はこの窓の中でだけ枠を引かない。**
+ *
+ * Vertex は約9分でセッションを切る（実測 `code=1000`）。
+ * 切れたところで会話を終わらせると、生徒には
+ * 「10分と言われたのに9分で打ち切られた」ように見える。
+ * だから切れたら繋ぎ直すのだが、**繋ぎ直しのたびに枠を引かない**と決めると、
+ * 端末が偽の再開ハンドルを送り続けるだけで無限に無料になる。
+ * ハンドルは Vertex が端末へ直接渡すのでサーバには検証しようがない。
+ *
+ * → **時間で縛る。** 枠を1つ引いた時刻から [RESUME_WINDOW_MINUTES] のあいだは
+ *   何度でも繋ぎ直せるが、窓を出たら次は普通に1枠引く。
+ *   これで1枠あたりの費用に上限がつく（何回繋ぎ直しても変わらない）。
+ */
+export const RESUME_WINDOW_MINUTES = MINUTES_PER_SESSION + 2
+
 export type QuotaVerdict = {
   /** 会話を始めてよいか */
   granted: boolean
@@ -130,6 +146,49 @@ export async function reserveSession(
     entitled: false,
     resetsAt,
     backend: mode,
+  }
+}
+
+/**
+ * 枠を引いた直後に開ける「繋ぎ直してよい窓」。
+ *
+ * 失敗しても投げない。**窓が開かなければ次の再開が1枠引くだけ**で、
+ * 生徒が損をする方向にしか転ばない（無料が漏れる方向には転ばない）。
+ */
+export async function openResumeWindow(deviceId: string, now = Date.now()): Promise<void> {
+  const until = now + RESUME_WINDOW_MINUTES * 60_000
+  const key = `rw:${deviceId}`
+  try {
+    if (backend() === 'kv') {
+      await kv([
+        ['SET', key, String(until)],
+        ['PEXPIREAT', key, String(until)],
+      ])
+    } else {
+      local.set(key, until)
+    }
+  } catch (e) {
+    console.error('再開の窓を開けられなかった（次の再開は1枠引く）', e)
+  }
+}
+
+/**
+ * まだ窓の中か。**読めなければ false**。
+ *
+ * ここは `reserveSession` と逆に、迷ったら**締める**。
+ * 通してしまうと、KV が落ちている間だけ無料枠が無制限になる。
+ */
+export async function withinResumeWindow(
+  deviceId: string,
+  now = Date.now(),
+): Promise<boolean> {
+  const key = `rw:${deviceId}`
+  try {
+    const v = backend() === 'kv' ? (await kv([['GET', key]]))[0] : local.get(key)
+    if (v == null) return false
+    return Number(v) > now
+  } catch {
+    return false
   }
 }
 

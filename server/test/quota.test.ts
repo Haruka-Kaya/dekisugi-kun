@@ -3,12 +3,16 @@ import { beforeEach, describe, it } from 'node:test'
 
 import liveToken from '../api/live-token.js'
 import { issueToken } from '../lib/auth.js'
+import { liveSessionConfig } from '../lib/live-config.js'
 import {
   FREE_SESSIONS_PER_DAY,
   MINUTES_PER_SESSION,
+  RESUME_WINDOW_MINUTES,
   grantEntitlement,
+  openResumeWindow,
   peekRemaining,
   reserveSession,
+  withinResumeWindow,
 } from '../lib/quota.js'
 
 const NOW = Date.UTC(2026, 7, 5, 3, 0) // JST 12:00
@@ -202,5 +206,141 @@ describe('/api/live-token', () => {
     await liveToken({ method: 'DELETE' }, res)
     assert.equal(out.code, 405)
     assert.equal(out.headers.Allow, 'GET, POST')
+  })
+})
+
+describe('繋ぎ直し（10分の壁）', () => {
+  // Vertex は約9分でセッションを切る（実測 code=1000）。
+  // そこで会話を終わらせると「10分と言われたのに9分で切られた」ように見える。
+  //
+  // 繋ぎ直しで枠を引かないと決めると、端末が偽のハンドルを送り続けるだけで
+  // 無限に無料になる。**ハンドルはサーバが一度も見ていない**ので
+  // （Vertex から端末へ直接届く）中身の検証はできない。
+  // だから時間で縛る。
+
+  const authed = () => ({ authorization: `Bearer ${issueToken(device())}` })
+  const unit = { unitId: 'force-motion' }
+
+  it('窓は1セッションぶんより長い', () => {
+    // Vertex が切るのは約9分。窓が10分ちょうどだと、
+    // 切れた瞬間には閉じている可能性がある
+    assert.ok(RESUME_WINDOW_MINUTES > MINUTES_PER_SESSION)
+  })
+
+  it('枠を引くと窓が開く', async () => {
+    const id = device()
+    assert.equal(await withinResumeWindow(id, NOW), false)
+    await openResumeWindow(id, NOW)
+    assert.equal(await withinResumeWindow(id, NOW + 60_000), true)
+  })
+
+  it('窓は時間で閉じる', async () => {
+    const id = device()
+    await openResumeWindow(id, NOW)
+    const after = NOW + (RESUME_WINDOW_MINUTES + 1) * 60_000
+    assert.equal(await withinResumeWindow(id, after), false,
+      '窓が閉じないと1枠で無限に話せる')
+  })
+
+  it('繋ぎ直しは枠を引かない', async () => {
+    const h = authed()
+    const first = fakeRes()
+    await liveToken({ method: 'POST', headers: h, body: unit }, first.res)
+
+    const resume = fakeRes()
+    await liveToken(
+      { method: 'POST', headers: h, body: { ...unit, resumeHandle: 'h-1' } },
+      resume.res,
+    )
+    assert.equal(resume.out.headers['X-Resumed'], '1')
+
+    const left = fakeRes()
+    await liveToken({ method: 'GET', headers: h }, left.res)
+    assert.equal(
+      (left.out.body as { remainingSessions: number }).remainingSessions,
+      FREE_SESSIONS_PER_DAY - 1,
+      '繋ぎ直しで枠が減っている',
+    )
+  })
+
+  it('窓が開いていなければ、ハンドルがあっても普通に引く', async () => {
+    // いきなり resumeHandle を送りつけても無料にはならない
+    const h = authed()
+    const { res, out } = fakeRes()
+    await liveToken(
+      { method: 'POST', headers: h, body: { ...unit, resumeHandle: 'h-1' } },
+      res,
+    )
+    assert.equal(out.headers['X-Resumed'], '0')
+
+    const left = fakeRes()
+    await liveToken({ method: 'GET', headers: h }, left.res)
+    assert.equal(
+      (left.out.body as { remainingSessions: number }).remainingSessions,
+      FREE_SESSIONS_PER_DAY - 1,
+    )
+  })
+
+  it('繋ぎ直しを繰り返しても枠は減らないが、窓は延びない', async () => {
+    // ここが崩れると、繋ぎ直すたびに窓が開き直って無限になる
+    const id = device()
+    await openResumeWindow(id, NOW)
+    // 繋ぎ直しでは openResumeWindow を呼ばない、という前提の確認。
+    // 窓の残り時間は最初に引いた時刻だけで決まる
+    const nearEnd = NOW + (RESUME_WINDOW_MINUTES - 1) * 60_000
+    assert.equal(await withinResumeWindow(id, nearEnd), true)
+    const afterEnd = NOW + (RESUME_WINDOW_MINUTES + 1) * 60_000
+    assert.equal(await withinResumeWindow(id, afterEnd), false)
+  })
+
+  it('空のハンドルは繋ぎ直しとして扱わない', async () => {
+    const h = authed()
+    const first = fakeRes()
+    await liveToken({ method: 'POST', headers: h, body: unit }, first.res)
+
+    const { res, out } = fakeRes()
+    await liveToken(
+      { method: 'POST', headers: h, body: { ...unit, resumeHandle: '' } },
+      res,
+    )
+    assert.equal(out.headers['X-Resumed'], '0')
+  })
+
+  it('長すぎるハンドルは受け取らない', async () => {
+    const h = authed()
+    const first = fakeRes()
+    await liveToken({ method: 'POST', headers: h, body: unit }, first.res)
+
+    const { res, out } = fakeRes()
+    await liveToken(
+      { method: 'POST', headers: h, body: { ...unit, resumeHandle: 'x'.repeat(5000) } },
+      res,
+    )
+    assert.equal(out.headers['X-Resumed'], '0')
+  })
+
+  it('繋ぎ直しでも単元は確かめる', async () => {
+    const h = authed()
+    const first = fakeRes()
+    await liveToken({ method: 'POST', headers: h, body: unit }, first.res)
+
+    const { res, out } = fakeRes()
+    await liveToken(
+      { method: 'POST', headers: h, body: { unitId: 'no-such', resumeHandle: 'h' } },
+      res,
+    )
+    assert.equal(out.code, 400)
+  })
+})
+
+describe('setupConfig の再開', () => {
+  it('ハンドルがあれば sessionResumption に載る', () => {
+    const cfg = liveSessionConfig(undefined, '[D:x]', 'h-1')
+    assert.deepEqual(cfg.sessionResumption, { handle: 'h-1' })
+  })
+
+  it('ハンドルが無ければ空のまま（新しい会話）', () => {
+    const cfg = liveSessionConfig(undefined, '[D:x]')
+    assert.deepEqual(cfg.sessionResumption, {})
   })
 })
