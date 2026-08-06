@@ -361,13 +361,24 @@ describe('貢献の記録', () => {
     return out
   }
 
-  /** 合計が読めるところまで人数を埋める。 */
+  /**
+   * その日サーバがトークンを配ったことにする。
+   *
+   * **端末の申告だけでは点が入らない。** 会話はサーバが配った
+   * トークンでしか始められないので、この記録が裏取りになる
+   */
+  function conversedOn(did: string, day: string, times = 2) {
+    fake.run(['SET', `s:${did}:${day}`, String(times)])
+  }
+
+  /** 合計が読めるところまで人数を埋め、きょう会話したことにする。 */
   async function readyTeam() {
     const t = await makeTeam()
     const { did } = await joinAs(t.code)
     for (let i = 0; i < MIN_MEMBERS_FOR_TOTAL; i++) {
       fake.run(['SADD', keys.members(t.teamId), `filler-${i}`])
     }
+    conversedOn(did, TODAY)
     return { ...t, did }
   }
 
@@ -436,6 +447,7 @@ describe('貢献の記録', () => {
   it('1日だめでも他は通す', async () => {
     // オフラインで溜めたぶんが1件のせいで全滅しない
     const { did } = await readyTeam()
+    conversedOn(did, TODAY)
     const out = await send(did, [
       { day: '2099-01-01', conceptsExplained: 3 },
       { day: TODAY, conceptsExplained: 2 },
@@ -461,6 +473,43 @@ describe('貢献の記録', () => {
   it('チームに入っていなければ 404', async () => {
     const out = await send(device(), [{ day: TODAY, conceptsExplained: 1 }])
     assert.equal(out.code, 404)
+  })
+
+  it('一度も会話していない日は点が入らない', async () => {
+    // **これが裏取りの本体。** 改造した端末が会話せずに申告しても、
+    // サーバが「その日トークンを配った」記録を持っていなければ 0
+    const t = await makeTeam()
+    const { did } = await joinAs(t.code)
+    for (let i = 0; i < MIN_MEMBERS_FOR_TOTAL; i++) {
+      fake.run(['SADD', keys.members(t.teamId), `filler-${i}`])
+    }
+    // conversedOn を呼ばない
+    const out = await send(did, [{ day: TODAY, conceptsExplained: 3 }])
+    assert.deepEqual(out.body.applied, [])
+    assert.equal(out.body.rejected[0].reason, 'no_session')
+    assert.equal((await summaryOf(did)).body.teamTotal, 0)
+  })
+
+  it('会話した回数より多くは盛れない', async () => {
+    const t = await makeTeam()
+    const { did } = await joinAs(t.code)
+    for (let i = 0; i < MIN_MEMBERS_FOR_TOTAL; i++) {
+      fake.run(['SADD', keys.members(t.teamId), `filler-${i}`])
+    }
+    conversedOn(did, TODAY, 1) // 1回だけ会話した
+    await send(did, [{ day: TODAY, conceptsExplained: 3 }])
+    assert.equal((await summaryOf(did)).body.teamTotal, 2, '1回の会話で3点入っている')
+  })
+
+  it('期間より前の日は受けない', async () => {
+    // 週の区切りより前は、今週の合計に入れる筋合いが無い。
+    //
+    // 副作用として「記録が古くて消えた」分岐は週単位の運用では到達しない
+    // （期間は最大6日前まで、記録の寿命は8日）。
+    // その分岐のテストは quota.test.ts の単体側にある
+    const { did } = await readyTeam()
+    const out = await send(did, [{ day: '2026-07-26', conceptsExplained: 3 }])
+    assert.equal(out.body.rejected[0].reason, 'out_of_range')
   })
 
   it('退出しても合計は残り、入り直しで二重に乗らない', async () => {

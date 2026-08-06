@@ -158,6 +158,40 @@ export function judgeDay(
   return { day: input.day, ok: true, value: contributionValue(input) }
 }
 
+/**
+ * サーバの実績と突き合わせて、寄与値を抑える。
+ *
+ * **端末の申告だけを信じない。** 会話は必ずサーバが配ったトークンでしか
+ * 始められないので、「その日トークンを配ったか」はサーバだけが知っている
+ * 客観の記録になる。改造した端末が一度も話さずに貢献を申告しても 0 に落ちる。
+ *
+ * > [!warning] 記録が無いことの意味は2つある
+ * > 記録の寿命内なのに無ければ「一度も会話していない」。
+ * > 寿命を過ぎていれば「消えただけ」で、会話したかどうかは分からない。
+ * > **同じ扱いにすると、どちらかで必ず間違える** —
+ * > 一律 0 ならオフラインで溜めた分を捨て、
+ * > 一律 1 なら会話せずに毎日1点を稼げてしまう。
+ *
+ * @param sessions [sessionsOn] の戻り値。`undefined` は記録なし
+ * @param ageDays その日から今日までの日数
+ * @param recordDays 記録が残っている期間（日）
+ */
+export function clampBySessions(
+  value: number,
+  sessions: number | undefined,
+  ageDays: number,
+  recordDays: number,
+): number {
+  if (sessions === undefined) {
+    // 記録があるはずの期間なのに無い＝その日は一度も会話していない
+    if (ageDays <= recordDays) return 0
+    // 消えただけ。捨てはしないが、盛れもしない
+    return Math.min(value, 1)
+  }
+  if (sessions <= 0) return 0
+  return Math.min(value, sessions * 2, MAX_DAILY_CONTRIBUTION)
+}
+
 // ── 集計の見せ方 ────────────────────────────────────────────
 
 export type TeamSummary = {

@@ -1,9 +1,11 @@
 import { verifyToken } from '../../lib/auth.js'
-import { jstDayKey } from '../../lib/day.js'
+import { daysBetween, jstDayKey } from '../../lib/day.js'
 import { bearer, parseBody, type Req, type Res } from '../../lib/http.js'
 import { hasKv } from '../../lib/kv.js'
+import { SESSION_RECORD_TTL_SECONDS, sessionsOn } from '../../lib/quota.js'
 import {
   MAX_DAYS_PER_REQUEST,
+  clampBySessions,
   judgeDay,
   memberId,
   type ContributionInput,
@@ -76,8 +78,25 @@ export default async function handler(req: Req, res: Res) {
     for (const item of raw as ContributionInput[]) {
       const v = judgeDay(item, today, team.periodStart)
       // **1日だめでも他を落とさない。** オフラインで溜めたぶんが全滅する
-      if (v.ok) ok.push({ day: v.day, value: v.value })
-      else rejected.push({ day: v.day, reason: v.reason })
+      if (!v.ok) {
+        rejected.push({ day: v.day, reason: v.reason })
+        continue
+      }
+      // **端末の申告だけを信じない。**
+      // 会話はサーバが配ったトークンでしか始められないので、
+      // 「その日配ったか」は改造できない客観の記録になる
+      const seen = await sessionsOn(auth.token.did, v.day)
+      const capped = clampBySessions(
+        v.value,
+        seen,
+        daysBetween(v.day, today),
+        SESSION_RECORD_TTL_SECONDS / 86400,
+      )
+      if (capped <= 0) {
+        rejected.push({ day: v.day, reason: 'no_session' })
+        continue
+      }
+      ok.push({ day: v.day, value: capped })
     }
 
     const done = await contribute(mid, team, ok)

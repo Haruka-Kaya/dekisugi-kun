@@ -3,7 +3,9 @@ import { beforeEach, describe, it } from 'node:test'
 
 import liveToken from '../api/live-token.js'
 import { issueToken } from '../lib/auth.js'
+import { jstDayKey } from '../lib/day.js'
 import { liveSessionConfig } from '../lib/live-config.js'
+import { clampBySessions } from '../lib/team.js'
 import {
   FREE_SESSIONS_PER_DAY,
   MINUTES_PER_SESSION,
@@ -14,6 +16,8 @@ import {
   openResumeWindow,
   peekRemaining,
   reserveSession,
+  sessionsOn,
+  SESSION_RECORD_TTL_SECONDS,
 } from '../lib/quota.js'
 
 const NOW = Date.UTC(2026, 7, 5, 3, 0) // JST 12:00
@@ -384,5 +388,51 @@ describe('setupConfig の再開', () => {
   it('ハンドルが無ければ空のまま（新しい会話）', () => {
     const cfg = liveSessionConfig(undefined, '[D:x]')
     assert.deepEqual(cfg.sessionResumption, {})
+  })
+})
+
+describe('会話の実績（チームの裏取りに使う）', () => {
+  it('配った日は数えられる', async () => {
+    const id = device()
+    assert.equal(await sessionsOn(id, jstDayKey(NOW)), undefined)
+    await reserveSession(id, NOW)
+    assert.equal(await sessionsOn(id, jstDayKey(NOW)), 1)
+    await reserveSession(id, NOW)
+    assert.equal(await sessionsOn(id, jstDayKey(NOW)), 2)
+  })
+
+  it('課金済みでも記録する', async () => {
+    // 以前は entitled のとき記録の前に return していた。
+    // そのままだと、課金した生徒だけチームに貢献できなくなる
+    const id = device()
+    await grantEntitlement(id, NOW + 30 * 24 * 3600_000)
+    const v = await reserveSession(id, NOW)
+    assert.equal(v.entitled, true)
+    assert.equal(await sessionsOn(id, jstDayKey(NOW)), 1, '課金済みだと記録が残らない')
+  })
+
+  it('記録が無いことの意味を、日の古さで分ける', () => {
+    // 一律にすると必ずどちらかで間違える:
+    // 一律0ならオフラインで溜めた分を捨て、
+    // 一律1なら会話せずに毎日1点を稼げる
+    assert.equal(clampBySessions(3, undefined, 0, 8), 0, 'きょう会話せずに点が入る')
+    assert.equal(clampBySessions(3, undefined, 8, 8), 0)
+    assert.equal(clampBySessions(3, undefined, 9, 8), 1, '古い分を捨てている')
+  })
+
+  it('その日は会話していないと分かれば 0', () => {
+    assert.equal(clampBySessions(3, 0, 0, 8), 0)
+  })
+
+  it('会話1回につき最大2点、上限は3点', () => {
+    assert.equal(clampBySessions(3, 1, 0, 8), 2)
+    assert.equal(clampBySessions(3, 2, 0, 8), 3)
+    assert.equal(clampBySessions(3, 99, 0, 8), 3)
+    assert.equal(clampBySessions(1, 99, 0, 8), 1, '申告より多くは入らない')
+  })
+
+  it('記録の寿命は、さかのぼれる日数に届く長さにする', () => {
+    // 2日だと、オフラインで溜めたぶんの裏が取れない
+    assert.ok(SESSION_RECORD_TTL_SECONDS >= 7 * 86400)
   })
 })

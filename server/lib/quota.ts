@@ -68,6 +68,18 @@ export const RESUME_WINDOW_MINUTES = MINUTES_PER_SESSION + 2
  */
 export const MAX_RESUMES_PER_WINDOW = 3
 
+/**
+ * 「その日トークンを配った」記録を残す期間（秒）。
+ *
+ * 枠の判定だけなら2日で足りるが、**チームの貢献の裏取りに使う**ので
+ * さかのぼれる期間（[MAX_BACKFILL_DAYS] = 14日）に近づけたい。
+ * 8日にしてあるのは、それ以上は容量と実効の釣り合いが悪いため。
+ *
+ * これより古い日は記録が消えているので、
+ * **貢献を捨てはしないが、盛れもしない**（1点に固定する）。
+ */
+export const SESSION_RECORD_TTL_SECONDS = 8 * 86400
+
 export type QuotaVerdict = {
   /** 会話を始めてよいか */
   granted: boolean
@@ -120,24 +132,18 @@ export async function reserveSession(
 ): Promise<QuotaVerdict> {
   const mode = backend()
   const resetsAt = nextResetAt(now)
+  const entitled = await isEntitled(deviceId, now)
 
-  if (await isEntitled(deviceId, now)) {
-    return {
-      granted: true,
-      remainingSessions: Number.POSITIVE_INFINITY,
-      entitled: true,
-      resetsAt,
-      backend: mode,
-    }
-  }
-
+  // **課金済みでも数える。** 以前はここより前に return していたので、
+  // entitled の端末は「その日トークンを配った」記録を1つも持たなかった。
+  // チームの貢献はこの記録と突き合わせるので、無いと貢献できなくなる
   const key = `s:${deviceId}:${dayKey(now)}`
   let used: number
   try {
     if (mode === 'kv') {
       const [v] = await kv([
         ['INCR', key],
-        ['EXPIRE', key, '172800', 'NX'],
+        ['EXPIRE', key, String(SESSION_RECORD_TTL_SECONDS), 'NX'],
       ])
       used = Number(v ?? 1)
     } else {
@@ -148,7 +154,23 @@ export async function reserveSession(
     // KV が読めないときは**通す**。締めると障害がそのまま全滅になる。
     // 費用側は全体の1日上限（ratelimit.ts）が別に見ている
     console.error('枠の記録に失敗（通す）', e)
-    return { granted: true, remainingSessions: 0, entitled: false, resetsAt, backend: mode }
+    return {
+      granted: true,
+      remainingSessions: entitled ? Number.POSITIVE_INFINITY : 0,
+      entitled,
+      resetsAt,
+      backend: mode,
+    }
+  }
+
+  if (entitled) {
+    return {
+      granted: true,
+      remainingSessions: Number.POSITIVE_INFINITY,
+      entitled: true,
+      resetsAt,
+      backend: mode,
+    }
   }
 
   const over = used > FREE_SESSIONS_PER_DAY
@@ -158,6 +180,26 @@ export async function reserveSession(
     entitled: false,
     resetsAt,
     backend: mode,
+  }
+}
+
+/**
+ * その日に何回トークンを配ったか。**チームの貢献の裏取りに使う。**
+ *
+ * 記録が無ければ `undefined`（0 と区別する）。
+ * 0 は「その日は一度も会話していない」、
+ * undefined は「古すぎて記録が消えた」で、扱いが違う。
+ */
+export async function sessionsOn(
+  deviceId: string,
+  day: string,
+): Promise<number | undefined> {
+  const key = `s:${deviceId}:${day}`
+  try {
+    const v = backend() === 'kv' ? (await kv([['GET', key]]))[0] : local.get(key)
+    return v == null ? undefined : Number(v)
+  } catch {
+    return undefined
   }
 }
 
