@@ -7,12 +7,13 @@ import { liveSessionConfig } from '../lib/live-config.js'
 import {
   FREE_SESSIONS_PER_DAY,
   MINUTES_PER_SESSION,
+  MAX_RESUMES_PER_WINDOW,
   RESUME_WINDOW_MINUTES,
+  claimResume,
   grantEntitlement,
   openResumeWindow,
   peekRemaining,
   reserveSession,
-  withinResumeWindow,
 } from '../lib/quota.js'
 
 const NOW = Date.UTC(2026, 7, 5, 3, 0) // JST 12:00
@@ -216,7 +217,10 @@ describe('繋ぎ直し（10分の壁）', () => {
   // 繋ぎ直しで枠を引かないと決めると、端末が偽のハンドルを送り続けるだけで
   // 無限に無料になる。**ハンドルはサーバが一度も見ていない**ので
   // （Vertex から端末へ直接届く）中身の検証はできない。
-  // だから時間で縛る。
+  //
+  // だから時間と回数の両方で縛る。**時間だけでは足りない** —
+  // 窓の12分のあいだ何本でも同時に張れると、
+  // PER_DEVICE_HOURLY = 80 のぶんだけ音声代が膨らむ。
 
   const authed = () => ({ authorization: `Bearer ${issueToken(device())}` })
   const unit = { unitId: 'force-motion' }
@@ -229,17 +233,56 @@ describe('繋ぎ直し（10分の壁）', () => {
 
   it('枠を引くと窓が開く', async () => {
     const id = device()
-    assert.equal(await withinResumeWindow(id, NOW), false)
+    assert.equal(await claimResume(id, NOW), false)
     await openResumeWindow(id, NOW)
-    assert.equal(await withinResumeWindow(id, NOW + 60_000), true)
+    assert.equal(await claimResume(id, NOW + 60_000), true)
   })
 
   it('窓は時間で閉じる', async () => {
     const id = device()
     await openResumeWindow(id, NOW)
     const after = NOW + (RESUME_WINDOW_MINUTES + 1) * 60_000
-    assert.equal(await withinResumeWindow(id, after), false,
+    assert.equal(await claimResume(id, after), false,
       '窓が閉じないと1枠で無限に話せる')
+  })
+
+  it('窓の中でも回数で閉じる', async () => {
+    // **時間だけでは縛りきれない。** 窓の12分のあいだ何本でも
+    // 同時に張れてしまうと、1枠のつもりが何十枠ぶんの音声代になる
+    // （PER_DEVICE_HOURLY = 80 なので最大80本）
+    const id = device()
+    await openResumeWindow(id, NOW)
+    for (let i = 1; i <= MAX_RESUMES_PER_WINDOW; i++) {
+      assert.equal(await claimResume(id, NOW + 1000), true, `${i}回目で止まった`)
+    }
+    assert.equal(await claimResume(id, NOW + 1000), false,
+      '回数の上限を超えても通っている')
+  })
+
+  it('端末側の上限より1つだけ多い', () => {
+    // 端末は maxResumeAttempts = 2 で諦める。
+    // サーバがそれより厳しいと、正しい端末が理由もなく弾かれる
+    assert.ok(MAX_RESUMES_PER_WINDOW > 2)
+  })
+
+  it('新しい窓では回数も戻る', async () => {
+    // 戻さないと、2つ目の窓が1つ目の残数を引き継いで即座に閉じる
+    const id = device()
+    await openResumeWindow(id, NOW)
+    for (let i = 0; i < MAX_RESUMES_PER_WINDOW; i++) await claimResume(id, NOW + 1000)
+    assert.equal(await claimResume(id, NOW + 1000), false)
+
+    const later = NOW + 3600_000
+    await openResumeWindow(id, later)
+    assert.equal(await claimResume(id, later + 1000), true, '回数が戻っていない')
+  })
+
+  it('窓の外で叩いても回数を削れない', async () => {
+    // 窓の外で数えると、他人の…ではなく自分の次の窓を先に削れてしまう
+    const id = device()
+    for (let i = 0; i < 10; i++) await claimResume(id, NOW)
+    await openResumeWindow(id, NOW)
+    assert.equal(await claimResume(id, NOW + 1000), true)
   })
 
   it('繋ぎ直しは枠を引かない', async () => {
@@ -281,16 +324,15 @@ describe('繋ぎ直し（10分の壁）', () => {
     )
   })
 
-  it('繋ぎ直しを繰り返しても枠は減らないが、窓は延びない', async () => {
-    // ここが崩れると、繋ぎ直すたびに窓が開き直って無限になる
+  it('繋ぎ直しても窓は延びない', async () => {
+    // ここが崩れると、繋ぎ直すたびに窓が開き直って無限になる。
+    // 窓の残り時間は最初に枠を引いた時刻だけで決まる
     const id = device()
     await openResumeWindow(id, NOW)
-    // 繋ぎ直しでは openResumeWindow を呼ばない、という前提の確認。
-    // 窓の残り時間は最初に引いた時刻だけで決まる
     const nearEnd = NOW + (RESUME_WINDOW_MINUTES - 1) * 60_000
-    assert.equal(await withinResumeWindow(id, nearEnd), true)
+    assert.equal(await claimResume(id, nearEnd), true)
     const afterEnd = NOW + (RESUME_WINDOW_MINUTES + 1) * 60_000
-    assert.equal(await withinResumeWindow(id, afterEnd), false)
+    assert.equal(await claimResume(id, afterEnd), false)
   })
 
   it('空のハンドルは繋ぎ直しとして扱わない', async () => {

@@ -2,10 +2,10 @@ import { verifyToken } from '../lib/auth.js'
 import { createLiveGrant } from '../lib/live-token.js'
 import {
   MINUTES_PER_SESSION,
+  claimResume,
   openResumeWindow,
   peekRemaining,
   reserveSession,
-  withinResumeWindow,
 } from '../lib/quota.js'
 import { checkRate } from '../lib/ratelimit.js'
 import { unitById } from '../lib/units.js'
@@ -105,9 +105,9 @@ export default async function handler(req: Req, res: Res) {
   }
 
   // 窓の中の繋ぎ直しは枠を引かない。
-  // **窓は時間で閉じる**ので、偽のハンドルを何度送っても
-  // 1枠で話せる総時間は変わらない（`RESUME_WINDOW_MINUTES`）
-  const resuming = resumeHandle != null && (await withinResumeWindow(deviceId))
+  // **窓は時間と回数の両方で閉じる。** 時間だけだと、その12分のあいだ
+  // 何本でも同時に張れてしまい、1枠のつもりが何十枠ぶんの音声代になる
+  const resuming = resumeHandle != null && (await claimResume(deviceId))
 
   let quota
   if (resuming) {

@@ -52,6 +52,20 @@ export const FREE_SESSIONS_PER_DAY = 2
  */
 export const RESUME_WINDOW_MINUTES = MINUTES_PER_SESSION + 2
 
+/**
+ * 1つの窓で繋ぎ直せる回数。
+ *
+ * > [!warning] 時間だけでは縛りきれない
+ * > 窓を時間だけで閉じると、**その12分のあいだは何本でも同時に張れる**。
+ * > `PER_DEVICE_HOURLY = 80` なので、改造した端末が窓の中で80本の
+ * > Live セッションを並行して開くと、1枠のつもりが80枠ぶんの音声代になる。
+ * > 「1枠あたりの費用が変わらない」は、**回数も縛って初めて成り立つ**。
+ *
+ * Vertex は約9分で切るので、12分の窓で必要な繋ぎ直しは多くて1〜2回。
+ * 端末側の上限（`maxResumeAttempts = 2`）より1つ多くしてある。
+ */
+export const MAX_RESUMES_PER_WINDOW = 3
+
 export type QuotaVerdict = {
   /** 会話を始めてよいか */
   granted: boolean
@@ -158,14 +172,18 @@ export async function reserveSession(
 export async function openResumeWindow(deviceId: string, now = Date.now()): Promise<void> {
   const until = now + RESUME_WINDOW_MINUTES * 60_000
   const key = `rw:${deviceId}`
+  const count = `rwn:${deviceId}`
   try {
     if (backend() === 'kv') {
+      // **回数も戻す。** 戻さないと、2つ目の窓が1つ目の残数を引き継ぐ
       await kv([
         ['SET', key, String(until)],
         ['PEXPIREAT', key, String(until)],
+        ['DEL', count],
       ])
     } else {
       local.set(key, until)
+      local.delete(count)
     }
   } catch (e) {
     console.error('再開の窓を開けられなかった（次の再開は1枠引く）', e)
@@ -173,20 +191,37 @@ export async function openResumeWindow(deviceId: string, now = Date.now()): Prom
 }
 
 /**
- * まだ窓の中か。**読めなければ false**。
+ * 繋ぎ直しを1回ぶん使う。**窓の中で、まだ回数が残っていれば true。**
  *
- * ここは `reserveSession` と逆に、迷ったら**締める**。
+ * 見るだけではなく**数える**。時間だけで縛ると、その12分のあいだ
+ * 何本でも同時に張れてしまい、1枠の費用が青天井になる。
+ *
+ * ここは `reserveSession` と逆に、迷ったら**締める**（読めなければ false）。
  * 通してしまうと、KV が落ちている間だけ無料枠が無制限になる。
+ * 締めても起きるのは「次の再開が1枠引く」だけで、生徒が損をする方向にしか転ばない。
  */
-export async function withinResumeWindow(
+export async function claimResume(
   deviceId: string,
   now = Date.now(),
 ): Promise<boolean> {
   const key = `rw:${deviceId}`
+  const count = `rwn:${deviceId}`
   try {
-    const v = backend() === 'kv' ? (await kv([['GET', key]]))[0] : local.get(key)
-    if (v == null) return false
-    return Number(v) > now
+    if (backend() === 'kv') {
+      const until = Number((await kv([['GET', key]]))[0] ?? 0)
+      // 窓の外なら数えない（数えると、窓の外で叩くだけで次の窓を削れる）
+      if (!(until > now)) return false
+      const [n] = await kv([
+        ['INCR', count],
+        ['PEXPIREAT', count, String(until)],
+      ])
+      return Number(n ?? 0) <= MAX_RESUMES_PER_WINDOW
+    }
+    const until = local.get(key)
+    if (until == null || until <= now) return false
+    const n = (local.get(count) ?? 0) + 1
+    local.set(count, n)
+    return n <= MAX_RESUMES_PER_WINDOW
   } catch {
     return false
   }
