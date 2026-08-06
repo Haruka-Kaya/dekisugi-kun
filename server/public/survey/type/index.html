@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>デキすぎ君 文字の読みやすさ調査</title>
+<title>文字の読みやすさ調査</title>
 <style>
 @font-face {
   font-family: 'NSJPSurvey';
@@ -386,7 +386,7 @@ function finish() {
     const blob = new Blob([json], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'dekisugi-type-' + Date.now() + '.json';
+    a.download = 'type-survey-' + Date.now() + '.json';
     a.click();
     URL.revokeObjectURL(a.href);
   });

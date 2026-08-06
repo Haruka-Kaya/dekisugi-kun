@@ -377,7 +377,7 @@ function finish(){
   };
   $("dl").onclick = ()=>{
     const b=new Blob([json],{type:"application/json"}); const a=document.createElement("a");
-    a.href=URL.createObjectURL(b); a.download="dekisugi-misconception-"+Date.now()+".json"; a.click();
+    a.href=URL.createObjectURL(b); a.download="rika-chousa-"+Date.now()+".json"; a.click();
     URL.revokeObjectURL(a.href);
   };
 }

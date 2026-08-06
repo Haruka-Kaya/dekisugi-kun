@@ -21,7 +21,7 @@ param(
   [ValidateSet('misconception', 'type')]
   [string]$Kind = 'misconception',
 
-  [string]$BaseUrl = 'https://dekisugi-director.vercel.app',
+  [string]$BaseUrl = 'https://rika-chousa.vercel.app',
 
   # 既定は secrets\survey-admin-token.txt
   [string]$TokenFile = (Join-Path $PSScriptRoot '..\secrets\survey-admin-token.txt'),

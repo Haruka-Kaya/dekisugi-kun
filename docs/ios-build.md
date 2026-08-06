@@ -28,7 +28,7 @@ cd ios && pod install && cd ..
 # 実機（iPad）に挿して
 flutter devices
 flutter run --release -d <iPad の id> \
-  --dart-define=SERVER_URL=https://dekisugi-director.vercel.app
+  --dart-define=SERVER_URL=https://rika-chousa.vercel.app
 ```
 
 初回は Xcode で署名の設定が要る。

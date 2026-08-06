@@ -66,7 +66,7 @@ app/android/key.properties      パスワードとエイリアス
 | アプリ / ゲーム | アプリ |
 | 無料 / 有料 | 無料（アプリ内課金あり） |
 | カテゴリ | 教育 |
-| プライバシーポリシー | https://dekisugi-director.vercel.app/privacy.html |
+| プライバシーポリシー | https://rika-chousa.vercel.app/privacy.html |
 | 問い合わせ先 | kayaharuka@hotmail.com |
 
 ### 短い説明（80字以内）

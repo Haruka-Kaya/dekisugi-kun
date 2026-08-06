@@ -16,7 +16,7 @@ import { describe, it } from 'node:test'
 
 import WebSocket from 'ws'
 
-const BASE = process.env.DEKISUGI_BASE ?? 'https://dekisugi-director.vercel.app'
+const BASE = process.env.DEKISUGI_BASE ?? 'https://rika-chousa.vercel.app'
 
 type Grant = {
   token: string

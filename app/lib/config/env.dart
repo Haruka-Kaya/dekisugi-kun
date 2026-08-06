@@ -9,10 +9,10 @@ abstract final class Env {
   /// サーバの置き場。**これが無いと会話そのものができない。**
   ///
   /// 会話用の一時トークンもここから取る。
-  /// 例: `--dart-define=SERVER_URL=https://dekisugi-director.vercel.app`
+  /// 例: `--dart-define=SERVER_URL=https://rika-chousa.vercel.app`
   static const String directorUrl = String.fromEnvironment(
     'SERVER_URL',
-    defaultValue: 'https://dekisugi-director.vercel.app',
+    defaultValue: 'https://rika-chousa.vercel.app',
   );
 
   static bool get hasServer => directorUrl.isNotEmpty;
