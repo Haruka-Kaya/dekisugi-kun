@@ -216,11 +216,40 @@ Xiaomi の実機で、AI の声をマイクが拾い、
 cd server
 npm install
 npm test          # tsc --noEmit + 通信しないテスト
-vercel --prod
 ```
 
 環境変数は `.env.example` を参照。`KV_REST_API_*` が無いときは
 メモリに落ちる（**インスタンスをまたがないので本番では当てにしない**）。
+
+### デプロイ
+
+**`main` が本番。** 日常の作業は `dev`（またはそこから切った枝）で行う。
+
+```
+dev へ push        → preview が自動で出る
+main へ merge/push → 本番が入れ替わる
+```
+
+Vercel の Root Directory は **`server`** で、プロジェクトの紐付け（`.vercel/`）は
+**リポジトリ直下**にある。手で出すときも直下から叩くこと。
+
+```bash
+# リポジトリ直下から。server/ から叩くと server/server を探しにいく
+vercel --prod
+```
+
+> [!warning] なぜ main が本番で、開発が dev なのか
+> 「main は preview、release で本番」にしたかったが、
+> **Vercel の Production Branch は REST API に出ていない**
+> （`v9`/`v10`/`v11` すべて `should NOT have additional property`）。
+> ダッシュボードを手で触らずに済ませるため、名前のほうを反転させた。
+> 効き方は同じで、**本番に入れる前に必ず preview を1つ挟める**。
+
+> [!warning] 出したら本番で確かめる
+> テストが通っていても、**本番でしか出ない穴がある**。
+> 実際に `RESUME_WINDOW_MINUTES` の同時接続の穴は、
+> デプロイ後にトークンを発行して `X-Resumed` と残り回数を叩いて見つけた。
+> `curl` で 200 を見るだけでは足りず、**本文と挙動まで確かめること**。
 
 ### アプリ
 
