@@ -27,6 +27,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // flutter_local_notifications が要求する。
+        // **無いと release ビルドだけが落ちる**（debug は通ってしまう）
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -70,4 +73,10 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // 上の isCoreLibraryDesugaringEnabled とセット。
+    // 片方だけだとビルドが通らない
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }

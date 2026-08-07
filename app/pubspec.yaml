@@ -18,6 +18,11 @@ dependencies:
   flutter_pcm_sound: ^3.3.3
   sqflite: ^2.4.2+1
   path: ^1.9.1
+  # 通知は**端末の中で完結させる**。FCM は使わない —
+  # トークン管理と端末識別子の保存が増え、同意文面に波及する
+  flutter_local_notifications: ^19.4.2
+  # 予約の時刻を扱うのに要る（flutter_local_notifications の前提）
+  timezone: ^0.10.1
 
 dev_dependencies:
   flutter_test:

@@ -3,14 +3,17 @@ import 'dart:async';
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../models/exam_plan.dart';
+import '../models/reminder.dart';
 import '../models/streak.dart';
 import '../models/team.dart';
 import '../models/unit.dart';
 import '../services/session_store.dart';
+import '../services/reminders.dart';
 import '../services/team_client.dart';
 import '../services/units_client.dart';
 import '../ui/_material.dart';
 import '../widgets/readable_width.dart';
+import 'settings_screen.dart';
 import 'team_join_screen.dart';
 import '../widgets/streak_line.dart';
 import '../widgets/team_card.dart';
@@ -32,6 +35,7 @@ class HomeScreen extends StatefulWidget {
     required this.store,
     required this.units,
     this.team,
+    this.reminders,
     required this.onStart,
     required this.onOpenReview,
     required this.onPickUnit,
@@ -42,6 +46,9 @@ class HomeScreen extends StatefulWidget {
 
   /// クラスの合計。**無くてもアプリは成立する**（付随物なので）
   final TeamClient? team;
+
+  /// まいにちの声かけ。これも付随物
+  final Reminders? reminders;
 
   /// きょうの1件を始める。単元IDと、どの概念に焦点を当てるか
   final void Function(UnitSummary unit, String conceptKey) onStart;
@@ -98,6 +105,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // クラスは付随物。**待たせない。取れなければ出さないだけ**
     unawaited(_loadTeam());
+    // 文面は状態で変わるので、開くたびに次の1件を立て直す
+    unawaited(_rescheduleReminder());
+  }
+
+  /// 次の声かけを立て直す。**失敗しても何も止めない。**
+  Future<void> _rescheduleReminder() async {
+    final r = widget.reminders;
+    final plan = _plan;
+    final streak = _streak;
+    if (r == null || plan == null || streak == null) return;
+    await r.reschedule(ReminderState(
+      daysLeft: plan.daysLeft,
+      remaining: plan.remaining,
+      dueCount: plan.due.length,
+      graceLeft: streak.graceLeft,
+      doneToday: streak.doneToday,
+      restDay: streak.restDay,
+    ));
   }
 
   /// クラスの合計を後から足す。会話も画面も止めない。
@@ -214,6 +239,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 label: 'ほかの単元を選ぶ',
                 onTap: widget.onPickUnit,
               ),
+              if (widget.reminders case final r?)
+                _RowLink(
+                  icon: Icons.notifications_none,
+                  label: '設定',
+                  onTap: () async {
+                    await Navigator.of(context).push(MaterialPageRoute<void>(
+                      builder: (_) => SettingsScreen(reminders: r),
+                    ));
+                    await _rescheduleReminder();
+                  },
+                ),
               const SizedBox(height: 8),
               const Divider(height: 1),
               // **継続は最下部に小さく。** 主役にしない

@@ -5,6 +5,10 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- AEC のために AudioManager のモードを切り替える -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+    <!-- 1日1回の声かけ。**端末の中だけで完結する**（FCM は使わない）。
+         Android 13+ では実行時に求める。同意画面では聞かず、
+         初回の会話を終えた直後に聞く -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <!-- マイクが無い端末は Play ストアの対象から外す。
          required="false" にすると、会話できない端末にインストールされてしまう -->

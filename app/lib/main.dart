@@ -15,6 +15,7 @@ import 'services/device_identity.dart';
 import 'services/director_client.dart';
 import 'services/live_session.dart';
 import 'services/live_token_client.dart';
+import 'services/reminders.dart';
 import 'services/session_store.dart';
 import 'services/team_client.dart';
 import 'services/units_client.dart';
@@ -70,6 +71,7 @@ class DekisugiApp extends StatelessWidget {
         Provider<UnitsClient>.value(
           value: UnitsClient(baseUrl: Env.directorUrl, store: store),
         ),
+        Provider<Reminders>.value(value: Reminders(store: store)),
         Provider<TeamClient>.value(
           value: TeamClient(
             baseUrl: Env.directorUrl,
@@ -204,6 +206,7 @@ class _Home extends StatelessWidget {
       store: context.read<SessionStore>(),
       units: context.read<UnitsClient>(),
       team: context.read<TeamClient>(),
+      reminders: context.read<Reminders>(),
       onOpenReview: () => _openReview(context),
       onPickUnit: () => _openPicker(context),
       onStart: (summary, conceptKey) async {
