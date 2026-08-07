@@ -54,6 +54,7 @@
 | 中断と再開 | 動く |
 | 文字での説明 | 動く。**音声と対等**（C8。未接続でも送ると自分で繋ぐ） |
 | iOS / iPadOS | **未ビルド。** 下ごしらえのみ（`docs/ios-build.md`） |
+| クラスの合計（チーム戦） | 動く。**実機未確認** |
 | 先生用の管理画面 | **無い** |
 | 教材の量 | **3単元8節だけ。** 1人あたり2〜3日ぶん |
 
@@ -284,7 +285,7 @@ DEKISUGI_LIVE=1 npx tsx --test test/jailbreak.live.test.ts  # 役を降ろせる
 ## 検証
 
 ```
-app     339 件   flutter test
+app     355 件   flutter test
 server  210 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
 ```
 

@@ -6,15 +6,21 @@ import 'package:dio/dio.dart';
 ///
 /// キーは `'<METHOD> <path>'`。クエリは見ない（同じ経路で
 /// 一覧と1件を出し分けている API があるため、必要なら本文で分ける）。
-Dio fakeDio(Map<String, Response<Object?> Function()> routes) {
+/// [onRequest] を渡すと、送った本文を覗ける。
+/// **何を送ったかを見ないと、送信のテストは形だけになる。**
+Dio fakeDio(
+  Map<String, Response<Object?> Function()> routes, {
+  void Function(RequestOptions options)? onRequest,
+}) {
   final dio = Dio(BaseOptions(validateStatus: (_) => true));
-  dio.httpClientAdapter = _StubAdapter(routes);
+  dio.httpClientAdapter = _StubAdapter(routes, onRequest);
   return dio;
 }
 
 class _StubAdapter implements HttpClientAdapter {
-  _StubAdapter(this.routes);
+  _StubAdapter(this.routes, this.onRequest);
   final Map<String, Response<Object?> Function()> routes;
+  final void Function(RequestOptions options)? onRequest;
 
   @override
   void close({bool force = false}) {}
@@ -25,6 +31,7 @@ class _StubAdapter implements HttpClientAdapter {
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) async {
+    onRequest?.call(options);
     final key = '${options.method} ${options.path}';
     final make = routes[key];
     if (make == null) return ResponseBody.fromString('{}', 404);

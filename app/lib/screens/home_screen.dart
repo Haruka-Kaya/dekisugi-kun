@@ -1,13 +1,19 @@
+import 'dart:async';
+
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../models/exam_plan.dart';
 import '../models/streak.dart';
+import '../models/team.dart';
 import '../models/unit.dart';
 import '../services/session_store.dart';
+import '../services/team_client.dart';
 import '../services/units_client.dart';
 import '../ui/_material.dart';
 import '../widgets/readable_width.dart';
+import 'team_join_screen.dart';
 import '../widgets/streak_line.dart';
+import '../widgets/team_card.dart';
 
 /// ホーム。**並び順が優先順位の宣言そのもの。**
 ///
@@ -25,6 +31,7 @@ class HomeScreen extends StatefulWidget {
     super.key,
     required this.store,
     required this.units,
+    this.team,
     required this.onStart,
     required this.onOpenReview,
     required this.onPickUnit,
@@ -32,6 +39,9 @@ class HomeScreen extends StatefulWidget {
 
   final SessionStore store;
   final UnitsClient units;
+
+  /// クラスの合計。**無くてもアプリは成立する**（付随物なので）
+  final TeamClient? team;
 
   /// きょうの1件を始める。単元IDと、どの概念に焦点を当てるか
   final void Function(UnitSummary unit, String conceptKey) onStart;
@@ -50,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
   StreakView? _streak;
   List<ExplainedItem> _said = const [];
   List<UnitSummary> _units = const [];
+  TeamSummary? _team;
   bool _loading = true;
 
   @override
@@ -84,6 +95,56 @@ class _HomeScreenState extends State<HomeScreen> {
       _streak = computeStreak(records: days, now: now, examDate: exam);
       _loading = false;
     });
+
+    // クラスは付随物。**待たせない。取れなければ出さないだけ**
+    unawaited(_loadTeam());
+  }
+
+  /// クラスの合計を後から足す。会話も画面も止めない。
+  Future<void> _loadTeam() async {
+    final client = widget.team;
+    if (client == null) return;
+    // 冪等なので、いつ何度送ってもよい
+    await client.syncContributions();
+    final s = await client.summary();
+    if (mounted) setState(() => _team = s);
+  }
+
+  Future<void> _openTeam() async {
+    final client = widget.team;
+    if (client == null) return;
+    if (_team == null) {
+      final joined = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => TeamJoinScreen(client: client)),
+      );
+      if (joined == true) await _loadTeam();
+      return;
+    }
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('クラスから抜けますか？'),
+        content: const Text(
+          'いままでの分はクラスの合計に残りますが、'
+          'あなたの記録は消えます。\n\n'
+          '入り直せるのは1週間後です。'
+          '同じ日をもう一度数えられないようにするためです。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('やめる'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('抜ける'),
+          ),
+        ],
+      ),
+    );
+    if (leave != true) return;
+    await client.leave();
+    if (mounted) setState(() => _team = null);
   }
 
   Future<void> _pickExamDate() async {
@@ -130,6 +191,15 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 12),
               _SaidItList(items: _said),
               const SizedBox(height: 12),
+              if (_team case final s?) ...[
+                TeamCard(summary: s, onLeave: _openTeam),
+                const SizedBox(height: 12),
+              ] else if (widget.team != null)
+                _RowLink(
+                  icon: Icons.groups_outlined,
+                  label: 'クラスに入る',
+                  onTap: _openTeam,
+                ),
               _RowLink(
                 icon: Icons.replay,
                 label: 'もう一度見るところ',

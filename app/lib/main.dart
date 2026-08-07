@@ -16,6 +16,7 @@ import 'services/director_client.dart';
 import 'services/live_session.dart';
 import 'services/live_token_client.dart';
 import 'services/session_store.dart';
+import 'services/team_client.dart';
 import 'services/units_client.dart';
 import 'ui/_material.dart';
 
@@ -68,6 +69,13 @@ class DekisugiApp extends StatelessWidget {
         Provider<ConsentStore>.value(value: ConsentStore(store)),
         Provider<UnitsClient>.value(
           value: UnitsClient(baseUrl: Env.directorUrl, store: store),
+        ),
+        Provider<TeamClient>.value(
+          value: TeamClient(
+            baseUrl: Env.directorUrl,
+            identity: DeviceIdentity(baseUrl: Env.directorUrl, store: store),
+            store: store,
+          ),
         ),
       ],
       child: MaterialApp(
@@ -195,6 +203,7 @@ class _Home extends StatelessWidget {
     return HomeScreen(
       store: context.read<SessionStore>(),
       units: context.read<UnitsClient>(),
+      team: context.read<TeamClient>(),
       onOpenReview: () => _openReview(context),
       onPickUnit: () => _openPicker(context),
       onStart: (summary, conceptKey) async {
