@@ -24,6 +24,7 @@ class MaterialScreen extends StatefulWidget {
     required this.unit,
     required this.onDone,
     this.focusConceptKey,
+    this.review = false,
   });
 
   final UnitDetail unit;
@@ -31,8 +32,15 @@ class MaterialScreen extends StatefulWidget {
   /// 読み終わった。会話へ進む
   final VoidCallback onDone;
 
-  /// 復習から来たときに開く節。指定があればそこだけを出す
+  /// 開く節。指定があればそこだけを出す。
+  ///
+  /// **「復習かどうか」とは別物。** ホームの「きょうの1件」も
+  /// 1つの節だけを開くが、そこから会話へ進む。
+  /// 兼ねさせていたせいで、ホームの主 CTA が行き止まりになっていた（実機で発覚）。
   final String? focusConceptKey;
+
+  /// 読み直しだけで、会話へ進まない。
+  final bool review;
 
   @override
   State<MaterialScreen> createState() => _MaterialScreenState();
@@ -42,7 +50,7 @@ class _MaterialScreenState extends State<MaterialScreen> {
   final _scroll = ScrollController();
   bool _reachedEnd = false;
 
-  bool get _isReview => widget.focusConceptKey != null;
+  bool get _isReview => widget.review;
 
   List<Section> get _sections {
     final key = widget.focusConceptKey;

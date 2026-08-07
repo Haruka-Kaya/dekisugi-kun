@@ -159,6 +159,25 @@ class LiveSessionController extends ChangeNotifier {
   /// マイクを聞いているか。画面の表示に使う。
   bool get isListeningToMic => isRunning && !_micMuted;
 
+  /// 文字で始めた会話に、あとからマイクを足す。
+  ///
+  /// 「声ではなす」を押した時点で初めて許可を求める。
+  /// 断られても会話は続く（文字だけで進める）。
+  Future<bool> enableMic() async {
+    if (!isRunning || _micSub != null) return _micSub != null;
+    if (!await _mic.hasPermission()) return false;
+    if (!await _mic.start()) return false;
+    _gate.reset();
+    _micSub = _mic.chunks.listen(_onMicChunk);
+    _levelSub = _mic.level.listen(_onLevel);
+    _note('マイクを後から有効にした');
+    notifyListeners();
+    return true;
+  }
+
+  /// マイクを聞いているか（許可済みで動いているか）。
+  bool get hasMic => _micSub != null;
+
   /// AI の発話を途中で止める。**タップから呼ぶ。**
   ///
   /// マイクでの割り込みは AEC が無いと成立しないので、
@@ -229,7 +248,15 @@ class LiveSessionController extends ChangeNotifier {
     }
   }
 
-  Future<void> start() async {
+  /// 会話を始める。
+  ///
+  /// [withMic] を false にすると、**マイクの許可を求めずに**繋ぐ。
+  ///
+  /// > [!important] 文字だけの生徒にマイクを要求しない
+  /// > C8 は「人前で声を出せない生徒」のための経路（恥ずかしいと答えた
+  /// > 日本人 71.1%）。その生徒に、文字を打つだけでマイクの許可を
+  /// > 求めるのでは本末転倒になる（実機で気づいた）。
+  Future<void> start({bool withMic = true}) async {
     const startable = {
       LiveState.idle,
       LiveState.failed,
@@ -248,7 +275,7 @@ class LiveSessionController extends ChangeNotifier {
     // 記録の行を先に作る。途中で落ちても発話が行き場を失わないように
     _sessionId ??= await _store?.startSession(unitId);
 
-    if (!await _mic.hasPermission()) {
+    if (withMic && !await _mic.hasPermission()) {
       _fail(LiveFailure.noPermission);
       return;
     }
@@ -256,7 +283,7 @@ class LiveSessionController extends ChangeNotifier {
     try {
       await _player.init();
       await _connect();
-      if (!await _mic.start()) {
+      if (withMic && !await _mic.start()) {
         _fail(LiveFailure.noPermission);
         return;
       }
@@ -264,8 +291,10 @@ class LiveSessionController extends ChangeNotifier {
         ..reset()
         ..start();
       _gate.reset();
-      _micSub = _mic.chunks.listen(_onMicChunk);
-      _levelSub = _mic.level.listen(_onLevel);
+      if (withMic) {
+        _micSub = _mic.chunks.listen(_onMicChunk);
+        _levelSub = _mic.level.listen(_onLevel);
+      }
       _drainTimer =
           Timer.periodic(const Duration(milliseconds: 120), (_) => _syncState());
       _setState(LiveState.listening);
@@ -604,7 +633,9 @@ class LiveSessionController extends ChangeNotifier {
     if (t.isEmpty) return;
 
     if (!isRunning) {
-      await start();
+      // **マイクを求めずに繋ぐ。** 文字だけで済ませたい生徒に
+      // マイクの許可を出させない（C8）
+      await start(withMic: false);
       // 繋がらなかった。`_failure` は start が立てているのでここでは触らない
       if (!isRunning) return;
     }

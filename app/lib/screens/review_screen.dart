@@ -91,6 +91,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
       builder: (_) => MaterialScreen(
         unit: unit!,
         focusConceptKey: item.conceptKey,
+        // **読み直すだけ。** ここから会話へは進ませない
+        review: true,
         onDone: () {},
       ),
     ));

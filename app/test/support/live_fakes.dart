@@ -21,6 +21,9 @@ class FakeMic extends MicStream {
   final _levels = StreamController<double>.broadcast();
   bool started = false;
 
+  /// 許可を求められたか。**文字だけの生徒に求めていないこと**の確認に使う
+  bool permissionAsked = false;
+
   @override
   Stream<Uint8List> get chunks => _chunks.stream;
   @override
@@ -29,7 +32,10 @@ class FakeMic extends MicStream {
   bool get isRecording => started;
 
   @override
-  Future<bool> hasPermission() async => true;
+  Future<bool> hasPermission() async {
+    permissionAsked = true;
+    return true;
+  }
   @override
   Future<bool> start({bool speakerphone = true}) async => started = true;
   @override

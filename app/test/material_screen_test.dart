@@ -29,6 +29,37 @@ Widget wrap(Widget child) => MaterialApp(
 
 void main() {
   group('教材を読む画面', () {
+    testWidgets('1つの節だけ開いても、会話へ進める', (tester) async {
+      // **ホームの「きょうの1件」がここを通る。**
+      // 「節を絞る」と「復習だから会話へ進まない」を同じフラグで
+      // 兼ねていたせいで、主 CTA が行き止まりになっていた（実機で発覚）
+      var done = false;
+      await tester.pumpWidget(wrap(MaterialScreen(
+        unit: unit(),
+        focusConceptKey: 'fall',
+        onDone: () => done = true,
+      )));
+      expect(find.text('もどる'), findsNothing, reason: '行き止まりになっている');
+
+      // 最後まで読んでから進む
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -3000));
+      await tester.pumpAndSettle();
+      final cta = find.byType(FilledButton);
+      expect(cta, findsOneWidget);
+      await tester.tap(cta);
+      expect(done, isTrue, reason: '会話へ進めない');
+    });
+
+    testWidgets('復習からの読み直しは会話へ進まない', (tester) async {
+      await tester.pumpWidget(wrap(MaterialScreen(
+        unit: unit(),
+        focusConceptKey: 'fall',
+        review: true,
+        onDone: () {},
+      )));
+      expect(find.text('もどる'), findsOneWidget);
+    });
+
     testWidgets('このあと説明することを先に伝える（C1）', (tester) async {
       await tester.pumpWidget(wrap(MaterialScreen(unit: unit(), onDone: () {})));
       expect(find.textContaining('説明してもらいます'), findsOneWidget);
@@ -122,9 +153,14 @@ void main() {
     });
 
     testWidgets('会話へ進ませない（読み直しに来ただけ）', (tester) async {
+      // **`review: true` が要る。**
+      // 以前は focusConceptKey だけで復習と見なしていて、
+      // このテストがその誤った前提を固定していた。
+      // おかげでホームの主 CTA が行き止まりでも緑のままだった
       await tester.pumpWidget(wrap(MaterialScreen(
         unit: unit(),
         focusConceptKey: 'inertia',
+        review: true,
         onDone: () {},
       )));
       await tester.pump();

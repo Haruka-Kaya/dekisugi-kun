@@ -479,10 +479,20 @@ class _Composer extends StatelessWidget {
             // 切替式にすると「既定は音声」が残り、結局こちらが二級になる
             _TextInput(live: live),
             const SizedBox(height: 10),
+            // 文字で始めた会話には、押した時点でマイクを足す。
+            // **最初からマイクを求めない**（C8。文字だけで済ませたい生徒がいる）
             FilledButton.icon(
-              onPressed: busy ? null : (running ? live.stop : live.start),
-              icon: Icon(running ? Icons.stop : Icons.mic),
-              label: Text(running ? 'おわる' : '声ではなす'),
+              onPressed: busy
+                  ? null
+                  : running
+                      ? (live.hasMic ? live.stop : live.enableMic)
+                      : live.start,
+              icon: Icon(running
+                  ? (live.hasMic ? Icons.stop : Icons.mic)
+                  : Icons.mic),
+              label: Text(running
+                  ? (live.hasMic ? 'おわる' : '声でも話す')
+                  : '声ではなす'),
             ),
           ],
         ),

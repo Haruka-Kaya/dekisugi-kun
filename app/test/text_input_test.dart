@@ -64,6 +64,9 @@ void main() {
     });
   });
 
+  Future<void> settle([int ms = 300]) =>
+      Future<void>.delayed(Duration(milliseconds: ms));
+
   group('C8: 未接続でも送れる', () {
     late FakeLive server;
     late LiveSessionController live;
@@ -87,6 +90,49 @@ void main() {
       expect(live.isRunning, isTrue, reason: 'マイクを押さずに送れないと C8 を満たさない');
       expect(live.transcript.where((u) => u.isStudent).map((u) => u.text),
           contains('重いほうが速く落ちると思ってた'));
+    });
+
+    test('文字だけならマイクの許可を求めない', () async {
+      // **C8 は「人前で声を出せない生徒」のための経路。**
+      // その生徒に、文字を打つだけでマイクの許可を出させるのでは
+      // 本末転倒になる（実機で気づいた）
+      final mic = FakeMic();
+      final live = LiveSessionController(
+        unitId: 'force-motion',
+        tokens: FakeTokens(grantFor(server.port)),
+        store: MemorySessionStore(),
+        mic: mic,
+        player: PcmPlayer(sink: FakeSink()),
+      );
+      addTearDown(live.stop);
+
+      await live.sendStudentText('重いほうが速く落ちると思ってた');
+      await settle();
+
+      expect(live.isRunning, isTrue);
+      expect(mic.permissionAsked, isFalse, reason: 'マイクの許可を求めている');
+      expect(mic.started, isFalse, reason: 'マイクを開いている');
+      expect(live.hasMic, isFalse);
+    });
+
+    test('声で話したくなったら、そのとき初めて求める', () async {
+      final mic = FakeMic();
+      final live = LiveSessionController(
+        unitId: 'force-motion',
+        tokens: FakeTokens(grantFor(server.port)),
+        store: MemorySessionStore(),
+        mic: mic,
+        player: PcmPlayer(sink: FakeSink()),
+      );
+      addTearDown(live.stop);
+
+      await live.sendStudentText('あ');
+      await settle();
+      expect(mic.permissionAsked, isFalse);
+
+      expect(await live.enableMic(), isTrue);
+      expect(mic.permissionAsked, isTrue);
+      expect(live.hasMic, isTrue);
     });
 
     test('空白だけなら繋ぎにいかない', () async {
