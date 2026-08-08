@@ -12,6 +12,7 @@ import '../services/reminders.dart';
 import '../services/team_client.dart';
 import '../services/units_client.dart';
 import '../ui/_material.dart';
+import '../ui/adaptive.dart';
 import '../widgets/readable_width.dart';
 import 'settings_screen.dart';
 import 'team_join_screen.dart';
@@ -174,11 +175,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _pickExamDate() async {
     final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _plan?.examDate ?? now.add(const Duration(days: 14)),
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
+    final picked = await pickDate(
+      context,
+      initial: _plan?.examDate ?? now.add(const Duration(days: 14)),
+      first: now,
+      last: now.add(const Duration(days: 365)),
       helpText: '次の定期考査はいつ？',
     );
     if (picked == null) return;

@@ -5,6 +5,7 @@ import '../models/streak.dart';
 import '../services/session_store.dart';
 import '../services/units_client.dart';
 import '../ui/_material.dart';
+import '../ui/adaptive.dart';
 import '../widgets/readable_width.dart';
 import '../widgets/streak_line.dart';
 import 'material_screen.dart';
@@ -56,11 +57,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
   Future<void> _pickExamDate() async {
     final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _exam ?? now.add(const Duration(days: 14)),
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
+    final picked = await pickDate(
+      context,
+      initial: _exam ?? now.add(const Duration(days: 14)),
+      first: now,
+      last: now.add(const Duration(days: 365)),
       helpText: '次の定期考査はいつ？',
     );
     if (picked == null) return;

@@ -55,7 +55,7 @@
 | 復習（間隔・考査日からの逆算） | 動く |
 | 中断と再開 | 動く |
 | 文字での説明 | 動く。**音声と対等**（C8。未接続でも送ると自分で繋ぐ） |
-| iOS / iPadOS | **未ビルド。** 下ごしらえのみ（`docs/ios-build.md`） |
+| iOS / iPadOS | **iPad で動作確認済み**（Mac 側）。音声は未確認 |
 | クラスの合計（チーム戦） | **実機で確認済み**（参加・表示） |
 | 先生用の管理画面 | **無い** |
 | 教材の量 | **3単元8節だけ。** 1人あたり2〜3日ぶん |
@@ -287,7 +287,7 @@ DEKISUGI_LIVE=1 npx tsx --test test/jailbreak.live.test.ts  # 役を降ろせる
 ## 検証
 
 ```
-app     374 件   flutter test
+app     382 件   flutter test
 server  210 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
 ```
 

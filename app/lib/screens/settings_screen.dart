@@ -1,6 +1,7 @@
 import '../models/reminder.dart';
 import '../services/reminders.dart';
 import '../ui/_material.dart';
+import '../ui/adaptive.dart';
 import '../widgets/readable_width.dart';
 
 /// 設定。いまは通知だけ。
@@ -56,14 +57,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _pickHour() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: _hour, minute: 0),
+    final picked = await pickHour(
+      context,
+      initial: _hour,
       helpText: '何時に知らせますか',
     );
     if (picked == null) return;
-    await widget.reminders.setHour(picked.hour);
-    if (mounted) setState(() => _hour = picked.hour);
+    await widget.reminders.setHour(picked);
+    if (mounted) setState(() => _hour = picked);
   }
 
   @override
@@ -80,7 +81,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: EdgeInsets.fromLTRB(
                     0, 8, 0, 8 + MediaQuery.paddingOf(context).bottom),
                 children: [
-                  SwitchListTile(
+                  // **形が OS の記号になっている**ので合わせる
+                  SwitchListTile.adaptive(
                     value: _on,
                     onChanged: _toggle,
                     title: const Text('まいにち知らせる'),

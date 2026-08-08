@@ -1,4 +1,5 @@
 import '../ui/_material.dart';
+import '../ui/adaptive.dart';
 import 'app_radius.dart';
 
 /// 同梱している可変フォントの family 名（pubspec.yaml の `fonts:` と一致させる）。
@@ -294,6 +295,11 @@ ThemeData buildAppTheme(Brightness brightness) {
   return ThemeData(
     colorScheme: scheme,
     useMaterial3: true,
+
+    // **波紋は Android の署名。** iOS に持ち込むと、面や色をどれだけ
+    // 中立にしても「移植したもの」に見える。
+    // 色・角丸・余白はプラットフォームで変えないが、**動きの作法だけは分ける**
+    splashFactory: isApple ? NoSplash.splashFactory : InkSparkle.splashFactory,
     fontFamily: kFontFamily,
     textTheme: textTheme,
     extensions: <ThemeExtension<dynamic>>[appColors],
