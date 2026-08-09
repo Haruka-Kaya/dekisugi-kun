@@ -11,8 +11,10 @@ import '../services/session_store.dart';
 import '../services/reminders.dart';
 import '../services/team_client.dart';
 import '../services/units_client.dart';
+import '../services/live_session.dart';
 import '../ui/_material.dart';
 import '../ui/adaptive.dart';
+import '../widgets/character.dart';
 import '../widgets/readable_width.dart';
 import 'settings_screen.dart';
 import 'team_join_screen.dart';
@@ -116,14 +118,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final plan = _plan;
     final streak = _streak;
     if (r == null || plan == null || streak == null) return;
-    await r.reschedule(ReminderState(
-      daysLeft: plan.daysLeft,
-      remaining: plan.remaining,
-      dueCount: plan.due.length,
-      graceLeft: streak.graceLeft,
-      doneToday: streak.doneToday,
-      restDay: streak.restDay,
-    ));
+    await r.reschedule(
+      ReminderState(
+        daysLeft: plan.daysLeft,
+        remaining: plan.remaining,
+        dueCount: plan.due.length,
+        graceLeft: streak.graceLeft,
+        doneToday: streak.doneToday,
+        restDay: streak.restDay,
+      ),
+    );
   }
 
   /// クラスの合計を後から足す。会話も画面も止めない。
@@ -159,11 +163,11 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('やめる'),
+            child: const Text('クラスに残る'),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('抜ける'),
+            child: const Text('クラスから抜ける'),
           ),
         ],
       ),
@@ -195,6 +199,15 @@ class _HomeScreenState extends State<HomeScreen> {
     widget.onStart(matches.first, task.conceptKey);
   }
 
+  Future<void> _openSettings() async {
+    final r = widget.reminders;
+    if (r == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => SettingsScreen(reminders: r)),
+    );
+    await _rescheduleReminder();
+  }
+
   @override
   Widget build(BuildContext context) {
     final plan = _plan;
@@ -203,58 +216,135 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('デキすぎ君')),
+      appBar: AppBar(
+        title: Text(
+          'デキすぎ君',
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.jaWeight(FontWeight.w700),
+        ),
+        actions: [
+          if (widget.reminders != null)
+            IconButton(
+              tooltip: '設定',
+              onPressed: _openSettings,
+              icon: const Icon(Icons.tune),
+            ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ReadableWidth(
           child: ListView(
             padding: EdgeInsets.fromLTRB(
-                12, 12, 12, 12 + MediaQuery.paddingOf(context).bottom),
+              12,
+              12,
+              12,
+              12 + MediaQuery.paddingOf(context).bottom,
+            ),
             children: [
-              _ExamCard(plan: plan, onTap: _pickExamDate),
-              const SizedBox(height: 12),
+              _CompanionIntro(plan: plan),
+              const SizedBox(height: 8),
               _TodayCard(plan: plan, onStart: _startToday),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
+              _ExamCard(plan: plan, onTap: _pickExamDate),
+              const SizedBox(height: 24),
               _SaidItList(items: _said),
-              const SizedBox(height: 12),
-              if (_team case final s?) ...[
-                TeamCard(summary: s, onLeave: _openTeam),
-                const SizedBox(height: 12),
-              ] else if (widget.team != null)
-                _RowLink(
-                  icon: Icons.groups_outlined,
-                  label: 'クラスに入る',
-                  onTap: _openTeam,
-                ),
+              const SizedBox(height: 24),
+              Text(
+                'ほかにできること',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.jaWeight(FontWeight.w700),
+              ),
+              const SizedBox(height: 6),
               _RowLink(
                 icon: Icons.replay,
                 label: 'もう一度見るところ',
-                trailing: plan.due.isEmpty ? null : '${plan.due.length}',
+                description: plan.due.isEmpty
+                    ? 'いま見直すものはありません'
+                    : '${plan.due.length}件を、忘れる前に見直す',
                 onTap: () async {
                   widget.onOpenReview();
                   await _load();
                 },
               ),
               _RowLink(
-                icon: Icons.menu_book_outlined,
-                label: 'ほかの単元を選ぶ',
+                icon: Icons.auto_stories_outlined,
+                label: '教えるテーマを選ぶ',
+                description: 'ほかの単元から、自分で選んで始める',
                 onTap: widget.onPickUnit,
               ),
-              if (widget.reminders case final r?)
+              if (_team case final s?) ...[
+                const SizedBox(height: 18),
+                TeamCard(summary: s, onLeave: _openTeam),
+              ] else if (widget.team != null)
                 _RowLink(
-                  icon: Icons.notifications_none,
-                  label: '設定',
-                  onTap: () async {
-                    await Navigator.of(context).push(MaterialPageRoute<void>(
-                      builder: (_) => SettingsScreen(reminders: r),
-                    ));
-                    await _rescheduleReminder();
-                  },
+                  icon: Icons.groups_outlined,
+                  label: 'クラスに入る',
+                  description: '誰かと競わず、クラス全体の説明を集める',
+                  onTap: _openTeam,
                 ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               const Divider(height: 1),
               // **継続は最下部に小さく。** 主役にしない
               if (_streak case final s?) StreakLine(streak: s),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 数字やメニューより先に、デキすぎ君との関係を見せる。
+///
+/// ホームを「管理画面」ではなく「話を聞いてくれる相手のいる場所」にする。
+/// キャラクターは待機状態なので常時アニメーションさせない。
+class _CompanionIntro extends StatelessWidget {
+  const _CompanionIntro({required this.plan});
+
+  final ExamPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    final scheme = t.colorScheme;
+    final task = plan.today;
+
+    return Semantics(
+      container: true,
+      label: task == null
+          ? 'デキすぎ君。きょうの分は聞けました。また話そう。'
+          : 'デキすぎ君。きょうは${task.label}の話を聞かせて。',
+      child: ExcludeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 4, 4, 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Character(state: LiveState.idle, size: 84),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'こんにちは。',
+                      style: t.textTheme.labelLarge?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      task == null
+                          ? 'きょうの分は聞けました。\nまた話そう。'
+                          : 'きょうは「${task.label}」の話を聞かせて。',
+                      style: t.textTheme.titleLarge?.jaWeight(FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -279,14 +369,30 @@ class _ExamCard extends StatelessWidget {
     final scheme = t.colorScheme;
     final left = plan.daysLeft;
 
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
+      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.xl),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
           child: Row(
             children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Icon(
+                  Icons.calendar_today_outlined,
+                  size: 19,
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,22 +401,23 @@ class _ExamCard extends StatelessWidget {
                       left == null
                           ? '次の考査日を入れると、そこから逆算します'
                           : left <= 0
-                              ? 'きょうが考査日'
-                              : '考査まで あと$left日',
-                      style: t.textTheme.titleMedium?.jaWeight(FontWeight.w700),
+                          ? 'きょうが考査日'
+                          : '考査まで あと$left日',
+                      style: t.textTheme.titleSmall?.jaWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       plan.remaining == 0
                           ? '説明していないところはありません'
                           : 'まだ説明していないところが ${plan.remaining} つ',
-                      style: t.textTheme.bodyMedium
-                          ?.copyWith(color: scheme.onSurfaceVariant),
+                      style: t.textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.edit_calendar_outlined, color: scheme.onSurfaceVariant),
+              Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
             ],
           ),
         ),
@@ -342,12 +449,17 @@ class _TodayCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('きょうの分は終わっています',
-                  style: t.textTheme.titleMedium?.jaWeight(FontWeight.w700)),
+              Text(
+                'きょうの分は終わっています',
+                style: t.textTheme.titleMedium?.jaWeight(FontWeight.w700),
+              ),
               const SizedBox(height: 6),
-              Text('また明日、忘れかけたころに出します。',
-                  style: t.textTheme.bodyMedium
-                      ?.copyWith(color: scheme.onSurfaceVariant)),
+              Text(
+                'また明日、忘れかけたころに出します。',
+                style: t.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
             ],
           ),
         ),
@@ -356,32 +468,51 @@ class _TodayCard extends StatelessWidget {
 
     return Card(
       color: scheme.primaryContainer,
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 色だけで区別しない (SC 1.4.1)
-                Icon(task.isReview ? Icons.replay : Icons.auto_stories_outlined,
-                    size: 18, color: scheme.onPrimaryContainer),
+                Icon(
+                  task.isReview ? Icons.replay : Icons.auto_stories_outlined,
+                  size: 18,
+                  color: scheme.onPrimaryContainer,
+                ),
                 const SizedBox(width: 6),
-                Text(task.isReview ? 'もう一度たしかめる' : 'きょうはこれを説明する',
-                    style: t.textTheme.labelLarge
-                        ?.copyWith(color: scheme.onPrimaryContainer)),
+                Expanded(
+                  child: Text(
+                    task.isReview ? 'もう一度たしかめる' : 'きょうはこれを説明する',
+                    style: t.textTheme.labelLarge?.copyWith(
+                      color: scheme.onPrimaryContainer,
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
-            Text(task.label,
-                style: t.textTheme.headlineSmall
-                    ?.copyWith(color: scheme.onPrimaryContainer)
-                    .jaWeight(FontWeight.w700)),
-            const SizedBox(height: 14),
+            Text(
+              task.label,
+              style: t.textTheme.headlineSmall
+                  ?.copyWith(color: scheme.onPrimaryContainer)
+                  .jaWeight(FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '教材を読む  →  自分の言葉で教える',
+              style: t.textTheme.bodySmall?.copyWith(
+                color: scheme.onPrimaryContainer,
+              ),
+            ),
+            const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: onStart,
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('はじめる'),
+              icon: const Icon(Icons.menu_book_outlined),
+              label: const Text('教材を読む'),
             ),
           ],
         ),
@@ -404,67 +535,75 @@ class _SaidItList extends StatelessWidget {
     final t = Theme.of(context);
     final scheme = t.colorScheme;
 
-    if (items.isEmpty) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.record_voice_over_outlined,
-                      size: 18, color: scheme.onSurfaceVariant),
-                  const SizedBox(width: 6),
-                  Text('言えるようになったこと',
-                      style: t.textTheme.titleMedium?.jaWeight(FontWeight.w700)),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text('自分の言葉で説明できたところが、ここにそのまま残ります。',
-                  style: t.textTheme.bodyMedium
-                      ?.copyWith(color: scheme.onSurfaceVariant)),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-        child: Column(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('言えるようになったこと',
-                style: t.textTheme.titleMedium?.jaWeight(FontWeight.w700)),
-            const SizedBox(height: 4),
-            for (final e in items.take(5))
-              Padding(
-                padding: const EdgeInsets.only(top: 10, bottom: 2),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(e.label,
-                        style: t.textTheme.labelMedium
-                            ?.copyWith(color: scheme.onSurfaceVariant)),
-                    const SizedBox(height: 2),
-                    // **生徒自身の言葉が主役。** ここを要約に置き換えない
-                    Text('「${e.said}」', style: t.textTheme.bodyMedium),
-                  ],
-                ),
+            Icon(Icons.format_quote, size: 20, color: scheme.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '言えるようになったこと',
+                style: t.textTheme.titleMedium?.jaWeight(FontWeight.w700),
               ),
-            if (items.length > 5)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text('ほか ${items.length - 5} 件',
-                    style: t.textTheme.labelSmall
-                        ?.copyWith(color: scheme.onSurfaceVariant)),
-              ),
-            const SizedBox(height: 6),
+            ),
           ],
         ),
-      ),
+        const SizedBox(height: 4),
+        Text(
+          'ここに残るのは、点数ではなくあなた自身の言葉です。',
+          style: t.textTheme.bodySmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (items.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            child: Text('最初の説明が、ここにそのまま残ります。', style: t.textTheme.bodyMedium),
+          )
+        else
+          for (final (index, e) in items.take(5).indexed) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    e.label,
+                    style: t.textTheme.labelMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  // **生徒自身の言葉が主役。** ここを要約に置き換えない
+                  Text(
+                    '「${e.said}」',
+                    style: t.textTheme.bodyLarge?.jaWeight(FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
+            if (index < items.take(5).length - 1) const Divider(),
+          ],
+        if (items.length > 5)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'ほか ${items.length - 5} 件',
+              style: t.textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -473,13 +612,13 @@ class _RowLink extends StatelessWidget {
   const _RowLink({
     required this.icon,
     required this.label,
+    required this.description,
     required this.onTap,
-    this.trailing,
   });
 
   final IconData icon;
   final String label;
-  final String? trailing;
+  final String description;
   final VoidCallback onTap;
 
   @override
@@ -487,19 +626,20 @@ class _RowLink extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return ListTile(
       // 主要操作は 48dp 以上
-      minTileHeight: 48,
-      leading: Icon(icon, color: scheme.onSurfaceVariant),
+      minTileHeight: 64,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: Icon(icon, size: 20, color: scheme.onSurfaceVariant),
+      ),
       title: Text(label),
-      trailing: trailing == null
-          ? const Icon(Icons.chevron_right)
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(trailing!),
-                const SizedBox(width: 4),
-                const Icon(Icons.chevron_right),
-              ],
-            ),
+      subtitle: Text(description),
+      trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
     );
   }

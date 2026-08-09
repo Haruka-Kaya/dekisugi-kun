@@ -7,6 +7,7 @@ import 'package:dekisugi/screens/home_screen.dart';
 import 'package:dekisugi/services/session_store.dart';
 import 'package:dekisugi/services/units_client.dart';
 import 'package:dekisugi/ui/_material.dart';
+import 'package:dekisugi/widgets/character.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/stub_dio.dart';
@@ -22,7 +23,8 @@ const _listJson = '''
 /// streak を上に出すと、狙っている層（Duolingo の14日保持率が
 /// 全年齢中最低の高校生年代）に最も効かないものを主役に据えることになる。
 void main() {
-  UnitSummary unit({String id = 'force-motion', int concepts = 2}) => UnitSummary(
+  UnitSummary unit({String id = 'force-motion', int concepts = 2}) =>
+      UnitSummary(
         id: id,
         title: '力と運動',
         brief: 'ざっくりした紹介。',
@@ -32,11 +34,7 @@ void main() {
         sectionCount: concepts,
       );
 
-  ReviewItem review({
-    String key = 'c0',
-    int timesSeen = 0,
-    DateTime? seen,
-  }) =>
+  ReviewItem review({String key = 'c0', int timesSeen = 0, DateTime? seen}) =>
       ReviewItem(
         unitId: 'force-motion',
         conceptKey: key,
@@ -142,22 +140,28 @@ void main() {
   group('ホームの画面', () {
     late MemorySessionStore store;
 
-    Widget wrap() => MaterialApp(
-          theme: buildAppTheme(Brightness.light),
-          home: HomeScreen(
-            store: store,
-            units: UnitsClient(
-              baseUrl: 'https://example.test',
-              store: store,
-              dio: fakeDio({
-                'GET https://example.test/api/units': () => jsonRes(200, _listJson),
-              }),
-            ),
-            onStart: (a, b) {},
-            onOpenReview: () {},
-            onPickUnit: () {},
-          ),
-        );
+    Widget wrap({double textScale = 1}) => MaterialApp(
+      theme: buildAppTheme(Brightness.light),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        child: child!,
+      ),
+      home: HomeScreen(
+        store: store,
+        units: UnitsClient(
+          baseUrl: 'https://example.test',
+          store: store,
+          dio: fakeDio({
+            'GET https://example.test/api/units': () => jsonRes(200, _listJson),
+          }),
+        ),
+        onStart: (a, b) {},
+        onOpenReview: () {},
+        onPickUnit: () {},
+      ),
+    );
 
     setUp(() => store = MemorySessionStore());
 
@@ -166,7 +170,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('きょうはこれを説明する'), findsOneWidget);
-      expect(find.text('はじめる'), findsOneWidget);
+      expect(find.text('教材を読む'), findsOneWidget);
+      expect(
+        find.byType(Character),
+        findsOneWidget,
+        reason: 'ホームが管理画面ではなく、デキすぎ君との場所に見える必要がある',
+      );
     });
 
     testWidgets('C5: ポイントめいたものが出ない', (tester) async {
@@ -180,13 +189,21 @@ void main() {
     });
 
     testWidgets('言えるようになったことが、継続日数より上に出る', (tester) async {
-      await store.recordExplained(ExplainedItem(
-        unitId: 'force-motion',
-        conceptKey: 'c0',
-        label: '概念0',
-        said: '空気の抵抗を無視すれば重さによらない',
-        at: DateTime(2026, 8, 6),
-      ));
+      // 並び順を同じフレームで測る。通常の600px高だと末尾の継続欄が
+      // ListView の遅延構築範囲外になり、位置を比較できない。
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await store.recordExplained(
+        ExplainedItem(
+          unitId: 'force-motion',
+          conceptKey: 'c0',
+          label: '概念0',
+          said: '空気の抵抗を無視すれば重さによらない',
+          at: DateTime(2026, 8, 6),
+        ),
+      );
       await store.recordActivity('2026-08-06', done: 1);
 
       await tester.pumpWidget(wrap());
@@ -194,19 +211,20 @@ void main() {
 
       final said = tester.getTopLeft(find.text('言えるようになったこと')).dy;
       final streak = tester.getTopLeft(find.textContaining('猶予')).dy;
-      expect(said, lessThan(streak),
-          reason: '報酬の本体より継続日数が上に来ている');
+      expect(said, lessThan(streak), reason: '報酬の本体より継続日数が上に来ている');
     });
 
     testWidgets('生徒自身の言葉がそのまま出る', (tester) async {
       // 要約に置き換えない。積み上がるのが自分の文であることが報酬の本体
-      await store.recordExplained(ExplainedItem(
-        unitId: 'force-motion',
-        conceptKey: 'c0',
-        label: '概念0',
-        said: '空気の抵抗を無視すれば重さによらない',
-        at: DateTime(2026, 8, 6),
-      ));
+      await store.recordExplained(
+        ExplainedItem(
+          unitId: 'force-motion',
+          conceptKey: 'c0',
+          label: '概念0',
+          said: '空気の抵抗を無視すれば重さによらない',
+          at: DateTime(2026, 8, 6),
+        ),
+      );
       await tester.pumpWidget(wrap());
       await tester.pumpAndSettle();
 
@@ -217,6 +235,22 @@ void main() {
       await tester.pumpWidget(wrap());
       await tester.pumpAndSettle();
       expect(find.textContaining('次の考査日を入れると'), findsOneWidget);
+    });
+
+    testWidgets('320dp・文字200%でも主導線が横にはみ出さない', (tester) async {
+      tester.view.physicalSize = const Size(320, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(wrap(textScale: 2));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('教材を読む'), findsOneWidget);
+
+      await tester.drag(find.byType(ListView), const Offset(0, -4000));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('通信が無くても開ける', (tester) async {

@@ -1,7 +1,9 @@
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../models/unit.dart';
+import '../services/live_session.dart';
 import '../ui/_material.dart';
+import '../widgets/character.dart';
 import '../widgets/emphasis_text.dart';
 import '../widgets/readable_width.dart';
 
@@ -89,16 +91,29 @@ class _MaterialScreenState extends State<MaterialScreen> {
     final sections = _sections;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.unit.title)),
+      appBar: AppBar(
+        title: Semantics(
+          label: _isReview
+              ? '${widget.unit.title}の教材を読み直す'
+              : '${widget.unit.title}の教材を読む',
+          child: ExcludeSemantics(
+            child: Text(
+              widget.unit.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+      ),
       // iPad は横に広い。読み物は行が長くなりすぎないよう止める
       body: ReadableWidth(
         child: ListView(
           controller: _scroll,
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
             if (!_isReview) _Intro(unit: widget.unit),
             for (final s in sections) ...[
-              const SizedBox(height: 20),
+              const SizedBox(height: 28),
               _SectionView(section: s),
             ],
           ],
@@ -112,36 +127,35 @@ class _MaterialScreenState extends State<MaterialScreen> {
         child: ReadableWidth(
           tight: true,
           child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: _isReview
-              ? OutlinedButton(
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  child: const Text('もどる'),
-                )
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _reachedEnd
-                          ? 'ここからは教材を見ずに説明します。'
-                          : '最後まで読むと、次へ進めます。',
-                      style: t.textTheme.bodySmall
-                          ?.copyWith(color: scheme.onSurfaceVariant),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        // **読み終わるまで進ませない。** 押せてしまうと、
-                        // 読まずに会話へ入って「説明できない」だけの体験になる
-                        onPressed: _reachedEnd ? widget.onDone : null,
-                        icon: const Icon(Icons.record_voice_over),
-                        label: const Text('デキすぎ君に教える'),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: _isReview
+                ? OutlinedButton(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    child: const Text('もどる'),
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _reachedEnd ? 'ここからは教材を見ずに説明します。' : '最後まで読むと、次へ進めます。',
+                        style: t.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          // **読み終わるまで進ませない。** 押せてしまうと、
+                          // 読まずに会話へ入って「説明できない」だけの体験になる
+                          onPressed: _reachedEnd ? widget.onDone : null,
+                          icon: const Icon(Icons.record_voice_over),
+                          label: const Text('デキすぎ君に教える'),
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ),
       ),
@@ -161,7 +175,7 @@ class _Intro extends StatelessWidget {
     final mins = (unit.readingTime.inSeconds / 60).ceil();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       decoration: BoxDecoration(
         color: scheme.surfaceContainer,
         borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -171,31 +185,68 @@ class _Intro extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.menu_book, size: 20),
-              const SizedBox(width: 8),
-              Text('読んでから、教えます', style: t.textTheme.titleSmall),
+              const Character(state: LiveState.idle, size: 70),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'まず「${unit.title}」を読む',
+                      style: t.textTheme.titleMedium?.jaWeight(FontWeight.w700),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'このあと、読んだ内容をデキすぎ君に説明してもらいます。',
+                      style: t.textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            'このあと、読んだ内容をデキすぎ君に説明してもらいます。',
-            style: t.textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 6),
-          // **先に伝える。** 会話が始まってから消えると裏切りになる
-          Text(
-            '教材は、話しているあいだは見られません。',
-            style: t.textTheme.bodyMedium?.jaWeight(FontWeight.w700),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: scheme.surface,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: scheme.outlineVariant),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.visibility_off_outlined,
+                  size: 18,
+                  color: scheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  // **先に伝える。** 会話が始まってから消えると裏切りになる
+                  child: Text(
+                    '話しているあいだ、教材は見られません。',
+                    style: t.textTheme.bodySmall?.jaWeight(FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 10),
           Row(
             children: [
               Icon(Icons.schedule, size: 16, color: scheme.onSurfaceVariant),
               const SizedBox(width: 6),
-              Text('読むのに およそ$mins分',
-                  style: t.textTheme.bodySmall
-                      ?.copyWith(color: scheme.onSurfaceVariant)),
+              Expanded(
+                child: Text(
+                  '読むのに およそ$mins分',
+                  style: t.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
             ],
           ),
         ],
@@ -218,8 +269,11 @@ class _SectionView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(section.title, style: t.textTheme.titleMedium),
-        const SizedBox(height: 10),
+        Text(
+          section.title,
+          style: t.textTheme.headlineSmall?.jaWeight(FontWeight.w700),
+        ),
+        const SizedBox(height: 14),
         for (final p in section.body)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -240,12 +294,18 @@ class _SectionView extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.science_outlined,
-                        size: 18, color: scheme.onSurfaceVariant),
+                    Icon(
+                      Icons.science_outlined,
+                      size: 18,
+                      color: scheme.onSurfaceVariant,
+                    ),
                     const SizedBox(width: 6),
-                    Text('やってみる',
-                        style: t.textTheme.labelLarge
-                            ?.copyWith(color: scheme.onSurfaceVariant)),
+                    Text(
+                      'やってみる',
+                      style: t.textTheme.labelLarge?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
