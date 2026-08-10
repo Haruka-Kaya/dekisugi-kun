@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dekisugi/config/app_theme.dart';
 import 'package:dekisugi/config/motion.dart';
 import 'package:dekisugi/learning/domain/learning_economy.dart';
@@ -8,6 +10,31 @@ import 'package:dekisugi/widgets/character.dart';
 import 'package:dekisugi/widgets/dekisugi_character_art.dart';
 import 'package:dekisugi/widgets/learning_path.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+/// macOS と Linux の software rasterizer で、ごく少数の anti-alias pixel だけが
+/// 異なる。構図や色の変化を通さないよう、1280x640 のうち最大32px相当だけを
+/// 許可する。pose / decoration / palette は下の構造assertでも別に固定する。
+class _RasterStableGoldenComparator extends LocalFileComparator {
+  _RasterStableGoldenComparator(super.testFile);
+
+  static const _maxDiffFraction = 0.00004;
+
+  @override
+  Future<bool> compare(Uint8List imageBytes, Uri golden) async {
+    final result = await GoldenFileComparator.compareLists(
+      imageBytes,
+      await getGoldenBytes(golden),
+    );
+    if (result.passed || result.diffPercent <= _maxDiffFraction) {
+      result.dispose();
+      return true;
+    }
+
+    final error = await generateFailureOutput(result, golden, basedir);
+    result.dispose();
+    throw FlutterError(error);
+  }
+}
 
 Widget _sheet(Brightness brightness) => MaterialApp(
   theme: buildAppTheme(brightness),
@@ -81,6 +108,12 @@ Widget _sheet(Brightness brightness) => MaterialApp(
 void main() {
   for (final brightness in Brightness.values) {
     testWidgets('LiveとPathの同一pose・3装飾 — ${brightness.name}', (tester) async {
+      final previousComparator = goldenFileComparator;
+      goldenFileComparator = _RasterStableGoldenComparator(
+        Uri.parse('test/character_continuity_golden_test.dart'),
+      );
+      addTearDown(() => goldenFileComparator = previousComparator);
+
       tester.view.physicalSize = const Size(1280, 640);
       tester.view.devicePixelRatio = 2;
       addTearDown(tester.view.reset);

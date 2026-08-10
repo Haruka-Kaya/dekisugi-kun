@@ -150,35 +150,45 @@ class ScienceActivityMascotBadge extends StatelessWidget {
   final LearningPathMascotStyle mascotStyle;
   final GameCharacterReaction mascotReaction;
 
+  static const double _mascotSize = 52;
+  static const double _activityBadgeSize = 20;
+
   @override
   Widget build(BuildContext context) => Semantics(
     label: 'デキすぎ君。${mascotReaction.semanticsLabel}',
     child: ExcludeSemantics(
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Center(
-            child: PathMascotPreview(
-              reaction: mascotReaction,
-              size: GameTokens.heroMascotSize,
-              style: mascotStyle,
-            ),
-          ),
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: onAccent,
-                shape: BoxShape.circle,
-                border: Border.all(color: accent, width: 2),
+      child: SizedBox.square(
+        key: const ValueKey('science-activity-mascot-badge'),
+        dimension: GameTokens.heroLeadingSize,
+        child: Stack(
+          children: [
+            Positioned(
+              left: 0,
+              top: 0,
+              child: PathMascotPreview(
+                key: const ValueKey('science-activity-mascot-region'),
+                reaction: mascotReaction,
+                size: _mascotSize,
+                style: mascotStyle,
               ),
-              child: Icon(icon, color: accent, size: 17),
             ),
-          ),
-        ],
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Container(
+                key: const ValueKey('science-activity-kind-icon'),
+                width: _activityBadgeSize,
+                height: _activityBadgeSize,
+                decoration: BoxDecoration(
+                  color: onAccent,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: accent, width: 2),
+                ),
+                child: Icon(icon, color: accent, size: 12),
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );

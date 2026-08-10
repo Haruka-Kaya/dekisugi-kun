@@ -1,6 +1,9 @@
 import 'package:dekisugi/config/app_theme.dart';
 import 'package:dekisugi/config/game_tokens.dart';
+import 'package:dekisugi/learning/domain/learning_economy.dart';
+import 'package:dekisugi/models/game_path.dart';
 import 'package:dekisugi/ui/_material.dart';
+import 'package:dekisugi/widgets/dekisugi_character_art.dart';
 import 'package:dekisugi/widgets/learning_path.dart';
 import 'package:dekisugi/widgets/science_challenge_support.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -45,5 +48,79 @@ void main() {
     expect(find.bySemanticsLabel(RegExp('デキすぎ君.*学習を応援しています')), findsOneWidget);
     expect(tester.takeException(), isNull);
     semantics.dispose();
+  });
+
+  testWidgets('72px枠をmascot 52pxとactivity icon 20pxの非重複領域に分ける', (tester) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      for (final style in LearningPathMascotStyle.values) {
+        for (final reaction in GameCharacterReaction.values) {
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: buildAppTheme(Brightness.light),
+              home: Scaffold(
+                body: Center(
+                  child: ScienceActivityMascotBadge(
+                    icon: Icons.science_outlined,
+                    accent: GamePalette.light.pathActive,
+                    onAccent: GamePalette.light.onPathActive,
+                    mascotStyle: style,
+                    mascotReaction: reaction,
+                  ),
+                ),
+              ),
+            ),
+          );
+
+          final frame = find.byKey(
+            const ValueKey('science-activity-mascot-badge'),
+          );
+          final mascotRegion = find.byKey(
+            const ValueKey('science-activity-mascot-region'),
+          );
+          final activityIcon = find.byKey(
+            const ValueKey('science-activity-kind-icon'),
+          );
+          expect(tester.getSize(frame), const Size.square(72));
+          expect(tester.getSize(mascotRegion), const Size.square(52));
+          expect(tester.getSize(activityIcon), const Size.square(20));
+          expect(
+            tester.getRect(mascotRegion).overlaps(tester.getRect(activityIcon)),
+            isFalse,
+            reason: '${style.name}/${reaction.name}の形とactivity iconが重なった',
+          );
+
+          final art = tester.widget<DekisugiCharacterArt>(
+            find.byType(DekisugiCharacterArt),
+          );
+          expect(art.size, 52);
+          expect(art.decoration, switch (style) {
+            LearningPathMascotStyle.standard =>
+              DekisugiCharacterDecoration.standard,
+            LearningPathMascotStyle.orbit => DekisugiCharacterDecoration.orbit,
+            LearningPathMascotStyle.nova => DekisugiCharacterDecoration.nova,
+          });
+          expect(art.pose, switch (reaction) {
+            GameCharacterReaction.none => DekisugiCharacterPose.idle,
+            GameCharacterReaction.invite => DekisugiCharacterPose.invite,
+            GameCharacterReaction.thinking => DekisugiCharacterPose.thinking,
+            GameCharacterReaction.encourage => DekisugiCharacterPose.encourage,
+            GameCharacterReaction.celebrate => DekisugiCharacterPose.celebrate,
+          });
+          expect(
+            find.bySemanticsLabel('${style.label}、${reaction.semanticsLabel}'),
+            findsNothing,
+            reason: '外側のまとめSemanticsと二重に読ませない',
+          );
+          expect(
+            find.bySemanticsLabel('デキすぎ君。${reaction.semanticsLabel}'),
+            findsOneWidget,
+          );
+          expect(tester.takeException(), isNull);
+        }
+      }
+    } finally {
+      semantics.dispose();
+    }
   });
 }
