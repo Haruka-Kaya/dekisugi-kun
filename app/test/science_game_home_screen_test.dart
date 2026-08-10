@@ -3530,8 +3530,24 @@ void main() {
         matching: find.byType(Scrollable),
       ),
     );
-    expect(find.text('2 / 2  ・  ◆ 3'), findsOneWidget);
-    expect(find.textContaining('2人の学習がそろいました'), findsOneWidget);
+    final completedPairPanel = find.byKey(
+      const ValueKey('local-coop-quest-panel'),
+    );
+    expect(
+      find.descendant(
+        of: completedPairPanel,
+        matching: find.text('2 / 2  ・  ◆ 3'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: completedPairPanel,
+        matching: find.text('2人の学習がそろいました。報酬は端末内の個人walletへ一度だけ記録済みです。'),
+      ),
+      findsOneWidget,
+      reason: 'Profileの恒常表示を一時的なSnackBarとは別に検証する',
+    );
 
     await tester.tap(find.byKey(const ValueKey('game-tab-league')));
     await tester.pumpAndSettle();

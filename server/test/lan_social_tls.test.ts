@@ -5,6 +5,10 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, it } from 'node:test'
 
+import {
+  inspectLanSocialPathProtection,
+  type LanSocialProtectedPathKind,
+} from '../lib/lan-social-file-security.js'
 import { openLanSocialTlsIdentity } from '../lib/lan-social-tls.js'
 
 const temporaryDirectories: string[] = []
@@ -40,12 +44,12 @@ describe('LAN coordinator TLS identity', () => {
     )
   })
 
-  it('証明書と秘密鍵はowner read/writeだけにする', async () => {
+  it('保存directory・証明書・秘密鍵をcurrent OS userだけにする', async () => {
     const path = await directory()
     await openLanSocialTlsIdentity(path)
+    await assertCurrentUserOnly(path, 'directory')
     for (const file of ['coordinator-cert.pem', 'coordinator-key.pem']) {
-      const mode = (await stat(join(path, file))).mode & 0o777
-      assert.equal(mode, 0o600, `${file} mode=${mode.toString(8)}`)
+      await assertCurrentUserOnly(join(path, file), 'file')
     }
   })
 
@@ -85,3 +89,21 @@ describe('LAN coordinator TLS identity', () => {
     }
   })
 })
+
+async function assertCurrentUserOnly(
+  path: string,
+  kind: LanSocialProtectedPathKind,
+): Promise<void> {
+  const protection = await inspectLanSocialPathProtection(path, kind)
+  assert.equal(protection.currentUserOnly, true, `${path} is not current-user-only`)
+  if (process.platform === 'win32') {
+    assert.equal(protection.windowsAclRuleCount, 1, `${path} ACL rule count`)
+    assert.equal(protection.windowsInheritanceProtected, true, `${path} inherits ACL`)
+    assert.equal(protection.windowsRuleIsInherited, false, `${path} inherited ACE`)
+    return
+  }
+  const expectedMode = kind === 'directory' ? 0o700 : 0o600
+  assert.equal(protection.posixMode, expectedMode, `${path} POSIX mode`)
+  const mode = (await stat(path)).mode & 0o777
+  assert.equal(mode, expectedMode, `${path} mode=${mode.toString(8)}`)
+}

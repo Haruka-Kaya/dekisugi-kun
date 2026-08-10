@@ -55,7 +55,7 @@ forwarded header、browser Origin、public remote address、public Hostを拒否
 
 ```text
 管理PC
-  ├─ 初回のみRSA 3072自己署名証明書を生成（秘密鍵0600）
+  ├─ 初回のみRSA 3072自己署名証明書を生成
   ├─ HTTPS LAN APIを開始
   └─ ローカルJSONを原子的renameで保存
 
@@ -73,16 +73,22 @@ forwarded header、browser Origin、public remote address、public Hostを拒否
 管理キーはroom作成専用で、参加コード、membership、league履歴へ保存しない。
 自己署名証明書を一般に信頼せず、接続コードでpinした1枚だけを受け入れる。
 証明書が期限外、pin不一致、証明書と秘密鍵の不一致なら接続・起動を止める。
+保存directory・TLS identity・coordinator stateは、macOS / Linuxではowner一致と
+directory `0700` / file `0600`を検証する。WindowsではPOSIX modeを代用せず、ACL継承を切り、
+現在ユーザーSIDのFullControl ACEだけへ限定する。ACLの適用・再検証、owner、通常file / directory
+種別のいずれかを確認できなければ起動を止める。
 
 ## 起動と配布
 
 ### 管理PC向け単一実行ファイル
 
-`.github/workflows/lan-social-coordinator.yml`は、macOS arm64 / macOS x64 / Windows x64 /
-Linux x64ごとに[Node Single Executable Application](https://nodejs.org/api/single-executable-applications.html)
+`.github/workflows/lan-social-coordinator.yml`は、macOS arm64 / Windows x64 / Linux x64ごとに
+[Node Single Executable Application](https://nodejs.org/api/single-executable-applications.html)
 を作り、同じOS上でHTTPS healthと秘密非混入smokeを通してartifactへ保存する。
 [GitHub公式runner](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)の
 各OS・architecture上でbuildするため、cross compileした別OS binaryを完成証拠にしない。
+Node SEAはmacOS x64を現在サポートしないため、Intel Mac向けSEAを生成・配布可能とは扱わない。
+Intel Macでは下記のsource起動を使う。
 macOS / Linuxは実行権限を保持する`tar.gz`、Windowsは`zip`とし、archive全体のSHA-256を
 sidecarへ出す。実行時刻をarchive metadataへ混ぜず、連続buildでbinaryとarchive双方の
 SHA-256一致を検査する。smokeは実際にarchiveを展開し、launcherとbinaryの実行権限も検査する。

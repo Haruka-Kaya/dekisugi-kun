@@ -4,10 +4,16 @@ import {
   createPublicKey,
   timingSafeEqual,
 } from 'node:crypto'
-import { chmod, mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
+import { readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 
 import { generate } from 'selfsigned'
+
+import {
+  finalizeLanSocialAtomicFile,
+  protectLanSocialDirectory,
+  protectLanSocialFile,
+} from './lan-social-file-security.js'
 
 export type LanSocialTlsIdentity = {
   key: Buffer
@@ -26,6 +32,9 @@ export type LanSocialTlsIdentity = {
 export async function openLanSocialTlsIdentity(
   directory: string,
 ): Promise<LanSocialTlsIdentity> {
+  // Windowsのmode option/chmodはPOSIXのowner/group/otherを表現しないため、
+  // fileを作る前に親directoryのACL自体をcurrent userだけへ限定する。
+  await protectLanSocialDirectory(directory)
   const certPath = join(directory, 'coordinator-cert.pem')
   const keyPath = join(directory, 'coordinator-key.pem')
   const certExists = await exists(certPath)
@@ -36,8 +45,12 @@ export async function openLanSocialTlsIdentity(
   if (!certExists) {
     await generateIdentity(directory, certPath, keyPath)
   }
+  // 古いversionが作ったfileや手動copyにも明示的に同じ契約を適用してから読む。
+  await Promise.all([
+    protectLanSocialFile(certPath),
+    protectLanSocialFile(keyPath),
+  ])
   const [cert, key] = await Promise.all([readFile(certPath), readFile(keyPath)])
-  await Promise.all([chmod(certPath, 0o600), chmod(keyPath, 0o600)])
   const certificate = new X509Certificate(cert)
   const validFrom = Date.parse(certificate.validFrom)
   const validTo = Date.parse(certificate.validTo)
@@ -73,7 +86,6 @@ async function generateIdentity(
   certPath: string,
   keyPath: string,
 ): Promise<void> {
-  await mkdir(directory, { recursive: true, mode: 0o700 })
   const suffix = `${process.pid}-${Date.now()}`
   const temporaryCert = join(directory, `coordinator-cert.${suffix}.tmp`)
   const temporaryKey = join(directory, `coordinator-key.${suffix}.tmp`)
@@ -113,14 +125,13 @@ async function generateIdentity(
         mode: 0o600,
       }),
     ])
-    await Promise.all([chmod(temporaryCert, 0o600), chmod(temporaryKey, 0o600)])
     // 片方だけ見える窓を小さくする。途中停止時は次回が片側検知でfail-closedになる。
     await rename(temporaryKey, keyPath)
     await rename(temporaryCert, certPath)
-    await chmod(directory, 0o700)
-    // directoryがsymlink等へすり替わった異常を、生成後にも最低限確認する。
-    const directoryStat = await stat(dirname(certPath))
-    if (!directoryStat.isDirectory()) throw new Error('TLS保存先がdirectoryではありません')
+    await Promise.all([
+      finalizeLanSocialAtomicFile(certPath),
+      finalizeLanSocialAtomicFile(keyPath),
+    ])
   } catch (error) {
     await Promise.allSettled([
       rm(temporaryCert, { force: true }),

@@ -100,13 +100,25 @@ jobs:
           channel: stable
           cache: true
 
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.12'
+          bundler-cache: true
+          working-directory: app/ios
+
       - name: Install Flutter dependencies
         working-directory: app
         run: flutter pub get --enforce-lockfile
 
+      - name: Install iOS pods from lockfile
+        working-directory: app/ios
+        run: bundle exec pod install --deployment
+
       - name: Build iOS Simulator app
         working-directory: app
-        run: flutter build ios --simulator --debug --no-pub
+        env:
+          BUNDLE_GEMFILE: ${{ github.workspace }}/app/ios/Gemfile
+        run: bundle exec flutter build ios --simulator --debug --no-pub
 
       - name: Verify clean checkout stayed clean
         run: |

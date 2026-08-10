@@ -1,8 +1,13 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
-import { mkdir, open, readFile, rename, chmod } from 'node:fs/promises'
+import { open, readFile, rename } from 'node:fs/promises'
 import { dirname } from 'node:path'
 
 import { isValidDay, jstWeekKey } from './day.js'
+import {
+  finalizeLanSocialAtomicFile,
+  protectLanSocialDirectory,
+  protectLanSocialFile,
+} from './lan-social-file-security.js'
 
 /**
  * 外部データ処理者を使わない、LAN内ソーシャル機能の正本。
@@ -430,13 +435,20 @@ export class LanSocialFileStore {
   private tail: Promise<void> = Promise.resolve()
 
   static async open(path: string): Promise<LanSocialFileStore> {
+    // stateにはserverSecret/coordinatorKeyが入る。Windowsでもmode optionへ頼らず、
+    // 読み書きの前に保存directoryと既存fileをcurrent user専用へ矯正する。
+    await protectLanSocialDirectory(dirname(path))
     let state: LanSocialState
     try {
+      await protectLanSocialFile(path)
       const raw = await readFile(path, 'utf8')
       const parsed: unknown = JSON.parse(raw)
       const loaded = migrateState(parsed)
       state = loaded.state
-      if (loaded.migrated) await writeState(path, state)
+      if (loaded.migrated) {
+        await writeState(path, state)
+        await protectLanSocialFile(path)
+      }
     } catch (error) {
       if (!isMissingFile(error)) throw error
       state = {
@@ -447,6 +459,7 @@ export class LanSocialFileStore {
         settlements: [],
       }
       await writeState(path, state)
+      await protectLanSocialFile(path)
     }
     return new LanSocialFileStore(path, state)
   }
@@ -493,7 +506,6 @@ function isMissingFile(error: unknown): boolean {
 }
 
 async function writeState(path: string, state: LanSocialState): Promise<void> {
-  await mkdir(dirname(path), { recursive: true, mode: 0o700 })
   const temporary = `${path}.${process.pid}.${opaqueRandom(6)}.tmp`
   const file = await open(temporary, 'wx', 0o600)
   try {
@@ -503,7 +515,7 @@ async function writeState(path: string, state: LanSocialState): Promise<void> {
     await file.close()
   }
   await rename(temporary, path)
-  await chmod(path, 0o600)
+  await finalizeLanSocialAtomicFile(path)
 }
 
 export class LanSocialCoordinator {

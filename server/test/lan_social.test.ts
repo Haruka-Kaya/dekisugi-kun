@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { afterEach, describe, it } from 'node:test'
 
+import { inspectLanSocialPathProtection } from '../lib/lan-social-file-security.js'
 import {
   LAN_SOCIAL_MAX_EVENTS_PER_DAY,
   LAN_SOCIAL_ROOM_RETENTION_MS,
@@ -40,6 +41,33 @@ const key = (character: string) => character.repeat(32)
 const eventKey = (character: string) => character.repeat(43)
 
 describe('LAN socialの保存境界', () => {
+  it('atomic更新後も保存directoryとstateをcurrent OS userだけにする', async () => {
+    const { value, path } = await coordinator()
+    await value.createRoom({
+      kind: 'friends', capacity: 2, createKey: key('Z'), now: NOW,
+    })
+
+    const directoryProtection = await inspectLanSocialPathProtection(
+      dirname(path),
+      'directory',
+    )
+    const stateProtection = await inspectLanSocialPathProtection(path, 'file')
+    assert.equal(directoryProtection.currentUserOnly, true)
+    assert.equal(stateProtection.currentUserOnly, true)
+    if (process.platform === 'win32') {
+      assert.equal(directoryProtection.windowsInheritanceProtected, true)
+      assert.equal(directoryProtection.windowsAclRuleCount, 1)
+      assert.equal(directoryProtection.windowsRuleIsInherited, false)
+      // atomic replacementは保護済み親の唯一のACEを継承する。file単体で継承を
+      // 切るためのPowerShellをrequestごとに起動する必要はない。
+      assert.equal(stateProtection.windowsAclRuleCount, 1)
+      assert.equal(stateProtection.windowsRuleIsInherited, true)
+    } else {
+      assert.equal(directoryProtection.posixMode, 0o700)
+      assert.equal(stateProtection.posixMode, 0o600)
+    }
+  })
+
   it('壊れた保存を空部屋として起動せずfail-closedにする', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'dekisugi-lan-social-corrupt-'))
     temporaryDirectories.push(directory)

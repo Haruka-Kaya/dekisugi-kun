@@ -1054,7 +1054,8 @@ LearningNodeProgress _node(
   bestEvidence: LearningEvidenceLevel.selfCompared,
   lastAttemptDay: lastAttemptDay,
   lastEventId: 'event-$id',
-  completedAt: DateTime.parse('${completedDay ?? lastAttemptDay}T00:00:00Z'),
+  // ローカル正午なら午前4時境界の同じ学習日になり、実行TZに依存しない。
+  completedAt: DateTime.parse('${completedDay ?? lastAttemptDay}T12:00:00'),
   contentVersion: 'v1',
 );
 

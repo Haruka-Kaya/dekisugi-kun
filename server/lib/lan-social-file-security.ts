@@ -1,0 +1,295 @@
+import { execFile } from 'node:child_process'
+import { chmod, lstat, mkdir } from 'node:fs/promises'
+import { dirname, resolve, win32 } from 'node:path'
+
+export type LanSocialProtectedPathKind = 'directory' | 'file'
+
+export type LanSocialPathProtection = {
+  kind: LanSocialProtectedPathKind
+  currentUserOnly: boolean
+  posixMode: number | null
+  windowsAclRuleCount: number | null
+  windowsInheritanceProtected: boolean | null
+  windowsRuleIsInherited: boolean | null
+}
+
+const protectedWindowsDirectories = new Set<string>()
+
+// Windows PowerShellの.NET ACL APIを使い、localizationされるicaclsの表示文字列を
+// parseしない。target pathはcommandへ埋め込まずchild processのenvironmentで渡す。
+const WINDOWS_ACL_SCRIPT = String.raw`
+$ErrorActionPreference = 'Stop'
+$target = [Environment]::GetEnvironmentVariable('DEKISUGI_LAN_ACL_TARGET', 'Process')
+$kind = [Environment]::GetEnvironmentVariable('DEKISUGI_LAN_ACL_KIND', 'Process')
+$action = [Environment]::GetEnvironmentVariable('DEKISUGI_LAN_ACL_ACTION', 'Process')
+
+if ([String]::IsNullOrWhiteSpace($target)) { throw 'ACL target is missing' }
+if ($kind -ne 'directory' -and $kind -ne 'file') { throw 'ACL kind is invalid' }
+if ($action -ne 'protect' -and $action -ne 'inspect') { throw 'ACL action is invalid' }
+
+$item = Get-Item -LiteralPath $target -Force
+$isDirectory = [bool]$item.PSIsContainer
+if (($kind -eq 'directory') -ne $isDirectory) { throw 'ACL target kind mismatch' }
+if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+  throw 'ACL target must not be a reparse point'
+}
+
+$currentSid = [Security.Principal.WindowsIdentity]::GetCurrent().User
+if ($null -eq $currentSid) { throw 'Current Windows SID is unavailable' }
+
+if ($action -eq 'protect') {
+  if ($kind -eq 'directory') {
+    $security = [Security.AccessControl.DirectorySecurity]::new()
+    $inheritance = (
+      [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor
+      [Security.AccessControl.InheritanceFlags]::ObjectInherit
+    )
+  } else {
+    $security = [Security.AccessControl.FileSecurity]::new()
+    $inheritance = [Security.AccessControl.InheritanceFlags]::None
+  }
+  $security.SetOwner($currentSid)
+  $security.SetAccessRuleProtection($true, $false)
+  $rule = [Security.AccessControl.FileSystemAccessRule]::new(
+    $currentSid,
+    [Security.AccessControl.FileSystemRights]::FullControl,
+    $inheritance,
+    [Security.AccessControl.PropagationFlags]::None,
+    [Security.AccessControl.AccessControlType]::Allow
+  )
+  [void]$security.AddAccessRule($rule)
+  Set-Acl -LiteralPath $target -AclObject $security
+}
+
+$actual = Get-Acl -LiteralPath $target
+$ownerSid = $actual.GetOwner([Security.Principal.SecurityIdentifier])
+$rules = @($actual.GetAccessRules(
+  $true,
+  $true,
+  [Security.Principal.SecurityIdentifier]
+))
+$expectedInheritance = if ($kind -eq 'directory') {
+  (
+    [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor
+    [Security.AccessControl.InheritanceFlags]::ObjectInherit
+  )
+} else {
+  [Security.AccessControl.InheritanceFlags]::None
+}
+$currentUserOnly = $ownerSid.Value -eq $currentSid.Value -and $rules.Count -eq 1
+if ($currentUserOnly) {
+  $onlyRule = $rules[0]
+  $currentUserOnly = (
+    $onlyRule.IdentityReference.Value -eq $currentSid.Value -and
+    $onlyRule.AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow -and
+    $onlyRule.FileSystemRights -eq [Security.AccessControl.FileSystemRights]::FullControl -and
+    $onlyRule.InheritanceFlags -eq $expectedInheritance -and
+    $onlyRule.PropagationFlags -eq [Security.AccessControl.PropagationFlags]::None
+  )
+}
+
+[ordered]@{
+  kind = $kind
+  currentUserOnly = [bool]$currentUserOnly
+  inheritanceProtected = [bool]$actual.AreAccessRulesProtected
+  ruleCount = [int]$rules.Count
+  ruleIsInherited = if ($rules.Count -eq 1) { [bool]$rules[0].IsInherited } else { $null }
+} | ConvertTo-Json -Compress
+`
+
+const WINDOWS_ACL_ENCODED = Buffer
+  .from(WINDOWS_ACL_SCRIPT, 'utf16le')
+  .toString('base64')
+
+/**
+ * LAN coordinatorの保存directoryを現在のOS userだけが読める状態にする。
+ * Windowsでは継承を切り、current SIDのFullControl ACE 1件だけを残す。
+ */
+export async function protectLanSocialDirectory(path: string): Promise<void> {
+  await mkdir(path, { recursive: true, mode: 0o700 })
+  await assertPathKind(path, 'directory')
+  if (process.platform === 'win32') {
+    const protection = await windowsProtection(path, 'directory', 'protect')
+    assertWindowsExplicitProtection(protection)
+    protectedWindowsDirectories.add(windowsPathKey(path))
+    return
+  }
+  await chmod(path, 0o700)
+  assertPrivateProtection(await inspectLanSocialPathProtection(path, 'directory'))
+}
+
+/** 既存のcert/key/stateをcurrent user専用へ矯正してから読む。 */
+export async function protectLanSocialFile(path: string): Promise<void> {
+  await assertPathKind(path, 'file')
+  if (process.platform === 'win32') {
+    const protection = await windowsProtection(path, 'file', 'protect')
+    assertWindowsExplicitProtection(protection)
+    return
+  }
+  await chmod(path, 0o600)
+  assertPrivateProtection(await inspectLanSocialPathProtection(path, 'file'))
+}
+
+/**
+ * 保護済みdirectory内で0600相当として新規作成した一時fileをrenameした後の処理。
+ * Windowsは親のcurrent-user-only ACEだけを継承するため、requestごとにPowerShellを
+ * 起動しない。呼出順を誤った場合はfail-closedにする。
+ */
+export async function finalizeLanSocialAtomicFile(path: string): Promise<void> {
+  await assertPathKind(path, 'file')
+  if (process.platform === 'win32') {
+    if (!protectedWindowsDirectories.has(windowsPathKey(dirname(path)))) {
+      throw new Error('Windows ACLで保護する前にLAN保存fileを作成しました')
+    }
+    return
+  }
+  await chmod(path, 0o600)
+  assertPrivateProtection(await inspectLanSocialPathProtection(path, 'file'))
+}
+
+/** testだけでなくstartup診断にも使える、mutationを伴わないpermission確認。 */
+export async function inspectLanSocialPathProtection(
+  path: string,
+  kind: LanSocialProtectedPathKind,
+): Promise<LanSocialPathProtection> {
+  const info = await assertPathKind(path, kind)
+  if (process.platform === 'win32') {
+    return windowsProtection(path, kind, 'inspect')
+  }
+  const expectedMode = kind === 'directory' ? 0o700 : 0o600
+  const currentUid = typeof process.geteuid === 'function' ? process.geteuid() : undefined
+  const mode = info.mode & 0o777
+  return {
+    kind,
+    currentUserOnly: mode === expectedMode &&
+      (currentUid === undefined || info.uid === currentUid),
+    posixMode: mode,
+    windowsAclRuleCount: null,
+    windowsInheritanceProtected: null,
+    windowsRuleIsInherited: null,
+  }
+}
+
+async function assertPathKind(
+  path: string,
+  kind: LanSocialProtectedPathKind,
+) {
+  const info = await lstat(path)
+  const correctKind = kind === 'directory' ? info.isDirectory() : info.isFile()
+  if (!correctKind || info.isSymbolicLink()) {
+    throw new Error(`LAN保存先が通常の${kind}ではありません`)
+  }
+  return info
+}
+
+function assertPrivateProtection(protection: LanSocialPathProtection): void {
+  if (!protection.currentUserOnly) {
+    throw new Error(`LAN保存${protection.kind}をcurrent user専用にできませんでした`)
+  }
+}
+
+function assertWindowsExplicitProtection(protection: LanSocialPathProtection): void {
+  if (!protection.currentUserOnly ||
+      protection.windowsInheritanceProtected !== true ||
+      protection.windowsAclRuleCount !== 1 ||
+      protection.windowsRuleIsInherited !== false) {
+    throw new Error(`LAN保存${protection.kind}のWindows ACLを限定できませんでした`)
+  }
+}
+
+function windowsPathKey(path: string): string {
+  return resolve(path).toLowerCase()
+}
+
+function windowsSystemRoot(): string {
+  const entry = Object.entries(process.env).find(
+    ([key]) => key.toLowerCase() === 'systemroot',
+  )
+  const root = entry?.[1]
+  if (!root || !/^[A-Za-z]:[\\/]/u.test(root)) {
+    throw new Error('Windows SystemRootの絶対pathを解決できません')
+  }
+  return win32.normalize(root)
+}
+
+async function windowsProtection(
+  path: string,
+  kind: LanSocialProtectedPathKind,
+  action: 'inspect' | 'protect',
+): Promise<LanSocialPathProtection> {
+  // PATHへ依存させない。SEA smokeがPATH=''でもWindows標準PowerShellを直接起動する。
+  const executable = win32.join(
+    windowsSystemRoot(),
+    'System32',
+    'WindowsPowerShell',
+    'v1.0',
+    'powershell.exe',
+  )
+  const stdout = await executePowerShell(executable, path, kind, action)
+  let value: unknown
+  try {
+    value = JSON.parse(stdout.replace(/^\uFEFF/u, '').trim())
+  } catch {
+    throw new Error('Windows ACL検証結果を解釈できません')
+  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('Windows ACL検証結果が不正です')
+  }
+  const record = value as Record<string, unknown>
+  if (record.kind !== kind || typeof record.currentUserOnly !== 'boolean' ||
+      typeof record.inheritanceProtected !== 'boolean' ||
+      typeof record.ruleCount !== 'number' || !Number.isInteger(record.ruleCount) ||
+      !(typeof record.ruleIsInherited === 'boolean' || record.ruleIsInherited === null)) {
+    throw new Error('Windows ACL検証結果のfieldが不正です')
+  }
+  return {
+    kind,
+    currentUserOnly: record.currentUserOnly,
+    posixMode: null,
+    windowsAclRuleCount: record.ruleCount,
+    windowsInheritanceProtected: record.inheritanceProtected,
+    windowsRuleIsInherited: record.ruleIsInherited,
+  }
+}
+
+async function executePowerShell(
+  executable: string,
+  path: string,
+  kind: LanSocialProtectedPathKind,
+  action: 'inspect' | 'protect',
+): Promise<string> {
+  return new Promise((resolveOutput, rejectOutput) => {
+    execFile(
+      executable,
+      [
+        '-NoLogo',
+        '-NoProfile',
+        '-NonInteractive',
+        '-ExecutionPolicy', 'Bypass',
+        '-EncodedCommand', WINDOWS_ACL_ENCODED,
+      ],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          DEKISUGI_LAN_ACL_TARGET: path,
+          DEKISUGI_LAN_ACL_KIND: kind,
+          DEKISUGI_LAN_ACL_ACTION: action,
+        },
+        maxBuffer: 64 * 1024,
+        timeout: 30_000,
+        windowsHide: true,
+      },
+      (error, stdout, stderr) => {
+        if (error) {
+          const detail = stderr.trim() || error.message
+          rejectOutput(new Error(
+            `Windows ACL ${action}が失敗しました: ${detail.slice(0, 1_000)}`,
+          ))
+          return
+        }
+        resolveOutput(stdout)
+      },
+    )
+  })
+}

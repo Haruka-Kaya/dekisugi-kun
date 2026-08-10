@@ -35,7 +35,7 @@ VercelへFunction deployされない。自己署名TLSを生成し、Flutterが�
 SHA-256 fingerprintをpinする。詳細と起動方法は
 [LAN social設計](../docs/lan-social-2026.md)を参照する。
 
-管理PC向けにはmacOS / Windows / LinuxのNode SEA artifactを生成するworkflowがあり、実行先へ
+管理PC向けにはmacOS arm64 / Windows x64 / Linux x64のNode SEA artifactを生成するworkflowがあり、実行先へ
 repo、Node.js、npm、OpenSSLを要求しない。build・smokeは`npm run social:binary`と
 `npm run social:binary:smoke`。macOS / Linuxは実行権限を保持するtar.gz、Windowsはzipへ固め、
 `npm run social:binary:reproducible`で連続buildに加え、別の一時source directoryからも
@@ -44,6 +44,8 @@ buildにはSEAを有効にした公式Node.js 26.5以上を使う。Homebrew版N
 `Single executable application is disabled`になる場合は、公式配布binaryを
 `DEKISUGI_SEA_NODE=/absolute/path/to/node`で指定する。GitHub Actionsは
 `actions/setup-node`の公式Node.js 26.7.0を使う。
+Node SEAが現在サポートしないmacOS x64はartifact対象に含めず、Intel Macでは
+Node.jsを入れたsource起動を使う。
 署名・notarize前のため現状はpilot用で、学校配布済みとは扱わない。
 
 ```
