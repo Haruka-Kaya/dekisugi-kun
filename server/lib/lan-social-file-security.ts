@@ -71,32 +71,22 @@ $rules = @($actual.GetAccessRules(
   $true,
   [Security.Principal.SecurityIdentifier]
 ))
-$directoryInheritance = (
-  [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor
-  [Security.AccessControl.InheritanceFlags]::ObjectInherit
-)
 $expectedInheritance = if ($kind -eq 'directory') {
-  $directoryInheritance
+  (
+    [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor
+    [Security.AccessControl.InheritanceFlags]::ObjectInherit
+  )
 } else {
   [Security.AccessControl.InheritanceFlags]::None
 }
 $currentUserOnly = $ownerSid.Value -eq $currentSid.Value -and $rules.Count -eq 1
 if ($currentUserOnly) {
   $onlyRule = $rules[0]
-  $inheritanceMatches = $onlyRule.InheritanceFlags -eq $expectedInheritance
-  if ($kind -eq 'file') {
-    # Windowsは親directoryからfileへ継承したACEにもCI/OIを保持する場合がある。
-    # SID・権限・propagationを厳格に保ち、既知の2表現だけを許可する。
-    $inheritanceMatches = (
-      $inheritanceMatches -or
-      $onlyRule.InheritanceFlags -eq $directoryInheritance
-    )
-  }
   $currentUserOnly = (
     $onlyRule.IdentityReference.Value -eq $currentSid.Value -and
     $onlyRule.AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow -and
     $onlyRule.FileSystemRights -eq [Security.AccessControl.FileSystemRights]::FullControl -and
-    $inheritanceMatches -and
+    $onlyRule.InheritanceFlags -eq $expectedInheritance -and
     $onlyRule.PropagationFlags -eq [Security.AccessControl.PropagationFlags]::None
   )
 }
@@ -152,8 +142,8 @@ export async function protectLanSocialFile(path: string): Promise<void> {
 
 /**
  * 保護済みdirectory内で0600相当として新規作成した一時fileをrenameした後の処理。
- * Windowsは親のcurrent-user-only ACEだけを継承するため、requestごとにPowerShellを
- * 起動しない。呼出順を誤った場合はfail-closedにする。
+ * Windowsはrename後のfileでも継承を切り、current SIDのACE 1件へ明示固定する。
+ * 呼出順を誤った場合やACLを固定できない場合はfail-closedにする。
  */
 export async function finalizeLanSocialAtomicFile(path: string): Promise<void> {
   await assertPathKind(path, 'file')
@@ -161,6 +151,8 @@ export async function finalizeLanSocialAtomicFile(path: string): Promise<void> {
     if (!protectedWindowsDirectories.has(windowsPathKey(dirname(path)))) {
       throw new Error('Windows ACLで保護する前にLAN保存fileを作成しました')
     }
+    const protection = await windowsProtection(path, 'file', 'protect')
+    assertWindowsExplicitProtection(protection)
     return
   }
   await chmod(path, 0o600)

@@ -447,7 +447,6 @@ export class LanSocialFileStore {
       state = loaded.state
       if (loaded.migrated) {
         await writeState(path, state)
-        await protectLanSocialFile(path)
       }
     } catch (error) {
       if (!isMissingFile(error)) throw error
@@ -459,7 +458,6 @@ export class LanSocialFileStore {
         settlements: [],
       }
       await writeState(path, state)
-      await protectLanSocialFile(path)
     }
     return new LanSocialFileStore(path, state)
   }

@@ -66,10 +66,10 @@ describe('LAN socialの保存境界', () => {
       assert.equal(directoryProtection.windowsInheritanceProtected, true)
       assert.equal(directoryProtection.windowsAclRuleCount, 1)
       assert.equal(directoryProtection.windowsRuleIsInherited, false)
-      // atomic replacementは保護済み親の唯一のACEを継承する。file単体で継承を
-      // 切るためのPowerShellをrequestごとに起動する必要はない。
+      // atomic replacement後もfile単体で継承を切り、唯一のACEを明示する。
       assert.equal(stateProtection.windowsAclRuleCount, 1)
-      assert.equal(stateProtection.windowsRuleIsInherited, true)
+      assert.equal(stateProtection.windowsInheritanceProtected, true)
+      assert.equal(stateProtection.windowsRuleIsInherited, false)
     } else {
       assert.equal(directoryProtection.posixMode, 0o700)
       assert.equal(stateProtection.posixMode, 0o600)
