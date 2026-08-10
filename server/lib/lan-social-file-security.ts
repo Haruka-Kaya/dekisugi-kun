@@ -71,22 +71,32 @@ $rules = @($actual.GetAccessRules(
   $true,
   [Security.Principal.SecurityIdentifier]
 ))
+$directoryInheritance = (
+  [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor
+  [Security.AccessControl.InheritanceFlags]::ObjectInherit
+)
 $expectedInheritance = if ($kind -eq 'directory') {
-  (
-    [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor
-    [Security.AccessControl.InheritanceFlags]::ObjectInherit
-  )
+  $directoryInheritance
 } else {
   [Security.AccessControl.InheritanceFlags]::None
 }
 $currentUserOnly = $ownerSid.Value -eq $currentSid.Value -and $rules.Count -eq 1
 if ($currentUserOnly) {
   $onlyRule = $rules[0]
+  $inheritanceMatches = $onlyRule.InheritanceFlags -eq $expectedInheritance
+  if ($kind -eq 'file') {
+    # Windowsは親directoryからfileへ継承したACEにもCI/OIを保持する場合がある。
+    # SID・権限・propagationを厳格に保ち、既知の2表現だけを許可する。
+    $inheritanceMatches = (
+      $inheritanceMatches -or
+      $onlyRule.InheritanceFlags -eq $directoryInheritance
+    )
+  }
   $currentUserOnly = (
     $onlyRule.IdentityReference.Value -eq $currentSid.Value -and
     $onlyRule.AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow -and
     $onlyRule.FileSystemRights -eq [Security.AccessControl.FileSystemRights]::FullControl -and
-    $onlyRule.InheritanceFlags -eq $expectedInheritance -and
+    $inheritanceMatches -and
     $onlyRule.PropagationFlags -eq [Security.AccessControl.PropagationFlags]::None
   )
 }

@@ -52,8 +52,16 @@ describe('LAN socialの保存境界', () => {
       'directory',
     )
     const stateProtection = await inspectLanSocialPathProtection(path, 'file')
-    assert.equal(directoryProtection.currentUserOnly, true)
-    assert.equal(stateProtection.currentUserOnly, true)
+    assert.equal(
+      directoryProtection.currentUserOnly,
+      true,
+      JSON.stringify(directoryProtection),
+    )
+    assert.equal(
+      stateProtection.currentUserOnly,
+      true,
+      JSON.stringify(stateProtection),
+    )
     if (process.platform === 'win32') {
       assert.equal(directoryProtection.windowsInheritanceProtected, true)
       assert.equal(directoryProtection.windowsAclRuleCount, 1)
