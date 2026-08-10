@@ -38,7 +38,8 @@ SHA-256 fingerprintをpinする。詳細と起動方法は
 管理PC向けにはmacOS / Windows / LinuxのNode SEA artifactを生成するworkflowがあり、実行先へ
 repo、Node.js、npm、OpenSSLを要求しない。build・smokeは`npm run social:binary`と
 `npm run social:binary:smoke`。macOS / Linuxは実行権限を保持するtar.gz、Windowsはzipへ固め、
-`npm run social:binary:reproducible`でSEA本体とarchive双方の再現性を確認する。
+`npm run social:binary:reproducible`で連続buildに加え、別の一時source directoryからも
+SEA本体とarchive双方のSHA-256が一致することを確認する。
 buildにはSEAを有効にした公式Node.js 26.5以上を使う。Homebrew版Nodeで
 `Single executable application is disabled`になる場合は、公式配布binaryを
 `DEKISUGI_SEA_NODE=/absolute/path/to/node`で指定する。GitHub Actionsは

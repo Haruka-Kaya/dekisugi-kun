@@ -291,7 +291,7 @@ Home側は次のAPIだけを使い、既存の同一端末runと混ぜない。
 
 - `server/test/lan_social_http.test.ts`: 独立2 credentialのFriends共同完了、独立5 credentialの匿名League、実HTTPS terminal receipt再送
 - `server/test/lan_social_tls.test.ts`: OpenSSLなしのRSA 3072生成、pin維持、鍵差替えfail-closed
-- `npm run social:binary:reproducible`: 同じplatform / architecture / Node入力の連続buildでSEA本体と配布archive双方のSHA-256一致
+- `npm run social:binary:reproducible`: 同じplatform / architecture / Node入力の連続buildと、別の一時source directoryからのbuildでSEA本体・配布archive双方のSHA-256一致
 - `npm run social:binary:smoke`: SEAを`PATH`空で起動、HTTPS health、runtime秘密のartifact非混入
 - `app/test/lan_social_client_test.dart`: 証明書pin、Friends 0 XP、退出503→再起動→204、10段tier、Memory/SQLite再起動receipt、保存/削除失敗exact-once
 - `app/test/lan_social_reward_test.dart`: Friends共同完了1結晶のMemory / SQLite再起動冪等

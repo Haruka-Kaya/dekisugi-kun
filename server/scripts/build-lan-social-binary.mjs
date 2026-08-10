@@ -66,6 +66,15 @@ try {
     minify: false,
     packages: 'bundle',
   })
+  // esbuildは同じES moduleでもcheckout境界の判定によって先頭の
+  // `"use strict";`だけを増減させることがある。bundle本体は同一なので、
+  // SEA入力を意味保存の形で正規化し、source directory依存を除く。
+  const bundledSource = await readFile(bundle, 'utf8')
+  const normalizedBundle = bundledSource.replace(/^"use strict";\r?\n/, '')
+  if (normalizedBundle.includes(serverRoot)) {
+    throw new Error('absolute checkout path leaked into LAN coordinator bundle')
+  }
+  await writeFile(bundle, normalizedBundle, 'utf8')
 
   const builtExecutable = resolve(workDirectory, executableName)
   const executable = resolve(stagedPackage, executableName)
@@ -73,10 +82,13 @@ try {
   await writeFile(
     seaConfiguration,
     `${JSON.stringify({
-      main: bundle,
+      // SEA payloadへcheckoutの絶対pathを埋め込まない。設定fileとbuilderの
+      // cwdをwork directoryへ揃え、同じsourceを別directoryでbuildしても
+      // 同じ実行fileになるよう相対pathだけを渡す。
+      main: basename(bundle),
       mainFormat: 'commonjs',
       executable: builderNode,
-      output: builtExecutable,
+      output: executableName,
       disableExperimentalSEAWarning: true,
       useSnapshot: false,
       useCodeCache: false,
@@ -84,7 +96,11 @@ try {
     }, null, 2)}\n`,
     'utf8',
   )
-  await run(builderNode, ['--build-sea', seaConfiguration], serverRoot)
+  await run(
+    builderNode,
+    ['--build-sea', basename(seaConfiguration)],
+    workDirectory,
+  )
   // SEA injectionで公式Nodeの既存署名は無効になる。pilot artifactは実行可能性の
   // ためad-hoc再署名し、Developer ID署名済みとは主張しない。
   if (platform === 'darwin') {
