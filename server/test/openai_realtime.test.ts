@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { beforeEach, describe, it } from 'node:test'
 
-import { realtimeGrantHandler } from '../api/realtime-grant.js'
+import { realtimeGrantHandler } from '../lib/realtime-grant-handler.js'
 import { issueToken } from '../lib/auth.js'
 import {
   OPENAI_REALTIME_CLIENT_SECRETS_URL,
@@ -194,7 +194,9 @@ describe('/api/realtime-grant security boundary', () => {
       noKey.res,
     )
     assert.equal(noKey.out.code, 503)
-    assert.deepEqual(noKey.out.body, { error: 'realtime_provider_unavailable' })
+    assert.deepEqual(noKey.out.body, {
+      error: 'realtime_provider_unavailable',
+    })
 
     process.env.OPENAI_API_KEY = OPENAI_KEY
     process.env.OPENAI_REALTIME_ZDR_APPROVED = 'true'
@@ -208,7 +210,9 @@ describe('/api/realtime-grant security boundary', () => {
       noZdr.res,
     )
     assert.equal(noZdr.out.code, 503)
-    assert.deepEqual(noZdr.out.body, { error: 'realtime_provider_unavailable' })
+    assert.deepEqual(noZdr.out.body, {
+      error: 'realtime_provider_unavailable',
+    })
 
     process.env.OPENAI_REALTIME_ZDR_APPROVED = '1'
     const noSafetySecret = fakeRes()
@@ -647,10 +651,13 @@ describe('OpenAI Realtime client secret issuance', () => {
           safetyIdentifierSecret: SAFETY_SECRET,
         },
         fetchFn: async () =>
-          new Response(JSON.stringify({ value: '', expires_at: 0, session: {} }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }),
+          new Response(
+            JSON.stringify({ value: '', expires_at: 0, session: {} }),
+            {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
       }),
       (error: unknown) =>
         error instanceof OpenAiRealtimeGrantError &&

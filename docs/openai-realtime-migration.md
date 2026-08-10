@@ -4,14 +4,13 @@
 
 ## 現在地
 
-`POST /api/realtime-grant` は、既存のVertex `/api/live-token`を削除・置換せずに追加した
-provider-neutralな移行候補である。ローカル/Vercel developmentの内部検証専用で、既存の
-生成AI hard gateを共有する。production / preview / `NODE_ENV=production`では環境変数で
-解除できず、認証後に503となる。
+`realtimeGrantHandler` は、既存のVertex `/api/live-token`を削除・置換せずに検証する
+provider-neutralな移行候補である。内部test専用で、既存の生成AI hard gateを共有する。
+Vercel HobbyのFunction上限内で公開機能を維持するためAPI entrypointにはしておらず、
+productionの `/api/realtime-grant` は404のままである。
 
-**2026-08-10現在、hard gateを含むこのworktree差分はVercel productionへ未デプロイ。**
-稼働中の旧本番は別状態なので、デプロイと実API確認なしに「本番停止済み」「OpenAIへ移行済み」
-と扱わない。
+**2026-08-10現在、OpenAI Realtimeはproductionへ未デプロイ。** 実APIの配備と確認なしに
+「OpenAIへ移行済み」と扱わない。
 
 ## サーバーの発行順序
 

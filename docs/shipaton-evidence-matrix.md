@@ -70,8 +70,8 @@ These prove buildability only and do not change the RED distribution status.
 
 ## OpenAI Realtime migration claim
 
-The new `/api/realtime-grant` is a disabled migration scaffold, not a public
-school-safe feature. It validates audience inputs, HMACs the device identifier,
+The internal `realtimeGrantHandler` is a disabled migration scaffold, not a public
+Function or school-safe feature. It validates audience inputs, HMACs the device identifier,
 requests a 30-second client secret, checks the effective upstream model/session/
 expiry, returns no-store, and does not expose the standard API key.
 

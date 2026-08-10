@@ -1,13 +1,13 @@
-import { verifyToken } from '../lib/auth.js'
-import { generativeAiEnabled } from '../lib/generative-ai.js'
-import { bearer, parseBody, type Req, type Res } from '../lib/http.js'
+import { verifyToken } from './auth.js'
+import { generativeAiEnabled } from './generative-ai.js'
+import { bearer, parseBody, type Req, type Res } from './http.js'
 import {
   createOpenAiRealtimeGrant,
   openAiRealtimeReady,
-} from '../lib/openai-realtime.js'
-import { reserveSession } from '../lib/quota.js'
-import { checkRate } from '../lib/ratelimit.js'
-import { parseRealtimeGrantRequest } from '../lib/realtime-grant-request.js'
+} from './openai-realtime.js'
+import { reserveSession } from './quota.js'
+import { checkRate } from './ratelimit.js'
+import { parseRealtimeGrantRequest } from './realtime-grant-request.js'
 
 type RealtimeGrantDeps = {
   checkRate: typeof checkRate

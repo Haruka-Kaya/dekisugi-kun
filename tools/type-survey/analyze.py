@@ -15,9 +15,13 @@ def load(paths):
     out = []
     for pat in paths:
         for p in glob.glob(pat):
-            raw = open(p, encoding="utf-8").read()
+            with open(p, encoding="utf-8") as source:
+                raw = source.read()
             if p.endswith(".json"):
-                out.append(json.loads(raw))
+                parsed = json.loads(raw)
+                # fetch-survey.ps1 の出力は回答オブジェクトの配列。
+                # ダウンロードボタン由来の単体 JSON との互換も保つ。
+                out.extend(parsed if isinstance(parsed, list) else [parsed])
                 continue
             for line in raw.splitlines():
                 line = line.strip()

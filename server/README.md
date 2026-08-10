@@ -4,8 +4,7 @@
 
 > [!CAUTION]
 > **このworktreeの実装では**生成AI入口を公開環境で強制停止する。ローカルまたはVercel developmentで
-> `DEKISUGI_INTERNAL_AI_TESTING=1` の場合だけ `/api/live-token`、`/api/director`、
-> `/api/realtime-grant` を開く。
+> `DEKISUGI_INTERNAL_AI_TESTING=1` の場合だけ `/api/live-token`、`/api/director`を開く。
 > production / preview、および `NODE_ENV=production` はフラグがあっても解除できず、認証後に
 > `503 {"error":"generative_ai_unavailable"}` を返し、rate・quota・Googleを呼ばない。
 > 学校や年齢による例外設定はない。公開再開にはレビュー付きのコード変更が必要。
@@ -20,12 +19,16 @@
 developmentで `DEKISUGI_INTERNAL_SCHOOL_TESTING=1` の場合だけ開き、AI用フラグとは分離する。
 こちらも公開再開は環境変数操作ではなく、DPA・学校契約の確認を伴うコードレビューで行う。
 
-Upstash / RevenueCatへ個人・端末・回答データを送る入口も別のguardで強制停止する。
-`/api/subscription-sync`、`/api/revenuecat-webhook`、`/api/survey` のPOSTは、production / preview、
-および `NODE_ENV=production` で無条件に
-`503 {"error":"restricted_data_processing_unavailable"}` を返す。ローカルまたはVercel developmentで
-`DEKISUGI_INTERNAL_RESTRICTED_DATA_TESTING=1` の場合だけ開く。既存記録を確認・削除できるよう、
-管理者認証済みのsurvey GET / DELETEはこのguardの対象外とする。
+RevenueCatへ個人・端末データを送る入口も別のguardで強制停止する。
+`/api/subscription-sync`、`/api/revenuecat-webhook` はproduction / preview、および
+`NODE_ENV=production`で無条件に`503 {"error":"restricted_data_processing_unavailable"}`を返す。
+
+匿名アンケートだけは別境界で、`DEKISUGI_ANONYMOUS_SURVEY_ENABLED=1`の環境に限りPOSTを開く。
+kindごとのexact schema、64KiB上限、匿名session 12件/時、全体240件/時、種類5000件上限を適用し、
+IP・User-Agent・言語・viewport・client時刻は保存しない。氏名・学校名・連絡先fieldを拒否し、
+自由記述は入力どおり保存されると明示して個人情報を書かないよう案内する。回答一覧は
+最後の新着から90日でRedis keyごと失効する。GET / DELETEは管理トークン必須で、
+成功時はglobal件数でなくopaque receiptだけを返す。
 
 ### 外部契約を使わないLAN social
 
@@ -58,10 +61,9 @@ Node.jsを入れたsource起動を使う。
 Vercel（ステートレス）
 ├─ GET  /api/units     … 単元カタログと空のカルテ
 ├─ POST /api/director  … カルテ更新 + 次の一手
-├─ POST /api/realtime-grant … OpenAI Realtime短命credential（公開環境は停止）
 ├─ POST /api/subscription-sync … RevenueCat から Plus を再照会（公開環境は停止）
 ├─ POST /api/revenuecat-webhook … Plus 状態変更の受信（公開環境は停止）
-└─ POST /api/survey    … アンケート回答の保存（公開環境は停止）
+└─ POST /api/survey    … 明示switch付き匿名アンケート回答の保存
 ```
 
 理解カルテは「1台の端末が持つ1つの会話」の状態なので、端末が持ってリクエストごとに送る。
@@ -142,11 +144,11 @@ pwsh ..\tools\run-dev.ps1 -ServerUrl http://localhost:3000
 ```
 POST /api/live-token  → 会話用のアクセストークンを発行し、1枠引く
 GET  /api/live-token  → 今日あと何回始められるかを、引かずに返す
-POST /api/realtime-grant → OpenAI Realtime用の短命credentialを発行し、1枠引く
 ```
 
-`/api/realtime-grant` は既存Vertex経路を置換せずに追加した移行候補。OpenAI標準API keyを
-端末へ返さず、`/v1/realtime/client_secrets` で作った短命credentialだけを返す。
+内部`realtimeGrantHandler`は既存Vertex経路を置換せずに検証する移行候補で、
+Vercel Functionとしては配備していない。OpenAI標準API keyを端末へ返さず、
+`/v1/realtime/client_secrets`で作った短命credentialだけを返す契約をtestする。
 `OPENAI_API_KEY`、OpenAI側で確認済みのZDRを表す
 `OPENAI_REALTIME_ZDR_APPROVED=1`、専用HMAC鍵
 `OPENAI_SAFETY_IDENTIFIER_SECRET`の全てが必要で、どれか欠ければrate・quotaより前に503となる。
@@ -189,7 +191,8 @@ Plus は端末が申告する entitlement を信じない。許可された内�
 |---|---|
 | 端末ごとの署名付きトークン（`/api/register`） | 稼働中 |
 | 生成AI全体guard（production / preview / `NODE_ENV=production`は解除不能） | **強制停止** |
-| 制限対象データ処理guard（subscription / webhook / survey POST） | **強制停止** |
+| 制限対象データ処理guard（subscription / webhook） | **強制停止** |
+| 匿名survey専用guard（exact schema / session rate / receipt） | **明示switch** |
 | レート制限（端末 80/時・400/日、全体 20000/日） | **Upstash Redis で稼働中** |
 | 本人確認・アカウント | **無い**（段階5 の範囲外） |
 

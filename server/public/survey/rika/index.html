@@ -83,8 +83,8 @@ legend{font-size:15px;margin-bottom:10px;padding:0}
     <p class="q">わからなくても、<strong>思ったとおりに書いてください</strong>。<br>
       きれいに書く必要はありません。話し言葉で大丈夫です。</p>
     <p class="note"><strong>集めるのは学年・理科の好き嫌い・あなたが書いた答えだけです。</strong>
-      名前やメールアドレスなど、あなたが誰かが分かる情報は一切取りません。<br>
-      答えは1問ごとに自動で送信されます。途中でやめても、そこまでは残ります。最後に、正しい考え方の解説を出します。</p>
+      自由記述は入力した文章のまま保存されます。名前・学校名・メール・電話番号・SNSのIDは書かないでください。端末情報やIPアドレスは回答として保存しません。<br>
+      答えは1問ごとに自動で送信され、回答一覧は最後の新着から90日後に自動削除されます。途中でやめても、そこまでは残ります。最後に、正しい考え方の解説を出します。</p>
   </div>
   <button class="btn" id="go-meta">はじめる</button>
 </section>
@@ -353,14 +353,19 @@ function gateMc(){
 
 // 回答者を通しで表す番号。**同じ人の追記だと分かるようにする。**
 // 個人を特定するものではなく、この1回の回答をまとめるだけ
-const sessionId = (crypto.randomUUID ? crypto.randomUUID()
-  : String(Date.now()) + Math.random().toString(36).slice(2));
+function newSessionId(){
+  if (crypto.randomUUID) return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+  const h = [...b].map(v=>v.toString(16).padStart(2,"0")).join("");
+  return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
+}
+const sessionId = newSessionId();
 
 function payload(done){
   return {
-    v:2, kind:"misconception", sessionId, done,
-    ts:new Date().toISOString(),
-    meta, env:{w:innerWidth,h:innerHeight,ua:navigator.userAgent.slice(0,190),lang:navigator.language},
+    v:3, kind:"misconception", sessionId, done,
+    meta,
     ans: answers.slice(0, k)
   };
 }

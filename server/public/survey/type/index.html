@@ -137,7 +137,7 @@ textarea {
       書いてある内容はまったく同じで、<strong>行の間隔や文字の間隔だけ</strong>が違います。</p>
     <p class="q">どちらが「きれい」かではなく、<strong>10分間ずっと読み続けるならどちらを選ぶか</strong>で答えてください。</p>
     <p class="note"><strong>集めるのは学年などの選択と、あなたが選んだ答えだけです。</strong>
-      名前やメールアドレスなど、あなたが誰かが分かる情報は一切取りません。答え終わると自動で送信されます。</p>
+      名前・学校名・メール・電話番号・SNSのIDは入力しません。端末情報やIPアドレスは回答として保存しません。答え終わると自動で送信され、回答一覧は最後の新着から90日後に自動削除されます。</p>
   </div>
   <button class="btn" id="go-meta">はじめる</button>
 </section>
@@ -320,18 +320,16 @@ function answer(side) {
 $('pick-a').addEventListener('click', () => answer('a'));
 $('pick-b').addEventListener('click', () => answer('b'));
 
-// 端末側のフォントスケールを推定する（設定値そのものは取れないため実測で近似）
-function measureScale() {
-  const d = document.createElement('div');
-  d.style.cssText = 'position:absolute;visibility:hidden;font-size:16px;line-height:1;';
-  d.textContent = 'あ';
-  document.body.appendChild(d);
-  const px = d.getBoundingClientRect().height;
-  d.remove();
-  return Math.round(px / 16 * 100) / 100;
-}
-
 const ENDPOINT = "/api/survey";
+
+function newSessionId() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+  const h = [...b].map((v) => v.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
+}
+const sessionId = newSessionId();
 
 async function submit(json) {
   try {
@@ -351,18 +349,10 @@ async function submit(json) {
 
 function finish() {
   const payload = {
-    v: 2,
+    v: 3,
     kind: "type",
-    ts: new Date().toISOString(),
+    sessionId: sessionId,
     meta: meta,
-    env: {
-      w: window.innerWidth,
-      h: window.innerHeight,
-      dpr: window.devicePixelRatio,
-      scaleEst: measureScale(),
-      ua: navigator.userAgent.slice(0, 190),
-      lang: navigator.language
-    },
     lh: LH, ls: LS,
     ans: answers
   };
