@@ -15,8 +15,8 @@ export type LanSocialPathProtection = {
 
 const protectedWindowsDirectories = new Set<string>()
 
-// Windows PowerShellの.NET ACL APIを使い、localizationされるicaclsの表示文字列を
-// parseしない。target pathはcommandへ埋め込まずchild processのenvironmentで渡す。
+// Windows PowerShellの.NET ACL APIだけを使う。親processのPSModulePathがpwsh 7用でも
+// 動くようGet/Set-Acl等のcmdletへ依存せず、targetもenvironmentで安全に渡す。
 const WINDOWS_ACL_SCRIPT = String.raw`
 $ErrorActionPreference = 'Stop'
 $target = [Environment]::GetEnvironmentVariable('DEKISUGI_LAN_ACL_TARGET', 'Process')
@@ -27,9 +27,12 @@ if ([String]::IsNullOrWhiteSpace($target)) { throw 'ACL target is missing' }
 if ($kind -ne 'directory' -and $kind -ne 'file') { throw 'ACL kind is invalid' }
 if ($action -ne 'protect' -and $action -ne 'inspect') { throw 'ACL action is invalid' }
 
-$item = Get-Item -LiteralPath $target -Force
-$isDirectory = [bool]$item.PSIsContainer
-if (($kind -eq 'directory') -ne $isDirectory) { throw 'ACL target kind mismatch' }
+if ($kind -eq 'directory') {
+  $item = [IO.DirectoryInfo]::new($target)
+} else {
+  $item = [IO.FileInfo]::new($target)
+}
+if (-not $item.Exists) { throw 'ACL target is missing or has the wrong kind' }
 if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
   throw 'ACL target must not be a reparse point'
 }
@@ -58,10 +61,10 @@ if ($action -eq 'protect') {
     [Security.AccessControl.AccessControlType]::Allow
   )
   [void]$security.AddAccessRule($rule)
-  Set-Acl -LiteralPath $target -AclObject $security
+  $item.SetAccessControl($security)
 }
 
-$actual = Get-Acl -LiteralPath $target
+$actual = $item.GetAccessControl()
 $ownerSid = $actual.GetOwner([Security.Principal.SecurityIdentifier])
 $rules = @($actual.GetAccessRules(
   $true,
@@ -88,13 +91,20 @@ if ($currentUserOnly) {
   )
 }
 
-[ordered]@{
-  kind = $kind
-  currentUserOnly = [bool]$currentUserOnly
-  inheritanceProtected = [bool]$actual.AreAccessRulesProtected
-  ruleCount = [int]$rules.Count
-  ruleIsInherited = if ($rules.Count -eq 1) { [bool]$rules[0].IsInherited } else { $null }
-} | ConvertTo-Json -Compress
+$ruleIsInheritedJson = 'null'
+if ($rules.Count -eq 1) {
+  $ruleIsInheritedJson = $rules[0].IsInherited.ToString().ToLowerInvariant()
+}
+$output = (
+  '{"kind":"' + $kind + '",' +
+  '"currentUserOnly":' + $currentUserOnly.ToString().ToLowerInvariant() + ',' +
+  '"inheritanceProtected":' +
+    $actual.AreAccessRulesProtected.ToString().ToLowerInvariant() + ',' +
+  '"ruleCount":' + $rules.Count.ToString() + ',' +
+  '"ruleIsInherited":' + $ruleIsInheritedJson +
+  '}'
+)
+[Console]::Out.Write($output)
 `
 
 const WINDOWS_ACL_ENCODED = Buffer
@@ -272,6 +282,8 @@ async function executePowerShell(
         encoding: 'utf8',
         env: {
           ...process.env,
+          // ACL scriptはmodule非依存。この値を空にしてpwsh 7用pathの継承も遮断する。
+          PSModulePath: '',
           DEKISUGI_LAN_ACL_TARGET: path,
           DEKISUGI_LAN_ACL_KIND: kind,
           DEKISUGI_LAN_ACL_ACTION: action,
