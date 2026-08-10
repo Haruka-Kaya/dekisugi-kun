@@ -3,6 +3,7 @@ import 'package:dekisugi/config/motion.dart';
 import 'package:dekisugi/services/live_session.dart';
 import 'package:dekisugi/ui/_material.dart';
 import 'package:dekisugi/widgets/character.dart';
+import 'package:dekisugi/widgets/dekisugi_character_art.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// キャラは AppColors（ThemeExtension）から色を取るので、テーマが要る
@@ -119,6 +120,20 @@ void main() {
             findsOneWidget,
             reason: '$state の固有ポーズがない',
           );
+          final art = tester.widget<DekisugiCharacterArt>(
+            find.byType(DekisugiCharacterArt),
+          );
+          expect(art.pose, switch (state) {
+            LiveState.idle => DekisugiCharacterPose.idle,
+            LiveState.connecting => DekisugiCharacterPose.connecting,
+            LiveState.listening => DekisugiCharacterPose.listening,
+            LiveState.thinking => DekisugiCharacterPose.thinking,
+            LiveState.speaking => DekisugiCharacterPose.speaking,
+            LiveState.done => DekisugiCharacterPose.celebrate,
+            LiveState.outOfTime => DekisugiCharacterPose.outOfTime,
+            LiveState.failed => DekisugiCharacterPose.retry,
+          });
+          expect(art.decoration, DekisugiCharacterDecoration.standard);
           expect(
             find.bySemanticsLabel(semanticsByState[state]!),
             findsOneWidget,

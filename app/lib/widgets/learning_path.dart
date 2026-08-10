@@ -6,6 +6,7 @@ import '../config/motion.dart';
 import '../learning/domain/learning_economy.dart';
 import '../models/game_path.dart';
 import '../ui/_material.dart';
+import 'dekisugi_character_art.dart';
 
 typedef GamePathNodeCallback = void Function(GamePathNode node);
 typedef GamePathUnitCallback = void Function(GamePathUnit unit);
@@ -410,25 +411,23 @@ class PathMascotPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.gamePalette;
-    final (body, face, accent, signal) = switch (style) {
+    final gameColors = context.gamePalette;
+    final characterColors = context.appColors;
+    final (decoration, ornament, ornamentSignal) = switch (style) {
       LearningPathMascotStyle.standard => (
-        colors.story,
-        colors.onStory,
-        colors.legendary,
-        colors.pathReview,
+        DekisugiCharacterDecoration.standard,
+        characterColors.charAccent,
+        characterColors.onCoolSurface,
       ),
       LearningPathMascotStyle.orbit => (
-        colors.pathReview,
-        colors.onPathReview,
-        colors.legendary,
-        colors.story,
+        DekisugiCharacterDecoration.orbit,
+        gameColors.pathReview,
+        gameColors.story,
       ),
       LearningPathMascotStyle.nova => (
-        colors.story,
-        colors.onStory,
-        colors.legendary,
-        colors.pathActive,
+        DekisugiCharacterDecoration.nova,
+        gameColors.legendary,
+        gameColors.onLegendary,
       ),
     };
     return Semantics(
@@ -438,281 +437,30 @@ class PathMascotPreview extends StatelessWidget {
       child: ExcludeSemantics(
         child: SizedBox.square(
           dimension: size,
-          child: CustomPaint(
-            key: ValueKey<String>('path-mascot-${style.wire}'),
-            painter: _PathMascotPainter(
-              reaction: reaction,
-              style: style,
-              body: body,
-              face: face,
-              accent: accent,
-              signal: signal,
-            ),
+          child: DekisugiCharacterArt(
+            pose: switch (reaction) {
+              GameCharacterReaction.none => DekisugiCharacterPose.idle,
+              GameCharacterReaction.invite => DekisugiCharacterPose.invite,
+              GameCharacterReaction.thinking => DekisugiCharacterPose.thinking,
+              GameCharacterReaction.encourage =>
+                DekisugiCharacterPose.encourage,
+              GameCharacterReaction.celebrate =>
+                DekisugiCharacterPose.celebrate,
+            },
+            decoration: decoration,
+            size: size,
+            body: characterColors.charBody,
+            face: characterColors.charFace,
+            accent: characterColors.charAccent,
+            signal: characterColors.onCoolSurface,
+            ornament: ornament,
+            ornamentSignal: ornamentSignal,
+            paintKey: ValueKey<String>('path-mascot-${style.wire}'),
           ),
         ),
       ),
     );
   }
-}
-
-class _PathMascotPainter extends CustomPainter {
-  const _PathMascotPainter({
-    required this.reaction,
-    required this.style,
-    required this.body,
-    required this.face,
-    required this.accent,
-    required this.signal,
-  });
-
-  final GameCharacterReaction reaction;
-  final LearningPathMascotStyle style;
-  final Color body;
-  final Color face;
-  final Color accent;
-  final Color signal;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final center = Offset(w * 0.5, w * 0.43);
-    final radius = w * 0.27;
-    final bodyPaint = Paint()..color = body;
-
-    // 表情だけでなくシルエットでも感情を区別する。小さい表示や
-    // 色覚に依存しない状態でも、手招き・思案・応援・祝福が残る。
-    final armPaint = Paint()
-      ..color = body
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = w * 0.085
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    switch (reaction) {
-      case GameCharacterReaction.invite:
-        canvas.drawPath(
-          Path()
-            ..moveTo(w * 0.72, w * 0.66)
-            ..lineTo(w * 0.86, w * 0.49)
-            ..lineTo(w * 0.80, w * 0.36),
-          armPaint,
-        );
-        break;
-      case GameCharacterReaction.thinking:
-        canvas.drawLine(
-          Offset(w * 0.70, w * 0.68),
-          Offset(w * 0.68, w * 0.48),
-          armPaint,
-        );
-        break;
-      case GameCharacterReaction.encourage:
-        canvas.drawLine(
-          Offset(w * 0.30, w * 0.67),
-          Offset(w * 0.13, w * 0.55),
-          armPaint,
-        );
-        canvas.drawLine(
-          Offset(w * 0.70, w * 0.67),
-          Offset(w * 0.87, w * 0.55),
-          armPaint,
-        );
-        break;
-      case GameCharacterReaction.celebrate:
-        canvas.drawLine(
-          Offset(w * 0.30, w * 0.66),
-          Offset(w * 0.15, w * 0.31),
-          armPaint,
-        );
-        canvas.drawLine(
-          Offset(w * 0.70, w * 0.66),
-          Offset(w * 0.85, w * 0.31),
-          armPaint,
-        );
-        break;
-      case GameCharacterReaction.none:
-        break;
-    }
-
-    if (style == LearningPathMascotStyle.orbit) {
-      canvas.save();
-      canvas.translate(w * 0.5, w * 0.46);
-      canvas.rotate(-0.28);
-      canvas.drawOval(
-        Rect.fromCenter(center: Offset.zero, width: w * 0.88, height: w * 0.38),
-        Paint()
-          ..color = accent
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = w * 0.045,
-      );
-      canvas.drawCircle(
-        Offset(w * 0.39, 0),
-        w * 0.065,
-        Paint()..color = signal,
-      );
-      canvas.restore();
-    }
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: Offset(w * 0.5, w * 0.76),
-          width: w * 0.58,
-          height: w * 0.28,
-        ),
-        Radius.circular(w * 0.12),
-      ),
-      bodyPaint,
-    );
-    canvas.drawCircle(center, radius, bodyPaint);
-
-    if (style == LearningPathMascotStyle.nova) {
-      final starCenter = Offset(w * 0.5, w * 0.75);
-      final star = Path();
-      for (var index = 0; index < 10; index++) {
-        final angle = -math.pi / 2 + index * math.pi / 5;
-        final distance = index.isEven ? w * 0.095 : w * 0.042;
-        final point = Offset(
-          starCenter.dx + math.cos(angle) * distance,
-          starCenter.dy + math.sin(angle) * distance,
-        );
-        if (index == 0) {
-          star.moveTo(point.dx, point.dy);
-        } else {
-          star.lineTo(point.dx, point.dy);
-        }
-      }
-      star.close();
-      canvas.drawPath(star, Paint()..color = accent);
-    }
-
-    final antenna = Paint()
-      ..color = body
-      ..strokeWidth = w * 0.065
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(
-      Offset(w * 0.59, w * 0.18),
-      Offset(w * 0.64, w * 0.05),
-      antenna,
-    );
-    canvas.drawCircle(
-      Offset(w * 0.65, w * 0.04),
-      w * 0.075,
-      Paint()..color = accent,
-    );
-
-    final eyePaint = Paint()..color = face;
-    for (final side in <double>[-1, 1]) {
-      final eyeCenter = Offset(
-        center.dx + side * radius * 0.42,
-        center.dy - radius * 0.06,
-      );
-      if (reaction == GameCharacterReaction.celebrate) {
-        canvas.drawArc(
-          Rect.fromCircle(center: eyeCenter, radius: radius * 0.18),
-          math.pi * 0.08,
-          math.pi * 0.84,
-          false,
-          Paint()
-            ..color = face
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = radius * 0.11
-            ..strokeCap = StrokeCap.round,
-        );
-      } else {
-        canvas.drawCircle(eyeCenter, radius * 0.17, eyePaint);
-        if (reaction == GameCharacterReaction.thinking) {
-          canvas.drawCircle(
-            Offset(eyeCenter.dx + radius * 0.05, eyeCenter.dy - radius * 0.05),
-            radius * 0.055,
-            Paint()..color = body,
-          );
-        }
-      }
-    }
-
-    final mouthPaint = Paint()
-      ..color = face
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = radius * 0.11
-      ..strokeCap = StrokeCap.round;
-    if (reaction == GameCharacterReaction.invite ||
-        reaction == GameCharacterReaction.encourage ||
-        reaction == GameCharacterReaction.celebrate) {
-      canvas.drawArc(
-        Rect.fromCenter(
-          center: Offset(w * 0.5, w * 0.50),
-          width: radius * 0.78,
-          height: radius * 0.55,
-        ),
-        0.12 * math.pi,
-        0.76 * math.pi,
-        false,
-        mouthPaint,
-      );
-    } else if (reaction == GameCharacterReaction.thinking) {
-      canvas.drawLine(
-        Offset(w * 0.44, w * 0.53),
-        Offset(w * 0.56, w * 0.51),
-        mouthPaint,
-      );
-    } else {
-      canvas.drawLine(
-        Offset(w * 0.45, w * 0.52),
-        Offset(w * 0.55, w * 0.52),
-        mouthPaint,
-      );
-    }
-
-    if (reaction == GameCharacterReaction.thinking) {
-      for (var index = 0; index < 3; index++) {
-        canvas.drawCircle(
-          Offset(w * (0.16 + index * 0.1), w * (0.13 - index * 0.025)),
-          w * (0.025 + index * 0.006),
-          Paint()..color = signal,
-        );
-      }
-    }
-    if (reaction == GameCharacterReaction.encourage ||
-        reaction == GameCharacterReaction.celebrate) {
-      final badgeCenter = Offset(w * 0.78, w * 0.72);
-      canvas.drawCircle(badgeCenter, w * 0.12, Paint()..color = accent);
-      final check = Paint()
-        ..color = signal
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = w * 0.045
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round;
-      canvas.drawPath(
-        Path()
-          ..moveTo(w * 0.72, w * 0.72)
-          ..lineTo(w * 0.77, w * 0.77)
-          ..lineTo(w * 0.85, w * 0.66),
-        check,
-      );
-    }
-    if (reaction == GameCharacterReaction.celebrate) {
-      final rayPaint = Paint()
-        ..color = signal
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = w * 0.035
-        ..strokeCap = StrokeCap.round;
-      for (final ray in <(Offset, Offset)>[
-        (Offset(w * 0.17, w * 0.17), Offset(w * 0.10, w * 0.10)),
-        (Offset(w * 0.50, w * 0.07), Offset(w * 0.50, 0)),
-        (Offset(w * 0.83, w * 0.17), Offset(w * 0.90, w * 0.10)),
-      ]) {
-        canvas.drawLine(ray.$1, ray.$2, rayPaint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _PathMascotPainter oldDelegate) =>
-      oldDelegate.reaction != reaction ||
-      oldDelegate.style != style ||
-      oldDelegate.body != body ||
-      oldDelegate.face != face ||
-      oldDelegate.accent != accent ||
-      oldDelegate.signal != signal;
 }
 
 class _NodeCanvas extends StatelessWidget {
