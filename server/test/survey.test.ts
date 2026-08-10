@@ -43,6 +43,9 @@ describe('アンケートの種類', () => {
 
 describe('POST /api/survey', () => {
   beforeEach(() => {
+    delete process.env.NODE_ENV
+    delete process.env.VERCEL_ENV
+    process.env.DEKISUGI_INTERNAL_RESTRICTED_DATA_TESTING = '1'
     delete process.env.KV_REST_API_URL
     delete process.env.KV_REST_API_TOKEN
     delete process.env.SURVEY_ADMIN_TOKEN

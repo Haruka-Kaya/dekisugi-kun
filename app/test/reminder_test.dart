@@ -15,15 +15,14 @@ void main() {
     int graceLeft = 2,
     bool doneToday = false,
     bool restDay = false,
-  }) =>
-      ReminderState(
-        daysLeft: daysLeft,
-        remaining: remaining,
-        dueCount: dueCount,
-        graceLeft: graceLeft,
-        doneToday: doneToday,
-        restDay: restDay,
-      );
+  }) => ReminderState(
+    daysLeft: daysLeft,
+    remaining: remaining,
+    dueCount: dueCount,
+    graceLeft: graceLeft,
+    doneToday: doneToday,
+    restDay: restDay,
+  );
 
   group('送らない場面', () {
     test('きょうの分が終わっていれば送らない', () {
@@ -44,24 +43,38 @@ void main() {
 
     test('猶予の残りだけでは呼び出さない', () {
       // 「使わずに済ませる」ための情報であって、呼び出す理由ではない
-      expect(reminderText(state(remaining: 0, dueCount: 0, graceLeft: 0)), isNull);
+      expect(
+        reminderText(state(remaining: 0, dueCount: 0, graceLeft: 0)),
+        isNull,
+      );
     });
   });
 
   group('文面', () {
+    test('翌日CASEは次の学習行為だけを伝える', () {
+      final text = missionFollowUpText('落下の速さ');
+      expect(text, '「落下の速さ」を、別の場面でたしかめる日です。');
+      for (final banned in ['連続', '失う', '待って', 'さびし', '今すぐ']) {
+        expect(text.contains(banned), isFalse);
+      }
+    });
+
     test('考査が入っていれば残り日数と残り数を出す', () {
-      expect(reminderText(state(daysLeft: 12, remaining: 3)),
-          '考査まであと12日。まだ説明していないところが3つあります。');
+      expect(
+        reminderText(state(daysLeft: 12, remaining: 3)),
+        '考査まであと12日。まだ説明していないところが3つあります。',
+      );
     });
 
     test('考査が無ければ残っているものだけ言う', () {
-      expect(reminderText(state(remaining: 2)),
-          'まだ説明していないところが2つあります。');
+      expect(reminderText(state(remaining: 2)), 'まだ説明していないところが2つあります。');
     });
 
     test('説明し終えていれば復習を案内する', () {
-      expect(reminderText(state(remaining: 0, dueCount: 4)),
-          'もう一度見るところが4件あります。');
+      expect(
+        reminderText(state(remaining: 0, dueCount: 4)),
+        'もう一度見るところが4件あります。',
+      );
     });
 
     test('主語が「進捗の事実」で、キャラの個人的な言葉にならない', () {
@@ -100,8 +113,11 @@ void main() {
       final src = File('lib/services/reminders.dart').readAsStringSync();
       final ids = RegExp(r'static const int _id = (\d+)').allMatches(src);
       expect(ids, hasLength(1));
-      expect(src.contains('periodicallyShow'), isFalse,
-          reason: '繰り返し予約は文面が古くなるので使わない');
+      expect(
+        src.contains('periodicallyShow'),
+        isFalse,
+        reason: '繰り返し予約は文面が古くなるので使わない',
+      );
     });
 
     test('考査が近くても文面は増えない', () {
@@ -120,8 +136,11 @@ void main() {
       // **initializeTimeZones() だけでは tz.local は UTC のまま。**
       // 設定しないと 20:00 のつもりの予約が翌朝5時に立つ（実機で確認）
       final src = File('lib/services/reminders.dart').readAsStringSync();
-      expect(src.contains('setLocalLocation'), isTrue,
-          reason: 'tz.local が UTC のままだと予約の時刻がずれる');
+      expect(
+        src.contains('setLocalLocation'),
+        isTrue,
+        reason: 'tz.local が UTC のままだと予約の時刻がずれる',
+      );
     });
 
     test('過ぎた時刻は翌日に回す', () {
@@ -136,9 +155,14 @@ void main() {
       // **初回の会話を終えた直後**に、文脈のある場面で聞く
       final src = File('lib/services/reminders.dart').readAsStringSync();
       expect(src.contains('requestAlertPermission: false'), isTrue);
-      final consent = File('lib/screens/consent_screen.dart').readAsStringSync();
-      expect(consent.contains('Reminders'), isFalse,
-          reason: '同意画面で通知の許可を求めている');
+      final consent = File(
+        'lib/screens/consent_screen.dart',
+      ).readAsStringSync();
+      expect(
+        consent.contains('Reminders'),
+        isFalse,
+        reason: '同意画面で通知の許可を求めている',
+      );
     });
   });
 }

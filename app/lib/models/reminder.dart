@@ -87,3 +87,8 @@ String? reminderText(ReminderState s) {
 
 /// 通知の見出し。**アプリ名だけ。** 煽らない。
 const String kReminderTitle = 'デキすぎ君';
+
+/// CLEAR翌日に予約する1通。キャラの感情や連続日数ではなく、次に行う
+/// 学習行為だけを事実として伝える。
+String missionFollowUpText(String conceptLabel) =>
+    '「$conceptLabel」を、別の場面でたしかめる日です。';

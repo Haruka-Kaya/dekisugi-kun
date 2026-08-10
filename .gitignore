@@ -29,8 +29,18 @@
 **/ios/Flutter/ephemeral/
 **/ios/Flutter/App.framework
 **/ios/Flutter/flutter_export_environment.sh
-**/Podfile.lock
 **/.symlinks/
+
+# Native dependency lockfiles are release inputs, not generated build output.
+# Flutter 3.44+ resolves most iOS plugins with SwiftPM; flutter_pcm_sound still
+# uses CocoaPods. Keep both resolution records visible to Git/clean CI.
+!**/Package.resolved
+!**/Podfile.lock
+
+# Launch screens and adaptive icons are source assets. Keep them visible even
+# if broader generated-file rules are added later.
+!**/android/app/src/main/res/**
+!**/ios/Runner/Assets.xcassets/**
 
 # ---- IDE ----
 .idea/
@@ -65,6 +75,9 @@ tools/type-survey/font_b64.txt
 
 # 実機計測の生ログ
 tools/*/measurements/
+
+# Shipaton rehearsalの検証前candidate。検証成功後の正式出力だけを成果物候補にする。
+docs/shipaton-demo-2026/.dekisugi-*.candidate.*
 
 # ---- Node / Vercel（server/） ----
 node_modules/

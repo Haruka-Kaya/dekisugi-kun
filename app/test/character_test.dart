@@ -7,12 +7,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// キャラは AppColors（ThemeExtension）から色を取るので、テーマが要る
 Widget wrap(Widget child, {bool reduceMotion = false}) => MaterialApp(
-      theme: buildAppTheme(Brightness.light),
-      home: MediaQuery(
-        data: MediaQueryData(disableAnimations: reduceMotion),
-        child: ReduceMotionScope(child: Center(child: child)),
-      ),
-    );
+  theme: buildAppTheme(Brightness.light),
+  home: MediaQuery(
+    data: MediaQueryData(disableAnimations: reduceMotion),
+    child: ReduceMotionScope(child: Center(child: child)),
+  ),
+);
 
 /// キャラのサブツリーでティッカーが動いているか。
 ///
@@ -47,7 +47,9 @@ void main() {
     });
 
     testWidgets('聞いている・考えているときだけ動かす', (tester) async {
-      await tester.pumpWidget(wrap(const Character(state: LiveState.listening)));
+      await tester.pumpWidget(
+        wrap(const Character(state: LiveState.listening)),
+      );
       expect(tickerEnabled(tester), isTrue);
 
       await tester.pumpWidget(wrap(const Character(state: LiveState.thinking)));
@@ -60,15 +62,15 @@ void main() {
   group('Reduce Motion', () {
     testWidgets('設定されていればどの状態でも動かさない', (tester) async {
       for (final s in [LiveState.listening, LiveState.thinking]) {
-        await tester.pumpWidget(
-            wrap(Character(state: s), reduceMotion: true));
+        await tester.pumpWidget(wrap(Character(state: s), reduceMotion: true));
         expect(tickerEnabled(tester), isFalse, reason: '$s で動いている');
       }
     });
 
     testWidgets('動きを止めても描画は出る（消えない）', (tester) async {
       await tester.pumpWidget(
-          wrap(const Character(state: LiveState.thinking), reduceMotion: true));
+        wrap(const Character(state: LiveState.thinking), reduceMotion: true),
+      );
       expect(find.byType(CustomPaint), findsWidgets);
     });
   });
@@ -84,7 +86,9 @@ void main() {
     });
 
     testWidgets('破棄してもタイマーが残らない', (tester) async {
-      await tester.pumpWidget(wrap(const Character(state: LiveState.listening)));
+      await tester.pumpWidget(
+        wrap(const Character(state: LiveState.listening)),
+      );
       await tester.pumpWidget(wrap(const SizedBox()));
       // まばたきの予約時間を越えて進める。残っていれば例外になる
       await tester.pump(Motion.blinkInterval * 2);
@@ -108,7 +112,8 @@ void main() {
 
     test('まばたきの稼働率が 5% 未満', () {
       // ここが待機中の CPU を決める。上げると常時アニメと同じ問題になる
-      final duty = Motion.blink.inMilliseconds / Motion.blinkInterval.inMilliseconds;
+      final duty =
+          Motion.blink.inMilliseconds / Motion.blinkInterval.inMilliseconds;
       expect(duty, lessThan(0.05));
     });
   });

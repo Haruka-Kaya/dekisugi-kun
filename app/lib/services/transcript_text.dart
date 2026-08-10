@@ -10,7 +10,8 @@
 library;
 
 /// 和文とみなす文字。ひらがな・カタカナ・漢字・全角約物。
-const _ja = r'[々〆぀-ヿㇰ-ㇿ'
+const _ja =
+    r'[々〆぀-ヿㇰ-ㇿ'
     r'㐀-䶿一-鿿豈-﫿'
     r'　-〿！-｠]';
 
@@ -29,6 +30,14 @@ final _closable = RegExp('(?:($_ja)[ 　]+(?=$_ja|[0-9])|([0-9])[ 　]+(?=$_ja))
 /// 残った空白の重なりをひとつにまとめる
 final _runs = RegExp(r'[ 　]{2,}');
 
+/// challenge 比較で発音内容として扱わない句読点・記号。
+final _challengePunctuation = RegExp(
+  r'''[、。,.!?，．！？…〜~'‘’"“”「」『』（）()\[\]{}:：;；\-‐‑‒–—―−]''',
+  unicode: true,
+);
+final _challengeWhitespace = RegExp(r'[\s　]+', unicode: true);
+final _hasJapanese = RegExp(r'[々〆぀-ヿ㐀-鿿豈-﫿]', unicode: true);
+
 /// 文字起こしを表示・記録に使える形に整える。
 String tidyJa(String raw) {
   if (raw.isEmpty) return raw;
@@ -36,4 +45,35 @@ String tidyJa(String raw) {
       .replaceAllMapped(_closable, (m) => m[1] ?? m[2]!)
       .replaceAll(_runs, ' ')
       .trim();
+}
+
+/// 固定 lure と Live の文字起こしを比べるための正規化。
+///
+/// 大文字小文字、全角 ASCII、空白、句読点だけを吸収し、
+/// 語の追加・省略は吸収しない。そのため「前後に自然な一言」も
+/// challenge としては受理されない。
+String normalizeChallengeText(String raw) {
+  final compatibilityAscii = String.fromCharCodes(
+    raw.runes.map((codePoint) {
+      if (codePoint == 0x3000) return 0x20;
+      if (codePoint >= 0xff01 && codePoint <= 0xff5e) {
+        return codePoint - 0xfee0;
+      }
+      return codePoint;
+    }),
+  );
+  final normalized = compatibilityAscii
+      .toLowerCase()
+      .replaceAll(_challengeWhitespace, ' ')
+      .replaceAll(_challengePunctuation, '')
+      .trim();
+  return _hasJapanese.hasMatch(normalized)
+      ? normalized.replaceAll(_challengeWhitespace, '')
+      : normalized.replaceAll(_challengeWhitespace, ' ');
+}
+
+bool isExactChallengeText(String actual, String expected) {
+  final normalizedExpected = normalizeChallengeText(expected);
+  return normalizedExpected.isNotEmpty &&
+      normalizeChallengeText(actual) == normalizedExpected;
 }

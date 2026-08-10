@@ -23,13 +23,12 @@ void main() {
     MemorySessionStore store,
     Map<String, Response<Object?> Function()> routes, {
     void Function(RequestOptions)? onRequest,
-  }) =>
-      TeamClient(
-        baseUrl: base,
-        identity: _Identity(store),
-        store: store,
-        dio: fakeDio(routes, onRequest: onRequest),
-      );
+  }) => TeamClient(
+    baseUrl: base,
+    identity: _Identity(store),
+    store: store,
+    dio: fakeDio(routes, onRequest: onRequest),
+  );
 
   String summaryJson({
     String state = 'ready',
@@ -49,12 +48,14 @@ void main() {
     test('サーバが名簿を返しても端末に入らない', () async {
       // 置き場が無ければ、画面に出しようがない
       final json = summaryJson(
-        extra: ',"members":[{"name":"山田","total":9}],'
+        extra:
+            ',"members":[{"name":"山田","total":9}],'
             '"ranking":[{"rank":1,"name":"佐藤"}],'
             '"lastActiveAt":"2026-08-06"',
       );
       final s = TeamSummary.fromJson(
-          (jsonDecode(json) as Map).cast<String, dynamic>());
+        (jsonDecode(json) as Map).cast<String, dynamic>(),
+      );
 
       // 読み取ったものに個人が1つも含まれないこと
       final dump = jsonEncode({
@@ -71,11 +72,16 @@ void main() {
 
     testWidgets('画面に順位や名前を出さない', (tester) async {
       final s = TeamSummary.fromJson(
-          (jsonDecode(summaryJson()) as Map).cast<String, dynamic>());
-      await tester.pumpWidget(MaterialApp(
-        theme: buildAppTheme(Brightness.light),
-        home: Scaffold(body: TeamCard(summary: s, onLeave: () {})),
-      ));
+        (jsonDecode(summaryJson()) as Map).cast<String, dynamic>(),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: Scaffold(
+            body: TeamCard(summary: s, onLeave: () {}),
+          ),
+        ),
+      );
 
       for (final w in ['位', 'ランキング', '順位', 'リーグ']) {
         expect(find.textContaining(w), findsNothing, reason: '「$w」が出ている');
@@ -87,21 +93,33 @@ void main() {
     test('合計は null のまま。0 で埋めない', () {
       // 0 は「誰もやっていない」という別の意味になる
       final s = TeamSummary.fromJson(
-          (jsonDecode(summaryJson(state: 'pending', teamTotal: null)) as Map)
-              .cast<String, dynamic>());
+        (jsonDecode(summaryJson(state: 'pending', teamTotal: null)) as Map)
+            .cast<String, dynamic>(),
+      );
       expect(s.pending, isTrue);
       expect(s.total, isNull);
     });
 
     testWidgets('合計の代わりに理由を出す', (tester) async {
       final s = TeamSummary.fromJson(
-          (jsonDecode(summaryJson(state: 'pending', teamTotal: null, memberCount: 5))
-                  as Map)
-              .cast<String, dynamic>());
-      await tester.pumpWidget(MaterialApp(
-        theme: buildAppTheme(Brightness.light),
-        home: Scaffold(body: TeamCard(summary: s, onLeave: () {})),
-      ));
+        (jsonDecode(
+                  summaryJson(
+                    state: 'pending',
+                    teamTotal: null,
+                    memberCount: 5,
+                  ),
+                )
+                as Map)
+            .cast<String, dynamic>(),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: Scaffold(
+            body: TeamCard(summary: s, onLeave: () {}),
+          ),
+        ),
+      );
 
       expect(find.textContaining('5人あつまってから'), findsOneWidget);
       // **0 を出さない**
@@ -175,18 +193,24 @@ void main() {
     test('やった日だけ送る', () async {
       final store = MemorySessionStore();
       Object? body;
-      final c = await joined(store, {
-        'POST $base/api/team/contribution': () => jsonRes(200, '{"applied":[]}'),
-      }, onRequest: (o) {
-        if (o.path.endsWith('/contribution')) body = o.data;
-      });
+      final c = await joined(
+        store,
+        {
+          'POST $base/api/team/contribution': () =>
+              jsonRes(200, '{"applied":[]}'),
+        },
+        onRequest: (o) {
+          if (o.path.endsWith('/contribution')) body = o.data;
+        },
+      );
       await store.recordActivity('2026-08-06', done: 2, sessions: 1);
       await store.recordActivity('2026-08-05', sessions: 1); // 開いただけ
       await c.syncContributions(now: DateTime(2026, 8, 6, 12));
 
       final days = ((body! as Map)['days'] as List).cast<Map>();
-      expect(days.map((d) => d['day']), ['2026-08-06'],
-          reason: '開いただけの日を送っている');
+      expect(days.map((d) => d['day']), [
+        '2026-08-06',
+      ], reason: '開いただけの日を送っている');
       expect(days.single['conceptsExplained'], 2);
     });
 
@@ -194,11 +218,16 @@ void main() {
       // サーバが受け付ける範囲を超えたものを送っても捨てられるだけ
       final store = MemorySessionStore();
       Object? body;
-      final c = await joined(store, {
-        'POST $base/api/team/contribution': () => jsonRes(200, '{"applied":[]}'),
-      }, onRequest: (o) {
-        if (o.path.endsWith('/contribution')) body = o.data;
-      });
+      final c = await joined(
+        store,
+        {
+          'POST $base/api/team/contribution': () =>
+              jsonRes(200, '{"applied":[]}'),
+        },
+        onRequest: (o) {
+          if (o.path.endsWith('/contribution')) body = o.data;
+        },
+      );
       await store.recordActivity('2026-08-06', done: 1);
       await store.recordActivity('2026-07-01', done: 1);
       await c.syncContributions(now: DateTime(2026, 8, 6, 12));
@@ -211,11 +240,16 @@ void main() {
       // 端末の時計がずれても、未来を送りつけない
       final store = MemorySessionStore();
       Object? body;
-      final c = await joined(store, {
-        'POST $base/api/team/contribution': () => jsonRes(200, '{"applied":[]}'),
-      }, onRequest: (o) {
-        if (o.path.endsWith('/contribution')) body = o.data;
-      });
+      final c = await joined(
+        store,
+        {
+          'POST $base/api/team/contribution': () =>
+              jsonRes(200, '{"applied":[]}'),
+        },
+        onRequest: (o) {
+          if (o.path.endsWith('/contribution')) body = o.data;
+        },
+      );
       await store.recordActivity('2026-08-06', done: 1);
       await store.recordActivity('2026-08-20', done: 1);
       await c.syncContributions(now: DateTime(2026, 8, 6, 12));
@@ -228,11 +262,16 @@ void main() {
       // サーバが冪等なので、端末は「送れたか」を覚えなくてよい
       final store = MemorySessionStore();
       final sent = <Object?>[];
-      final c = await joined(store, {
-        'POST $base/api/team/contribution': () => jsonRes(200, '{"applied":[]}'),
-      }, onRequest: (o) {
-        if (o.path.endsWith('/contribution')) sent.add(o.data);
-      });
+      final c = await joined(
+        store,
+        {
+          'POST $base/api/team/contribution': () =>
+              jsonRes(200, '{"applied":[]}'),
+        },
+        onRequest: (o) {
+          if (o.path.endsWith('/contribution')) sent.add(o.data);
+        },
+      );
       await store.recordActivity('2026-08-06', done: 2);
       await c.syncContributions(now: DateTime(2026, 8, 6, 12));
       await c.syncContributions(now: DateTime(2026, 8, 6, 12));
@@ -271,7 +310,8 @@ void main() {
       final c = client(store, {
         'POST $base/api/team/join': () =>
             jsonRes(200, '{"teamId":"T1","teamName":"A"}'),
-        'GET $base/api/team/summary': () => jsonRes(404, '{"error":"not_in_team"}'),
+        'GET $base/api/team/summary': () =>
+            jsonRes(404, '{"error":"not_in_team"}'),
       });
       await c.join('ABCD-EFGH');
       expect(await c.summary(), isNull);

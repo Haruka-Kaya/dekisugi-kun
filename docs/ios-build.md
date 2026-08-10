@@ -1,6 +1,11 @@
 # iOS / iPadOS でビルドする
 
-学校で配られる端末は iPad が多いので、**iPadOS が本命**。
+> [!danger] 現在の Vertex ビルドを中高生・学校向けに配布しない
+> Google Cloud Service Specific Terms §20(d) により、学校管理端末、MDM、TestFlight、
+> カスタム App のどの配布方法でも年齢制限は解消しない。以下は18歳以上の開発確認、または
+> 利用可能な AI 基盤への移行後に限る。
+
+将来の学校導入では iPad が想定されるため、**iPadOS を主要対象**としている。
 コードは Flutter で共通なので、Windows 側でできる下ごしらえは済ませてある。
 ここから先は **Mac が要る**。
 
@@ -92,7 +97,8 @@ iOS は背面に回ったアプリの音声を止める。
 
 ## 審査で聞かれそうなこと
 
-App Store に出す場合。**学校配布だけなら審査は要らない**
+App Store に出す場合。なお、学校向けの非公開配布でも Google Cloud §20(d) の禁止は変わらない。
+配布経路によっては App Store の一般公開審査とは異なる手続になる
 （Apple Business Manager / Apple School Manager 経由の配布、または TestFlight）。
 
 | 論点 | 用意しておくもの |

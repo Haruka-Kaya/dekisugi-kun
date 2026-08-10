@@ -24,8 +24,13 @@ class TeamCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     final scheme = t.colorScheme;
+    final c = context.appColors;
 
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: c.coolSurface,
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+      ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
         child: Column(
@@ -33,7 +38,11 @@ class TeamCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.groups_outlined, size: 18, color: scheme.onSurfaceVariant),
+                Icon(
+                  Icons.groups_outlined,
+                  size: 18,
+                  color: scheme.onSurfaceVariant,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -44,9 +53,12 @@ class TeamCard extends StatelessWidget {
                 ),
                 IconButton(
                   onPressed: onLeave,
-                  icon: const Icon(Icons.more_horiz),
-                  tooltip: 'クラスの設定',
-                  constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                  icon: const Icon(Icons.logout, size: 20),
+                  tooltip: 'クラスから抜ける',
+                  constraints: const BoxConstraints(
+                    minWidth: 48,
+                    minHeight: 48,
+                  ),
                 ),
               ],
             ),
@@ -88,7 +100,9 @@ class _Pending extends StatelessWidget {
           child: Text(
             'クラスの合計は、$memberCount人あつまってから出ます。'
             '\n少ない人数だと、合計から一人ひとりの数が分かってしまうためです。',
-            style: t.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            style: t.textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
           ),
         ),
       ],
@@ -105,26 +119,20 @@ class _Totals extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     final scheme = t.colorScheme;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('クラスで集まった説明',
-                style: t.textTheme.labelMedium
-                    ?.copyWith(color: scheme.onSurfaceVariant)),
-            Text('${summary.total ?? 0}',
-                style: t.textTheme.headlineMedium?.jaWeight(FontWeight.w700)),
-          ],
+        Text(
+          'みんなの説明が ${summary.total ?? 0}件 集まりました。',
+          style: t.textTheme.titleSmall?.jaWeight(FontWeight.w700),
         ),
-        const SizedBox(width: 20),
+        const SizedBox(height: 4),
         // **自分のぶんは添えるだけ。** 比べさせない
-        Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: Text('うち あなた ${summary.myTotal}',
-              style: t.textTheme.bodyMedium
-                  ?.copyWith(color: scheme.onSurfaceVariant)),
+        Text(
+          'あなたが話したぶん ${summary.myTotal}件',
+          style: t.textTheme.bodySmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -144,7 +152,7 @@ class _Reached extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
+        color: context.appColors.warmSurface,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(

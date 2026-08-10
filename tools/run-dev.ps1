@@ -1,22 +1,20 @@
 # 開発用の起動スクリプト。
 #
-# APIキーをソースにも履歴にも残さないために、ここで環境から読んで --dart-define に渡す。
-# **キーは表示しない。** 見つかったかどうかだけ出す。
+# Flutter端末へ外部AIのキーを渡さない。会話資格情報はSERVER_URLのサーバーから受け取る。
 #
 #   pwsh tools\run-dev.ps1                    # 端末の明暗設定に従う
 #   pwsh tools\run-dev.ps1 -Brightness dark   # ダーク固定
 #   pwsh tools\run-dev.ps1 -Device windows    # 実機が無いとき
 #
-# 段階5 で、端末に生キーを置かない形（サーバが ephemeral token を発行）に差し替える。
-# --dart-define は APK に平文で残るので、**配布ビルドでは使えない**。
+# 公開環境の生成AI APIは現在強制停止中。内部会話テストは、ローカルのserverを
+# 明示して起動し、server側の内部テストguardを別途開いたときだけ行う。
 
 [CmdletBinding()]
 param(
   [ValidateSet('', 'light', 'dark')][string]$Brightness = '',
   [string]$Device = '',
-  # ディレクター（進行役）の置き場。省略すると会話はできるが進行しない
-  [string]$DirectorUrl = $env:DEKISUGI_DIRECTOR_URL,
-  [string]$DirectorToken = $env:DEKISUGI_DIRECTOR_TOKEN,
+  # units / live-token / directorを提供するサーバー。内部AIテストはローカルURLを渡す
+  [string]$ServerUrl = $env:DEKISUGI_SERVER_URL,
   [switch]$Release
 )
 
@@ -25,50 +23,20 @@ $PSNativeCommandUseErrorActionPreference = $false
 
 $appDir = Join-Path $PSScriptRoot '..\app' | Resolve-Path
 
-function Get-GeminiKey {
-  if ($env:GEMINI_API_KEY) { return $env:GEMINI_API_KEY }
-
-  # 賀屋さんの了解のうえで jiyu-kenkyu-ai のキーを流用する
-  $candidates = @(
-    (Join-Path $PSScriptRoot '..\.env.local'),
-    'C:\Users\kayah\jiyu-kenkyu-ai\.env.local'
-  )
-  foreach ($p in $candidates) {
-    if (Test-Path $p) {
-      $m = [regex]::Match((Get-Content $p -Raw), 'GEMINI_API_KEY\s*=\s*(\S+)')
-      if ($m.Success) { return $m.Groups[1].Value.Trim('"', "'") }
-    }
-  }
-  return $null
-}
-
-$key = Get-GeminiKey
-if (-not $key) {
-  Write-Error @'
-GEMINI_API_KEY が見つかりません。次のどれかで渡してください:
-  $env:GEMINI_API_KEY = '...'
-  dekisugi-kun\.env.local に GEMINI_API_KEY=... を書く
-'@
-  exit 1
-}
-Write-Host "APIキー: 見つかりました (長さ $($key.Length))" -ForegroundColor Green
-
 $flutterArgs = @('run')
 if ($Release) { $flutterArgs += '--release' }
 if ($Device) { $flutterArgs += @('-d', $Device) }
-$flutterArgs += "--dart-define=GEMINI_API_KEY=$key"
 if ($Brightness) { $flutterArgs += "--dart-define=FORCE_BRIGHTNESS=$Brightness" }
-if ($DirectorUrl) {
-  $flutterArgs += "--dart-define=DIRECTOR_URL=$($DirectorUrl.TrimEnd('/'))"
-  Write-Host "ディレクター: $($DirectorUrl.TrimEnd('/'))" -ForegroundColor Green
+if ($ServerUrl) {
+  $server = $ServerUrl.TrimEnd('/')
+  $flutterArgs += "--dart-define=SERVER_URL=$server"
+  Write-Host "サーバー: $server" -ForegroundColor Green
 } else {
-  Write-Host 'ディレクター: 未設定（会話はできるが進行しません）' -ForegroundColor Yellow
+  Write-Host 'サーバー: アプリ既定値（公開環境のAI会話は停止中）' -ForegroundColor Yellow
 }
-if ($DirectorToken) { $flutterArgs += "--dart-define=DIRECTOR_TOKEN=$DirectorToken" }
 
 Push-Location $appDir
 try {
-  # 引数はそのまま渡す。ここで Write-Host するとキーがコンソールに出る
   & flutter @flutterArgs
 } finally {
   Pop-Location

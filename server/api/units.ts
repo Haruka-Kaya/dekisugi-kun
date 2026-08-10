@@ -1,17 +1,26 @@
 import { type Req, type Res } from '../lib/http.js'
 import { emptyDossier } from '../lib/dossier.js'
 import { envLang, localizeUnit, parseLang } from '../lib/i18n.js'
+import {
+  BUNDLED_UNIT_CATALOG_SCHEMA_VERSION,
+  publicUnitDetail,
+  publicUnitSummary,
+} from '../lib/public-unit-catalog.js'
 import { UNITS, unitById, validateCatalog } from '../lib/units.js'
 
 /**
  * 単元の一覧と、教材と、空の理解カルテ。
  *
- * 端末に単元カタログを焼き込むと、教材を足すたびにアプリの更新が要る。
- * カタログはサーバに置いて、端末は取りに来るだけにする。
+ * カタログの正はサーバに置き、端末は通常ここから更新する。
+ * アプリには初回オフライン用の機械生成スナップショットも同梱するが、
+ * `server/lib/units.ts` から生成して一致テストを通し、手編集はしない。
  *
- * 誤概念の文言（[Misconception.lure]）は**返さない**。
+ * オンライン誘発の文言（[Misconception.lure]）は**返さない**。
  * 生徒の端末に「AI がこれから言う嘘」がそのまま入っていると、
  * 覗けば誘発が成立しなくなる。判定基準の `intent` も返さない。
+ * 詳細に含む `localPracticeVariants[].checkpoint.lure` と、旧クライアント用の
+ * `localCheckpoint.lure` は端末内練習専用の別文で、Directorが逐語で話す文とは
+ * 不変条件テストで分離する。
  *
  * > [!note] 教材が誤概念に触れることは許す
  * > 各節の終わりは「よくある引っかかり」で、中身は誤概念カタログと重なる。
@@ -66,7 +75,8 @@ export default function handler(req: Req, res: Res) {
     res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600')
     res.setHeader('Vary', 'Accept-Language')
     res.status(200).json({
-      unit: { ...publicUnit(unit), sections: unit.sections },
+      schemaVersion: BUNDLED_UNIT_CATALOG_SCHEMA_VERSION,
+      unit: publicUnitDetail(unit),
       dossier: emptyDossier(unit.id),
     })
     return
@@ -75,16 +85,5 @@ export default function handler(req: Req, res: Res) {
   // 一覧に教材の本文は載せない。選ぶのに要らないぶんを運ばない
   res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600')
   res.setHeader('Vary', 'Accept-Language')
-  res.status(200).json({ units: UNITS.map(local).map(publicUnit) })
-}
-
-/** 端末に出してよい形。intent（判定基準）も出さない */
-function publicUnit(u: (typeof UNITS)[number]) {
-  return {
-    id: u.id,
-    title: u.title,
-    brief: u.brief,
-    concepts: u.concepts.map((c) => ({ key: c.key, label: c.label })),
-    sectionCount: u.sections.length,
-  }
+  res.status(200).json({ units: UNITS.map(local).map(publicUnitSummary) })
 }

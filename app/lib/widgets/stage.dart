@@ -1,3 +1,5 @@
+import '../config/app_radius.dart';
+import '../config/app_theme.dart';
 import '../config/motion.dart';
 import '../services/live_session.dart';
 import '../ui/_material.dart';
@@ -27,72 +29,100 @@ class Stage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
+    final c = context.appColors;
 
     final speaking = live.state == LiveState.speaking;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 話しているあいだはタップで止められる。
-          // **声で割り込ませない**（AEC が無い端末では AI の声を自分で拾い、
-          // それが生徒の発話として記録される）ので、止める手段は操作で持つ
-          Semantics(
-            button: speaking,
-            label: speaking ? 'デキすぎ君の話を止める' : null,
-            child: GestureDetector(
-              onTap: speaking ? live.silenceAi : null,
-              // 透明な部分もタップを受ける
-              behavior: HitTestBehavior.opaque,
-              child: StreamBuilder<double>(
-                stream: live.voiceLevel,
-                initialData: 0,
-                builder: (context, snap) => Character(
-                  state: live.state,
-                  voiceLevel: snap.data ?? 0,
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 10),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: c.heroSurface,
+          borderRadius: BorderRadius.circular(AppRadius.stage),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 話しているあいだはタップで止められる。
+              // **声で割り込ませない**（AEC が無い端末では AI の声を自分で拾い、
+              // それが生徒の発話として記録される）ので、止める手段は操作で持つ
+              Semantics(
+                button: speaking,
+                label: speaking ? 'デキすぎ君の話を止める' : 'デキすぎ君',
+                child: GestureDetector(
+                  onTap: speaking ? live.silenceAi : null,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: 166,
+                    height: 166,
+                    decoration: BoxDecoration(
+                      color: c.coolSurface,
+                      shape: BoxShape.circle,
+                    ),
+                    child: StreamBuilder<double>(
+                      stream: live.voiceLevel,
+                      initialData: 0,
+                      builder: (context, snap) => Character(
+                        state: live.state,
+                        voiceLevel: snap.data ?? 0,
+                        size: 150,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          // 状態は文字でも出す。動きが止まっていても伝わるように
-          AnimatedSwitcher(
-            duration: Motion.state,
-            switchInCurve: Motion.stateCurve,
-            child: Text(
-              _label(live.state),
-              key: ValueKey(live.state),
-              style: t.textTheme.titleSmall
-                  ?.copyWith(color: t.colorScheme.onSurfaceVariant),
-            ),
-          ),
-          // 見えない操作は無いのと同じ。話している間だけ出す
-          SizedBox(
-            height: 20,
-            child: AnimatedOpacity(
-              opacity: speaking ? 1 : 0,
-              duration: Motion.state,
-              child: Text(
-                'タップで止められます',
-                style: t.textTheme.bodySmall
-                    ?.copyWith(color: t.colorScheme.onSurfaceVariant),
+              const SizedBox(height: 10),
+              // AnimatedSwitcher の旧・新Textを読み上げツリーへ重ねない。
+              Semantics(
+                liveRegion: true,
+                label: _label(live.state),
+                child: ExcludeSemantics(
+                  child: AnimatedSwitcher(
+                    duration: Motion.state,
+                    switchInCurve: Motion.stateCurve,
+                    child: Text(
+                      _label(live.state),
+                      key: ValueKey(live.state),
+                      style: t.textTheme.titleMedium
+                          ?.copyWith(color: c.onHeroSurface)
+                          .jaWeight(FontWeight.w700),
+                    ),
+                  ),
+                ),
               ),
-            ),
+              // 200%文字でも固定高で切らない。必要なときだけ自然高で出す。
+              AnimatedSwitcher(
+                duration: Motion.state,
+                switchInCurve: Motion.stateCurve,
+                child: speaking
+                    ? Text(
+                        'キャラクターをタップすると止められます',
+                        key: const ValueKey('silence-hint'),
+                        style: t.textTheme.bodySmall?.copyWith(
+                          color: c.heroMuted,
+                        ),
+                        textAlign: TextAlign.center,
+                      )
+                    : const SizedBox.shrink(key: ValueKey('no-silence-hint')),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   static String _label(LiveState s) => switch (s) {
-        LiveState.idle => 'まだ始まっていません',
-        LiveState.connecting => 'つないでいます',
-        LiveState.listening => '聞いています',
-        LiveState.thinking => '考えています',
-        LiveState.speaking => '話しています',
-        LiveState.done => 'ひととおり終わりました',
-        LiveState.outOfTime => 'きょうのぶんは終わりです',
-        LiveState.failed => '続けられませんでした',
-      };
+    LiveState.idle => '声でも文字でも、準備できています',
+    LiveState.connecting => 'つないでいます',
+    LiveState.listening => '聞いています',
+    LiveState.thinking => '考えています',
+    LiveState.speaking => '話しています',
+    LiveState.done => 'ひととおり終わりました',
+    LiveState.outOfTime => 'きょうのぶんは終わりです',
+    LiveState.failed => '続けられませんでした',
+  };
 }

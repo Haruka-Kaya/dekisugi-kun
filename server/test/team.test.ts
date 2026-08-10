@@ -7,6 +7,8 @@ import join from '../api/team/join.js'
 import leave from '../api/team/leave.js'
 import summary from '../api/team/summary.js'
 import { issueToken } from '../lib/auth.js'
+import { jstDayKey } from '../lib/day.js'
+import { schoolTestingEnabled } from '../lib/school-access.js'
 import {
   CODE_ALPHABET,
   CODE_LENGTH,
@@ -50,6 +52,9 @@ let restore: () => void
 beforeEach(() => {
   process.env.AUTH_SECRET = 'x'.repeat(48)
   process.env.TEAM_ADMIN_TOKEN = ADMIN
+  delete process.env.NODE_ENV
+  delete process.env.VERCEL_ENV
+  process.env.DEKISUGI_INTERNAL_SCHOOL_TESTING = '1'
   const f = useFakeKv()
   fake = f.kv
   restore = f.restore
@@ -57,6 +62,7 @@ beforeEach(() => {
 afterEach(() => {
   restore()
   delete process.env.TEAM_ADMIN_TOKEN
+  delete process.env.DEKISUGI_INTERNAL_SCHOOL_TESTING
 })
 
 /** チームを1つ作って招待コードを返す。 */
@@ -172,6 +178,50 @@ describe('POST /api/team/admin', () => {
     )
     assert.equal(out.code, 503)
     restore = () => {}
+  })
+})
+
+describe('学校Team APIの公開環境guard', () => {
+  it('Vercel外でもNODE_ENV=productionなら内部フラグで解除できない', () => {
+    delete process.env.VERCEL_ENV
+    process.env.NODE_ENV = 'production'
+    process.env.DEKISUGI_INTERNAL_SCHOOL_TESTING = '1'
+    assert.equal(schoolTestingEnabled(), false)
+
+    process.env.VERCEL_ENV = 'development'
+    assert.equal(schoolTestingEnabled(), false)
+  })
+
+  it('productionは内部フラグ付きでも全endpointを503で閉じる', async () => {
+    process.env.VERCEL_ENV = 'production'
+    process.env.DEKISUGI_INTERNAL_SCHOOL_TESTING = '1'
+    const headers = { authorization: `Bearer ${issueToken(device())}` }
+    const calls = [
+      (res: ReturnType<typeof fakeRes>['res']) =>
+        admin(
+          {
+            method: 'POST',
+            headers: { authorization: `Bearer ${ADMIN}` },
+            body: { name: 'A組' },
+          },
+          res,
+        ),
+      (res: ReturnType<typeof fakeRes>['res']) =>
+        join({ method: 'POST', headers, body: { inviteCode: 'ABCD-EFGH' } }, res),
+      (res: ReturnType<typeof fakeRes>['res']) =>
+        leave({ method: 'POST', headers }, res),
+      (res: ReturnType<typeof fakeRes>['res']) =>
+        summary({ method: 'GET', headers }, res),
+      (res: ReturnType<typeof fakeRes>['res']) =>
+        contribution({ method: 'POST', headers, body: { days: [] } }, res),
+    ]
+
+    for (const call of calls) {
+      const { res, out } = fakeRes()
+      await call(res)
+      assert.equal(out.code, 503)
+      assert.deepEqual(out.body, { error: 'school_features_unavailable' })
+    }
   })
 })
 
@@ -337,7 +387,8 @@ describe('POST /api/team/leave', () => {
 })
 
 describe('貢献の記録', () => {
-  const TODAY = '2026-08-06'
+  // チームの集計期間は実行日の週から作られるため、固定日だと週明けに壊れる。
+  const TODAY = jstDayKey(Date.now())
 
   async function send(
     did: string,

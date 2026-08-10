@@ -1,4 +1,5 @@
 import { callerIp, header, queryOf, type Req, type Res } from '../lib/http.js'
+import { restrictedDataProcessingEnabled } from '../lib/restricted-data-processing.js'
 import {
   MAX_BYTES,
   clearResponses,
@@ -25,7 +26,15 @@ import {
 /** 呼び出し元。**特定のためではなく連投を抑えるためだけに使う。** */
 
 
-export default async function handler(req: Req, res: Res) {
+export async function handleSurvey(
+  req: Req,
+  res: Res,
+  options: {
+    callerIpOf?: typeof callerIp
+    tooMany?: typeof tooManyFrom
+    save?: typeof saveResponse
+  } = {},
+): Promise<void> {
   // アンケートは別オリジンから開かれることもある（配布のしかたを縛らない）
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
@@ -41,6 +50,11 @@ export default async function handler(req: Req, res: Res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'GET, POST, DELETE')
     res.status(405).json({ error: 'method_not_allowed' })
+    return
+  }
+
+  if (!restrictedDataProcessingEnabled()) {
+    res.status(503).json({ error: 'restricted_data_processing_unavailable' })
     return
   }
 
@@ -70,13 +84,13 @@ export default async function handler(req: Req, res: Res) {
     return
   }
 
-  if (await tooManyFrom(callerIp(req))) {
+  if (await (options.tooMany ?? tooManyFrom)((options.callerIpOf ?? callerIp)(req))) {
     res.status(429).json({ error: 'too_many' })
     return
   }
 
   try {
-    const saved = await saveResponse(kind, json)
+    const saved = await (options.save ?? saveResponse)(kind, json)
     if (!saved.ok) {
       // **200 を返して実は消えている、が最悪。**
       // ブラウザはこれを見てコード表示に落ちる
@@ -88,6 +102,10 @@ export default async function handler(req: Req, res: Res) {
     console.error('アンケートを保存できなかった', e)
     res.status(503).json({ error: 'store_failed' })
   }
+}
+
+export default async function handler(req: Req, res: Res): Promise<void> {
+  await handleSurvey(req, res)
 }
 
 /**

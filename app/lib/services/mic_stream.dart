@@ -57,24 +57,26 @@ class MicStream {
     if (_sub != null) return true;
     if (!await _rec.hasPermission()) return false;
 
-    final stream = await _rec.startStream(RecordConfig(
-      encoder: AudioEncoder.pcm16bits,
-      sampleRate: sampleRate,
-      numChannels: 1,
-      echoCancel: true,
-      noiseSuppress: true,
-      // AGC は入れない。音量を機械が動かすと、こちらが持つピーク値の意味が消える
-      autoGain: false,
-      androidConfig: AndroidRecordConfig(
-        audioSource: AndroidAudioSource.voiceCommunication,
-        // これを入れないと AEC が出力側を参照できず、端末によっては
-        // AI の声を自分で拾って自己割り込みする
-        audioManagerMode: AudioManagerMode.modeInCommunication,
-        speakerphone: speakerphone,
+    final stream = await _rec.startStream(
+      RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
+        sampleRate: sampleRate,
+        numChannels: 1,
+        echoCancel: true,
+        noiseSuppress: true,
+        // AGC は入れない。音量を機械が動かすと、こちらが持つピーク値の意味が消える
+        autoGain: false,
+        androidConfig: AndroidRecordConfig(
+          audioSource: AndroidAudioSource.voiceCommunication,
+          // これを入れないと AEC が出力側を参照できず、端末によっては
+          // AI の声を自分で拾って自己割り込みする
+          audioManagerMode: AudioManagerMode.modeInCommunication,
+          speakerphone: speakerphone,
+        ),
+        // iOS 既定（defaultToSpeaker + Bluetooth 許可）のままでよい
+        iosConfig: const IosRecordConfig(),
       ),
-      // iOS 既定（defaultToSpeaker + Bluetooth 許可）のままでよい
-      iosConfig: const IosRecordConfig(),
-    ));
+    );
 
     _chunker.reset();
     _sub = stream.listen(
@@ -159,7 +161,7 @@ RecordingIssue? diagnose(List<double> peaks) {
 /// フレームが細切れになったり大きすぎたりする。
 class PcmChunker {
   PcmChunker({required this.bytesPerChunk})
-      : assert(bytesPerChunk > 0 && bytesPerChunk.isEven);
+    : assert(bytesPerChunk > 0 && bytesPerChunk.isEven);
 
   final int bytesPerChunk;
   final BytesBuilder _buf = BytesBuilder(copy: true);

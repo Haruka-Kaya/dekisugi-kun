@@ -8,16 +8,15 @@ Map<String, dynamic> slotJson({
   String status = 'explained',
   List<String> evidence = const ['u02'],
   List<Map<String, dynamic>> probes = const [],
-}) =>
-    {
-      'key': key,
-      'label': '落下の速さ',
-      'status': status,
-      'content': '重さによらない',
-      'evidence': evidence,
-      'followUpHint': '条件を引き出す',
-      'probes': probes,
-    };
+}) => {
+  'key': key,
+  'label': '落下の速さ',
+  'status': status,
+  'content': '重さによらない',
+  'evidence': evidence,
+  'followUpHint': '条件を引き出す',
+  'probes': probes,
+};
 
 void main() {
   group('SlotStatus のパース', () {
@@ -64,7 +63,10 @@ void main() {
     });
 
     test('probes の要素が Map でなくても落ちない', () {
-      final s = Slot.fromJson({...slotJson(), 'probes': ['ごみ', 42]});
+      final s = Slot.fromJson({
+        ...slotJson(),
+        'probes': ['ごみ', 42],
+      });
       expect(s.probes, isEmpty);
     });
   });
@@ -75,35 +77,59 @@ void main() {
     });
 
     test('薄い → shaky', () {
-      expect(statusOf(Slot.fromJson(slotJson(status: 'thin'))),
-          ExplainStatus.shaky);
+      expect(
+        statusOf(Slot.fromJson(slotJson(status: 'thin'))),
+        ExplainStatus.shaky,
+      );
     });
 
     test('触れていない → untouched', () {
-      expect(statusOf(Slot.fromJson(slotJson(status: 'untouched', evidence: []))),
-          ExplainStatus.untouched);
+      expect(
+        statusOf(Slot.fromJson(slotJson(status: 'untouched', evidence: []))),
+        ExplainStatus.untouched,
+      );
     });
 
     test('訂正できなかった誤概念があれば weak', () {
-      final s = Slot.fromJson(slotJson(probes: [
-        {'id': 'M01', 'result': 'accepted', 'evidence': ['u04']}
-      ]));
+      final s = Slot.fromJson(
+        slotJson(
+          probes: [
+            {
+              'id': 'M01',
+              'result': 'accepted',
+              'evidence': ['u04'],
+            },
+          ],
+        ),
+      );
       expect(statusOf(s), ExplainStatus.weak);
     });
 
     test('unclear は weak に落とさない', () {
       // 判断がついていないものを「できていない」側に置くと、
       // 触れてもいないことを突きつけることになる
-      final s = Slot.fromJson(slotJson(probes: [
-        {'id': 'M01', 'result': 'unclear', 'evidence': <String>[]}
-      ]));
+      final s = Slot.fromJson(
+        slotJson(
+          probes: [
+            {'id': 'M01', 'result': 'unclear', 'evidence': <String>[]},
+          ],
+        ),
+      );
       expect(statusOf(s), ExplainStatus.gotIt);
     });
 
     test('corrected は説明できた扱いのまま', () {
-      final s = Slot.fromJson(slotJson(probes: [
-        {'id': 'M01', 'result': 'corrected', 'evidence': ['u04']}
-      ]));
+      final s = Slot.fromJson(
+        slotJson(
+          probes: [
+            {
+              'id': 'M01',
+              'result': 'corrected',
+              'evidence': ['u04'],
+            },
+          ],
+        ),
+      );
       expect(statusOf(s), ExplainStatus.gotIt);
     });
   });
@@ -123,6 +149,7 @@ void main() {
         },
         'nextInstruction': '次はこれ',
         'lureId': 'M01',
+        'lureText': '固定文',
         'shouldEnd': false,
         'endReason': '',
       });
@@ -131,6 +158,7 @@ void main() {
       expect(r.dossier.coverage, 30);
       expect(r.dossier.slots.single.key, 'fall');
       expect(r.lureId, 'M01');
+      expect(r.lureText, '固定文');
       expect(r.shouldEnd, isFalse);
     });
 
@@ -139,6 +167,7 @@ void main() {
       expect(r.corrections, isEmpty);
       expect(r.dossier.slots, isEmpty);
       expect(r.lureId, isNull);
+      expect(r.lureText, isNull);
       expect(r.shouldEnd, isFalse);
     });
 
@@ -161,6 +190,85 @@ void main() {
       // 生の文字起こしは残す（何が崩れたか追えなくなる）
       expect(u.withCorrection('砂糖水').text, '茶道水');
     });
+
+    test('校正してもchallengeの発話印を保つ', () {
+      const u = Utterance(
+        id: 'u01',
+        isStudent: false,
+        text: '重い方が速いの？',
+        challengeLureId: 'M01',
+        challengeLureText: '重い方が速いの？',
+      );
+      final corrected = u.withCorrection('重いものの方が速く落ちるの？');
+
+      expect(corrected.challengeLureId, 'M01');
+      expect(corrected.challengeLureText, '重い方が速いの？');
+      expect(corrected.toJson()['challengeLureId'], 'M01');
+      expect(corrected.toJson()['challengeLureText'], '重い方が速いの？');
+    });
+  });
+
+  group('本人の説明を evidence から取り出す', () {
+    test('LLMが作ったcontentではなく、実在する生徒発話を使う', () {
+      final slot = Slot.fromJson({
+        ...slotJson(),
+        'content': 'これはディレクターが作った要約',
+        'evidence': ['u02'],
+      });
+      final said = studentExplanationFor(slot, const [
+        Utterance(id: 'u01', isStudent: false, text: 'どうして？'),
+        Utterance(id: 'u02', isStudent: true, text: '重さは関係ないと思う'),
+      ]);
+
+      expect(said, '重さは関係ないと思う');
+      expect(said, isNot(contains('ディレクター')), reason: 'AIの要約を「本人の言葉」として保存している');
+    });
+
+    test('累積evidenceの古い誤答を混ぜず、最新の実発話だけを使う', () {
+      final slot = Slot.fromJson({
+        ...slotJson(),
+        'evidence': ['u03', 'u01', 'u03'],
+      });
+      final said = studentExplanationFor(slot, const [
+        Utterance(id: 'u01', isStudent: true, text: '重い方が速く落ちる'),
+        Utterance(id: 'u02', isStudent: false, text: 'それから？'),
+        Utterance(id: 'u03', isStudent: true, text: 'いや、重さは関係ない'),
+      ]);
+
+      expect(said, 'いや、重さは関係ない');
+      expect(said, isNot(contains('重い方が速く落ちる')));
+    });
+
+    test('LLMの校正文ではなく、生の発話を使う', () {
+      final slot = Slot.fromJson({
+        ...slotJson(),
+        'evidence': ['u01'],
+      });
+      final said = studentExplanationFor(slot, const [
+        Utterance(
+          id: 'u01',
+          isStudent: true,
+          text: '空気のていこうがある',
+          corrected: '空気抵抗が作用するためです',
+        ),
+      ]);
+
+      expect(said, '空気のていこうがある');
+      expect(said, isNot(contains('作用するためです')));
+    });
+
+    test('存在しないIDやAI発話しかなければ空にする', () {
+      final slot = Slot.fromJson({
+        ...slotJson(),
+        'evidence': ['u99', 'u02'],
+      });
+      expect(
+        studentExplanationFor(slot, const [
+          Utterance(id: 'u02', isStudent: false, text: 'AIの発話'),
+        ]),
+        isEmpty,
+      );
+    });
   });
 
   group('Dossier の往復', () {
@@ -169,9 +277,16 @@ void main() {
         'unitId': 'force-motion',
         'coverage': 45,
         'slots': [
-          slotJson(probes: [
-            {'id': 'M01', 'result': 'accepted', 'evidence': ['u04'], 'countered': true}
-          ])
+          slotJson(
+            probes: [
+              {
+                'id': 'M01',
+                'result': 'accepted',
+                'evidence': ['u04'],
+                'countered': true,
+              },
+            ],
+          ),
         ],
       });
       final after = Dossier.fromJson(before.toJson());

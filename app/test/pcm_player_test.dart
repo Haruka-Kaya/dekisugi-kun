@@ -10,6 +10,7 @@ class FakeSink implements PcmSink {
   void Function(int)? _cb;
   bool released = false;
   int startCalls = 0;
+  int? setupSampleRate;
 
   /// native がキューを消化して補充を求めた、という状況を作る。
   void requestFeed([int remaining = 0]) => _cb?.call(remaining);
@@ -28,7 +29,13 @@ class FakeSink implements PcmSink {
   @override
   Future<void> setLogLevel(LogLevel level) async {}
   @override
-  Future<void> setup({required int sampleRate, required int channelCount}) async {}
+  Future<void> setup({
+    required int sampleRate,
+    required int channelCount,
+  }) async {
+    setupSampleRate = sampleRate;
+  }
+
   @override
   Future<void> setFeedThreshold(int frames) async {}
   @override
@@ -57,6 +64,18 @@ void main() {
   });
 
   group('再生待ちの受け渡し', () {
+    test('既定はLive用24kHz、指定時はマイク用16kHzでnativeを初期化する', () async {
+      expect(sink.setupSampleRate, PcmPlayer.sampleRate);
+
+      final localSink = FakeSink();
+      final local = PcmPlayer(sink: localSink, playbackSampleRate: 16000);
+      await local.init();
+
+      expect(localSink.setupSampleRate, 16000);
+      expect(local.configuredMaxResidual.inMilliseconds, 100);
+      await local.dispose();
+    });
+
     test('積んだ順にバイトの並びを崩さず渡す', () {
       // チャンク境界をまたいで詰め直すので、順序が壊れやすい箇所
       player.enqueue(ramp(100));
@@ -121,8 +140,9 @@ void main() {
 
       final residualBytes = sink.allFed.length;
       final residual = Duration(
-          microseconds:
-              (residualBytes / 2 * 1000000 / PcmPlayer.sampleRate).round());
+        microseconds: (residualBytes / 2 * 1000000 / PcmPlayer.sampleRate)
+            .round(),
+      );
       expect(residual, lessThanOrEqualTo(PcmPlayer.maxResidual));
       expect(PcmPlayer.maxResidual.inMilliseconds, lessThanOrEqualTo(100));
     });

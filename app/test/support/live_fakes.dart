@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:dekisugi/models/mission.dart';
 import 'package:dekisugi/services/device_identity.dart';
 import 'package:dekisugi/services/live_token_client.dart';
 import 'package:dekisugi/services/mic_stream.dart';
@@ -36,6 +37,7 @@ class FakeMic extends MicStream {
     permissionAsked = true;
     return true;
   }
+
   @override
   Future<bool> start({bool speakerphone = true}) async => started = true;
   @override
@@ -62,7 +64,10 @@ class FakeSink implements PcmSink {
   @override
   Future<void> setLogLevel(LogLevel level) async {}
   @override
-  Future<void> setup({required int sampleRate, required int channelCount}) async {}
+  Future<void> setup({
+    required int sampleRate,
+    required int channelCount,
+  }) async {}
   @override
   Future<void> setFeedThreshold(int frames) async {}
   @override
@@ -79,7 +84,7 @@ class FakeSink implements PcmSink {
 /// `reserve` は wss:// しか受け付けないので、**本番の検査を緩めずに**差し替える。
 class FakeTokens extends LiveTokenClient {
   FakeTokens(this.grant)
-      : super(baseUrl: 'https://example.test', identity: NoIdentity());
+    : super(baseUrl: 'https://example.test', identity: NoIdentity());
 
   final LiveGrant grant;
 
@@ -89,6 +94,15 @@ class FakeTokens extends LiveTokenClient {
   /// 直近の `reserve` に渡された再開ハンドル。
   String? lastResumeHandle;
 
+  /// 直近の `reserve` に渡されたミッション対象。
+  String? lastFocusConceptKey;
+
+  /// 直近の認知課題。表示だけのRETRYになっていないことを検査する。
+  MissionKind? lastMissionKind;
+
+  /// 直近の説明の足場。教材での選択が会話生成まで届くことを検査する。
+  TeachingTactic? lastTeachingTactic;
+
   /// サーバが再開を受け入れるか。false にすると
   /// 「再開に未対応のサーバ」を再現できる
   bool acceptResume = true;
@@ -97,9 +111,18 @@ class FakeTokens extends LiveTokenClient {
   bool failReserve = false;
 
   @override
-  Future<LiveGrant> reserve(String unitId, {String? resumeHandle}) async {
+  Future<LiveGrant> reserve(
+    String unitId, {
+    String? resumeHandle,
+    String? focusConceptKey,
+    TeachingTactic tactic = TeachingTactic.reason,
+    MissionKind missionKind = MissionKind.teach,
+  }) async {
     reserveCalls++;
     lastResumeHandle = resumeHandle;
+    lastFocusConceptKey = focusConceptKey;
+    lastTeachingTactic = tactic;
+    lastMissionKind = missionKind;
     if (failReserve) throw const LiveTokenUnavailable('テスト用の失敗');
     return _withResumed(grant, resumeHandle != null && acceptResume);
   }
@@ -110,18 +133,18 @@ class FakeTokens extends LiveTokenClient {
 
 /// `resumed` だけ差し替えた控え。`LiveGrant` に copyWith が無いので手で作る
 LiveGrant _withResumed(LiveGrant g, bool resumed) => LiveGrant(
-      directorPrefix: g.directorPrefix,
-      token: g.token,
-      wsUrl: g.wsUrl,
-      model: g.model,
-      setupConfig: g.setupConfig,
-      expiresAt: g.expiresAt,
-      sessionMinutes: g.sessionMinutes,
-      remainingSessions: g.remainingSessions,
-      entitled: g.entitled,
-      resetsAt: g.resetsAt,
-      resumed: resumed,
-    );
+  directorPrefix: g.directorPrefix,
+  token: g.token,
+  wsUrl: g.wsUrl,
+  model: g.model,
+  setupConfig: g.setupConfig,
+  expiresAt: g.expiresAt,
+  sessionMinutes: g.sessionMinutes,
+  remainingSessions: g.remainingSessions,
+  entitled: g.entitled,
+  resetsAt: g.resetsAt,
+  resumed: resumed,
+);
 
 class NoIdentity extends DeviceIdentity {
   NoIdentity() : super(baseUrl: '', store: MemorySessionStore());
@@ -136,13 +159,13 @@ String audioB64(int bytes) => base64Encode(Uint8List(bytes));
 
 /// AI が喋りはじめたことにするメッセージ。
 Map<String, dynamic> modelAudio(int bytes) => {
-      'serverContent': {
-        'modelTurn': {
-          'parts': [
-            {
-              'inlineData': {'mimeType': 'audio/pcm', 'data': audioB64(bytes)},
-            },
-          ],
+  'serverContent': {
+    'modelTurn': {
+      'parts': [
+        {
+          'inlineData': {'mimeType': 'audio/pcm', 'data': audioB64(bytes)},
         },
-      },
-    };
+      ],
+    },
+  },
+};

@@ -91,17 +91,16 @@ export async function checkRate(
   const hourBucket = Math.floor(now / 3_600_000)
   const dayBucket = Math.floor(now / 86_400_000)
 
-  const keys: Array<[key: string, ttl: number, limit: number]> = [
+  const deviceKeys: Array<[key: string, ttl: number, limit: number]> = [
     [`d:${deviceId}:h:${hourBucket}`, 3600, PER_DEVICE_HOURLY],
     [`d:${deviceId}:d:${dayBucket}`, 86400, PER_DEVICE_DAILY],
-    [`g:d:${dayBucket}`, 86400, GLOBAL_DAILY],
   ]
 
   let worstRemaining = Number.POSITIVE_INFINITY
   let blocked = false
   let retryAfter = 60
 
-  for (const [key, ttl, limit] of keys) {
+  for (const [key, ttl, limit] of deviceKeys) {
     let count: number
     try {
       count = backend === 'kv' ? await bump(key, ttl) : bumpLocal(key, ttl, now)
@@ -118,6 +117,30 @@ export async function checkRate(
       // 窓の残り時間を返す。固定値だと窓の頭で当たった人が長く待つ
       const windowMs = ttl * 1000
       retryAfter = Math.max(1, Math.ceil((windowMs - (now % windowMs)) / 1000))
+    }
+  }
+
+  // 端末上限を超えたリクエストは、ここから先のGeminiを呼ばない。
+  // そのため全体枠にも数えない。先にglobalを増やすと、1台が429を連打するだけで
+  // 全利用者のGLOBAL_DAILYを使い切れる。
+  if (!blocked) {
+    const key = `g:d:${dayBucket}`
+    try {
+      const count = backend === 'kv'
+        ? await bump(key, 86400)
+        : bumpLocal(key, 86400, now)
+      const remaining = Math.max(0, GLOBAL_DAILY - count)
+      if (remaining < worstRemaining) worstRemaining = remaining
+      if (count > GLOBAL_DAILY) {
+        blocked = true
+        retryAfter = Math.max(
+          1,
+          Math.ceil((86_400_000 - (now % 86_400_000)) / 1000),
+        )
+      }
+    } catch (e) {
+      // 既存契約どおり、保存障害だけは会話全体を止めない。
+      console.error('全体レート制限の記録に失敗（通す）', e)
     }
   }
 

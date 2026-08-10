@@ -100,7 +100,8 @@ class _CharacterState extends State<Character> with TickerProviderStateMixin {
   void _scheduleBlink() {
     // 間隔を少し散らす。きっちり4秒だと機械が瞬いているように見える
     final jitter = Duration(
-        milliseconds: (Motion.blinkInterval.inMilliseconds * 0.3).round());
+      milliseconds: (Motion.blinkInterval.inMilliseconds * 0.3).round(),
+    );
     final wait = Motion.blinkInterval - (jitter ~/ 2) + (jitter * _rand());
     _blinkTimer = Timer(wait, () async {
       if (!mounted || widget.state != LiveState.listening) return;
@@ -127,7 +128,8 @@ class _CharacterState extends State<Character> with TickerProviderStateMixin {
 
     // 動きが要らない状態ではサブツリーのティッカーごと止める。
     // 実測 91.4% → 0.8%。Reduce Motion のときも止める
-    final wantsTicker = !reduce &&
+    final wantsTicker =
+        !reduce &&
         (widget.state == LiveState.listening ||
             widget.state == LiveState.thinking);
 
@@ -149,6 +151,7 @@ class _CharacterState extends State<Character> with TickerProviderStateMixin {
               body: c.charBody,
               face: c.charFace,
               accent: c.charAccent,
+              signal: c.onCoolSurface,
             ),
           ),
         ),
@@ -166,6 +169,7 @@ class _CharacterPainter extends CustomPainter {
     required this.body,
     required this.face,
     required this.accent,
+    required this.signal,
   });
 
   final LiveState state;
@@ -179,7 +183,7 @@ class _CharacterPainter extends CustomPainter {
   /// 声の大きさ 0.0〜1.0
   final double bounce;
 
-  final Color body, face, accent;
+  final Color body, face, accent, signal;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -197,15 +201,19 @@ class _CharacterPainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromCenter(
-            center: Offset(w / 2 + r * 0.35, headY - r * 1.12),
-            width: r * 0.18,
-            height: r * 0.42),
+          center: Offset(w / 2 + r * 0.35, headY - r * 1.12),
+          width: r * 0.18,
+          height: r * 0.42,
+        ),
         Radius.circular(r * 0.09),
       ),
       bodyPaint,
     );
     canvas.drawCircle(
-        Offset(w / 2 + r * 0.35, headY - r * 1.35), r * 0.15, Paint()..color = accent);
+      Offset(w / 2 + r * 0.35, headY - r * 1.35),
+      r * 0.15,
+      Paint()..color = accent,
+    );
 
     // ② 体。**頭より横に広くする。**
     //    頭より狭いと、同じ色なので体ではなく「あご」に見える
@@ -213,9 +221,10 @@ class _CharacterPainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromCenter(
-            center: Offset(w / 2, headY + r * 1.28),
-            width: bodyW,
-            height: r * 0.9),
+          center: Offset(w / 2, headY + r * 1.28),
+          width: bodyW,
+          height: r * 0.9,
+        ),
         Radius.circular(r * 0.34),
       ),
       bodyPaint,
@@ -225,11 +234,14 @@ class _CharacterPainter extends CustomPainter {
     final rx = r * (1 + bounce * 0.05);
     final ry = r * (1 - bounce * 0.04);
     canvas.drawOval(
-        Rect.fromCenter(center: head, width: rx * 2, height: ry * 2), bodyPaint);
+      Rect.fromCenter(center: head, width: rx * 2, height: ry * 2),
+      bodyPaint,
+    );
 
     if (state == LiveState.listening) _paintEar(canvas, head, r);
     if (state == LiveState.speaking) _paintVoice(canvas, head, r);
     _paintEyes(canvas, head, r);
+    if (state == LiveState.done) _paintNotebook(canvas, head, r);
 
     // 房は右上に立っているので、点は左上に出す（重ねると何の記号か読めない）
     if (state == LiveState.thinking) _paintThinking(canvas, w, headY - r, r);
@@ -239,7 +251,7 @@ class _CharacterPainter extends CustomPainter {
   /// 声が無くても最低限の高さで描く。**
   void _paintVoice(Canvas canvas, Offset center, double r) {
     final paint = Paint()
-      ..color = accent
+      ..color = signal
       ..style = PaintingStyle.stroke
       ..strokeWidth = r * 0.11
       ..strokeCap = StrokeCap.round;
@@ -250,7 +262,11 @@ class _CharacterPainter extends CustomPainter {
       final h = r * (base + bounce * (0.22 - i * 0.05));
       // 描画範囲に収める。r*1.5 を超えると SizedBox の外にはみ出て切れる
       final x = center.dx + r * (1.12 + i * 0.17);
-      canvas.drawLine(Offset(x, center.dy - h), Offset(x, center.dy + h), paint);
+      canvas.drawLine(
+        Offset(x, center.dy - h),
+        Offset(x, center.dy + h),
+        paint,
+      );
     }
   }
 
@@ -281,9 +297,37 @@ class _CharacterPainter extends CustomPainter {
     }
   }
 
+  /// 完了時に本人の言葉を受け取った「ノート」を持つ。
+  ///
+  /// 紙吹雪や星ではなく、実際に残る成果物そのものを完了ポーズにする。
+  /// 口や疑似リップシンクは追加しない。
+  void _paintNotebook(Canvas canvas, Offset center, double r) {
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: Offset(center.dx, center.dy + r * 1.18),
+        width: r * 1.34,
+        height: r * 0.72,
+      ),
+      Radius.circular(r * 0.12),
+    );
+    canvas.drawRRect(rect, Paint()..color = accent);
+
+    final line = Paint()
+      ..color = body
+      ..strokeWidth = r * 0.055
+      ..strokeCap = StrokeCap.round;
+    for (final offset in [-0.16, 0.06, 0.28]) {
+      canvas.drawLine(
+        Offset(center.dx - r * 0.42, center.dy + r * (1.18 + offset)),
+        Offset(center.dx + r * 0.42, center.dy + r * (1.18 + offset)),
+        line,
+      );
+    }
+  }
+
   /// 考え中の点3つ。順に立ち上がる。
   void _paintThinking(Canvas canvas, double w, double top, double r) {
-    final paint = Paint()..color = accent;
+    final paint = Paint()..color = signal;
     final dotR = w * 0.028;
     for (var i = 0; i < 3; i++) {
       // 各点が 1/3 ずつ位相をずらして持ち上がる
@@ -301,7 +345,7 @@ class _CharacterPainter extends CustomPainter {
   /// 聞いているしるし。**動かさない静的なポーズ**で状態を示す。
   void _paintEar(Canvas canvas, Offset center, double r) {
     final paint = Paint()
-      ..color = accent
+      ..color = signal
       ..style = PaintingStyle.stroke
       ..strokeWidth = r * 0.09
       ..strokeCap = StrokeCap.round;
@@ -311,7 +355,13 @@ class _CharacterPainter extends CustomPainter {
         center: Offset(center.dx + r * 1.02 * side, center.dy),
         radius: r * 0.3,
       );
-      canvas.drawArc(rect, side > 0 ? -math.pi / 2 : math.pi / 2, math.pi, false, paint);
+      canvas.drawArc(
+        rect,
+        side > 0 ? -math.pi / 2 : math.pi / 2,
+        math.pi,
+        false,
+        paint,
+      );
     }
   }
 
@@ -321,5 +371,8 @@ class _CharacterPainter extends CustomPainter {
       old.eyeOpen != eyeOpen ||
       old.thinkPhase != thinkPhase ||
       old.bounce != bounce ||
-      old.body != body;
+      old.body != body ||
+      old.face != face ||
+      old.accent != accent ||
+      old.signal != signal;
 }

@@ -2,6 +2,7 @@ import { bearer, parseBody, queryOf, type Req, type Res } from '../../lib/http.j
 import { hasKv } from '../../lib/kv.js'
 import { formatCode, normalizeCode, normalizeTeamName } from '../../lib/team.js'
 import { CODE_TTL_DAYS, createTeam, revokeCode } from '../../lib/team-store.js'
+import { schoolTestingEnabled } from '../../lib/school-access.js'
 
 /**
  * チームの器と招待コードを作る。**開発者だけが叩く。**
@@ -17,11 +18,11 @@ import { CODE_TTL_DAYS, createTeam, revokeCode } from '../../lib/team-store.js'
  * 開発者が配布資料を先生に手渡す運用が既にあるので、
  * 発行を1往復増やしても運用は壊れない。
  *
- * > [!warning] 「あいことば」とは別物
- * > `docs/school-pack/README.md` は
- * > 「あいことばはサーバーには送っていません」と明記して配ってある。
- * > あれを招待コードに転用すると、配布済みの説明が嘘になる。
- * > **あいことばは端末内の経路分岐のまま据え置く。**
+ * ## 学校経路との関係
+ *
+ * 現行クライアントの学校コードは、このサーバ発行の招待コードを `/api/team/join`
+ * へ送って検証する。コードは学校承認・保護者同意・契約の証跡ではない。
+ * Google Cloud の年齢制限により学校経路は UI で遮断中なので、移行完了まで発行・配布しない。
  *
  * POST   … チームを作って招待コードを返す
  * DELETE … 招待コードを失効させる
@@ -43,6 +44,10 @@ export default async function handler(req: Req, res: Res) {
   }
   if (!adminOk(req)) {
     res.status(401).json({ error: 'unauthorized' })
+    return
+  }
+  if (!schoolTestingEnabled()) {
+    res.status(503).json({ error: 'school_features_unavailable' })
     return
   }
   if (!hasKv()) {

@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
@@ -9,7 +10,7 @@ import '_material.dart';
 ///
 /// ## なぜ「iOS らしく」ではなく「Android に見えないように」なのか
 ///
-/// この製品のデザインは `DESIGN.md` の数値（コントラスト 3:1、タップ域 48dp、
+/// この製品のデザインは共通トークン（コントラスト 3:1、タップ域 48dp、
 /// 和文の行送り、ソリッドな面と境界線）で組んであり、**どちらのOSの流儀でもない**。
 /// 面・色・余白は共通のままでよい。
 ///
@@ -24,7 +25,7 @@ import '_material.dart';
 /// 3. **タップの波紋** — 波紋は Android の署名。iOS には無い
 ///
 /// **色や角丸をプラットフォームで変えないこと。** そこまで分けると
-/// 「1つの製品」ではなく「2つの製品」になり、DESIGN.md の根拠も二重になる。
+/// 「1つの製品」ではなく「2つの製品」になり、判断根拠も二重になる。
 
 /// iOS / iPadOS か。**テストから差し替えられるようにしておく。**
 bool get isApple {
@@ -48,29 +49,47 @@ Future<DateTime?> pickDate(
   required DateTime last,
   String? helpText,
 }) async {
+  // 保存済みの考査日が過ぎていても、ピッカー自体は開けなければならない。
+  // Material/Cupertino とも initial が範囲外だと assert するため、
+  // 「日付」へ正規化してから現在の選択可能範囲へ収める。
+  final firstDate = _dateOnly(first);
+  final lastDate = _dateOnly(last);
+  assert(!lastDate.isBefore(firstDate));
+  final initialDate = _clampDate(_dateOnly(initial), firstDate, lastDate);
+
   if (!isApple) {
     return showDatePicker(
       context: context,
-      initialDate: initial,
-      firstDate: first,
-      lastDate: last,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
       helpText: helpText,
     );
   }
 
-  var picked = initial;
+  var picked = initialDate;
   final ok = await _cupertinoSheet(
     context,
     title: helpText,
     child: CupertinoDatePicker(
       mode: CupertinoDatePickerMode.date,
-      initialDateTime: initial,
-      minimumDate: first,
-      maximumDate: last,
+      initialDateTime: initialDate,
+      minimumDate: firstDate,
+      maximumDate: lastDate,
+      itemExtent: _pickerItemExtent(context),
       onDateTimeChanged: (v) => picked = v,
     ),
   );
   return ok == true ? picked : null;
+}
+
+DateTime _dateOnly(DateTime value) =>
+    DateTime(value.year, value.month, value.day);
+
+DateTime _clampDate(DateTime value, DateTime first, DateTime last) {
+  if (value.isBefore(first)) return first;
+  if (value.isAfter(last)) return last;
+  return value;
 }
 
 /// 時刻を選ぶ。**分は使わないので「時」だけ返す。**
@@ -96,12 +115,10 @@ Future<int?> pickHour(
     context,
     title: helpText,
     child: CupertinoPicker(
-      itemExtent: 36,
+      itemExtent: _pickerItemExtent(context),
       scrollController: FixedExtentScrollController(initialItem: initial),
       onSelectedItemChanged: (i) => picked = i,
-      children: [
-        for (var h = 0; h < 24; h++) Center(child: Text('$h:00')),
-      ],
+      children: [for (var h = 0; h < 24; h++) Center(child: Text('$h:00'))],
     ),
   );
   return ok == true ? picked : null;
@@ -118,44 +135,66 @@ Future<bool?> _cupertinoSheet(
 
   return showCupertinoModalPopup<bool>(
     context: context,
-    builder: (ctx) => Container(
-      height: 320,
-      // **色は共通のトークンから取る。** ここで Cupertino の既定色を使うと、
-      // 画面の他の部分と地の色が食い違う
-      color: scheme.surface,
-      child: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
-              ),
-              child: Row(
-                children: [
-                  CupertinoButton(
-                    onPressed: () => Navigator.of(ctx).pop(false),
-                    child: const Text('やめる'),
+    builder: (ctx) {
+      final media = MediaQuery.of(ctx);
+      final scale = media.textScaler.scale(1);
+      final desired = 320.0 + math.max(0, scale - 1) * 96;
+      final height = math.min(desired, media.size.height * 0.78);
+      return Container(
+        height: height,
+        // **色は共通のトークンから取る。** ここで Cupertino の既定色を使うと、
+        // 画面の他の部分と地の色が食い違う
+        color: scheme.surface,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: scheme.outlineVariant),
                   ),
-                  Expanded(
-                    child: Text(
-                      title ?? '',
-                      textAlign: TextAlign.center,
-                      style: t.labelLarge?.copyWith(color: scheme.onSurfaceVariant),
+                ),
+                child: Column(
+                  children: [
+                    if (title?.isNotEmpty == true) ...[
+                      Text(
+                        title!,
+                        textAlign: TextAlign.center,
+                        style: t.labelLarge?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                    ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        CupertinoButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: const Text('やめる'),
+                        ),
+                        CupertinoButton.filled(
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          child: const Text('決定'),
+                        ),
+                      ],
                     ),
-                  ),
-                  CupertinoButton(
-                    onPressed: () => Navigator.of(ctx).pop(true),
-                    child: const Text('決定'),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Expanded(child: child),
-          ],
+              Expanded(child: child),
+            ],
+          ),
         ),
-      ),
-    ),
+      );
+    },
   );
+}
+
+double _pickerItemExtent(BuildContext context) {
+  final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 16;
+  return math.max(44, MediaQuery.textScalerOf(context).scale(fontSize) + 18);
 }

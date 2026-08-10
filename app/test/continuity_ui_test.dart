@@ -15,23 +15,28 @@ import 'package:flutter_test/flutter_test.dart';
 /// Duolingo 自身も Total Sessions の欠陥を認め、
 /// 品質で重み付けた TSLW へ指標を移している。
 void main() {
-  Widget wrap(Widget child) => MaterialApp(
-        theme: buildAppTheme(Brightness.light),
-        home: Scaffold(body: child),
-      );
+  Widget wrap(Widget child, {double textScale = 1}) => MaterialApp(
+    theme: buildAppTheme(Brightness.light),
+    builder: (context, child) => MediaQuery(
+      data: MediaQuery.of(
+        context,
+      ).copyWith(textScaler: TextScaler.linear(textScale)),
+      child: child!,
+    ),
+    home: Scaffold(body: child),
+  );
 
   StreakView view({
     int days = 5,
     int graceLeft = 2,
     bool doneToday = true,
     bool restDay = false,
-  }) =>
-      StreakView(
-        days: days,
-        graceLeft: graceLeft,
-        doneToday: doneToday,
-        restDay: restDay,
-      );
+  }) => StreakView(
+    days: days,
+    graceLeft: graceLeft,
+    doneToday: doneToday,
+    restDay: restDay,
+  );
 
   group('C5: ポイントを作らない', () {
     test('継続まわりのソースに通貨めいた語が出てこない', () {
@@ -50,16 +55,20 @@ void main() {
         //
         // 行ごとに見るのは、引用符が行をまたいで
         // 別の行のコメントを巻き込むのを防ぐため
-        final lines = File(path)
-            .readAsLinesSync()
-            .where((l) => !l.trimLeft().startsWith('//'));
+        final lines = File(
+          path,
+        ).readAsLinesSync().where((l) => !l.trimLeft().startsWith('//'));
 
         for (final word in banned) {
           final re = RegExp("'[^']*${RegExp.escape(word)}[^']*'");
           final hits = lines.where(re.hasMatch);
-          expect(hits, isEmpty,
-              reason: '$path が「$word」を画面に出そうとしている（C5違反）: '
-                  '${hits.isEmpty ? '' : hits.first.trim()}');
+          expect(
+            hits,
+            isEmpty,
+            reason:
+                '$path が「$word」を画面に出そうとしている（C5違反）: '
+                '${hits.isEmpty ? '' : hits.first.trim()}',
+          );
         }
       }
     });
@@ -77,32 +86,51 @@ void main() {
       // Sharif & Shu 2021 が示したのは「使わずに済ませること自体が動機になる」
       // という働き。**残っていることが見えていないと機能しない**
       await tester.pumpWidget(wrap(StreakLine(streak: view(graceLeft: 2))));
-      expect(find.textContaining('猶予 2'), findsOneWidget);
+      expect(find.textContaining('あと2日'), findsOneWidget);
     });
 
     testWidgets('残数が減れば表示も減る', (tester) async {
       await tester.pumpWidget(wrap(StreakLine(streak: view(graceLeft: 0))));
-      expect(find.textContaining('猶予 0'), findsOneWidget);
+      expect(find.textContaining('あと0日'), findsOneWidget);
     });
 
     testWidgets('形だけで伝えない（SC 1.4.1）', (tester) async {
       // 小さいアイコンの塗り分けだけだと見分けられない
       await tester.pumpWidget(wrap(StreakLine(streak: view(graceLeft: 1))));
-      expect(find.byIcon(Icons.shield), findsOneWidget);
-      expect(find.byIcon(Icons.shield_outlined), findsOneWidget);
-      expect(find.textContaining('猶予 1'), findsOneWidget);
+      expect(find.byIcon(Icons.event_available), findsOneWidget);
+      expect(find.byIcon(Icons.shield), findsNothing);
+      expect(find.byIcon(Icons.shield_outlined), findsNothing);
+      expect(find.textContaining('あと1日'), findsOneWidget);
+    });
+
+    testWidgets('320dp・文字200%では日数と猶予を縦に並べる', (tester) async {
+      tester.view.physicalSize = const Size(320, 400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        wrap(StreakLine(streak: view(graceLeft: 2)), textScale: 2),
+      );
+
+      final days = tester.getTopLeft(find.textContaining('つづけて'));
+      final grace = tester.getTopLeft(find.textContaining('あと2日'));
+      expect(grace.dy, greaterThan(days.dy));
+      expect(tester.takeException(), isNull);
     });
   });
 
   group('文言', () {
     testWidgets('0日のときに失点したように見せない', (tester) async {
-      await tester.pumpWidget(wrap(StreakLine(streak: view(days: 0, doneToday: false))));
+      await tester.pumpWidget(
+        wrap(StreakLine(streak: view(days: 0, doneToday: false))),
+      );
       expect(find.textContaining('0日'), findsNothing);
     });
 
     testWidgets('きょうがまだなら、まだだと分かる', (tester) async {
       await tester.pumpWidget(
-          wrap(StreakLine(streak: view(days: 3, doneToday: false))));
+        wrap(StreakLine(streak: view(days: 3, doneToday: false))),
+      );
       expect(find.textContaining('3日'), findsOneWidget);
       expect(find.textContaining('これから'), findsOneWidget);
     });

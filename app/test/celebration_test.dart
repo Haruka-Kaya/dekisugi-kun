@@ -6,7 +6,8 @@ import 'package:dekisugi/widgets/dossier_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Dossier build(Map<String, String> statuses, {int coverage = 0}) => Dossier.fromJson({
+Dossier build(Map<String, String> statuses, {int coverage = 0}) =>
+    Dossier.fromJson({
       'unitId': 'force-motion',
       'coverage': coverage,
       'slots': [
@@ -19,19 +20,19 @@ Dossier build(Map<String, String> statuses, {int coverage = 0}) => Dossier.fromJ
             'evidence': ['u02'],
             'followUpHint': '',
             'probes': const [],
-          }
+          },
       ],
     });
 
 Widget wrap(Dossier d, {bool reduceMotion = false}) => MaterialApp(
-      theme: buildAppTheme(Brightness.light),
-      home: MediaQuery(
-        data: MediaQueryData(disableAnimations: reduceMotion),
-        child: ReduceMotionScope(
-          child: Scaffold(body: DossierBar(dossier: d)),
-        ),
-      ),
-    );
+  theme: buildAppTheme(Brightness.light),
+  home: MediaQuery(
+    data: MediaQueryData(disableAnimations: reduceMotion),
+    child: ReduceMotionScope(
+      child: Scaffold(body: DossierBar(dossier: d)),
+    ),
+  ),
+);
 
 void main() {
   late List<MethodCall> haptics;
@@ -40,9 +41,9 @@ void main() {
     haptics = [];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, (call) async {
-      if (call.method == 'HapticFeedback.vibrate') haptics.add(call);
-      return null;
-    });
+          if (call.method == 'HapticFeedback.vibrate') haptics.add(call);
+          return null;
+        });
   });
 
   tearDown(() {
@@ -72,9 +73,12 @@ void main() {
     });
 
     testWidgets('同じ状態のままなら祝わない（毎回鳴らさない）', (tester) async {
-      await tester.pumpWidget(wrap(build({'fall': 'explained'}), reduceMotion: true));
-      await tester.pumpWidget(wrap(build({'fall': 'explained'}, coverage: 50),
-          reduceMotion: true));
+      await tester.pumpWidget(
+        wrap(build({'fall': 'explained'}), reduceMotion: true),
+      );
+      await tester.pumpWidget(
+        wrap(build({'fall': 'explained'}, coverage: 50), reduceMotion: true),
+      );
       await tester.pump();
       expect(haptics, isEmpty);
     });
@@ -87,30 +91,38 @@ void main() {
     });
 
     testWidgets('Reduce Motion では拡大しないが、達成は伝わる', (tester) async {
-      await tester.pumpWidget(wrap(build({'fall': 'thin'}), reduceMotion: true));
-      await tester.pumpWidget(wrap(build({'fall': 'explained'}), reduceMotion: true));
+      await tester.pumpWidget(
+        wrap(build({'fall': 'thin'}), reduceMotion: true),
+      );
+      await tester.pumpWidget(
+        wrap(build({'fall': 'explained'}), reduceMotion: true),
+      );
       await tester.pump();
 
       // 動かさないだけで、状態そのものは出す
       expect(find.byIcon(statusIcon(ExplainStatus.gotIt)), findsOneWidget);
       expect(find.byKey(const ValueKey('celebrate')), findsNothing);
 
-      await tester.pumpWidget(wrap(build({'fall': 'untouched'}), reduceMotion: true));
+      await tester.pumpWidget(
+        wrap(build({'fall': 'untouched'}), reduceMotion: true),
+      );
       await tester.pump(Motion.celebrate * 3);
     });
   });
 
   group('カルテの表示', () {
-    testWidgets('充足度を数字でも出す（バーだけにしない）', (tester) async {
+    testWidgets('採点に見えるパーセントを生徒へ出さない', (tester) async {
       await tester.pumpWidget(wrap(build({'fall': 'thin'}, coverage: 45)));
-      expect(find.text('45%'), findsOneWidget);
+      expect(find.text('45%'), findsNothing);
+      expect(find.text('いまの会話ノート'), findsOneWidget);
     });
 
-    testWidgets('概念ごとに状態のアイコンとラベルを出す', (tester) async {
+    testWidgets('触れた概念だけ状態のアイコンとラベルを出す', (tester) async {
       await tester.pumpWidget(
-          wrap(build({'fall': 'explained', 'inertia': 'untouched'})));
+        wrap(build({'fall': 'explained', 'inertia': 'untouched'})),
+      );
       expect(find.text('落下の速さ'), findsOneWidget);
-      expect(find.text('慣性'), findsOneWidget);
+      expect(find.text('慣性'), findsNothing, reason: 'まだ話していない内容を採点一覧に見せない');
     });
   });
 }

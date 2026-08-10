@@ -21,23 +21,38 @@ import 'package:flutter_pcm_sound/flutter_pcm_sound.dart';
 /// `gemini_live` の example はターン全体をバッファして WAV ヘッダを付けてから
 /// `audioplayers` で鳴らす。生成が終わるまで一切音が出ないので、会話には使えない。
 class PcmPlayer {
-  PcmPlayer({PcmSink? sink}) : _sink = sink ?? const FlutterPcmSink();
+  PcmPlayer({PcmSink? sink, this.playbackSampleRate = sampleRate})
+    : assert(playbackSampleRate > 0),
+      _sink = sink ?? const FlutterPcmSink();
 
   final PcmSink _sink;
 
   /// Gemini Live の出力レート。入力の 16kHz とは違うので取り違えないこと。
   static const int sampleRate = 24000;
 
+  /// このインスタンスが再生するPCMのサンプルレート。
+  ///
+  /// Live音声は既定の24kHz。端末マイクをそのまま聞き返す用途だけ、入力と同じ
+  /// 16kHzを明示する。PCMを別レートとして再生すると声の高さと長さが変わるため、
+  /// 暗黙の変換はしない。
+  final int playbackSampleRate;
+
   /// native のキューがこれを下回ったら補充する。
-  static const int _thresholdFrames = 1200; // 50ms @24kHz
+  int get _thresholdFrames => playbackSampleRate ~/ 20; // 50ms
 
   /// 1回の補充量。
-  static const int _chunkFrames = 1200; // 50ms @24kHz
+  int get _chunkFrames => playbackSampleRate ~/ 20; // 50ms
 
   /// 割り込み時に鳴り残る最大時間。**この値が割り込みの体感を決める。**
   static Duration get maxResidual => Duration(
-      microseconds:
-          ((_thresholdFrames + _chunkFrames) * 1000000 / sampleRate).round());
+    microseconds: ((sampleRate ~/ 10) * 1000000 / sampleRate).round(),
+  );
+
+  Duration get configuredMaxResidual => Duration(
+    microseconds:
+        ((_thresholdFrames + _chunkFrames) * 1000000 / playbackSampleRate)
+            .round(),
+  );
 
   final Queue<Uint8List> _pending = Queue<Uint8List>();
   final _level = StreamController<double>.broadcast();
@@ -62,7 +77,7 @@ class PcmPlayer {
   Future<void> init() async {
     if (_ready || _disposed) return;
     await _sink.setLogLevel(LogLevel.none);
-    await _sink.setup(sampleRate: sampleRate, channelCount: 1);
+    await _sink.setup(sampleRate: playbackSampleRate, channelCount: 1);
     await _sink.setFeedThreshold(_thresholdFrames);
     _sink.setFeedCallback(_onFeed);
     _ready = true;
@@ -97,8 +112,10 @@ class PcmPlayer {
     if (_disposed) return;
     stopNow();
     _disposed = true;
-    _sink.setFeedCallback(null);
-    if (_ready) await _sink.release();
+    if (_ready) {
+      _sink.setFeedCallback(null);
+      await _sink.release();
+    }
     _ready = false;
     await _level.close();
   }
@@ -172,7 +189,8 @@ class FlutterPcmSink implements PcmSink {
   const FlutterPcmSink();
 
   @override
-  Future<void> setLogLevel(LogLevel level) => FlutterPcmSound.setLogLevel(level);
+  Future<void> setLogLevel(LogLevel level) =>
+      FlutterPcmSound.setLogLevel(level);
 
   @override
   Future<void> setup({required int sampleRate, required int channelCount}) =>

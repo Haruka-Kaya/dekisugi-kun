@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Dekisugi</string>
+	<string>デキすぎ君</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>dekisugi</string>
+	<string>デキすぎ君</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -73,8 +73,16 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>デキすぎ君に声で説明するために、マイクを使います。文字で説明することもできます。</string>
 
-	<!-- 音声認識の API は使っていない（文字起こしは Google 側で行う）。
-	     NSSpeechRecognitionUsageDescription は不要 -->
+	<!-- 外部クラウドを使わないペアクエスト/週次リーグで、同じWi-Fi上の
+	     学校・家庭管理PCへ接続する。Bonjour discoveryは使わず、参加QRに入った
+	     private IPと自己署名証明書fingerprintへだけ接続する。 -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>同じWi-Fiにいる実在の学習仲間と、ペアクエストや週次リーグに参加するために使います。氏名・回答・音声は送りません。</string>
+
+	<!-- 必修SpeakingではSpeech frameworkをオンデバイス専用で使う。
+	     認識候補は固定語句との比較後に破棄し、保存・送信しない。 -->
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>目標の理科用語を声で確認するため、端末内の音声認識を使います。音声や認識結果は保存・送信しません。</string>
 
 	<!-- 会話中に画面が暗くならないようにする設定は
 	     コード側（WakelockPlus 等）で行う。ここでは宣言しない -->

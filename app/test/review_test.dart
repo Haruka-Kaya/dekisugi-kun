@@ -2,27 +2,23 @@ import 'package:dekisugi/models/dossier.dart';
 import 'package:dekisugi/models/review.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Dossier dossierWith(List<Map<String, dynamic>> slots) => Dossier.fromJson({
-      'unitId': 'force-motion',
-      'coverage': 0,
-      'slots': slots,
-    });
+Dossier dossierWith(List<Map<String, dynamic>> slots) =>
+    Dossier.fromJson({'unitId': 'force-motion', 'coverage': 0, 'slots': slots});
 
 Map<String, dynamic> slot({
   required String key,
   String status = 'explained',
   List<String> evidence = const ['u02'],
   List<Map<String, dynamic>> probes = const [],
-}) =>
-    {
-      'key': key,
-      'label': key,
-      'status': status,
-      'content': 'x',
-      'evidence': evidence,
-      'followUpHint': '',
-      'probes': probes,
-    };
+}) => {
+  'key': key,
+  'label': key,
+  'status': status,
+  'content': 'x',
+  'evidence': evidence,
+  'followUpHint': '',
+  'probes': probes,
+};
 
 final _now = DateTime(2026, 8, 5, 12);
 
@@ -30,9 +26,16 @@ void main() {
   group('復習に回すもの', () {
     test('訂正できなかった概念を含む', () {
       final d = dossierWith([
-        slot(key: 'fall', probes: [
-          {'id': 'M01', 'result': 'accepted', 'evidence': ['u04']}
-        ])
+        slot(
+          key: 'fall',
+          probes: [
+            {
+              'id': 'M01',
+              'result': 'accepted',
+              'evidence': ['u04'],
+            },
+          ],
+        ),
       ]);
       final items = reviewItemsOf(d, _now);
       expect(items, hasLength(1));
@@ -40,7 +43,10 @@ void main() {
     });
 
     test('説明が薄いままの概念を含む', () {
-      final items = reviewItemsOf(dossierWith([slot(key: 'fall', status: 'thin')]), _now);
+      final items = reviewItemsOf(
+        dossierWith([slot(key: 'fall', status: 'thin')]),
+        _now,
+      );
       expect(items.single.reason, ReviewReason.thin);
     });
 
@@ -48,16 +54,21 @@ void main() {
       // 判断がついていないものを「できていない」側に置くと、
       // 触れてもいないことを突きつけることになる
       final d = dossierWith([
-        slot(key: 'fall', probes: [
-          {'id': 'M01', 'result': 'unclear', 'evidence': <String>[]}
-        ])
+        slot(
+          key: 'fall',
+          probes: [
+            {'id': 'M01', 'result': 'unclear', 'evidence': <String>[]},
+          ],
+        ),
       ]);
       expect(reviewItemsOf(d, _now), isEmpty);
     });
 
     test('触れていない概念を含めない', () {
       // 「まだ」と「できなかった」は別物
-      final d = dossierWith([slot(key: 'fall', status: 'untouched', evidence: [])]);
+      final d = dossierWith([
+        slot(key: 'fall', status: 'untouched', evidence: []),
+      ]);
       expect(reviewItemsOf(d, _now), isEmpty);
     });
 
@@ -83,30 +94,37 @@ void main() {
 
     test('考査が遠いほど間隔が伸びる', () {
       Duration g(int days) => nextGap(
-            now: _now,
-            examDate: _now.add(Duration(days: days)),
-            timesSeen: 0,
-          );
+        now: _now,
+        examDate: _now.add(Duration(days: days)),
+        timesSeen: 0,
+      );
       expect(g(7) <= g(30), isTrue);
       expect(g(30) <= g(90), isTrue);
       expect(g(7) < g(90), isTrue, reason: '保持期間で変わっていない');
     });
 
     test('考査当日・過ぎているなら1日', () {
-      expect(nextGap(now: _now, examDate: _now, timesSeen: 0),
-          const Duration(days: 1));
       expect(
-          nextGap(
-              now: _now,
-              examDate: _now.subtract(const Duration(days: 3)),
-              timesSeen: 0),
-          const Duration(days: 1));
+        nextGap(now: _now, examDate: _now, timesSeen: 0),
+        const Duration(days: 1),
+      );
+      expect(
+        nextGap(
+          now: _now,
+          examDate: _now.subtract(const Duration(days: 3)),
+          timesSeen: 0,
+        ),
+        const Duration(days: 1),
+      );
     });
 
     test('間隔が0日にならない', () {
       for (final d in [2, 3, 5]) {
         final gap = nextGap(
-            now: _now, examDate: _now.add(Duration(days: d)), timesSeen: 0);
+          now: _now,
+          examDate: _now.add(Duration(days: d)),
+          timesSeen: 0,
+        );
         expect(gap.inDays, greaterThanOrEqualTo(1));
       }
     });
@@ -115,14 +133,17 @@ void main() {
       // 間隔が保持期間を超えると、復習が考査の後になる
       for (final d in [7, 14, 30, 60, 200]) {
         final gap = nextGap(
-            now: _now, examDate: _now.add(Duration(days: d)), timesSeen: 0);
+          now: _now,
+          examDate: _now.add(Duration(days: d)),
+          timesSeen: 0,
+        );
         expect(gap.inDays, lessThan(d), reason: '$d日先の考査に間に合わない');
       }
     });
 
     test('考査日が無ければ回数で伸ばす', () {
       final gaps = [
-        for (var i = 0; i < 5; i++) nextGap(now: _now, timesSeen: i).inDays
+        for (var i = 0; i < 5; i++) nextGap(now: _now, timesSeen: i).inDays,
       ];
       expect(gaps, [1, 3, 7, 14, 30]);
     });
@@ -134,6 +155,24 @@ void main() {
   });
 
   group('ReviewItem の往復', () {
+    test('見直した後の次回期限は古い会話日ではなく見直し日から数える', () {
+      final reviewedAt = _now.add(const Duration(days: 10));
+      final item = ReviewItem(
+        unitId: 'force-motion',
+        conceptKey: 'fall',
+        label: '落下の速さ',
+        reason: ReviewReason.notFinished,
+        lastSeen: _now,
+        timesSeen: 1,
+        lastReviewedAt: reviewedAt,
+      );
+
+      expect(
+        item.dueAt(const Duration(days: 3)),
+        reviewedAt.add(const Duration(days: 3)),
+      );
+    });
+
     test('行にして戻せる', () {
       final item = ReviewItem(
         unitId: 'force-motion',

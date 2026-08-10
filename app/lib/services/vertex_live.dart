@@ -57,8 +57,10 @@ class VertexLiveSession {
     _socket.listen(
       (raw) {
         try {
-          _handle(jsonDecode(raw is String ? raw : utf8.decode(raw as List<int>))
-              as Map<String, dynamic>);
+          _handle(
+            jsonDecode(raw is String ? raw : utf8.decode(raw as List<int>))
+                as Map<String, dynamic>,
+          );
         } catch (e) {
           debugPrint('Live のメッセージを読めなかった: $e');
         }
@@ -98,7 +100,8 @@ class VertexLiveSession {
       return;
     }
 
-    final handle = (m['sessionResumptionUpdate'] as Map?)?['newHandle'] as String?;
+    final handle =
+        (m['sessionResumptionUpdate'] as Map?)?['newHandle'] as String?;
     if (handle != null && handle.isNotEmpty) {
       _emit(LiveEvent.resumptionHandle(handle));
     }
@@ -122,7 +125,8 @@ class VertexLiveSession {
       }
     }
 
-    final interim = (sc['interimInputTranscription'] as Map?)?['text'] as String?;
+    final interim =
+        (sc['interimInputTranscription'] as Map?)?['text'] as String?;
     if (interim != null && interim.isNotEmpty) {
       _emit(LiveEvent.interimStudent(interim));
     }
@@ -226,7 +230,8 @@ sealed class LiveEvent {
   const factory LiveEvent.studentText(String text) = LiveStudentText;
   const factory LiveEvent.interimStudent(String text) = LiveInterimStudent;
   const factory LiveEvent.aiText(String text) = LiveAiText;
-  const factory LiveEvent.resumptionHandle(String handle) = LiveResumptionHandle;
+  const factory LiveEvent.resumptionHandle(String handle) =
+      LiveResumptionHandle;
   const factory LiveEvent.failed(String detail) = LiveFailed;
   const factory LiveEvent.closed(int? code, String? reason) = LiveClosed;
 }

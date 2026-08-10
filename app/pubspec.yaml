@@ -5,19 +5,30 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.11.5
+  # Flutter 3.44.xの同梱Dartとpubspec.lockの下限に合わせる。
+  sdk: '>=3.12.0 <4.0.0'
 
 dependencies:
   flutter:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
   provider: ^6.1.5+1
   dio: ^5.11.0
+  # LAN coordinatorの証明書pinと、room固有idempotency keyのSHA-256に使う。
+  # 通信サービスではなく端末内のpure Dart実装。
+  crypto: ^3.0.7
   record: ^6.2.1
   flutter_pcm_sound: ^3.3.3
   sqflite: ^2.4.2+1
   path: ^1.9.1
+  # RevenueCat の公式 SDK。本体の Paywall UI は自前で組み、
+  # purchases_ui_flutter は入れない。Test Store は 9.8.0 以上が必要。
+  purchases_flutter: ^10.8.0
+  # Privacy・ストア規約・購読管理をOSの安全な外部ブラウザで開く。
+  url_launcher: ^6.3.2
   # 通知は**端末の中で完結させる**。FCM は使わない —
   # トークン管理と端末識別子の保存が増え、同意文面に波及する
   flutter_local_notifications: ^19.4.2
@@ -37,6 +48,12 @@ flutter:
   uses-material-design: true
 
   assets:
+    # 初回起動がオフラインでも、一覧と教材本文を読めるようにする。
+    # 手編集禁止。server で `npm run catalog:generate` して作る。
+    - assets/catalog/units.ja.json
+    # 人が収録したListening教材だけを置く。音源が無い教材は端末TTSへ退避し、
+    # 人の録音とは表示しない。命名規則は同ディレクトリのREADMEを参照。
+    - assets/audio/listening/
     # フォント本体は下の fonts: で入るが、**ライセンス文は入らない**。
     # SIL OFL は頒布時に添付を求めるので、アセットとして明示的に同梱する。
     - assets/fonts/OFL.txt

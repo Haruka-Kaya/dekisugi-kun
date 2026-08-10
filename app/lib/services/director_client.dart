@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/dossier.dart';
+import '../models/mission.dart';
 import 'device_identity.dart';
 
 /// ディレクター（サーバ側の進行役）を呼ぶ。
@@ -12,15 +13,18 @@ import 'device_identity.dart';
 /// 1回あたり実測 6秒前後かかる。**await して次の発話を止めないこと。**
 class DirectorClient {
   DirectorClient({required this.baseUrl, this.identity, Dio? dio})
-      : _dio = dio ??
-            Dio(BaseOptions(
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
               connectTimeout: const Duration(seconds: 10),
               // ディレクターは Gemini を挟むので遅い。実測 6秒前後
               receiveTimeout: const Duration(seconds: 30),
               headers: {'Content-Type': 'application/json'},
               // ステータスで例外を投げさせない。リトライ判断を自分で持つため
               validateStatus: (_) => true,
-            ));
+            ),
+          );
 
   final String baseUrl;
 
@@ -36,6 +40,9 @@ class DirectorClient {
   /// 失敗しても会話は続く（指示が来ないだけ）。だから例外を投げずに null を返す。
   Future<DirectorResult?> run({
     required String unitId,
+    String? focusConceptKey,
+    TeachingTactic tactic = TeachingTactic.reason,
+    MissionKind missionKind = MissionKind.teach,
     Dossier? dossier,
     required List<Utterance> utterances,
     required double secondsLeft,
@@ -45,6 +52,9 @@ class DirectorClient {
 
     final body = {
       'unitId': unitId,
+      'focusConceptKey': ?focusConceptKey,
+      'teachingTactic': tactic.wire,
+      'missionKind': missionKind.wire,
       if (dossier != null) 'dossier': dossier.toJson(),
       'utterances': utterances.map((u) => u.toJson()).toList(),
       'secondsLeft': secondsLeft,
@@ -53,10 +63,16 @@ class DirectorClient {
 
     try {
       final res = await _withRetry(
-          (h) => _dio.post<Object?>('$baseUrl/api/director',
-              data: body, options: Options(headers: h)));
+        (h) => _dio.post<Object?>(
+          '$baseUrl/api/director',
+          data: body,
+          options: Options(headers: h),
+        ),
+      );
       final data = res.data;
-      if (data is Map) return DirectorResult.fromJson(data.cast<String, dynamic>());
+      if (data is Map) {
+        return DirectorResult.fromJson(data.cast<String, dynamic>());
+      }
       debugPrint('ディレクターの応答が想定外: ${data.runtimeType}');
       return null;
     } catch (e) {
@@ -71,16 +87,20 @@ class DirectorClient {
     if (!isConfigured) return const [];
     try {
       // 単元カタログは門の外。トークンが無くても取れる
-      final res = await _withRetry((_) => _dio.get<Object?>('$baseUrl/api/units'));
+      final res = await _withRetry(
+        (_) => _dio.get<Object?>('$baseUrl/api/units'),
+      );
       final list = (res.data as Map?)?['units'];
       if (list is! List) return const [];
       return list
           .whereType<Map>()
-          .map((u) => (
-                id: u['id'] as String? ?? '',
-                title: u['title'] as String? ?? '',
-                brief: u['brief'] as String? ?? '',
-              ))
+          .map(
+            (u) => (
+              id: u['id'] as String? ?? '',
+              title: u['title'] as String? ?? '',
+              brief: u['brief'] as String? ?? '',
+            ),
+          )
           .where((u) => u.id.isNotEmpty)
           .toList();
     } catch (e) {
@@ -102,9 +122,10 @@ class DirectorClient {
     var reissued = false;
     var token = await identity?.token();
 
-    for (var i = 0;; i++) {
-      final headers =
-          token == null ? null : <String, String>{'Authorization': 'Bearer $token'};
+    for (var i = 0; ; i++) {
+      final headers = token == null
+          ? null
+          : <String, String>{'Authorization': 'Bearer $token'};
       late final Response<Object?> res;
       try {
         res = await call(headers);
@@ -129,7 +150,9 @@ class DirectorClient {
       if ((s == 429 || s == 500 || s == 502 || s == 503) && i < max - 1) {
         final ra = int.tryParse(res.headers.value('retry-after') ?? '');
         // Retry-After が長すぎるときは諦める。会話中に何分も待てない
-        if (ra != null && ra > 30) throw DirectorException(s, _messageFor(s, res.data));
+        if (ra != null && ra > 30) {
+          throw DirectorException(s, _messageFor(s, res.data));
+        }
         await Future<void>.delayed(ra != null ? Duration(seconds: ra) : delay);
         delay *= 2;
         continue;
