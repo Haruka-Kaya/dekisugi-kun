@@ -1,4 +1,4 @@
-// キャラクターの4状態を1枚に並べて書き出す。
+// キャラクターの8状態を160pxと72pxで1枚に並べて書き出す。
 //
 // 文字は `flutter test` ではダミーフォントになるが、**図形はそのまま描かれる**ので
 // キャラクターの見た目はこれで確認できる（キャラに文字は無い）。
@@ -22,17 +22,39 @@ Widget sheet(Brightness brightness) {
     home: ReduceMotionScope(
       child: Scaffold(
         body: Center(
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              for (final (s, voice) in const [
-                (LiveState.idle, 0.0),
-                (LiveState.listening, 0.0),
-                (LiveState.thinking, 0.0),
-                (LiveState.speaking, 0.8),
-              ])
-                Character(state: s, voiceLevel: voice, size: 150),
+              SizedBox(
+                width: 664,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final state in LiveState.values)
+                      Character(
+                        state: state,
+                        voiceLevel: state == LiveState.speaking ? 0.8 : 0,
+                        size: 160,
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final state in LiveState.values) ...[
+                    Character(
+                      state: state,
+                      voiceLevel: state == LiveState.speaking ? 0.8 : 0,
+                      size: 72,
+                    ),
+                    if (state != LiveState.values.last)
+                      const SizedBox(width: 8),
+                  ],
+                ],
+              ),
             ],
           ),
         ),
@@ -43,9 +65,10 @@ Widget sheet(Brightness brightness) {
 
 void main() {
   for (final b in Brightness.values) {
-    testWidgets('キャラクターの4状態 — $b', (tester) async {
-      // 論理サイズ = physicalSize / devicePixelRatio。4体を1行に並べるので 640 要る
-      tester.view.physicalSize = const Size(1280, 420);
+    testWidgets('キャラクターの8状態 — $b', (tester) async {
+      // 論理サイズ = physicalSize / devicePixelRatio。
+      // 160pxを4体×2段、72pxを8体×1段で比較する。
+      tester.view.physicalSize = const Size(1440, 960);
       tester.view.devicePixelRatio = 2.0;
       addTearDown(tester.view.reset);
 

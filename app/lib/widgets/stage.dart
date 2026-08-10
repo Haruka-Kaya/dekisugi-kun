@@ -69,6 +69,8 @@ class Stage extends StatelessWidget {
                         state: live.state,
                         voiceLevel: snap.data ?? 0,
                         size: 150,
+                        // 親の操作ラベルと直下の状態テキストが同じ内容を返す。
+                        excludeFromSemantics: true,
                       ),
                     ),
                   ),
