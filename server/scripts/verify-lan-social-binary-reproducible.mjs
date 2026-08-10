@@ -15,11 +15,10 @@ import { spawn } from 'node:child_process'
 const scriptDirectory = dirname(fileURLToPath(import.meta.url))
 const serverRoot = resolve(scriptDirectory, '..')
 const packageName = `dekisugi-lan-coordinator-${process.platform}-${process.arch}`
-const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 
 const before = await manifest(serverRoot)
 const beforeArchiveSha256 = await archiveSha256(serverRoot)
-await run(npmCommand, ['run', 'social:binary'], serverRoot)
+await buildAt(serverRoot)
 const after = await manifest(serverRoot)
 const afterArchiveSha256 = await archiveSha256(serverRoot)
 
@@ -42,7 +41,7 @@ if (before.sha256 !== after.sha256 ||
 // executable/archiveも完全一致することを検査する。
 const relocatedRoot = await relocatedServerRoot()
 try {
-  await run(npmCommand, ['run', 'social:binary'], relocatedRoot)
+  await buildAt(relocatedRoot)
   const relocated = await manifest(relocatedRoot)
   const relocatedArchiveSha256 = await archiveSha256(relocatedRoot)
   if (after.sha256 !== relocated.sha256 ||
@@ -109,6 +108,17 @@ async function relocatedServerRoot() {
     mkdir(resolve(root, 'dist'), { recursive: true }),
   ])
   return root
+}
+
+async function buildAt(root) {
+  // package scriptの実体を同じNodeで直接起動する。Windowsでnpm.cmdを
+  // shell:false spawnするとEINVALになる一方、shell:trueは不要な解釈面を増やす。
+  // script pathは各rootから解決し、relocated checkoutの独立検証を維持する。
+  await run(
+    process.execPath,
+    [resolve(root, 'scripts', 'build-lan-social-binary.mjs')],
+    root,
+  )
 }
 
 async function run(command, args, cwd) {
