@@ -7,7 +7,7 @@ import 'package:dekisugi/widgets/learning_path.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('マスコットは5反応を形とSemanticsで別々に伝える', (tester) async {
+  testWidgets('マスコットは9反応を形とSemanticsで別々に伝える', (tester) async {
     final semantics = tester.ensureSemantics();
 
     await tester.pumpWidget(
@@ -47,9 +47,13 @@ void main() {
     expect(art.map((item) => item.pose), const [
       DekisugiCharacterPose.idle,
       DekisugiCharacterPose.invite,
+      DekisugiCharacterPose.listening,
       DekisugiCharacterPose.thinking,
       DekisugiCharacterPose.encourage,
+      DekisugiCharacterPose.speaking,
       DekisugiCharacterPose.celebrate,
+      DekisugiCharacterPose.outOfTime,
+      DekisugiCharacterPose.retry,
     ]);
     expect(
       art.every(

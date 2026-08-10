@@ -441,11 +441,17 @@ class PathMascotPreview extends StatelessWidget {
             pose: switch (reaction) {
               GameCharacterReaction.none => DekisugiCharacterPose.idle,
               GameCharacterReaction.invite => DekisugiCharacterPose.invite,
+              GameCharacterReaction.listening =>
+                DekisugiCharacterPose.listening,
               GameCharacterReaction.thinking => DekisugiCharacterPose.thinking,
               GameCharacterReaction.encourage =>
                 DekisugiCharacterPose.encourage,
+              GameCharacterReaction.speaking => DekisugiCharacterPose.speaking,
               GameCharacterReaction.celebrate =>
                 DekisugiCharacterPose.celebrate,
+              GameCharacterReaction.outOfTime =>
+                DekisugiCharacterPose.outOfTime,
+              GameCharacterReaction.retry => DekisugiCharacterPose.retry,
             },
             decoration: decoration,
             size: size,

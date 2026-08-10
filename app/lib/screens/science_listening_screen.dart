@@ -102,16 +102,19 @@ class _ScienceListeningScreenState extends State<ScienceListeningScreen> {
   LocalCheckpointOption? get _correctOption =>
       _checkpoint.optionFor(_checkpoint.correctOptionId);
 
-  GameCharacterReaction get _mascotReaction => switch (_phase) {
-    _ListeningPhase.prepare => GameCharacterReaction.invite,
-    _ListeningPhase.transcribe ||
-    _ListeningPhase.answer => GameCharacterReaction.thinking,
-    _ListeningPhase.transcriptCompare ||
-    _ListeningPhase.hint ||
-    _ListeningPhase.compare => GameCharacterReaction.encourage,
-    _ListeningPhase.done => GameCharacterReaction.celebrate,
-    _ListeningPhase.textOnlyDone => GameCharacterReaction.encourage,
-  };
+  GameCharacterReaction get _mascotReaction {
+    if (_speaking) return GameCharacterReaction.speaking;
+    return switch (_phase) {
+      _ListeningPhase.prepare => GameCharacterReaction.invite,
+      _ListeningPhase.transcribe ||
+      _ListeningPhase.answer => GameCharacterReaction.thinking,
+      _ListeningPhase.transcriptCompare ||
+      _ListeningPhase.hint ||
+      _ListeningPhase.compare => GameCharacterReaction.encourage,
+      _ListeningPhase.done => GameCharacterReaction.celebrate,
+      _ListeningPhase.textOnlyDone => GameCharacterReaction.encourage,
+    };
+  }
 
   @override
   void initState() {

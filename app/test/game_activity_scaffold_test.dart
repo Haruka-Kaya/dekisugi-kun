@@ -1,8 +1,14 @@
+import 'dart:ui' show SemanticsAction;
+
 import 'package:dekisugi/config/app_theme.dart';
+import 'package:dekisugi/config/game_tokens.dart';
 import 'package:dekisugi/config/motion.dart';
+import 'package:dekisugi/learning/domain/learning_economy.dart';
 import 'package:dekisugi/models/game_path.dart';
 import 'package:dekisugi/ui/_material.dart';
+import 'package:dekisugi/widgets/dekisugi_character_art.dart';
 import 'package:dekisugi/widgets/game_activity_scaffold.dart';
+import 'package:dekisugi/widgets/science_challenge_support.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _initialStatus = GamePlayerStatus(
@@ -11,6 +17,35 @@ const _initialStatus = GamePlayerStatus(
   gems: 84,
   hearts: 4,
 );
+
+class _ScopedActivityProbe extends StatelessWidget {
+  const _ScopedActivityProbe();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gamePalette;
+    return Scaffold(
+      appBar: GameActivityScaffold.hasSharedChrome(context)
+          ? null
+          : AppBar(title: const Text('子画面のAppBar')),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              ScienceActivityMascotBadge(
+                icon: Icons.science_outlined,
+                accent: colors.pathActive,
+                onAccent: colors.onPathActive,
+              ),
+              const Text('fixed statusの下で、activity本文だけがスクロールします。'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 void main() {
   for (final brightness in Brightness.values) {
@@ -39,21 +74,34 @@ void main() {
               statusListenable: status,
               schoolMode: false,
               onExit: () => exits += 1,
-              child: const Scaffold(
-                body: SingleChildScrollView(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('固定statusの下で、activity本文だけがスクロールします。'),
-                  ),
-                ),
-              ),
+              mascotStyle: LearningPathMascotStyle.orbit,
+              child: const _ScopedActivityProbe(),
             ),
           ),
         );
         await tester.pump();
 
         expect(find.byKey(const ValueKey('game-activity-scaffold')), findsOne);
+        expect(
+          find.byKey(const ValueKey('game-activity-top-chrome')),
+          findsOne,
+        );
         expect(find.byKey(const ValueKey('game-activity-status')), findsOne);
+        expect(find.byKey(const ValueKey('player-status-bar')), findsOne);
+        expect(find.byType(AppBar), findsNothing);
+        expect(
+          tester
+              .widget<DekisugiCharacterArt>(find.byType(DekisugiCharacterArt))
+              .decoration,
+          DekisugiCharacterDecoration.orbit,
+        );
+        final exitSemantics = tester.getSemantics(
+          find.bySemanticsLabel('前の画面へ戻る'),
+        );
+        expect(
+          exitSemantics.getSemanticsData().hasAction(SemanticsAction.tap),
+          isTrue,
+        );
         expect(find.bySemanticsLabel('学習ハート、5個中4個'), findsOne);
         final exitSize = tester.getSize(
           find.byKey(const ValueKey('game-activity-exit')),
@@ -106,5 +154,23 @@ void main() {
     );
     expect(find.text('WIDE ACTIVITY'), findsOne);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('共有chrome外では課題自身のAppBarを保つ', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: const _ScopedActivityProbe(),
+      ),
+    );
+
+    expect(find.byType(AppBar), findsOneWidget);
+    expect(find.text('子画面のAppBar'), findsOneWidget);
+    expect(
+      tester
+          .widget<DekisugiCharacterArt>(find.byType(DekisugiCharacterArt))
+          .decoration,
+      DekisugiCharacterDecoration.standard,
+    );
   });
 }

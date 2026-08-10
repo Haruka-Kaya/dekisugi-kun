@@ -12,7 +12,7 @@ import 'package:dekisugi/widgets/learning_path.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// macOS と Linux の software rasterizer で、ごく少数の anti-alias pixel だけが
-/// 異なる。構図や色の変化を通さないよう、1280x640 のうち最大32px相当だけを
+/// 異なる。構図や色の変化を通さないよう、1280x960 のうち最大48px相当だけを
 /// 許可する。pose / decoration / palette は下の構造assertでも別に固定する。
 class _RasterStableGoldenComparator extends LocalFileComparator {
   _RasterStableGoldenComparator(super.testFile);
@@ -76,7 +76,36 @@ Widget _sheet(Brightness brightness) => MaterialApp(
               ),
             ],
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 20),
+          const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              PathMascotPreview(
+                reaction: GameCharacterReaction.listening,
+                size: 88,
+                style: LearningPathMascotStyle.standard,
+              ),
+              SizedBox(width: 20),
+              PathMascotPreview(
+                reaction: GameCharacterReaction.speaking,
+                size: 88,
+                style: LearningPathMascotStyle.standard,
+              ),
+              SizedBox(width: 20),
+              PathMascotPreview(
+                reaction: GameCharacterReaction.outOfTime,
+                size: 88,
+                style: LearningPathMascotStyle.standard,
+              ),
+              SizedBox(width: 20),
+              PathMascotPreview(
+                reaction: GameCharacterReaction.retry,
+                size: 88,
+                style: LearningPathMascotStyle.standard,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
           const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -114,7 +143,7 @@ void main() {
       );
       addTearDown(() => goldenFileComparator = previousComparator);
 
-      tester.view.physicalSize = const Size(1280, 640);
+      tester.view.physicalSize = const Size(1280, 960);
       tester.view.devicePixelRatio = 2;
       addTearDown(tester.view.reset);
 
@@ -134,8 +163,12 @@ void main() {
 
   for (final pair in const <(LiveState, GameCharacterReaction)>[
     (LiveState.idle, GameCharacterReaction.none),
+    (LiveState.listening, GameCharacterReaction.listening),
     (LiveState.thinking, GameCharacterReaction.thinking),
+    (LiveState.speaking, GameCharacterReaction.speaking),
     (LiveState.done, GameCharacterReaction.celebrate),
+    (LiveState.outOfTime, GameCharacterReaction.outOfTime),
+    (LiveState.failed, GameCharacterReaction.retry),
   ]) {
     testWidgets('${pair.$1.name}はLiveとPathで同じ描画入力を使う', (tester) async {
       await tester.pumpWidget(

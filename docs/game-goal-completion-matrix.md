@@ -21,7 +21,7 @@
 | Unit末Legendary | 実装済み | `path:v2:<unit>:unit:legendary`、翌学習日解放、旧履歴互換、Home E2E | なし |
 | Timed / Match / Lightning | 実装済み | 3つの別screen・別route、monotonic deadlineとbackground復帰時の時間切れ照合、時間切れ時はheart / XP / progressの更新0。Timed確認→日次1回消費→同日再入場、学校無消費、Match / Lightning無料のHome E2E | なし |
 | Personalized Practice | 実装済み | 期限復習、Resume、Repairを別の事実から投影。Repair入口はcatalogへ一意対応できるcanonical active needだけで、中断runはResumeだけに出す。Match誤答は選択肢IDでなく同じcatalog needだけを保存し、対応するexact Repair成功でのみ解消するplanner / projection / Home E2E | なし |
-| 画像方向の全面UI | 実装済み・自動QA済み（物理実機目視待ち） | 6タブshellと共通GameTokens。連続学習・結晶・heart・quest入口はタブpageの外に固定し、全activity routeも共通`GameActivityScaffold`で戻る／連続／結晶／heart HUDを保持する。誤答保存後のheartを開いた画面へ反映し、デキすぎ君は開始・思考・訂正・完了でSemanticsを含むreactionを変える。Story / Speaking / Bossを含む理科activityはGamePaletteへ統一。保存成功後だけ笑顔・500ms以下の祝福・実XP / 結晶 / 非保存の今回時間・「次の一歩」CTAを表示し、測っていない正答率を作らない。320×568・文字200%・light/dark・Reduce Motion、700dp以上、Semantics、6タブ／代表activity routeをwidget testで固定し、Android 16 emulatorでPathと実Lessonの固定HUD・overflowなしを目視 | 最新6タブ・代表activity・祝福面をAndroid / iOS物理端末で最終目視し、初見学習者5〜10分pilotを行う |
+| 画像方向の全面UI | 実装済み・自動QA済み（物理実機目視待ち） | 6タブshellと共通GameTokens。連続学習・結晶・heart・quest入口はタブpageの外に固定し、全activity routeも共通`GameActivityScaffold`の単一top chromeで「前の画面へ戻る」／連続／結晶／heart HUDを保持する。誤答保存後のheartを開いた画面へ反映し、デキすぎ君はAIアンテナ・開いた本・腕・目線の共通輪郭と、待機／手招き／聞く／考える／応援／説明／祝福／時間切れ／再挑戦の9 reactionを形・Semanticsで表す。Orbit / Novaの装備は6タブからactivity・完了面まで途切れず、録音中だけ「話を聞いています」と告知する。activity badgeはsolid surfaceと境界でlight/darkの代表accent上3:1以上を保つ。Stories / Notationは実進捗からHeroの文言・reaction・単一CTAを導出し、Local Leagueはembedded時の見出し・ルールCTA重複を作らない。Heroと祝福面は要約を1回だけ読み上げ、キャラクター状態・指標・CTAは独立操作として残す。Story / Speaking / Bossを含む理科activityはGamePaletteへ統一。保存成功後だけ笑顔・500ms以下の祝福・実XP / 結晶 / 非保存の今回時間・「次の一歩」CTAを表示し、測っていない正答率を作らない。320×568・文字200%・light/dark・Reduce Motion、700dp以上、Semantics、6タブ／代表activity routeをwidget testで固定し、Android 16 emulatorでPathと実Lessonの固定HUD・overflowなしを目視 | 最新6タブ・代表activity・祝福面をAndroid / iOS物理端末で最終目視し、初見学習者5〜10分pilotを行う |
 
 ## Stories / Notation の完成境界
 
@@ -42,7 +42,7 @@
 
 ## 全体gate
 
-- 自動: Flutter 1148/1148・analyze 0、server 351/351・typecheck・catalog check・依存脆弱性0、Memory / SQLite同一contract
+- 自動: Flutter 1175/1175・analyze 0、server 370/370・typecheck・catalog check・依存脆弱性0、Memory / SQLite同一contract
 - 自動UI: 6タブroute、320×568・文字200%・light/dark・Reduce Motion・Semantics、700dp以上の可読幅とgrid
 - build: Android debug APKとiOS Simulator debug buildは成功。物理端末・配布署名の証拠には数えない
 - Git成果物: 必要な新規production / test / asset / workflowを意図的に追跡し、clean checkout CIが通るまで未完

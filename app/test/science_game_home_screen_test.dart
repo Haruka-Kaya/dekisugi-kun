@@ -483,6 +483,28 @@ Widget _app(
   );
 }
 
+void _expectSingleActivityChrome(WidgetTester tester) {
+  expect(find.byKey(const ValueKey('game-activity-scaffold')), findsOneWidget);
+  expect(
+    find.byKey(const ValueKey('game-activity-top-chrome')),
+    findsOneWidget,
+  );
+  expect(find.byKey(const ValueKey('game-activity-status')), findsOneWidget);
+  expect(find.byKey(const ValueKey('game-activity-exit')), findsOneWidget);
+  expect(find.byKey(const ValueKey('player-status-bar')), findsOneWidget);
+  expect(find.byType(AppBar), findsNothing);
+  final exitSize = tester.getSize(
+    find.byKey(const ValueKey('game-activity-exit')),
+  );
+  expect(exitSize.width, greaterThanOrEqualTo(48));
+  expect(exitSize.height, greaterThanOrEqualTo(48));
+}
+
+Future<void> _exitActivity(WidgetTester tester) async {
+  await tester.tap(find.byKey(const ValueKey('game-activity-exit')));
+  await tester.pumpAndSettle();
+}
+
 Future<void> _depletePersonalHearts(
   MemorySessionStore store, {
   int remaining = 0,
@@ -1377,6 +1399,7 @@ void main() {
     expect(find.byKey(const ValueKey('game-activity-status')), findsOneWidget);
     expect(find.byKey(const ValueKey('game-activity-exit')), findsOneWidget);
     expect(find.bySemanticsLabel('学習ハート、5個中5個'), findsOneWidget);
+    _expectSingleActivityChrome(tester);
     expect(find.text('物体には重力がはたらく。'), findsNothing);
   });
 
@@ -3016,6 +3039,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(ValueKey<String>(cta.destinationKey)), findsOneWidget);
+      _expectSingleActivityChrome(tester);
     });
   }
 
@@ -3313,6 +3337,33 @@ void main() {
     }
     await tester.tap(find.byKey(const ValueKey('game-tab-path')));
     await tester.pumpAndSettle();
+
+    final lessonId = GamePathProjection.nodeId(
+      'motion',
+      'fall',
+      GamePathNodeKind.lesson,
+    );
+    final lessonNode = find.byKey(ValueKey<String>('game-path-node-$lessonId'));
+    await tester.scrollUntilVisible(
+      lessonNode,
+      220,
+      scrollable: find.descendant(
+        of: find.byKey(const PageStorageKey<String>('game-learning-path')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.tap(lessonNode);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('game-node-sheet-start')));
+    await tester.pumpAndSettle();
+    _expectSingleActivityChrome(tester);
+    expect(find.bySemanticsLabel('前の画面へ戻る'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('path-mascot-orbit')),
+      findsOneWidget,
+      reason: 'activityと完了画面にも6タブと同じ装備を引き継ぐ',
+    );
+    await _exitActivity(tester);
 
     await tester.tap(find.byKey(const ValueKey('player-status-gems')));
     await tester.pumpAndSettle();
@@ -3737,7 +3788,7 @@ void main() {
       find.bySemanticsLabel(RegExp('この端末の学習者、1位、意味のある学習1件')),
       findsOneWidget,
     );
-    expect(find.textContaining('架空の相手やオンラインの偽順位は足しません'), findsOneWidget);
+    expect(find.textContaining('実在する仲間との週次順位だけ'), findsOneWidget);
   });
 
   testWidgets('2週休眠後の起動でも古い実順位から順に一度だけ確定し10段tierへ反映する', (tester) async {
@@ -3828,6 +3879,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const ValueKey('game-activity-status')), findsOneWidget);
+    _expectSingleActivityChrome(tester);
 
     var after = await store.learningProgressSnapshot(LearningScope.personal);
     expect(after.events.length, before.events.length);
@@ -3843,8 +3895,7 @@ void main() {
       SafeLearningEconomyCatalogV1.timedDayPassId,
     );
 
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+    await _exitActivity(tester);
     expect(find.byKey(const ValueKey('practice-hub-screen')), findsOneWidget);
     await _openOptionalPracticeMode(tester, 'timed');
     expect(
@@ -3855,6 +3906,7 @@ void main() {
       find.byKey(const ValueKey('science-timed-challenge-screen')),
       findsOneWidget,
     );
+    _expectSingleActivityChrome(tester);
     after = await store.learningProgressSnapshot(LearningScope.personal);
     expect(after.gemSpends, hasLength(1));
     expect(after.wallet.gems, before.wallet.gems - 1);
@@ -3907,6 +3959,7 @@ void main() {
       await tester.pumpAndSettle();
       await _openOptionalPracticeMode(tester, route.mode);
       expect(find.byKey(ValueKey(route.screenKey)), findsOneWidget);
+      _expectSingleActivityChrome(tester);
     });
   }
 
@@ -3974,6 +4027,7 @@ void main() {
         findsOneWidget,
         reason: '誤答保存後の実snapshotがactivity内固定statusへ反映される',
       );
+      _expectSingleActivityChrome(tester);
       final snapshot = await store.learningProgressSnapshot(
         LearningScope.personal,
       );
@@ -4131,6 +4185,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const ValueKey('game-activity-status')), findsOneWidget);
+    _expectSingleActivityChrome(tester);
     expect(
       find.byKey(const ValueKey('offline-practice-screen')),
       findsOneWidget,
@@ -4243,6 +4298,7 @@ void main() {
       find.byKey(const ValueKey('science-unit-legendary-screen')),
       findsOneWidget,
     );
+    _expectSingleActivityChrome(tester);
     expect(
       find.byKey(const ValueKey('unit-legendary-task-fall')),
       findsOneWidget,
@@ -4397,7 +4453,7 @@ void main() {
         .onTap!();
     await tester.pumpAndSettle();
     await tester.pumpAndSettle();
-    expect(find.text('期限の復習'), findsOneWidget);
+    expect(find.textContaining('SPACED REVIEW'), findsOneWidget);
 
     final reviewScroll = find
         .descendant(
@@ -4501,8 +4557,7 @@ void main() {
     expect(failed.skills.single.successfulRetrievals, 0);
     expect(failed.runs.single.activityIndex, 1);
 
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+    await _exitActivity(tester);
     await tester.tap(personalized);
     await tester.pumpAndSettle();
     expect(find.text('紙を丸めた場合を予想する。conditions'), findsOneWidget);
@@ -4920,8 +4975,7 @@ void main() {
       1,
     );
 
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+    await _exitActivity(tester);
     await tester.tap(node);
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('game-node-sheet-start')));

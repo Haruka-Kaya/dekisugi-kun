@@ -521,23 +521,29 @@ void main() {
 
   testWidgets('声は録音後に自分で再生するまで比較できず、16kHzで聞き返せる', (tester) async {
     final audio = _voice();
+    final semantics = tester.ensureSemantics();
     var completed = 0;
     await tester.pumpWidget(
       _wrap(voice: audio.practice, onCompleted: () => completed++),
     );
     await _passSpeakingTargetByText(tester);
     await _tapVisible(tester, const ValueKey('science-explain-choose-voice'));
+    expect(find.bySemanticsLabel(RegExp('デキすぎ君。一緒に考えています')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('デキすぎ君。話を聞いています')), findsNothing);
     await _tapVisible(
       tester,
       const ValueKey('science-explain-start-recording'),
     );
     await _flush(tester);
     expect(audio.mic.started, isTrue);
+    expect(find.bySemanticsLabel(RegExp('デキすぎ君。話を聞いています')), findsOneWidget);
 
     audio.mic.emit(3200);
     await _flush(tester);
     await _tapVisible(tester, const ValueKey('science-explain-stop-recording'));
     await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel(RegExp('デキすぎ君。一緒に考えています')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('デキすぎ君。話を聞いています')), findsNothing);
 
     final submit = find.byKey(const ValueKey('science-explain-submit-voice'));
     expect(tester.widget<FilledButton>(submit).onPressed, isNull);
@@ -547,6 +553,7 @@ void main() {
     await _flush(tester);
     expect(audio.sink.sampleRate, 16000);
     expect(audio.sink.startCalls, 1);
+    expect(find.bySemanticsLabel(RegExp('デキすぎ君。話を聞いています')), findsNothing);
     expect(tester.widget<FilledButton>(submit).onPressed, isNotNull);
 
     await _tapVisible(tester, const ValueKey('science-explain-submit-voice'));
@@ -559,6 +566,7 @@ void main() {
 
     expect(completed, 1);
     expect(audio.practice.snapshot.recordedBytes, 0);
+    semantics.dispose();
   });
 
   testWidgets('route終了時に録音中でもRAM・マイク・playerを破棄する', (tester) async {

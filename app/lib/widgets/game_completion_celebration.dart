@@ -112,20 +112,24 @@ class GameCompletionCelebration extends StatelessWidget {
                       .jaWeight(FontWeight.w800),
                 ),
                 const SizedBox(height: GameTokens.spaceXs),
-                Text(
-                  summary.title,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium
-                      ?.copyWith(color: colors.ink, height: 1.35)
-                      .jaWeight(FontWeight.w800),
+                ExcludeSemantics(
+                  child: Text(
+                    summary.title,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineMedium
+                        ?.copyWith(color: colors.ink, height: 1.35)
+                        .jaWeight(FontWeight.w800),
+                  ),
                 ),
                 const SizedBox(height: GameTokens.spaceSm),
-                Text(
-                  summary.message,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge?.copyWith(color: colors.inkMuted),
+                ExcludeSemantics(
+                  child: Text(
+                    summary.message,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(color: colors.inkMuted),
+                  ),
                 ),
                 const SizedBox(height: GameTokens.spaceXl),
                 Wrap(

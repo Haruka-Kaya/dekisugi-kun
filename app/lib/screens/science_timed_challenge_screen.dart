@@ -10,6 +10,7 @@ import '../models/unit.dart';
 import '../services/challenge_deadline.dart';
 import '../ui/_material.dart';
 import '../widgets/cognitive_task_input.dart';
+import '../widgets/game_activity_scaffold.dart';
 import '../widgets/science_challenge_support.dart';
 
 enum _TimedPhase { intro, task, checkpoint, result }
@@ -290,19 +291,22 @@ class _ScienceTimedChallengeScreenState
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
     final reduceMotion = ReduceMotionScope.of(context);
+    final hasSharedChrome = GameActivityScaffold.hasSharedChrome(context);
     return Scaffold(
       key: const ValueKey('science-timed-challenge-screen'),
       backgroundColor: colors.canvas,
-      appBar: AppBar(
-        backgroundColor: colors.canvas,
-        foregroundColor: colors.ink,
-        title: Text(
-          '時間制チャレンジ',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
-        ),
-      ),
+      appBar: hasSharedChrome
+          ? null
+          : AppBar(
+              backgroundColor: colors.canvas,
+              foregroundColor: colors.ink,
+              title: Text(
+                '時間制チャレンジ',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
+              ),
+            ),
       body: SafeArea(
         top: false,
         child: Align(
@@ -699,9 +703,11 @@ class _TimedResult extends StatelessWidget {
           icon: icon,
           accent: accent,
           onAccent: foreground,
-          mascotReaction: outcome == _TimedOutcome.cleared
-              ? GameCharacterReaction.celebrate
-              : GameCharacterReaction.encourage,
+          mascotReaction: switch (outcome) {
+            _TimedOutcome.cleared => GameCharacterReaction.celebrate,
+            _TimedOutcome.needsReview => GameCharacterReaction.retry,
+            _TimedOutcome.timeUp => GameCharacterReaction.outOfTime,
+          },
         ),
         const SizedBox(height: GameTokens.spaceXl),
         if (response != null)

@@ -5,6 +5,7 @@ import '../models/game_path.dart';
 import '../models/unit.dart';
 import '../ui/_material.dart';
 import 'cognitive_task_input.dart';
+import 'game_activity_scaffold.dart';
 import 'learning_path.dart';
 
 /// 画面内だけにある構造化回答と、catalog v4の固定解を照合する。
@@ -53,7 +54,7 @@ class ScienceChallengeHeader extends StatelessWidget {
     required this.icon,
     required this.accent,
     required this.onAccent,
-    this.mascotStyle = LearningPathMascotStyle.standard,
+    this.mascotStyle,
     this.mascotReaction = GameCharacterReaction.encourage,
   });
 
@@ -63,7 +64,7 @@ class ScienceChallengeHeader extends StatelessWidget {
   final IconData icon;
   final Color accent;
   final Color onAccent;
-  final LearningPathMascotStyle mascotStyle;
+  final LearningPathMascotStyle? mascotStyle;
   final GameCharacterReaction mascotReaction;
 
   @override
@@ -140,58 +141,81 @@ class ScienceActivityMascotBadge extends StatelessWidget {
     required this.icon,
     required this.accent,
     required this.onAccent,
-    this.mascotStyle = LearningPathMascotStyle.standard,
+    this.mascotStyle,
     this.mascotReaction = GameCharacterReaction.encourage,
   });
 
   final IconData icon;
   final Color accent;
   final Color onAccent;
-  final LearningPathMascotStyle mascotStyle;
+  final LearningPathMascotStyle? mascotStyle;
   final GameCharacterReaction mascotReaction;
 
   static const double _mascotSize = 52;
   static const double _activityBadgeSize = 20;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    label: 'デキすぎ君。${mascotReaction.semanticsLabel}',
-    child: ExcludeSemantics(
-      child: SizedBox.square(
-        key: const ValueKey('science-activity-mascot-badge'),
-        dimension: GameTokens.heroLeadingSize,
-        child: Stack(
-          children: [
-            Positioned(
-              left: 0,
-              top: 0,
-              child: PathMascotPreview(
-                key: const ValueKey('science-activity-mascot-region'),
-                reaction: mascotReaction,
-                size: _mascotSize,
-                style: mascotStyle,
-              ),
-            ),
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: Container(
-                key: const ValueKey('science-activity-kind-icon'),
-                width: _activityBadgeSize,
-                height: _activityBadgeSize,
-                decoration: BoxDecoration(
-                  color: onAccent,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: accent, width: 2),
+  Widget build(BuildContext context) {
+    final colors = context.gamePalette;
+    final resolvedMascotStyle =
+        mascotStyle ?? GameActivityScaffold.mascotStyleOf(context);
+    return Semantics(
+      label: 'デキすぎ君。${mascotReaction.semanticsLabel}',
+      child: ExcludeSemantics(
+        child: SizedBox.square(
+          key: const ValueKey('science-activity-mascot-badge'),
+          dimension: GameTokens.heroLeadingSize,
+          child: Stack(
+            children: [
+              Positioned(
+                left: 0,
+                top: 0,
+                child: SizedBox.square(
+                  dimension: _mascotSize,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Container(
+                        key: const ValueKey('science-activity-mascot-surface'),
+                        decoration: BoxDecoration(
+                          color: colors.surface,
+                          borderRadius: BorderRadius.circular(
+                            GameTokens.radiusMd,
+                          ),
+                          border: Border.all(color: onAccent, width: 2),
+                        ),
+                      ),
+                      PathMascotPreview(
+                        key: const ValueKey('science-activity-mascot-region'),
+                        reaction: mascotReaction,
+                        size: _mascotSize,
+                        style: resolvedMascotStyle,
+                      ),
+                    ],
+                  ),
                 ),
-                child: Icon(icon, color: accent, size: 12),
               ),
-            ),
-          ],
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  key: const ValueKey('science-activity-kind-icon'),
+                  width: _activityBadgeSize,
+                  height: _activityBadgeSize,
+                  decoration: BoxDecoration(
+                    color: onAccent,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: accent, width: 2),
+                  ),
+                  child: Icon(icon, color: accent, size: 12),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class ScienceChallengeSurface extends StatelessWidget {

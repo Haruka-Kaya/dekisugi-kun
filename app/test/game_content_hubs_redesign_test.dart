@@ -4,9 +4,11 @@ import 'package:dekisugi/config/motion.dart';
 import 'package:dekisugi/learning/domain/learning_economy.dart';
 import 'package:dekisugi/learning/services/daily_audio_practice_plan.dart';
 import 'package:dekisugi/models/game_hub.dart';
+import 'package:dekisugi/models/game_path.dart';
 import 'package:dekisugi/screens/notation_lab_hub_screen.dart';
 import 'package:dekisugi/screens/practice_hub_screen.dart';
 import 'package:dekisugi/screens/stories_screen.dart';
+import 'package:dekisugi/widgets/game_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -197,9 +199,11 @@ Widget _host({
 
 StoriesScreen _stories({
   LearningPathMascotStyle mascotStyle = LearningPathMascotStyle.standard,
+  List<StoryEpisodeView> episodes = _episodes,
+  ValueChanged<StoryEpisodeView>? onOpen,
 }) => StoriesScreen(
-  episodes: _episodes,
-  onOpen: (_) {},
+  episodes: episodes,
+  onOpen: onOpen ?? (_) {},
   mascotStyle: mascotStyle,
 );
 
@@ -216,9 +220,11 @@ PracticeHubScreen _practice({
 
 NotationLabHubScreen _notation({
   LearningPathMascotStyle mascotStyle = LearningPathMascotStyle.standard,
+  List<NotationLabEntry> entries = _notationEntries,
+  ValueChanged<NotationLabEntry>? onOpen,
 }) => NotationLabHubScreen(
-  entries: _notationEntries,
-  onOpen: (_) {},
+  entries: entries,
+  onOpen: onOpen ?? (_) {},
   mascotStyle: mascotStyle,
 );
 
@@ -238,7 +244,70 @@ Future<void> _reveal(WidgetTester tester, Finder target, Key screenKey) async {
 BoxDecoration _decoration(WidgetTester tester, Finder finder) =>
     tester.widget<Container>(finder).decoration! as BoxDecoration;
 
+GameCharacterReaction _heroReaction(WidgetTester tester) => tester
+    .widget<GameHeroSurface>(find.byType(GameHeroSurface))
+    .mascotReaction!;
+
 void main() {
+  testWidgets('共通Heroは要約を一度だけ読み、補足・設定・CTAは独立操作として残す', (tester) async {
+    final semantics = tester.ensureSemantics();
+    var actionCount = 0;
+    final colors = GamePalette.light;
+
+    await tester.pumpWidget(
+      _host(
+        fixtureKey: 'hero-semantics',
+        child: GameHeroSurface(
+          color: colors.story,
+          foregroundColor: colors.onStory,
+          eyebrow: '研究ミッション',
+          title: '重力の見出し',
+          body: '観察を比べます。',
+          semanticSummary: '研究ミッション。重力の見出し。観察を比べます。',
+          leading: Semantics(
+            label: '装飾アイコン',
+            child: const Icon(Icons.science_outlined),
+          ),
+          trailing: Semantics(
+            button: true,
+            label: '設定を開く',
+            excludeSemantics: true,
+            child: IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.settings_outlined),
+            ),
+          ),
+          content: Semantics(
+            label: '補足情報',
+            excludeSemantics: true,
+            child: const Text('進捗の補足'),
+          ),
+          primaryAction: FilledButton(
+            onPressed: () => actionCount++,
+            child: const Text('続ける'),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('研究ミッション'), findsOneWidget);
+    expect(find.text('重力の見出し'), findsOneWidget);
+    expect(find.text('観察を比べます。'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('研究ミッション')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('重力の見出し')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('観察を比べます。')), findsOneWidget);
+    expect(find.bySemanticsLabel('装飾アイコン'), findsOneWidget);
+    expect(find.bySemanticsLabel('補足情報'), findsOneWidget);
+    expect(find.bySemanticsLabel('設定を開く'), findsOneWidget);
+    expect(find.bySemanticsLabel('続ける'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('続ける'));
+    await tester.pump();
+    expect(actionCount, 1);
+    semantics.dispose();
+  });
+
   testWidgets('3つのhubは320x568・文字200%のlight/darkで末尾まで読める', (tester) async {
     tester.view.physicalSize = const Size(320, 568);
     tester.view.devicePixelRatio = 1;
@@ -307,24 +376,24 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('3つのhubは装備中mascotを静止reaction付きHeroへ反映する', (tester) async {
+  testWidgets('3つのhubは装備中mascotを現在状態のreaction付きHeroへ反映する', (tester) async {
     tester.view.physicalSize = const Size(320, 568);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final semantics = tester.ensureSemantics();
 
-    final fixtures = <({Widget screen, String reaction})>[
+    final fixtures = <({Widget screen, GameCharacterReaction reaction})>[
       (
         screen: _stories(mascotStyle: LearningPathMascotStyle.orbit),
-        reaction: '一緒に考えています',
+        reaction: GameCharacterReaction.encourage,
       ),
       (
         screen: _practice(mascotStyle: LearningPathMascotStyle.orbit),
-        reaction: '学習を応援しています',
+        reaction: GameCharacterReaction.encourage,
       ),
       (
         screen: _notation(mascotStyle: LearningPathMascotStyle.orbit),
-        reaction: '一緒に考えています',
+        reaction: GameCharacterReaction.encourage,
       ),
     ];
 
@@ -340,12 +409,177 @@ void main() {
 
       expect(find.byKey(const ValueKey('game-hero-mascot')), findsOneWidget);
       expect(find.byKey(const ValueKey('path-mascot-orbit')), findsOneWidget);
+      expect(_heroReaction(tester), fixture.reaction);
       expect(
-        find.bySemanticsLabel('軌道リングのデキすぎ君が${fixture.reaction}'),
+        find.bySemanticsLabel('軌道リングのデキすぎ君が${fixture.reaction.semanticsLabel}'),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
     }
+    semantics.dispose();
+  });
+
+  testWidgets('Stories HeroはinProgressを最優先し、続きのreactionと単一CTAへ結ぶ', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final semantics = tester.ensureSemantics();
+    StoryEpisodeView? opened;
+
+    await tester.pumpWidget(
+      _host(
+        fixtureKey: 'stories-priority',
+        brightness: Brightness.dark,
+        textScaler: const TextScaler.linear(2),
+        child: _stories(
+          episodes: [_episodes[0], _episodes[3], _episodes[1]],
+          onOpen: (episode) => opened = episode,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('「回路に流れる手がかり」の続き'), findsOneWidget);
+    expect(_heroReaction(tester), GameCharacterReaction.encourage);
+    expect(
+      find.bySemanticsLabel(RegExp('理科事件簿.*続きの事件は回路に流れる手がかり')),
+      findsOneWidget,
+    );
+    final action = find.byKey(const ValueKey('stories-primary-action'));
+    expect(action, findsOneWidget);
+    expect(tester.getSize(action).height, greaterThanOrEqualTo(48));
+    await _reveal(tester, action, const ValueKey('stories-screen'));
+    await tester.tap(action);
+    expect(opened?.id, 'progress');
+    expect(tester.takeException(), isNull);
+    semantics.dispose();
+  });
+
+  testWidgets('Stories Heroはreview→availableの順で選び、完了と空は独立reactionになる', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+
+    await tester.pumpWidget(
+      _host(
+        fixtureKey: 'stories-review',
+        child: _stories(episodes: [_episodes[0], _episodes[3]]),
+      ),
+    );
+    expect(find.text('「磁界をもう一度調べる」をもう一度'), findsOneWidget);
+    expect(find.text('もう一度調べる'), findsOneWidget);
+    expect(_heroReaction(tester), GameCharacterReaction.thinking);
+
+    await tester.pumpWidget(
+      _host(
+        fixtureKey: 'stories-available',
+        child: _stories(episodes: [_episodes[0]]),
+      ),
+    );
+    expect(find.text('浮く力の謎'), findsWidgets);
+    expect(find.text('事件を開く'), findsOneWidget);
+    expect(_heroReaction(tester), GameCharacterReaction.invite);
+
+    await tester.pumpWidget(
+      _host(
+        fixtureKey: 'stories-completed',
+        child: _stories(episodes: [_episodes[2]]),
+      ),
+    );
+    expect(find.text('すべての事件を解明しました'), findsOneWidget);
+    expect(find.byKey(const ValueKey('stories-primary-action')), findsNothing);
+    expect(_heroReaction(tester), GameCharacterReaction.celebrate);
+
+    await tester.pumpWidget(
+      _host(
+        fixtureKey: 'stories-empty',
+        child: _stories(episodes: const []),
+      ),
+    );
+    expect(find.text('最初の事件を準備中'), findsOneWidget);
+    expect(find.byKey(const ValueKey('stories-primary-action')), findsNothing);
+    expect(_heroReaction(tester), GameCharacterReaction.invite);
+    expect(tester.takeException(), isNull);
+    semantics.dispose();
+  });
+
+  testWidgets('Notation HeroはreviewDueを最優先し、次課題のreactionと単一CTAへ結ぶ', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final semantics = tester.ensureSemantics();
+    NotationLabEntry? opened;
+
+    await tester.pumpWidget(
+      _host(
+        fixtureKey: 'notation-priority',
+        brightness: Brightness.dark,
+        textScaler: const TextScaler.linear(2),
+        child: _notation(
+          entries: [_notationEntries[0], _notationEntries[2]],
+          onOpen: (entry) => opened = entry,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('「速度のグラフ」をもう一度'), findsOneWidget);
+    expect(_heroReaction(tester), GameCharacterReaction.encourage);
+    expect(find.bySemanticsLabel(RegExp('記号ラボ.*次は速度のグラフを復習')), findsOneWidget);
+    final action = find.byKey(const ValueKey('notation-lab-primary-action'));
+    expect(action, findsOneWidget);
+    expect(tester.getSize(action).height, greaterThanOrEqualTo(48));
+    await _reveal(tester, action, const ValueKey('notation-lab-hub'));
+    await tester.tap(action);
+    expect(opened?.id, 'review');
+    expect(tester.takeException(), isNull);
+    semantics.dispose();
+  });
+
+  testWidgets('Notation Heroはavailableを直結し、全完了と空は独立reactionになる', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+
+    await tester.pumpWidget(
+      _host(
+        fixtureKey: 'notation-available',
+        child: _notation(entries: [_notationEntries[0]]),
+      ),
+    );
+    expect(find.text('次の課題を開く'), findsOneWidget);
+    expect(_heroReaction(tester), GameCharacterReaction.invite);
+
+    await tester.pumpWidget(
+      _host(
+        fixtureKey: 'notation-completed',
+        child: _notation(entries: [_notationEntries[1]]),
+      ),
+    );
+    expect(find.text('すべての記号課題を練習しました'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('notation-lab-primary-action')),
+      findsNothing,
+    );
+    expect(_heroReaction(tester), GameCharacterReaction.celebrate);
+
+    await tester.pumpWidget(
+      _host(
+        fixtureKey: 'notation-empty',
+        child: _notation(entries: const []),
+      ),
+    );
+    expect(find.text('最初の記号課題を準備中'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('notation-lab-primary-action')),
+      findsNothing,
+    );
+    expect(_heroReaction(tester), GameCharacterReaction.invite);
+    expect(tester.takeException(), isNull);
     semantics.dispose();
   });
 

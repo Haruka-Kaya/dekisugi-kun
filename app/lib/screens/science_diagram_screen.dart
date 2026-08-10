@@ -7,6 +7,7 @@ import '../models/game_path.dart';
 import '../models/unit.dart';
 import '../ui/_material.dart';
 import '../widgets/cognitive_task_input.dart';
+import '../widgets/game_activity_scaffold.dart';
 import '../widgets/science_challenge_support.dart';
 
 enum _ReflectionChoice { keep, revise }
@@ -149,6 +150,7 @@ class _ScienceDiagramScreenState extends State<ScienceDiagramScreen> {
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
     final reduceMotion = ReduceMotionScope.of(context);
+    final hasSharedChrome = GameActivityScaffold.hasSharedChrome(context);
     final headerBody = _finished
         ? '自分の組み方と教材を比べ終えました。'
         : _submitted
@@ -158,16 +160,18 @@ class _ScienceDiagramScreenState extends State<ScienceDiagramScreen> {
     return Scaffold(
       key: const ValueKey('science-diagram-screen'),
       backgroundColor: colors.canvas,
-      appBar: AppBar(
-        backgroundColor: colors.canvas,
-        foregroundColor: colors.ink,
-        title: Text(
-          'しくみ図',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
-        ),
-      ),
+      appBar: hasSharedChrome
+          ? null
+          : AppBar(
+              backgroundColor: colors.canvas,
+              foregroundColor: colors.ink,
+              title: Text(
+                'しくみ図',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
+              ),
+            ),
       body: SafeArea(
         top: false,
         child: Align(

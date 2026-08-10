@@ -8,6 +8,7 @@ import '../models/game_path.dart';
 import '../models/unit.dart';
 import '../services/challenge_deadline.dart';
 import '../ui/_material.dart';
+import '../widgets/game_activity_scaffold.dart';
 import '../widgets/science_challenge_support.dart';
 import '../widgets/science_mini_game_widgets.dart';
 
@@ -294,19 +295,22 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
   @override
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
+    final hasSharedChrome = GameActivityScaffold.hasSharedChrome(context);
     return Scaffold(
       key: const ValueKey('science-match-lab-screen'),
       backgroundColor: colors.canvas,
-      appBar: AppBar(
-        backgroundColor: colors.canvas,
-        foregroundColor: colors.ink,
-        title: Text(
-          'Match Lab',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
-        ),
-      ),
+      appBar: hasSharedChrome
+          ? null
+          : AppBar(
+              backgroundColor: colors.canvas,
+              foregroundColor: colors.ink,
+              title: Text(
+                'Match Lab',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
+              ),
+            ),
       body: SafeArea(
         top: false,
         child: Align(
@@ -457,9 +461,11 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
               : Icons.pause_circle_outline_rounded,
           accent: cleared ? colors.pathComplete : colors.surfaceRaised,
           onAccent: cleared ? colors.onPathComplete : colors.ink,
-          mascotReaction: cleared
-              ? GameCharacterReaction.celebrate
-              : GameCharacterReaction.encourage,
+          mascotReaction: switch (_outcome!) {
+            _MatchOutcome.cleared => GameCharacterReaction.celebrate,
+            _MatchOutcome.needsReview => GameCharacterReaction.retry,
+            _MatchOutcome.timeUp => GameCharacterReaction.outOfTime,
+          },
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(

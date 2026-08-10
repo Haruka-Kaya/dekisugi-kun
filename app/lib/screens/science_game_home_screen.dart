@@ -696,6 +696,9 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     statusListenable: status,
     schoolMode: widget.schoolMode,
     onExit: onExit,
+    mascotStyle:
+        _game?.economy.equippedPathMascotStyle ??
+        LearningPathMascotStyle.standard,
     child: child,
   );
 

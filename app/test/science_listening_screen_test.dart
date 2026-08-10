@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dekisugi/config/app_theme.dart';
 import 'package:dekisugi/config/motion.dart';
 import 'package:dekisugi/learning/domain/learning_heart.dart';
@@ -9,8 +11,29 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/science_challenge_fixture.dart';
 
+final class _PendingNarration implements LocalNarration {
+  final started = Completer<void>();
+  final result = Completer<LocalNarrationResult>();
+
+  @override
+  Future<LocalNarrationResult> play(LocalNarrationRequest request) {
+    if (!started.isCompleted) started.complete();
+    return result.future;
+  }
+
+  @override
+  Future<void> stop() async {}
+
+  @override
+  Future<void> dispose() async {
+    if (!result.isCompleted) {
+      result.complete(const LocalNarrationResult.unavailable());
+    }
+  }
+}
+
 Widget _app({
-  required FakeLocalNarration narration,
+  required LocalNarration narration,
   VoidCallback? onCompleted,
   VoidCallback? onReturnToPath,
   LearningNeedEvidenceReported? onNeedEvidence,
@@ -66,6 +89,26 @@ Future<void> _transcribeAndOpenMeaning(
 }
 
 void main() {
+  testWidgets('読み上げ中は説明ポーズとSemanticsを表示する', (tester) async {
+    final semantics = tester.ensureSemantics();
+    final narration = _PendingNarration();
+    await tester.pumpWidget(_app(narration: narration));
+
+    await _tapVisible(tester, find.text('説明を聞く'));
+    await narration.started.future;
+    expect(find.bySemanticsLabel(RegExp('デキすぎ君。説明しています')), findsOneWidget);
+
+    narration.result.complete(
+      const LocalNarrationResult(
+        completed: true,
+        delivery: LocalNarrationDelivery.deviceSpeechSynthesis,
+      ),
+    );
+    await tester.pump();
+    expect(find.bySemanticsLabel(RegExp('デキすぎ君。一緒に考えています')), findsOneWidget);
+    semantics.dispose();
+  });
+
   testWidgets('音声を最後まで聞く前は正本・文字起こし入力・選択肢を先出ししない', (tester) async {
     final narration = FakeLocalNarration();
     await tester.pumpWidget(_app(narration: narration));

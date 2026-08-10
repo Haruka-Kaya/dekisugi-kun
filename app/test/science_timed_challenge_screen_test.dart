@@ -123,6 +123,10 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     expect(find.byKey(const ValueKey('timed-result')), findsOneWidget);
     expect(find.text('時間になりました'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(RegExp('時間になったことを落ち着いて伝えています')),
+      findsOneWidget,
+    );
     expect(find.textContaining('Path・連続学習・報酬'), findsOneWidget);
     expect(finished, 0, reason: '時間切れを外部の完了イベントにしない');
     expect(heartLosses, isEmpty, reason: '時間切れではハートを失わない');
@@ -186,6 +190,7 @@ void main() {
 
     expect(find.byKey(const ValueKey('timed-result')), findsOneWidget);
     expect(find.text('今回はここまで'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('もう一度取り組めるよう案内しています')), findsOneWidget);
     expect(
       find.byKey(const ValueKey('cognitive-task-choice-task-together')),
       findsNothing,

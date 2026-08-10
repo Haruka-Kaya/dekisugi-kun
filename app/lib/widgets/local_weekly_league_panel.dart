@@ -35,8 +35,10 @@ class LocalWeeklyLeaguePanel extends StatelessWidget {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _LeagueHeader(),
-        const SizedBox(height: GameTokens.spaceLg),
+        if (!embedded) ...[
+          const _LeagueHeader(),
+          const SizedBox(height: GameTokens.spaceLg),
+        ],
         switch (view.availability) {
           LocalWeeklyLeagueAvailability.schoolDisabled =>
             const _UnavailableMessage(
@@ -62,6 +64,7 @@ class LocalWeeklyLeaguePanel extends StatelessWidget {
             selectedParticipantId: selectedParticipantId,
             onSelectParticipant: onSelectParticipant,
             onStartNextRound: onStartNextRound,
+            showRulesDisclosure: !embedded,
           ),
         },
       ],
@@ -290,12 +293,14 @@ class _ActiveLeague extends StatelessWidget {
     required this.selectedParticipantId,
     required this.onSelectParticipant,
     required this.onStartNextRound,
+    required this.showRulesDisclosure,
   });
 
   final LocalWeeklyLeagueView view;
   final String? selectedParticipantId;
   final ValueChanged<String>? onSelectParticipant;
   final VoidCallback? onStartNextRound;
+  final bool showRulesDisclosure;
 
   @override
   Widget build(BuildContext context) {
@@ -368,36 +373,38 @@ class _ActiveLeague extends StatelessWidget {
                 : '次の学習を記録する参加枠は、学習画面側から選べます。',
             style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
           ),
-        const SizedBox(height: GameTokens.spaceMd),
-        OutlinedButton.icon(
-          key: const ValueKey('local-weekly-league-rules'),
-          onPressed: () => showGamePageSheet<void>(
-            context: context,
-            title: '端末手渡しリーグの計測ルール',
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _InlineNotice(
-                  icon: Icons.replay_outlined,
-                  text: '同じ学習の周回は0件です。同じeventを別の人や別roundへ使い回せません。',
-                ),
-                SizedBox(height: GameTokens.spaceMd),
-                _InlineNotice(
-                  icon: Icons.lock_open_outlined,
-                  text: '順位や参加枠を選ばなくても、Pathと練習はいつでも続けられます。',
-                ),
-                SizedBox(height: GameTokens.spaceMd),
-                _InlineNotice(
-                  icon: Icons.shield_outlined,
-                  text:
-                      'slot 1は「この端末の学習者」、他slotは「2人目〜8人目」と件数だけを使い、名前・account・回答・正誤を表示・保存しません。',
-                ),
-              ],
+        if (showRulesDisclosure) ...[
+          const SizedBox(height: GameTokens.spaceMd),
+          OutlinedButton.icon(
+            key: const ValueKey('local-weekly-league-rules'),
+            onPressed: () => showGamePageSheet<void>(
+              context: context,
+              title: '端末手渡しリーグの計測ルール',
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _InlineNotice(
+                    icon: Icons.replay_outlined,
+                    text: '同じ学習の周回は0件です。同じeventを別の人や別roundへ使い回せません。',
+                  ),
+                  SizedBox(height: GameTokens.spaceMd),
+                  _InlineNotice(
+                    icon: Icons.lock_open_outlined,
+                    text: '順位や参加枠を選ばなくても、Pathと練習はいつでも続けられます。',
+                  ),
+                  SizedBox(height: GameTokens.spaceMd),
+                  _InlineNotice(
+                    icon: Icons.shield_outlined,
+                    text:
+                        'slot 1は「この端末の学習者」、他slotは「2人目〜8人目」と件数だけを使い、名前・account・回答・正誤を表示・保存しません。',
+                  ),
+                ],
+              ),
             ),
+            icon: const Icon(Icons.policy_outlined),
+            label: const Text('計測ルールと保存範囲'),
           ),
-          icon: const Icon(Icons.policy_outlined),
-          label: const Text('計測ルールと保存範囲'),
-        ),
+        ],
       ],
     );
   }

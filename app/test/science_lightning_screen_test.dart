@@ -158,6 +158,7 @@ void main() {
     );
 
     expect(find.text('今回はここまで'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('もう一度取り組めるよう案内しています')), findsOneWidget);
     expect(find.byKey(const ValueKey('lightning-option-same')), findsNothing);
     expect(find.textContaining('空気中で差を生む'), findsNothing);
     expect(find.byKey(const ValueKey('lightning-complete')), findsNothing);
@@ -190,6 +191,10 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
 
     expect(find.text('時間になりました'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(RegExp('時間になったことを落ち着いて伝えています')),
+      findsOneWidget,
+    );
     expect(find.textContaining('Path・連続学習・報酬は変わりません'), findsOneWidget);
     expect(find.byKey(const ValueKey('lightning-complete')), findsNothing);
     expect(completed, 0);

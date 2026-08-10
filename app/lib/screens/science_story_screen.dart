@@ -240,13 +240,15 @@ class _ScienceStoryScreenState extends State<ScienceStoryScreen>
               conceptLabel: widget.conceptLabel,
               stageLabel: _variant.stage.label,
               act: _act,
-              reaction: switch (_scene) {
-                _StoryScene.situation => GameCharacterReaction.invite,
-                _StoryScene.judgment => GameCharacterReaction.thinking,
-                _StoryScene.reaction ||
-                _StoryScene.comparison => GameCharacterReaction.encourage,
-                _StoryScene.complete => GameCharacterReaction.celebrate,
-              },
+              reaction: _speaking
+                  ? GameCharacterReaction.speaking
+                  : switch (_scene) {
+                      _StoryScene.situation => GameCharacterReaction.invite,
+                      _StoryScene.judgment => GameCharacterReaction.thinking,
+                      _StoryScene.reaction ||
+                      _StoryScene.comparison => GameCharacterReaction.encourage,
+                      _StoryScene.complete => GameCharacterReaction.celebrate,
+                    },
             ),
             Expanded(
               child: SingleChildScrollView(

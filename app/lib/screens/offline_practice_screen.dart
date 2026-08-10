@@ -11,6 +11,7 @@ import '../models/unit.dart';
 import '../ui/_material.dart';
 import '../widgets/cognitive_task_input.dart';
 import '../widgets/emphasis_text.dart';
+import '../widgets/game_activity_scaffold.dart';
 import '../widgets/readable_width.dart';
 import '../widgets/science_challenge_support.dart';
 import '../widgets/prediction_result_compare.dart';
@@ -388,20 +389,23 @@ class _OfflinePracticeScreenState extends State<OfflinePracticeScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
+    final hasSharedChrome = GameActivityScaffold.hasSharedChrome(context);
     return Scaffold(
       key: const ValueKey('offline-practice-screen'),
       backgroundColor: colors.canvas,
-      appBar: AppBar(
-        backgroundColor: colors.canvas,
-        foregroundColor: colors.ink,
-        surfaceTintColor: Colors.transparent,
-        title: Text(
-          widget.missionKind == MissionKind.caseRetry ? '章ボス' : '端末内で練習',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.jaWeight(FontWeight.w700),
-        ),
-      ),
+      appBar: hasSharedChrome
+          ? null
+          : AppBar(
+              backgroundColor: colors.canvas,
+              foregroundColor: colors.ink,
+              surfaceTintColor: Colors.transparent,
+              title: Text(
+                widget.missionKind == MissionKind.caseRetry ? '章ボス' : '端末内で練習',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.jaWeight(FontWeight.w700),
+              ),
+            ),
       body: SafeArea(
         top: false,
         child: ReadableWidth(

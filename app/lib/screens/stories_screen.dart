@@ -27,6 +27,8 @@ class StoriesScreen extends StatelessWidget {
     final completed = episodes
         .where((episode) => episode.state == GameContentState.completed)
         .length;
+    final hero = _storyHeroState(episodes);
+    final primaryEpisode = hero.primaryEpisode;
     return GamePageScaffold(
       scrollKey: const ValueKey('stories-screen'),
       children: [
@@ -34,12 +36,13 @@ class StoriesScreen extends StatelessWidget {
           surfaceKey: const ValueKey('stories-hero'),
           color: colors.story,
           foregroundColor: colors.onStory,
-          eyebrow: '観察ストーリー',
-          title: '理科事件簿',
-          body: 'デキすぎ君の思い込みを、観察と理由で解き明かします。読むだけでなく、条件と結果をつなぎます。',
+          eyebrow: hero.eyebrow,
+          title: hero.title,
+          body: hero.body,
           semanticSummary:
-              '理科事件簿。${episodes.length}件中$readable件が読めます。$completed件完了',
-          mascotReaction: GameCharacterReaction.thinking,
+              '理科事件簿。${episodes.length}件中$readable件が読めます。'
+              '$completed件完了。${hero.semanticState}',
+          mascotReaction: hero.reaction,
           mascotStyle: mascotStyle,
           content: GameSolidSurface(
             padding: const EdgeInsets.all(GameTokens.spaceMd),
@@ -59,6 +62,21 @@ class StoriesScreen extends StatelessWidget {
               ],
             ),
           ),
+          primaryAction: primaryEpisode == null
+              ? null
+              : FilledButton.icon(
+                  key: const ValueKey('stories-primary-action'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.surface,
+                    foregroundColor: colors.story,
+                    minimumSize: const Size.fromHeight(
+                      GameTokens.minTouchTarget,
+                    ),
+                  ),
+                  onPressed: () => onOpen(primaryEpisode),
+                  icon: Icon(hero.actionIcon),
+                  label: Text(hero.actionLabel!),
+                ),
         ),
         const SizedBox(height: GameTokens.spaceXl),
         const GameSectionHeader(
@@ -78,6 +96,108 @@ class StoriesScreen extends StatelessWidget {
       ],
     );
   }
+}
+
+typedef _StoryHeroState = ({
+  String eyebrow,
+  String title,
+  String body,
+  String semanticState,
+  GameCharacterReaction reaction,
+  StoryEpisodeView? primaryEpisode,
+  String? actionLabel,
+  IconData? actionIcon,
+});
+
+_StoryHeroState _storyHeroState(List<StoryEpisodeView> episodes) {
+  StoryEpisodeView? firstWith(GameContentState state) {
+    for (final episode in episodes) {
+      if (episode.state == state) return episode;
+    }
+    return null;
+  }
+
+  final primary =
+      firstWith(GameContentState.inProgress) ??
+      firstWith(GameContentState.dueReview) ??
+      firstWith(GameContentState.available);
+  if (primary != null) {
+    return switch (primary.state) {
+      GameContentState.inProgress => (
+        eyebrow: '理科事件簿 ・ 続き',
+        title: '「${primary.title}」の続き',
+        body: '前回の判断から再開し、観察と理由を最後までつなぎます。',
+        semanticState: '続きの事件は${primary.title}です',
+        reaction: GameCharacterReaction.encourage,
+        primaryEpisode: primary,
+        actionLabel: '続きから読む',
+        actionIcon: Icons.play_arrow_rounded,
+      ),
+      GameContentState.dueReview => (
+        eyebrow: '理科事件簿 ・ 再検証',
+        title: '「${primary.title}」をもう一度',
+        body: '前に解明した事件を、条件と結果を思い出しながら再検証します。',
+        semanticState: '次は${primary.title}を再検証します',
+        reaction: GameCharacterReaction.thinking,
+        primaryEpisode: primary,
+        actionLabel: 'もう一度調べる',
+        actionIcon: Icons.replay_rounded,
+      ),
+      GameContentState.available => (
+        eyebrow: '理科事件簿 ・ 次の事件',
+        title: primary.title,
+        body: '${primary.conceptLabel}の思い込みを、観察と理由で解き明かします。',
+        semanticState: '次は${primary.title}を読みます',
+        reaction: GameCharacterReaction.invite,
+        primaryEpisode: primary,
+        actionLabel: '事件を開く',
+        actionIcon: Icons.menu_book_rounded,
+      ),
+      _ => throw StateError(
+        'Unsupported primary story state: ${primary.state}',
+      ),
+    };
+  }
+
+  final allCompleted =
+      episodes.isNotEmpty &&
+      episodes.every((episode) => episode.state == GameContentState.completed);
+  if (allCompleted) {
+    return (
+      eyebrow: '理科事件簿 ・ 解明済み',
+      title: 'すべての事件を解明しました',
+      body: '観察した条件と結果を、学習パスで次の問いにつなげられます。',
+      semanticState: 'すべての事件を解明済みです',
+      reaction: GameCharacterReaction.celebrate,
+      primaryEpisode: null,
+      actionLabel: null,
+      actionIcon: null,
+    );
+  }
+
+  if (episodes.isEmpty) {
+    return (
+      eyebrow: '理科事件簿',
+      title: '最初の事件を準備中',
+      body: '学習パスを進めると、ここに観察ストーリーが現れます。',
+      semanticState: '事件を準備中です',
+      reaction: GameCharacterReaction.invite,
+      primaryEpisode: null,
+      actionLabel: null,
+      actionIcon: null,
+    );
+  }
+
+  return (
+    eyebrow: '理科事件簿 ・ 未解放',
+    title: '次の事件は学習パスで解放',
+    body: '現在の必修ノードを終えると、次の事件ファイルを読めます。',
+    semanticState: '読める事件はまだありません',
+    reaction: GameCharacterReaction.invite,
+    primaryEpisode: null,
+    actionLabel: null,
+    actionIcon: null,
+  );
 }
 
 class _EmptyStories extends StatelessWidget {

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:dekisugi/config/app_theme.dart';
 import 'package:dekisugi/config/game_tokens.dart';
 import 'package:dekisugi/learning/domain/learning_economy.dart';
@@ -7,6 +9,18 @@ import 'package:dekisugi/widgets/dekisugi_character_art.dart';
 import 'package:dekisugi/widgets/learning_path.dart';
 import 'package:dekisugi/widgets/science_challenge_support.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+double _contrast(Color foreground, Color background) {
+  final lighter = math.max(
+    foreground.computeLuminance(),
+    background.computeLuminance(),
+  );
+  final darker = math.min(
+    foreground.computeLuminance(),
+    background.computeLuminance(),
+  );
+  return (lighter + 0.05) / (darker + 0.05);
+}
 
 void main() {
   testWidgets('Challenge headerは320dp・200%でもmascotと行動を一体表示する', (tester) async {
@@ -78,11 +92,15 @@ void main() {
           final mascotRegion = find.byKey(
             const ValueKey('science-activity-mascot-region'),
           );
+          final mascotSurface = find.byKey(
+            const ValueKey('science-activity-mascot-surface'),
+          );
           final activityIcon = find.byKey(
             const ValueKey('science-activity-kind-icon'),
           );
           expect(tester.getSize(frame), const Size.square(72));
           expect(tester.getSize(mascotRegion), const Size.square(52));
+          expect(tester.getRect(mascotSurface), tester.getRect(mascotRegion));
           expect(tester.getSize(activityIcon), const Size.square(20));
           expect(
             tester.getRect(mascotRegion).overlaps(tester.getRect(activityIcon)),
@@ -103,9 +121,13 @@ void main() {
           expect(art.pose, switch (reaction) {
             GameCharacterReaction.none => DekisugiCharacterPose.idle,
             GameCharacterReaction.invite => DekisugiCharacterPose.invite,
+            GameCharacterReaction.listening => DekisugiCharacterPose.listening,
             GameCharacterReaction.thinking => DekisugiCharacterPose.thinking,
             GameCharacterReaction.encourage => DekisugiCharacterPose.encourage,
+            GameCharacterReaction.speaking => DekisugiCharacterPose.speaking,
             GameCharacterReaction.celebrate => DekisugiCharacterPose.celebrate,
+            GameCharacterReaction.outOfTime => DekisugiCharacterPose.outOfTime,
+            GameCharacterReaction.retry => DekisugiCharacterPose.retry,
           });
           expect(
             find.bySemanticsLabel('${style.label}、${reaction.semanticsLabel}'),
@@ -121,6 +143,72 @@ void main() {
       }
     } finally {
       semantics.dispose();
+    }
+  });
+
+  testWidgets('mascotはsolid surfaceとaccent境界の上で3:1以上を保つ', (tester) async {
+    for (final brightness in Brightness.values) {
+      final theme = buildAppTheme(brightness);
+      final palette = theme.extension<GamePalette>()!;
+      final character = theme.extension<AppColors>()!;
+      final accents = <String, (Color, Color)>{
+        'pathActive': (palette.pathActive, palette.onPathActive),
+        'pathComplete': (palette.pathComplete, palette.onPathComplete),
+        'pathReview': (palette.pathReview, palette.onPathReview),
+        'pathLocked': (palette.pathLocked, palette.onPathLocked),
+        'story': (palette.story, palette.onStory),
+        'legendary': (palette.legendary, palette.onLegendary),
+        'surfaceRaised': (palette.surfaceRaised, palette.ink),
+      };
+
+      for (final entry in accents.entries) {
+        final (accent, onAccent) = entry.value;
+        await tester.pumpWidget(
+          MaterialApp(
+            key: ValueKey('${brightness.name}-${entry.key}'),
+            theme: theme,
+            darkTheme: theme,
+            themeMode: brightness == Brightness.dark
+                ? ThemeMode.dark
+                : ThemeMode.light,
+            home: Scaffold(
+              backgroundColor: accent,
+              body: ScienceActivityMascotBadge(
+                icon: Icons.science_outlined,
+                accent: accent,
+                onAccent: onAccent,
+              ),
+            ),
+          ),
+        );
+
+        final art = tester.widget<DekisugiCharacterArt>(
+          find.byType(DekisugiCharacterArt),
+        );
+        final surface = tester.widget<Container>(
+          find.byKey(const ValueKey('science-activity-mascot-surface')),
+        );
+        final decoration = surface.decoration! as BoxDecoration;
+        expect(art.body, character.charBody);
+        expect(decoration.color, palette.surface);
+        expect(decoration.gradient, isNull);
+        expect(decoration.boxShadow, isNull);
+        expect(
+          _contrast(art.body, decoration.color!),
+          greaterThanOrEqualTo(3),
+          reason: '${brightness.name}/${entry.key}/charBody/backing',
+        );
+        expect(decoration.border, isA<Border>());
+        final border = decoration.border! as Border;
+        expect(border.top.color, onAccent);
+        expect(border.top.width, 2);
+        expect(
+          _contrast(border.top.color, accent),
+          greaterThanOrEqualTo(3),
+          reason: '${brightness.name}/${entry.key}/border',
+        );
+        expect(tester.takeException(), isNull);
+      }
     }
   });
 }

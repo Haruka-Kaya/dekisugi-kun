@@ -383,6 +383,10 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen> {
               conceptLabel: widget.conceptLabel,
               stageLabel: _variant.stage.label,
               step: _step,
+              listening:
+                  _pronunciationSnapshot.state ==
+                      LocalPronunciationState.listening ||
+                  _voiceSnapshot.state == LocalVoicePracticeState.recording,
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -687,11 +691,13 @@ class _Header extends StatelessWidget {
     required this.conceptLabel,
     required this.stageLabel,
     required this.step,
+    required this.listening,
   });
 
   final String conceptLabel;
   final String stageLabel;
   final _ExplainStep step;
+  final bool listening;
 
   @override
   Widget build(BuildContext context) {
@@ -704,13 +710,16 @@ class _Header extends StatelessWidget {
       _ExplainStep.compare => '教材と自己比較',
       _ExplainStep.complete => '比較完了',
     };
-    final mascotReaction = switch (step) {
-      _ExplainStep.pronunciation ||
-      _ExplainStep.choose => GameCharacterReaction.invite,
-      _ExplainStep.voice || _ExplainStep.text => GameCharacterReaction.thinking,
-      _ExplainStep.compare => GameCharacterReaction.encourage,
-      _ExplainStep.complete => GameCharacterReaction.celebrate,
-    };
+    final mascotReaction = listening
+        ? GameCharacterReaction.listening
+        : switch (step) {
+            _ExplainStep.pronunciation ||
+            _ExplainStep.choose => GameCharacterReaction.invite,
+            _ExplainStep.voice ||
+            _ExplainStep.text => GameCharacterReaction.thinking,
+            _ExplainStep.compare => GameCharacterReaction.encourage,
+            _ExplainStep.complete => GameCharacterReaction.celebrate,
+          };
     return Semantics(
       container: true,
       label:

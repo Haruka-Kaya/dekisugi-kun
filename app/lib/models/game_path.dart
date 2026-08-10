@@ -24,15 +24,29 @@ enum GamePathNodeState {
   legendaryCompleted,
 }
 
-enum GameCharacterReaction { none, invite, thinking, encourage, celebrate }
+enum GameCharacterReaction {
+  none,
+  invite,
+  listening,
+  thinking,
+  encourage,
+  speaking,
+  celebrate,
+  outOfTime,
+  retry,
+}
 
 extension GameCharacterReactionPresentation on GameCharacterReaction {
   String get semanticsLabel => switch (this) {
     GameCharacterReaction.none => 'そばにいます',
     GameCharacterReaction.invite => '次の学習へ手招きしています',
+    GameCharacterReaction.listening => '話を聞いています',
     GameCharacterReaction.thinking => '一緒に考えています',
     GameCharacterReaction.encourage => '学習を応援しています',
+    GameCharacterReaction.speaking => '説明しています',
     GameCharacterReaction.celebrate => '笑顔で成果を祝っています',
+    GameCharacterReaction.outOfTime => '時間になったことを落ち着いて伝えています',
+    GameCharacterReaction.retry => 'もう一度取り組めるよう案内しています',
   };
 }
 

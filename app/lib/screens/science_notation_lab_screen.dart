@@ -5,6 +5,7 @@ import '../learning/domain/learning_need.dart';
 import '../models/game_path.dart';
 import '../models/unit.dart';
 import '../ui/_material.dart';
+import '../widgets/game_activity_scaffold.dart';
 import '../widgets/science_challenge_support.dart';
 import '../widgets/science_mini_game_widgets.dart';
 
@@ -376,19 +377,22 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
+    final hasSharedChrome = GameActivityScaffold.hasSharedChrome(context);
     return Scaffold(
       key: const ValueKey('science-notation-lab-screen'),
       backgroundColor: colors.canvas,
-      appBar: AppBar(
-        backgroundColor: colors.canvas,
-        foregroundColor: colors.ink,
-        title: Text(
-          'Notation Lab',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
-        ),
-      ),
+      appBar: hasSharedChrome
+          ? null
+          : AppBar(
+              backgroundColor: colors.canvas,
+              foregroundColor: colors.ink,
+              title: Text(
+                'Notation Lab',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
+              ),
+            ),
       body: SafeArea(
         top: false,
         child: Align(

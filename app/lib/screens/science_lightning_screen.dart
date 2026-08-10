@@ -8,6 +8,7 @@ import '../models/game_path.dart';
 import '../models/unit.dart';
 import '../services/challenge_deadline.dart';
 import '../ui/_material.dart';
+import '../widgets/game_activity_scaffold.dart';
 import '../widgets/science_challenge_support.dart';
 import '../widgets/science_mini_game_widgets.dart';
 
@@ -306,19 +307,22 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
   @override
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
+    final hasSharedChrome = GameActivityScaffold.hasSharedChrome(context);
     return Scaffold(
       key: const ValueKey('science-lightning-screen'),
       backgroundColor: colors.canvas,
-      appBar: AppBar(
-        backgroundColor: colors.canvas,
-        foregroundColor: colors.ink,
-        title: Text(
-          'Lightning',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
-        ),
-      ),
+      appBar: hasSharedChrome
+          ? null
+          : AppBar(
+              backgroundColor: colors.canvas,
+              foregroundColor: colors.ink,
+              title: Text(
+                'Lightning',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
+              ),
+            ),
       body: SafeArea(
         top: false,
         child: Align(
@@ -468,9 +472,11 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
           icon: cleared ? Icons.bolt_rounded : Icons.pause_circle_outline,
           accent: cleared ? colors.pathComplete : colors.surfaceRaised,
           onAccent: cleared ? colors.onPathComplete : colors.ink,
-          mascotReaction: cleared
-              ? GameCharacterReaction.celebrate
-              : GameCharacterReaction.encourage,
+          mascotReaction: switch (_outcome!) {
+            _LightningOutcome.cleared => GameCharacterReaction.celebrate,
+            _LightningOutcome.needsReview => GameCharacterReaction.retry,
+            _LightningOutcome.timeUp => GameCharacterReaction.outOfTime,
+          },
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(

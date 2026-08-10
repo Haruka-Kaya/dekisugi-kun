@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsAction;
+
 import 'package:dekisugi/config/app_theme.dart';
 import 'package:dekisugi/config/game_tokens.dart';
 import 'package:dekisugi/learning/domain/learning_economy.dart';
@@ -39,6 +41,30 @@ const _notStarted = LocalWeeklyLeagueView(
   endDay: null,
   standings: [],
   activeRunId: null,
+  integrityConflictCount: 0,
+);
+
+const _activeLocal = LocalWeeklyLeagueView(
+  availability: LocalWeeklyLeagueAvailability.active,
+  weekKey: '2026-08-10',
+  endDay: '2026-08-16',
+  standings: [
+    LocalWeeklyLeagueStanding(
+      participantId: 'opaque.local.1',
+      slotNumber: 1,
+      meaningfulEventCount: 1,
+      rank: 1,
+      tied: true,
+    ),
+    LocalWeeklyLeagueStanding(
+      participantId: 'opaque.local.2',
+      slotNumber: 2,
+      meaningfulEventCount: 1,
+      rank: 1,
+      tied: true,
+    ),
+  ],
+  activeRunId: 'local-weekly-league.round.1',
   integrityConflictCount: 0,
 );
 
@@ -185,6 +211,87 @@ void main() {
       semantics.dispose();
     },
   );
+
+  testWidgets('active localは320x568・文字200%・light/darkでもHero見出しとルールCTAを各1つにする', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final semantics = tester.ensureSemantics();
+
+    for (final brightness in Brightness.values) {
+      await tester.pumpWidget(
+        _host(
+          brightness: brightness,
+          textScaler: const TextScaler.linear(2),
+          child: LeagueScreen(
+            player: _player,
+            schoolMode: false,
+            localWeeklyLeague: _activeLocal,
+            selectedLocalWeeklyLeagueParticipantId: 'opaque.local.1',
+            onSelectLocalWeeklyLeagueParticipant: (_) {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final hero = find.byKey(const ValueKey('league-progress'));
+      final heroHeading = find.descendant(
+        of: hero,
+        matching: find.text('ブロンズリーグ'),
+      );
+      expect(heroHeading, findsOneWidget);
+      expect(
+        tester
+            .getSemantics(heroHeading)
+            .getSemanticsData()
+            .flagsCollection
+            .isHeader,
+        isTrue,
+      );
+      expect(
+        find.text('端末手渡し週次リーグ'),
+        findsNothing,
+        reason: 'embedded panelの見出しは外側Heroと競合させない',
+      );
+      expect(
+        find.bySemanticsLabel(RegExp('端末手渡し週次リーグ。実在する2人、意味のある学習2件')),
+        findsOneWidget,
+        reason: '見出しを省いてもactive状態の読み上げは維持する',
+      );
+
+      expect(
+        find.byKey(const ValueKey('local-weekly-league-rules')),
+        findsNothing,
+        reason: 'embedded panelは内側のルールCTAを構築しない',
+      );
+      final rules = find.byKey(const ValueKey('league-rules-disclosure'));
+      expect(rules, findsOneWidget);
+      expect(find.text('ルールとプライバシー'), findsOneWidget);
+      expect(find.text('計測ルールと保存範囲'), findsNothing);
+      await _reveal(tester, rules, const ValueKey('league-screen'));
+      expect(
+        tester.getSize(rules).height,
+        greaterThanOrEqualTo(GameTokens.minTouchTarget),
+      );
+      final rulesSemantics = tester.getSemantics(rules).getSemanticsData();
+      expect(rulesSemantics.label, contains('ルールとプライバシー'));
+      expect(rulesSemantics.flagsCollection.isButton, isTrue);
+      expect(rulesSemantics.hasAction(SemanticsAction.tap), isTrue);
+
+      await tester.tap(rules);
+      await tester.pumpAndSettle();
+      expect(find.text('リーグのルールと保存範囲'), findsOneWidget);
+      expect(find.text('同じ学習の周回は数えない'), findsOneWidget);
+      expect(find.textContaining('氏名・account・回答・正誤は表示・保存しません'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.tapAt(const Offset(4, 4));
+      await tester.pumpAndSettle();
+    }
+
+    semantics.dispose();
+  });
 
   testWidgets('Profileはマスコット・バッジ棚・quest boardを主役にし320dp/200%で溢れない', (
     tester,

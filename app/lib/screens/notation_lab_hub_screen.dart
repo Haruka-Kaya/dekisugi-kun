@@ -45,6 +45,8 @@ class NotationLabHubScreen extends StatelessWidget {
     final reviewDue = entries
         .where((entry) => entry.state == NotationLabState.reviewDue)
         .length;
+    final hero = _notationHeroState(entries);
+    final primaryEntry = hero.primaryEntry;
     return GamePageScaffold(
       scrollKey: const ValueKey('notation-lab-hub'),
       children: [
@@ -52,11 +54,13 @@ class NotationLabHubScreen extends StatelessWidget {
           surfaceKey: const ValueKey('notation-lab-hero'),
           color: colors.story,
           foregroundColor: colors.onStory,
-          eyebrow: '数学表現を理科で使う',
-          title: '記号ラボ',
-          body: '式・単位・矢印・グラフを、「なぞる→組む→読む」の順で練習します。',
-          semanticSummary: '記号ラボ。利用できる課題$available件。復習$reviewDue件',
-          mascotReaction: GameCharacterReaction.thinking,
+          eyebrow: hero.eyebrow,
+          title: hero.title,
+          body: hero.body,
+          semanticSummary:
+              '記号ラボ。利用できる課題$available件。復習$reviewDue件。'
+              '${hero.semanticState}',
+          mascotReaction: hero.reaction,
           mascotStyle: mascotStyle,
           content: GameSolidSurface(
             padding: const EdgeInsets.all(GameTokens.spaceMd),
@@ -76,6 +80,21 @@ class NotationLabHubScreen extends StatelessWidget {
               ],
             ),
           ),
+          primaryAction: primaryEntry == null
+              ? null
+              : FilledButton.icon(
+                  key: const ValueKey('notation-lab-primary-action'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.surface,
+                    foregroundColor: colors.story,
+                    minimumSize: const Size.fromHeight(
+                      GameTokens.minTouchTarget,
+                    ),
+                  ),
+                  onPressed: () => onOpen(primaryEntry),
+                  icon: Icon(hero.actionIcon),
+                  label: Text(hero.actionLabel!),
+                ),
         ),
         const SizedBox(height: GameTokens.spaceXl),
         const GameSectionHeader(
@@ -122,6 +141,97 @@ class NotationLabHubScreen extends StatelessWidget {
       ],
     );
   }
+}
+
+typedef _NotationHeroState = ({
+  String eyebrow,
+  String title,
+  String body,
+  String semanticState,
+  GameCharacterReaction reaction,
+  NotationLabEntry? primaryEntry,
+  String? actionLabel,
+  IconData? actionIcon,
+});
+
+_NotationHeroState _notationHeroState(List<NotationLabEntry> entries) {
+  NotationLabEntry? firstWith(NotationLabState state) {
+    for (final entry in entries) {
+      if (entry.state == state) return entry;
+    }
+    return null;
+  }
+
+  final primary =
+      firstWith(NotationLabState.reviewDue) ??
+      firstWith(NotationLabState.available);
+  if (primary != null) {
+    return switch (primary.state) {
+      NotationLabState.reviewDue => (
+        eyebrow: '記号ラボ ・ 復習',
+        title: '「${primary.conceptLabel}」をもう一度',
+        body: '${primary.description}「なぞる→組む→読む」の順で思い出します。',
+        semanticState: '次は${primary.conceptLabel}を復習します',
+        reaction: GameCharacterReaction.encourage,
+        primaryEntry: primary,
+        actionLabel: '復習をはじめる',
+        actionIcon: Icons.replay_rounded,
+      ),
+      NotationLabState.available => (
+        eyebrow: '記号ラボ ・ 次の課題',
+        title: primary.conceptLabel,
+        body: '${primary.description}記号が表す量と条件を順にたしかめます。',
+        semanticState: '次は${primary.conceptLabel}の課題を開きます',
+        reaction: GameCharacterReaction.invite,
+        primaryEntry: primary,
+        actionLabel: '次の課題を開く',
+        actionIcon: Icons.play_arrow_rounded,
+      ),
+      _ => throw StateError(
+        'Unsupported primary notation state: ${primary.state}',
+      ),
+    };
+  }
+
+  final allCompleted =
+      entries.isNotEmpty &&
+      entries.every((entry) => entry.state == NotationLabState.completed);
+  if (allCompleted) {
+    return (
+      eyebrow: '記号ラボ ・ 練習済み',
+      title: 'すべての記号課題を練習しました',
+      body: '式・単位・矢印・グラフを、次の理科の問いで使えます。',
+      semanticState: 'すべての記号課題を練習済みです',
+      reaction: GameCharacterReaction.celebrate,
+      primaryEntry: null,
+      actionLabel: null,
+      actionIcon: null,
+    );
+  }
+
+  if (entries.isEmpty) {
+    return (
+      eyebrow: '記号ラボ',
+      title: '最初の記号課題を準備中',
+      body: '学習パスを進めると、式・単位・矢印・グラフの課題が加わります。',
+      semanticState: '記号課題を準備中です',
+      reaction: GameCharacterReaction.invite,
+      primaryEntry: null,
+      actionLabel: null,
+      actionIcon: null,
+    );
+  }
+
+  return (
+    eyebrow: '記号ラボ ・ 未解放',
+    title: '次の記号課題は学習パスで解放',
+    body: '現在の必修ノードを終えると、次の記号課題を利用できます。',
+    semanticState: '利用できる記号課題はまだありません',
+    reaction: GameCharacterReaction.invite,
+    primaryEntry: null,
+    actionLabel: null,
+    actionIcon: null,
+  );
 }
 
 class _EntryCard extends StatelessWidget {

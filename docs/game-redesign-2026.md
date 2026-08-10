@@ -141,9 +141,23 @@ Duolingoの商標・キャラクター・画面を複製せず、理科版 `Orbi
 - ノードは72dp、押下100ms、完了演出だけ最大500ms
 - 保存成功後の完了面は、笑顔のデキすぎ君、実際に付与したXP / 結晶、この画面だけの経過時間、
   「次の一歩をマップで見る」を一つの主CTAとして返す。回答を採点していない課題に正答率を作らない
+- デキすぎ君は、AIのアンテナ、教わる立場を示す開いた本、非対称の腕と目線を共通輪郭とする。
+  Path / Live / Hub / activityで別のキャラクターにせず、待機・手招き・聞く・考える・応援・説明・祝福・
+  時間切れ・再挑戦の9反応を形とSemanticsの両方で分ける。音素タイミングが無いのに口パクを作らず、
+  listening / speakingはヘッドホン・音の形、timeUp / retryは時計・再挑戦記号で静止時も識別できるようにする
+- activityのキャラクターはaccent色の上へ直接置かず、solid surfaceと境界を持つ52dp領域へ置く。
+  light / darkの代表accentすべてで輪郭と背景を3:1以上に保ち、activity iconは非重複の20dp領域に分ける
+- 装備中のstandard / orbit / novaは6タブ、activity、保存成功後の祝福面まで同じ見た目を引き継ぎ、
+  Speakingの「聞いています」はマイクが実際にrecording中のときだけ告知する
 - Lesson / Diagram / Story / Listening / Speaking / Boss / Legendary / Notation / Timed系は
-  同じGamePalette / GameTokensと共通activity HUDを使う。画面ごとの`AppColors`や`ColorScheme`への
+  同じGamePalette / GameTokensと共通activity HUDを使う。共通HUDは戻る・連続学習・結晶・heartを含む唯一の上top chromeとし、
+  戻り先を決めつけず「前の画面へ戻る」と正しく読み上げ、Semanticsのactivate actionを持たせる。
+  子activityのAppBarと二重にしない。画面ごとの`AppColors`や`ColorScheme`への
   逆戻りを許さず、320dp・文字200%と700dp以上の双方で本文を最後まで読めるようにする
+- StoriesとNotationのHeroは装飾にしない。実在するin-progress / review-due / availableの優先1件から文言、reaction、
+  単一の主CTAを同時に導出し、全完了でだけ祝福する。Local Leagueのembedded表示は外側HeroとルールCTAを正本にし、
+  同じ見出しや操作を二重表示しない
+- Heroと完了面は見出し・本文の要約を1回だけ読み上げ、マスコット状態、指標、補足、設定、CTAは独立した子nodeで保つ
 - 320dp/文字200%ではpopupをanchor overlayではなくscrollable sheetへ切替
 - locked/completed/review/legendaryは色だけでなく形、icon、文言を併記
 - 700dp以上では本文を720dp以下に抑え、一覧は情報階層を変えず3列まで広げる

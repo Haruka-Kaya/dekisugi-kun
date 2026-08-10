@@ -96,9 +96,13 @@ class GameHeroSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
+    Widget excludeFromSummary(Widget child) =>
+        semanticSummary == null ? child : ExcludeSemantics(child: child);
+
     return Semantics(
       container: true,
       explicitChildNodes: true,
+      header: semanticSummary != null,
       label: semanticSummary,
       child: Container(
         key: surfaceKey,
@@ -127,23 +131,27 @@ class GameHeroSurface extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        eyebrow,
-                        style: t.labelLarge
-                            ?.copyWith(color: foregroundColor)
-                            .jaWeight(FontWeight.w800),
+                      excludeFromSummary(
+                        Text(
+                          eyebrow,
+                          style: t.labelLarge
+                              ?.copyWith(color: foregroundColor)
+                              .jaWeight(FontWeight.w800),
+                        ),
                       ),
                       const SizedBox(height: GameTokens.spaceXs),
-                      Semantics(
-                        header: true,
-                        child: Text(
-                          title,
-                          style: t.headlineSmall
-                              ?.copyWith(
-                                color: foregroundColor,
-                                height: GameTokens.heroTitleLineHeight,
-                              )
-                              .jaWeight(FontWeight.w900),
+                      excludeFromSummary(
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            title,
+                            style: t.headlineSmall
+                                ?.copyWith(
+                                  color: foregroundColor,
+                                  height: GameTokens.heroTitleLineHeight,
+                                )
+                                .jaWeight(FontWeight.w900),
+                          ),
                         ),
                       ),
                     ],
@@ -156,7 +164,9 @@ class GameHeroSurface extends StatelessWidget {
               ],
             ),
             const SizedBox(height: GameTokens.spaceMd),
-            Text(body, style: t.bodyMedium?.copyWith(color: foregroundColor)),
+            excludeFromSummary(
+              Text(body, style: t.bodyMedium?.copyWith(color: foregroundColor)),
+            ),
             if (content != null) ...[
               const SizedBox(height: GameTokens.spaceLg),
               content!,

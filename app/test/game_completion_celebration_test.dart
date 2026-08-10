@@ -63,20 +63,31 @@ Future<void> _pumpLauncher(
 
 void main() {
   testWidgets('保存済みのXP・結晶・一時時間と笑顔のマスコットを祝福面に出す', (tester) async {
+    final semantics = tester.ensureSemantics();
     GameCompletionAction? result;
     await _pumpLauncher(tester, onResult: (value) => result = value);
 
     expect(find.byKey(const ValueKey('game-completion-celebration')), findsOne);
     expect(find.text('やった！一歩進んだ'), findsOne);
+    expect(find.bySemanticsLabel(RegExp('やった！一歩進んだ')), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(RegExp('予想と観察を比べて、次の実験へ進めます。')),
+      findsOneWidget,
+    );
     expect(find.text('+10'), findsOne);
     expect(find.text('+1'), findsOne);
     expect(find.text('4:08'), findsOne);
+    expect(find.bySemanticsLabel('XP、+10'), findsOneWidget);
+    expect(find.bySemanticsLabel('結晶、+1'), findsOneWidget);
+    expect(find.bySemanticsLabel('今回の時間、4:08'), findsOneWidget);
     expect(find.textContaining('時間はこの完了画面だけ'), findsOne);
     expect(find.bySemanticsLabel('軌道リングのデキすぎ君が笑顔で学習完了を祝っています'), findsOne);
+    expect(find.bySemanticsLabel('次の一歩をマップで見る'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('completion-next-step')));
     await tester.pumpAndSettle();
     expect(result, GameCompletionAction.nextStep);
+    semantics.dispose();
   });
 
   testWidgets('320×568・文字200%でも縦にスクロールして両操作へ届く', (tester) async {
