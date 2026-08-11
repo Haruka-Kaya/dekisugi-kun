@@ -85,5 +85,8 @@ export default function handler(req: Req, res: Res) {
   // 一覧に教材の本文は載せない。選ぶのに要らないぶんを運ばない
   res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600')
   res.setHeader('Vary', 'Accept-Language')
-  res.status(200).json({ units: UNITS.map(local).map(publicUnitSummary) })
+  res.status(200).json({
+    schemaVersion: BUNDLED_UNIT_CATALOG_SCHEMA_VERSION,
+    units: UNITS.map(local).map(publicUnitSummary),
+  })
 }

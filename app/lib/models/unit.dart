@@ -12,35 +12,228 @@ import 'dart:math' as math;
 
 import '../services/transcript_text.dart';
 
-/// 一覧に公開する1概念。Storyの事件名も詳細と同じcatalog正本から受け取る。
+enum UnitCurriculumField {
+  matter,
+  energy,
+  life,
+  earth;
+
+  String get wire => name;
+
+  static UnitCurriculumField? parse(Object? value) => switch (value) {
+    'matter' => UnitCurriculumField.matter,
+    'energy' => UnitCurriculumField.energy,
+    'life' => UnitCurriculumField.life,
+    'earth' => UnitCurriculumField.earth,
+    _ => null,
+  };
+}
+
+enum UnitSafetyLevel {
+  homeSafe,
+  teacherGuided,
+  referenceOnly;
+
+  String get wire => name;
+
+  static UnitSafetyLevel? parse(Object? value) => switch (value) {
+    'homeSafe' => UnitSafetyLevel.homeSafe,
+    'teacherGuided' => UnitSafetyLevel.teacherGuided,
+    'referenceOnly' => UnitSafetyLevel.referenceOnly,
+    _ => null,
+  };
+}
+
+class UnitCurriculumReference {
+  const UnitCurriculumReference({
+    required this.document,
+    required this.section,
+    required this.pages,
+    required this.url,
+  });
+
+  final String document;
+  final String section;
+  final List<int> pages;
+  final String url;
+
+  static UnitCurriculumReference? fromJson(Map<String, Object?> json) {
+    if (!_hasExactKeys(json, const {'document', 'section', 'pages', 'url'})) {
+      return null;
+    }
+    final document = json['document'] as String?;
+    final section = _notationText(json['section'], maxLength: 300);
+    final rawPages = json['pages'];
+    final url = json['url'];
+    if (document != 'mext-jhs-science-2017' ||
+        section == null ||
+        rawPages is! List ||
+        rawPages.isEmpty ||
+        rawPages.length > 12 ||
+        rawPages.any(
+          (page) =>
+              page is! num ||
+              !page.isFinite ||
+              page.toInt() != page ||
+              page < 1 ||
+              page > 1000,
+        ) ||
+        url is! String ||
+        url !=
+            'https://www.mext.go.jp/component/a_menu/education/micro_detail/'
+                '__icsFiles/afieldfile/2019/03/18/1387018_005.pdf') {
+      return null;
+    }
+    final pages = rawPages.cast<num>().map((page) => page.toInt()).toList();
+    if (pages.toSet().length != pages.length) return null;
+    return UnitCurriculumReference(
+      document: 'mext-jhs-science-2017',
+      section: section,
+      pages: List.unmodifiable(pages),
+      url: url,
+    );
+  }
+
+  Map<String, Object?> toJson() => {
+    'document': document,
+    'section': section,
+    'pages': pages,
+    'url': url,
+  };
+}
+
+class UnitSafety {
+  const UnitSafety({required this.level, required this.guidance});
+
+  final UnitSafetyLevel level;
+  final String guidance;
+
+  static UnitSafety? fromJson(Map<String, Object?> json) {
+    if (!_hasExactKeys(json, const {'level', 'guidance'})) return null;
+    final level = UnitSafetyLevel.parse(json['level']);
+    final guidance = _notationText(json['guidance'], maxLength: 1000);
+    if (level == null || guidance == null) return null;
+    return UnitSafety(level: level, guidance: guidance);
+  }
+
+  Map<String, Object?> toJson() => {'level': level.wire, 'guidance': guidance};
+}
+
+/// 一覧に公開する1概念。Storyの事件名と学習指導要領対応も正本から受け取る。
 class UnitConcept {
   const UnitConcept({
     required this.key,
     required this.label,
     required this.storyTitle,
+    this.field = UnitCurriculumField.energy,
+    this.grade = 1,
+    this.curriculumRefs = const [],
+    this.prerequisites = const [],
+    this.difficulty = 1,
+    this.safety = const UnitSafety(
+      level: UnitSafetyLevel.referenceOnly,
+      guidance: '直接構築したfixtureのため観察は行わない。',
+    ),
   });
 
   final String key;
   final String label;
   final String storyTitle;
+  final UnitCurriculumField field;
+  final int grade;
+  final List<UnitCurriculumReference> curriculumRefs;
+  final List<String> prerequisites;
+  final int difficulty;
+  final UnitSafety safety;
 
   static UnitConcept? fromJson(Map<String, Object?> json) {
-    if (!_hasExactKeys(json, const {'key', 'label', 'storyTitle'})) {
+    if (!_hasExactKeys(json, const {
+      'key',
+      'label',
+      'storyTitle',
+      'field',
+      'grade',
+      'curriculumRefs',
+      'prerequisites',
+      'difficulty',
+      'safety',
+    })) {
       return null;
     }
     final key = _notationText(json['key'], maxLength: 128);
     final label = _notationText(json['label'], maxLength: 300);
     final storyTitle = _notationText(json['storyTitle'], maxLength: 300);
-    if (key == null || label == null || storyTitle == null) {
+    final field = UnitCurriculumField.parse(json['field']);
+    final grade = json['grade'];
+    final difficulty = json['difficulty'];
+    final rawReferences = json['curriculumRefs'];
+    final rawPrerequisites = json['prerequisites'];
+    final safetyJson = _stringKeyedMap(json['safety']);
+    if (key == null ||
+        label == null ||
+        storyTitle == null ||
+        field == null ||
+        grade is! num ||
+        !grade.isFinite ||
+        grade.toInt() != grade ||
+        grade < 1 ||
+        grade > 3 ||
+        difficulty is! num ||
+        !difficulty.isFinite ||
+        difficulty.toInt() != difficulty ||
+        difficulty < 1 ||
+        difficulty > 5 ||
+        rawReferences is! List ||
+        rawReferences.isEmpty ||
+        rawReferences.any((reference) => reference is! Map) ||
+        rawPrerequisites is! List ||
+        rawPrerequisites.any(
+          (value) => value is! String || value.trim().isEmpty || value == key,
+        ) ||
+        safetyJson == null) {
       return null;
     }
-    return UnitConcept(key: key, label: label, storyTitle: storyTitle);
+    final references = <UnitCurriculumReference>[];
+    for (final rawReference in rawReferences.cast<Map>()) {
+      final referenceJson = _stringKeyedMap(rawReference);
+      if (referenceJson == null) return null;
+      final reference = UnitCurriculumReference.fromJson(referenceJson);
+      if (reference == null) return null;
+      references.add(reference);
+    }
+    final prerequisites = rawPrerequisites.cast<String>();
+    final safety = UnitSafety.fromJson(safetyJson);
+    if (prerequisites.toSet().length != prerequisites.length ||
+        references.map((reference) => reference.section).toSet().length !=
+            references.length ||
+        safety == null) {
+      return null;
+    }
+    return UnitConcept(
+      key: key,
+      label: label,
+      storyTitle: storyTitle,
+      field: field,
+      grade: grade.toInt(),
+      curriculumRefs: List.unmodifiable(references),
+      prerequisites: List.unmodifiable(prerequisites),
+      difficulty: difficulty.toInt(),
+      safety: safety,
+    );
   }
 
   Map<String, Object?> toJson() => {
     'key': key,
     'label': label,
     'storyTitle': storyTitle,
+    'field': field.wire,
+    'grade': grade,
+    'curriculumRefs': [
+      for (final reference in curriculumRefs) reference.toJson(),
+    ],
+    'prerequisites': prerequisites,
+    'difficulty': difficulty,
+    'safety': safety.toJson(),
   };
 }
 
@@ -1232,19 +1425,455 @@ class LocalNotationGraphTask {
   };
 }
 
-/// server catalog v8から損失なく復元するNotation Lab正本。
-class LocalNotationLab {
-  const LocalNotationLab({
-    required this.orderTasks,
-    required this.symbolMatch,
-    required this.graphRead,
+enum LocalNotationTaskKind {
+  modelBuild,
+  labelDiagram,
+  sequence,
+  tableRead,
+  graphRead,
+  symbolMatch;
+
+  String get wire => name;
+  bool get isArrange =>
+      this == LocalNotationTaskKind.modelBuild ||
+      this == LocalNotationTaskKind.sequence;
+
+  static LocalNotationTaskKind? parse(Object? value) => switch (value) {
+    'modelBuild' => LocalNotationTaskKind.modelBuild,
+    'labelDiagram' => LocalNotationTaskKind.labelDiagram,
+    'sequence' => LocalNotationTaskKind.sequence,
+    'tableRead' => LocalNotationTaskKind.tableRead,
+    'graphRead' => LocalNotationTaskKind.graphRead,
+    'symbolMatch' => LocalNotationTaskKind.symbolMatch,
+    _ => null,
+  };
+}
+
+sealed class LocalNotationTask {
+  const LocalNotationTask({
+    required this.kind,
+    required this.id,
+    required this.needCode,
+    required this.title,
+    required this.prompt,
+    required this.solutionSummary,
   });
 
-  final List<LocalNotationOrderTask> orderTasks;
-  final LocalNotationSymbolTask symbolMatch;
-  final LocalNotationGraphTask graphRead;
+  final LocalNotationTaskKind kind;
+  final String id;
+  final String? needCode;
+  final String title;
+  final String prompt;
+  final String solutionSummary;
+
+  static LocalNotationTask? fromJson(Map<String, Object?> json) {
+    final kind = LocalNotationTaskKind.parse(json['kind']);
+    if (kind == null) return null;
+    return kind.isArrange
+        ? LocalNotationArrangeTask.fromJson(json, kind: kind)
+        : LocalNotationChoiceTask.fromJson(json, kind: kind);
+  }
+
+  Map<String, Object?> toJson();
+}
+
+final class LocalNotationArrangeTask extends LocalNotationTask {
+  const LocalNotationArrangeTask({
+    required super.kind,
+    required super.id,
+    required super.needCode,
+    required super.title,
+    required super.prompt,
+    required super.solutionSummary,
+    required this.guide,
+    required this.tokens,
+    required this.correctOrderIds,
+    this.tracePattern,
+  }) : assert(
+         kind == LocalNotationTaskKind.modelBuild ||
+             kind == LocalNotationTaskKind.sequence,
+       );
+
+  final String guide;
+  final List<LocalNotationToken> tokens;
+  final List<String> correctOrderIds;
+  final LocalNotationTracePattern? tracePattern;
+
+  static LocalNotationArrangeTask? fromJson(
+    Map<String, Object?> json, {
+    required LocalNotationTaskKind kind,
+  }) {
+    final hasTrace = json.containsKey('tracePattern');
+    final expectedKeys = {
+      'kind',
+      'id',
+      'needCode',
+      'title',
+      'prompt',
+      'guide',
+      'tokens',
+      'correctOrderIds',
+      'solutionSummary',
+      if (hasTrace) 'tracePattern',
+    };
+    if (!kind.isArrange || !_hasExactKeys(json, expectedKeys)) return null;
+    final id = _notationText(json['id'], maxLength: 128);
+    final needCode = _needCodeText(json['needCode']);
+    final title = _notationText(json['title'], maxLength: 200);
+    final prompt = _notationText(json['prompt'], maxLength: 2000);
+    final guide = _notationText(json['guide'], maxLength: 2000);
+    final solutionSummary = _notationText(
+      json['solutionSummary'],
+      maxLength: 2000,
+    );
+    final rawTokens = json['tokens'];
+    final rawOrder = json['correctOrderIds'];
+    final traceJson = hasTrace ? _stringKeyedMap(json['tracePattern']) : null;
+    final tracePattern = traceJson == null
+        ? null
+        : LocalNotationTracePattern.fromJson(traceJson);
+    if (id == null ||
+        needCode == null ||
+        !_notationNeedMatchesKind(needCode, kind) ||
+        title == null ||
+        prompt == null ||
+        guide == null ||
+        solutionSummary == null ||
+        rawTokens is! List ||
+        rawTokens.length < 2 ||
+        rawTokens.length > 6 ||
+        rawTokens.any((token) => token is! Map) ||
+        rawOrder is! List ||
+        rawOrder.length != rawTokens.length ||
+        rawOrder.any((value) => value is! String) ||
+        (hasTrace && tracePattern == null)) {
+      return null;
+    }
+    final tokens = <LocalNotationToken>[];
+    for (final rawToken in rawTokens.cast<Map>()) {
+      final tokenJson = _stringKeyedMap(rawToken);
+      if (tokenJson == null) return null;
+      final token = LocalNotationToken.fromJson(tokenJson);
+      if (token == null) return null;
+      tokens.add(token);
+    }
+    final tokenIds = tokens.map((token) => token.id).toSet();
+    final order = rawOrder.cast<String>();
+    if (tokenIds.length != tokens.length ||
+        order.toSet().length != tokens.length ||
+        !order.every(tokenIds.contains) ||
+        _sameStringOrder(tokens.map((token) => token.id).toList(), order)) {
+      return null;
+    }
+    return LocalNotationArrangeTask(
+      kind: kind,
+      id: id,
+      needCode: needCode,
+      title: title,
+      prompt: prompt,
+      solutionSummary: solutionSummary,
+      guide: guide,
+      tokens: List.unmodifiable(tokens),
+      correctOrderIds: List.unmodifiable(order),
+      tracePattern: tracePattern,
+    );
+  }
+
+  @override
+  Map<String, Object?> toJson() => {
+    'kind': kind.wire,
+    'id': id,
+    if (needCode != null) 'needCode': needCode,
+    'title': title,
+    'prompt': prompt,
+    'guide': guide,
+    if (tracePattern != null) 'tracePattern': tracePattern!.toJson(),
+    'tokens': [for (final token in tokens) token.toJson()],
+    'correctOrderIds': correctOrderIds,
+    'solutionSummary': solutionSummary,
+  };
+}
+
+final class LocalNotationChoiceTask extends LocalNotationTask {
+  const LocalNotationChoiceTask({
+    required super.kind,
+    required super.id,
+    required super.needCode,
+    required super.title,
+    required super.prompt,
+    required super.solutionSummary,
+    required this.representation,
+    required this.representationSemanticsLabel,
+    required this.choices,
+    required this.correctChoiceId,
+  }) : assert(
+         kind != LocalNotationTaskKind.modelBuild &&
+             kind != LocalNotationTaskKind.sequence,
+       );
+
+  final List<String> representation;
+  final String representationSemanticsLabel;
+  final List<LocalNotationChoice> choices;
+  final String correctChoiceId;
+
+  static LocalNotationChoiceTask? fromJson(
+    Map<String, Object?> json, {
+    required LocalNotationTaskKind kind,
+  }) {
+    if (kind.isArrange ||
+        !_hasExactKeys(json, const {
+          'kind',
+          'id',
+          'needCode',
+          'title',
+          'prompt',
+          'representation',
+          'representationSemanticsLabel',
+          'choices',
+          'correctChoiceId',
+          'solutionSummary',
+        })) {
+      return null;
+    }
+    final id = _notationText(json['id'], maxLength: 128);
+    final needCode = _needCodeText(json['needCode']);
+    final title = _notationText(json['title'], maxLength: 200);
+    final prompt = _notationText(json['prompt'], maxLength: 2000);
+    final solutionSummary = _notationText(
+      json['solutionSummary'],
+      maxLength: 2000,
+    );
+    final semantics = _notationText(
+      json['representationSemanticsLabel'],
+      maxLength: 2000,
+    );
+    final rawRepresentation = json['representation'];
+    final correctChoiceId = _notationText(
+      json['correctChoiceId'],
+      maxLength: 128,
+    );
+    final parsedChoices = _parseNotationChoices(json['choices']);
+    if (id == null ||
+        needCode == null ||
+        !_notationNeedMatchesKind(needCode, kind) ||
+        title == null ||
+        prompt == null ||
+        solutionSummary == null ||
+        semantics == null ||
+        rawRepresentation is! List ||
+        rawRepresentation.length > 10 ||
+        rawRepresentation.any(
+          (line) => line is! String || line.trim().isEmpty || line.length > 300,
+        ) ||
+        (kind != LocalNotationTaskKind.symbolMatch &&
+            rawRepresentation.length < 2) ||
+        correctChoiceId == null ||
+        parsedChoices == null ||
+        parsedChoices.length < 2 ||
+        parsedChoices.length > 5 ||
+        parsedChoices.where((choice) => choice.id == correctChoiceId).length !=
+            1) {
+      return null;
+    }
+    return LocalNotationChoiceTask(
+      kind: kind,
+      id: id,
+      needCode: needCode,
+      title: title,
+      prompt: prompt,
+      solutionSummary: solutionSummary,
+      representation: List.unmodifiable(rawRepresentation.cast<String>()),
+      representationSemanticsLabel: semantics,
+      choices: parsedChoices,
+      correctChoiceId: correctChoiceId,
+    );
+  }
+
+  @override
+  Map<String, Object?> toJson() => {
+    'kind': kind.wire,
+    'id': id,
+    if (needCode != null) 'needCode': needCode,
+    'title': title,
+    'prompt': prompt,
+    'representation': representation,
+    'representationSemanticsLabel': representationSemanticsLabel,
+    'choices': [for (final choice in choices) choice.toJson()],
+    'correctChoiceId': correctChoiceId,
+    'solutionSummary': solutionSummary,
+  };
+}
+
+bool _notationNeedMatchesKind(String needCode, LocalNotationTaskKind kind) {
+  final suffix = needCode.split('.').last;
+  final expectedKind = switch (suffix) {
+    'arrow' => LocalNotationTaskKind.sequence,
+    'equation' => LocalNotationTaskKind.modelBuild,
+    'symbol' => LocalNotationTaskKind.symbolMatch,
+    'graph' => LocalNotationTaskKind.graphRead,
+    _ => LocalNotationTaskKind.parse(suffix),
+  };
+  return expectedKind == kind;
+}
+
+String _notationConceptFromNeed(String? needCode) {
+  final parts = needCode?.split('.') ?? const <String>[];
+  return parts.length >= 2 ? parts[1] : 'legacy';
+}
+
+/// server catalog v10のtagged unionを損失なく復元するNotation Lab正本。
+///
+/// 公開constructorは旧fixtureと旧保存形の後方互換用。[toJson]は常にv10の
+/// `tasks` wireへ投影し、UnitsClientはv9 cacheと同梱assetを別key/schemaで拒否する。
+class LocalNotationLab {
+  const LocalNotationLab({
+    required List<LocalNotationOrderTask> orderTasks,
+    required LocalNotationSymbolTask symbolMatch,
+    required LocalNotationGraphTask graphRead,
+  }) : _legacyOrderTasks = orderTasks,
+       _legacySymbolMatch = symbolMatch,
+       _legacyGraphRead = graphRead,
+       _taggedTasks = const [];
+
+  const LocalNotationLab.tagged({required List<LocalNotationTask> tasks})
+    : _taggedTasks = tasks,
+      _legacyOrderTasks = null,
+      _legacySymbolMatch = null,
+      _legacyGraphRead = null;
+
+  final List<LocalNotationTask> _taggedTasks;
+  final List<LocalNotationOrderTask>? _legacyOrderTasks;
+  final LocalNotationSymbolTask? _legacySymbolMatch;
+  final LocalNotationGraphTask? _legacyGraphRead;
+
+  List<LocalNotationTask> get tasks {
+    if (_taggedTasks.isNotEmpty) return _taggedTasks;
+    final orderTasks = _legacyOrderTasks ?? const <LocalNotationOrderTask>[];
+    final symbol = _legacySymbolMatch;
+    final graph = _legacyGraphRead;
+    return List.unmodifiable([
+      for (var index = 0; index < orderTasks.length; index++)
+        LocalNotationArrangeTask(
+          kind: index == 0
+              ? LocalNotationTaskKind.sequence
+              : LocalNotationTaskKind.modelBuild,
+          id: orderTasks[index].id,
+          needCode: orderTasks[index].needCode,
+          title: orderTasks[index].title,
+          prompt: orderTasks[index].prompt,
+          solutionSummary: orderTasks[index].solutionSummary,
+          guide: orderTasks[index].traceGuide,
+          tracePattern: orderTasks[index].tracePattern,
+          tokens: orderTasks[index].tokens,
+          correctOrderIds: orderTasks[index].correctOrderIds,
+        ),
+      if (symbol != null)
+        LocalNotationChoiceTask(
+          kind: LocalNotationTaskKind.symbolMatch,
+          id: '${_notationConceptFromNeed(symbol.needCode)}.symbol',
+          needCode: symbol.needCode,
+          title: '単位記号を意味と結ぶ',
+          prompt: symbol.prompt,
+          solutionSummary: symbol.solutionSummary,
+          representation: const [],
+          representationSemanticsLabel: '選択肢の記号と意味を対応させます。',
+          choices: symbol.choices,
+          correctChoiceId: symbol.correctChoiceId,
+        ),
+      if (graph != null)
+        LocalNotationChoiceTask(
+          kind: LocalNotationTaskKind.graphRead,
+          id: '${_notationConceptFromNeed(graph.needCode)}.graph',
+          needCode: graph.needCode,
+          title: 'グラフを読む',
+          prompt: graph.prompt,
+          solutionSummary: graph.solutionSummary,
+          representation: graph.graphNotation,
+          representationSemanticsLabel: graph.graphSemanticsLabel,
+          choices: graph.choices,
+          correctChoiceId: graph.correctChoiceId,
+        ),
+    ]);
+  }
+
+  /// 移行期の直接fixture用。production消費側は[tasks]を列挙する。
+  List<LocalNotationOrderTask> get orderTasks =>
+      _legacyOrderTasks ??
+      List.unmodifiable(
+        tasks
+            .whereType<LocalNotationArrangeTask>()
+            .where((task) => task.tracePattern != null)
+            .map(
+              (task) => LocalNotationOrderTask(
+                id: task.id,
+                title: task.title,
+                prompt: task.prompt,
+                traceGuide: task.guide,
+                tracePattern: task.tracePattern!,
+                tokens: task.tokens,
+                correctOrderIds: task.correctOrderIds,
+                solutionSummary: task.solutionSummary,
+                needCode: task.needCode,
+              ),
+            ),
+      );
+
+  LocalNotationSymbolTask get symbolMatch {
+    if (_legacySymbolMatch case final symbol?) return symbol;
+    final task = tasks.whereType<LocalNotationChoiceTask>().firstWhere(
+      (task) => task.kind == LocalNotationTaskKind.symbolMatch,
+    );
+    return LocalNotationSymbolTask(
+      prompt: task.prompt,
+      choices: task.choices,
+      correctChoiceId: task.correctChoiceId,
+      solutionSummary: task.solutionSummary,
+      needCode: task.needCode,
+    );
+  }
+
+  LocalNotationGraphTask get graphRead {
+    if (_legacyGraphRead case final graph?) return graph;
+    final task = tasks.whereType<LocalNotationChoiceTask>().firstWhere(
+      (task) => task.kind == LocalNotationTaskKind.graphRead,
+    );
+    return LocalNotationGraphTask(
+      prompt: task.prompt,
+      graphNotation: task.representation,
+      graphSemanticsLabel: task.representationSemanticsLabel,
+      choices: task.choices,
+      correctChoiceId: task.correctChoiceId,
+      solutionSummary: task.solutionSummary,
+      needCode: task.needCode,
+    );
+  }
 
   static LocalNotationLab? fromJson(Map<String, Object?> json) {
+    if (_hasExactKeys(json, const {'tasks'})) {
+      final rawTasks = json['tasks'];
+      if (rawTasks is! List ||
+          rawTasks.length < 2 ||
+          rawTasks.length > 6 ||
+          rawTasks.any((task) => task is! Map)) {
+        return null;
+      }
+      final tasks = <LocalNotationTask>[];
+      for (final rawTask in rawTasks.cast<Map>()) {
+        final taskJson = _stringKeyedMap(rawTask);
+        if (taskJson == null) return null;
+        final task = LocalNotationTask.fromJson(taskJson);
+        if (task == null) return null;
+        tasks.add(task);
+      }
+      if (tasks.map((task) => task.id).toSet().length != tasks.length ||
+          tasks.map((task) => task.needCode).toSet().length != tasks.length ||
+          tasks.map((task) => task.kind).toSet().length < 2 ||
+          !tasks.any((task) => task.kind.isArrange) ||
+          !tasks.any((task) => !task.kind.isArrange)) {
+        return null;
+      }
+      return LocalNotationLab.tagged(tasks: List.unmodifiable(tasks));
+    }
     if (!_hasExactKeys(json, const {
       'orderTasks',
       'symbolMatch',
@@ -1285,9 +1914,7 @@ class LocalNotationLab {
   }
 
   Map<String, Object?> toJson() => {
-    'orderTasks': [for (final task in orderTasks) task.toJson()],
-    'symbolMatch': symbolMatch.toJson(),
-    'graphRead': graphRead.toJson(),
+    'tasks': [for (final task in tasks) task.toJson()],
   };
 }
 
@@ -1653,7 +2280,8 @@ String? _notationText(Object? raw, {required int maxLength}) {
 
 final RegExp _needCodePattern = RegExp(
   r'^science\.[A-Za-z][A-Za-z0-9]{0,63}\.'
-  r'(foundation|conditions|transfer|notation\.(arrow|equation|symbol|graph)|'
+  r'(foundation|conditions|transfer|notation\.(arrow|equation|symbol|graph|'
+  r'modelBuild|labelDiagram|sequence|tableRead|graphRead|symbolMatch)|'
   r'listening\.(foundation|conditions|transfer)\.(transcript|meaning))$',
 );
 
@@ -1697,7 +2325,7 @@ class Section {
   /// 旧fixtureと旧API向けの1周目。教材画面には描画しない。
   final LocalCheckpoint localCheckpoint;
 
-  /// JSON/API/同梱catalog v8では必須。direct fixtureだけはnullを許す。
+  /// JSON/API/同梱catalog v10では必須。direct fixtureだけはnullを許す。
   final LocalSpeakingPractice? localSpeakingPractice;
 
   /// 原理 → 条件 → 別場面の順で巡回する3回分の端末内練習。
@@ -1829,18 +2457,15 @@ class Section {
         scienceStory.scientificResolution.reason != foundation.expectedReason) {
       return null;
     }
-    final expectedNotationCodes = {
-      'science.$key.notation.arrow',
-      'science.$key.notation.equation',
-    };
-    if (notationLab.orderTasks.map((task) => task.needCode).toSet().length !=
-            2 ||
-        !notationLab.orderTasks
-            .map((task) => task.needCode)
-            .toSet()
-            .containsAll(expectedNotationCodes) ||
-        notationLab.symbolMatch.needCode != 'science.$key.notation.symbol' ||
-        notationLab.graphRead.needCode != 'science.$key.notation.graph') {
+    final notationTasks = notationLab.tasks;
+    final notationCodes = notationTasks.map((task) => task.needCode).toSet();
+    if (notationCodes.length != notationTasks.length ||
+        notationTasks.any(
+          (task) =>
+              task.needCode == null ||
+              !task.needCode!.startsWith('science.$key.notation.') ||
+              !_notationNeedMatchesKind(task.needCode!, task.kind),
+        )) {
       return null;
     }
     // 旧クライアント用1周目と新配列の先頭が食い違うカタログは、同じ教材で

@@ -2,6 +2,7 @@ import 'package:dekisugi/config/app_theme.dart';
 import 'package:dekisugi/config/motion.dart';
 import 'package:dekisugi/learning/domain/learning_heart.dart';
 import 'package:dekisugi/learning/domain/learning_need.dart';
+import 'package:dekisugi/models/unit.dart';
 import 'package:dekisugi/screens/science_notation_lab_screen.dart';
 import 'package:dekisugi/ui/_material.dart';
 import 'package:dekisugi/widgets/science_challenge_support.dart';
@@ -135,6 +136,42 @@ const _content = ScienceNotationLabContent(
   ),
 );
 
+const _taggedContent = ScienceNotationLabContent.tagged(
+  tasks: [
+    ScienceNotationArrangeTask(
+      kind: LocalNotationTaskKind.sequence,
+      id: 'cells.sequence',
+      title: '体の階層を組み立てる',
+      prompt: '小さい単位から大きい単位へ並べる。',
+      solutionSummary: '細胞が集まって組織と器官をつくります。',
+      guide: '細胞から個体へ広げます。',
+      tokens: [
+        ScienceNotationToken(id: 'tissue', label: '組織'),
+        ScienceNotationToken(id: 'organ', label: '器官'),
+        ScienceNotationToken(id: 'cell', label: '細胞'),
+      ],
+      correctOrderIds: ['cell', 'tissue', 'organ'],
+      needCode: 'science.fall.notation.sequence',
+    ),
+    ScienceNotationChoiceTask(
+      kind: LocalNotationTaskKind.labelDiagram,
+      id: 'cells.labelDiagram',
+      title: '細胞図の境界を見分ける',
+      prompt: '外側の厚い境界はどれ？',
+      solutionSummary: '細胞膜の外側にある厚い境界は細胞壁です。',
+      representation: ['┏━━━━┓ 外側の境界', '┃ ┌──┐ ┃ 内側の膜'],
+      representationSemanticsLabel: '外側に厚い境界、内側に細い膜がある細胞図。',
+      choices: [
+        ScienceNotationChoice(id: 'membrane', label: '細胞膜'),
+        ScienceNotationChoice(id: 'wall', label: '細胞壁'),
+        ScienceNotationChoice(id: 'chloroplast', label: '葉緑体'),
+      ],
+      correctChoiceId: 'wall',
+      needCode: 'science.fall.notation.labelDiagram',
+    ),
+  ],
+);
+
 Widget _wrap({
   VoidCallback? onCompleted,
   double textScale = 1,
@@ -145,6 +182,7 @@ Widget _wrap({
   LearningHeartLossReported? onHeartLoss,
   Future<bool> Function()? onRetryRequested,
   bool accessibleNavigation = false,
+  ScienceNotationLabContent content = _content,
 }) => MaterialApp(
   theme: buildAppTheme(brightness),
   builder: (context, child) => MediaQuery(
@@ -159,7 +197,7 @@ Widget _wrap({
     section: challengeSection,
     conceptLabel: '速さとグラフ',
     practiceAttempt: challengePracticeAttempt,
-    content: _content,
+    content: content,
     onCompleted: onCompleted ?? () {},
     focusNeedCode: focusNeedCode,
     onNeedEvidence: onNeedEvidence,
@@ -281,6 +319,37 @@ void main() {
     expect(find.textContaining('矢印は始点、線、矢じり'), findsOneWidget);
     expect(find.textContaining('速さは、距離を時間で'), findsOneWidget);
     expect(find.textContaining('右上がりの線は'), findsOneWidget);
+    semantics.dispose();
+  });
+
+  testWidgets('v10のtrace無しsequenceからlabelDiagramへ回答を保存せず進む', (tester) async {
+    final needs = <LearningNeedEvidence>[];
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      _wrap(
+        content: _taggedContent,
+        disableAnimations: true,
+        onNeedEvidence: needs.add,
+      ),
+    );
+
+    expect(find.text('体の階層を組み立てる'), findsOneWidget);
+    await _answerOrder(tester, const ['cell', 'tissue', 'organ']);
+    expect(find.byKey(const ValueKey('notation-trace-canvas')), findsNothing);
+    expect(find.text('細胞図の境界を見分ける'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('外側に厚い境界.*内側に細い膜')), findsOneWidget);
+    expect(needs.single.needCode, 'science.fall.notation.sequence');
+
+    await _tap(
+      tester,
+      find.byKey(const ValueKey('notation-labelDiagram-wall')),
+    );
+    await _tap(tester, find.byKey(const ValueKey('notation-submit')));
+    expect(find.text('記号を意味とつなげました'), findsOneWidget);
+    expect(needs.map((need) => need.needCode), [
+      'science.fall.notation.sequence',
+      'science.fall.notation.labelDiagram',
+    ]);
     semantics.dispose();
   });
 

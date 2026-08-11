@@ -15,6 +15,8 @@ import 'package:dekisugi/models/game_path.dart';
 import 'package:dekisugi/models/lan_social.dart';
 import 'package:dekisugi/models/unit.dart';
 import 'package:dekisugi/screens/science_game_home_screen.dart';
+import 'package:dekisugi/screens/science_listening_screen.dart';
+import 'package:dekisugi/screens/science_speak_listen_screen.dart';
 import 'package:dekisugi/services/session_store.dart';
 import 'package:dekisugi/services/units_client.dart';
 import 'package:dekisugi/widgets/science_challenge_support.dart';
@@ -232,7 +234,32 @@ final _unit = UnitDetail(
     id: 'motion',
     title: '力と運動',
     brief: '落下を条件から考える',
-    concepts: [UnitConcept(key: 'fall', label: '落下', storyTitle: '落下研究室の紙対決')],
+    concepts: [
+      UnitConcept(
+        key: 'fall',
+        label: '落下',
+        storyTitle: '落下研究室の紙対決',
+        field: UnitCurriculumField.energy,
+        grade: 3,
+        curriculumRefs: [
+          UnitCurriculumReference(
+            document: 'mext-jhs-science-2017',
+            section: '第1分野 (5) 運動とエネルギー',
+            pages: [61, 62],
+            url:
+                'https://www.mext.go.jp/component/a_menu/education/'
+                'micro_detail/__icsFiles/afieldfile/2019/03/18/'
+                '1387018_005.pdf',
+          ),
+        ],
+        prerequisites: [],
+        difficulty: 2,
+        safety: UnitSafety(
+          level: UnitSafetyLevel.homeSafe,
+          guidance: '同じ紙だけを手の高さから落とし、人や壊れ物へ向けない。',
+        ),
+      ),
+    ],
     sectionCount: 1,
   ),
   sections: [
@@ -260,7 +287,7 @@ class _CatalogBundle extends CachingAssetBundle {
     : bytes = Uint8List.fromList(
         utf8.encode(
           jsonEncode({
-            'schemaVersion': 9,
+            'schemaVersion': 10,
             'language': 'ja',
             'units': [_unit.toJson()],
           }),
@@ -275,6 +302,7 @@ class _CatalogBundle extends CachingAssetBundle {
 
 class _FailFirstHeartStore extends MemorySessionStore {
   bool _shouldFail = true;
+  int spendRequests = 0;
 
   @override
   Future<LearningChallengeHeartSpendResult> spendLearningChallengeHeart(
@@ -284,6 +312,7 @@ class _FailFirstHeartStore extends MemorySessionStore {
     required String learningDay,
     required DateTime occurredAt,
   }) {
+    spendRequests++;
     if (_shouldFail) {
       _shouldFail = false;
       return Future.error(StateError('injected heart write failure'));
@@ -444,6 +473,22 @@ class _ReplayOptionalNeedStore extends MemorySessionStore {
       inserted: replay.inserted,
     ));
     return replay;
+  }
+}
+
+class _FailOptionalMatchNeedStore extends _CountingHeartStore {
+  int failedNeedWrites = 0;
+
+  @override
+  Future<CommitLearningResult> commitLearningEvent(
+    LearningEventCommand event, {
+    LearningCommitRules rules = const LearningCommitRules(),
+  }) {
+    if (event.activityId == 'practice.match.need.v1') {
+      failedNeedWrites++;
+      return Future.error(StateError('injected optional need write failure'));
+    }
+    return super.commitLearningEvent(event, rules: rules);
   }
 }
 
@@ -1860,6 +1905,13 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('daily-audio-listening')));
       await tester.pumpAndSettle();
 
+      final listening = tester.widget<ScienceListeningScreen>(
+        find.byType(ScienceListeningScreen),
+      );
+      final listeningVariant = _unit.sections.single.practiceVariantForAttempt(
+        listening.practiceAttempt,
+      );
+
       final routeScroll = find.byType(Scrollable).first;
       Future<void> tapListening(Finder target) async {
         await tester.scrollUntilVisible(target, 180, scrollable: routeScroll);
@@ -1906,10 +1958,7 @@ void main() {
       expect(after.activeNeeds.single.skillId, 'motion/fall');
       expect(
         after.activeNeeds.single.needCode,
-        _unit.sections.single
-            .practiceVariantForAttempt(1)
-            .listeningNeedCodes!
-            .transcript,
+        listeningVariant.listeningNeedCodes!.transcript,
       );
       expect(
         after.events
@@ -1938,26 +1987,20 @@ void main() {
     },
   );
 
-  testWidgets('必修Speakingは無関係発話でevent・XPを作らずcatalog語句一致後だけ完了する', (
+  testWidgets('必修Speakingは1文字説明だけではevent・XPを作らず固定問い返しと訂正後だけ完了する', (
     tester,
   ) async {
-    const speechChannel = MethodChannel(
-      'jp.dekisugi.dekisugi/on_device_speech_recognition',
+    const narrationChannel = MethodChannel(
+      'jp.dekisugi.dekisugi/local_narration',
     );
-    var candidates = <String>['今日は別の話をします'];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(speechChannel, (call) async {
-          if (call.method == 'recognize') {
-            return <String, Object?>{
-              'status': 'recognized',
-              'candidates': candidates,
-            };
-          }
+        .setMockMethodCallHandler(narrationChannel, (call) async {
+          if (call.method == 'speak') return true;
           return null;
         });
     addTearDown(
       () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(speechChannel, null),
+          .setMockMethodCallHandler(narrationChannel, null),
     );
     final store = MemorySessionStore();
     await _seedNodes(store, const [
@@ -1986,6 +2029,19 @@ void main() {
     await tester.tap(speakingMission);
     await tester.pumpAndSettle();
 
+    final speaking = tester.widget<ScienceSpeakListenScreen>(
+      find.byType(ScienceSpeakListenScreen),
+    );
+    final variant = _unit.sections.single.practiceVariantForAttempt(
+      speaking.practiceAttempt,
+    );
+    final wrongOption = variant.checkpoint.options.firstWhere(
+      (option) => option.id != variant.checkpoint.correctOptionId,
+    );
+    final correctOption = variant.checkpoint.optionFor(
+      variant.checkpoint.correctOptionId,
+    )!;
+
     Future<void> tapSpeaking(Key key) async {
       final target = find.byKey(key);
       await tester.scrollUntilVisible(
@@ -1998,28 +2054,59 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    await tapSpeaking(const ValueKey('science-speaking-start-recognition'));
-    expect(find.textContaining('目標語句とは一致しませんでした'), findsOneWidget);
-    final rejected = await store.learningProgressSnapshot(
-      LearningScope.personal,
-    );
-    expect(
-      rejected.events.where((event) => event.activityId == 'path.speaking.v1'),
-      isEmpty,
-    );
-    expect(rejected.wallet.xp, before.wallet.xp);
-
-    candidates = [_unit.sections.single.localSpeakingPractice!.targetPhrase];
-    await tapSpeaking(const ValueKey('science-speaking-start-recognition'));
-    await tapSpeaking(const ValueKey('science-speaking-continue-voice'));
     await tapSpeaking(const ValueKey('science-explain-choose-text'));
     await tester.enterText(
       find.byKey(const ValueKey('science-explain-text-input')),
       '一',
     );
     await tester.pump();
+    await tapSpeaking(const ValueKey('science-explain-review-text'));
     await tapSpeaking(const ValueKey('science-explain-submit-text'));
+
+    expect(
+      find.byKey(const ValueKey('science-explain-follow-up')),
+      findsOneWidget,
+    );
+    final oneCharacterOnly = await store.learningProgressSnapshot(
+      LearningScope.personal,
+    );
+    expect(
+      oneCharacterOnly.events.where(
+        (event) => event.activityId == 'path.speaking.v1',
+      ),
+      isEmpty,
+    );
+    expect(oneCharacterOnly.wallet.xp, before.wallet.xp);
+
+    await tapSpeaking(
+      ValueKey('science-explain-follow-up-option-${wrongOption.id}'),
+    );
+    await tapSpeaking(const ValueKey('science-explain-submit-follow-up'));
+    expect(
+      find.byKey(const ValueKey('science-explain-follow-up-hint')),
+      findsOneWidget,
+    );
+    expect(find.text(correctOption.text), findsNothing);
+    await tapSpeaking(const ValueKey('science-explain-start-revision'));
+    await tester.enterText(
+      find.byKey(const ValueKey('science-explain-text-input')),
+      '一。理由と成立条件を足して言い直す',
+    );
+    await tester.pump();
+    await tapSpeaking(const ValueKey('science-explain-review-text'));
+    await tapSpeaking(const ValueKey('science-explain-submit-text'));
+    expect(
+      find.byKey(const ValueKey('science-explain-comparison')),
+      findsOneWidget,
+    );
     await tapSpeaking(const ValueKey('science-explain-keep'));
+
+    expect(
+      find.byKey(const ValueKey('game-completion-celebration')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('completion-next-step')));
+    await tester.pumpAndSettle();
 
     final completed = await store.learningProgressSnapshot(
       LearningScope.personal,
@@ -2028,8 +2115,134 @@ void main() {
       completed.events.where((event) => event.activityId == 'path.speaking.v1'),
       hasLength(1),
     );
+    expect(
+      completed.events
+          .singleWhere((event) => event.activityId == 'path.speaking.v1')
+          .contentVersion,
+      'catalog-v10',
+    );
     expect(completed.wallet.xp, before.wallet.xp + 10);
-    expect(find.textContaining('端末内で声を確認済み'), findsOneWidget);
+    expect(completed.challengeHearts?.current, 4);
+    expect(completed.activeNeeds, hasLength(1));
+    expect(completed.activeNeeds.single.needCode, wrongOption.needCode);
+    expect(
+      (await store.recentSessions()).expand((session) => session.transcript),
+      isEmpty,
+      reason: 'Speakingの自由説明を旧逐語sessionへ混ぜない',
+    );
+    final persistedFixedFields = <String>[
+      for (final event in completed.events) ...[
+        event.eventId,
+        event.nodeId,
+        event.activityId,
+      ],
+      for (final need in completed.activeNeeds) ...[
+        need.skillId,
+        need.needCode,
+      ],
+    ].join('|');
+    expect(persistedFixedFields, isNot(contains('理由と成立条件を足して言い直す')));
+  });
+
+  testWidgets('Speakingの誤答直後に戻ってもheartだけを減らさずcanonical needをRepairへ残す', (
+    tester,
+  ) async {
+    const narrationChannel = MethodChannel(
+      'jp.dekisugi.dekisugi/local_narration',
+    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(narrationChannel, (call) async {
+          if (call.method == 'speak') return true;
+          return null;
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(narrationChannel, null),
+    );
+    final store = MemorySessionStore();
+    await _seedNodes(store, const [
+      GamePathNodeKind.lesson,
+      GamePathNodeKind.practice,
+      GamePathNodeKind.story,
+      GamePathNodeKind.listening,
+    ]);
+    final before = await store.learningProgressSnapshot(LearningScope.personal);
+    await tester.pumpWidget(_app(store));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('game-tab-practice')));
+    await tester.pumpAndSettle();
+    final mission = find.byKey(const ValueKey('daily-audio-speaking'));
+    await tester.scrollUntilVisible(
+      mission,
+      160,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('practice-hub-screen')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.pump();
+    await tester.tap(mission);
+    await tester.pumpAndSettle();
+
+    final speaking = tester.widget<ScienceSpeakListenScreen>(
+      find.byType(ScienceSpeakListenScreen),
+    );
+    final variant = _unit.sections.single.practiceVariantForAttempt(
+      speaking.practiceAttempt,
+    );
+    final wrongOption = variant.checkpoint.options.firstWhere(
+      (option) => option.id != variant.checkpoint.correctOptionId,
+    );
+
+    Future<void> tapSpeaking(Key key) async {
+      final target = find.byKey(key);
+      await tester.scrollUntilVisible(
+        target,
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pump();
+      await tester.tap(target);
+      await tester.pumpAndSettle();
+    }
+
+    await tapSpeaking(const ValueKey('science-explain-choose-text'));
+    await tester.enterText(
+      find.byKey(const ValueKey('science-explain-text-input')),
+      '一',
+    );
+    await tapSpeaking(const ValueKey('science-explain-review-text'));
+    await tapSpeaking(const ValueKey('science-explain-submit-text'));
+    await tapSpeaking(
+      ValueKey('science-explain-follow-up-option-${wrongOption.id}'),
+    );
+    await tapSpeaking(const ValueKey('science-explain-submit-follow-up'));
+    expect(
+      find.byKey(const ValueKey('science-explain-follow-up-hint')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('game-activity-exit')));
+    await tester.pumpAndSettle();
+
+    final after = await store.learningProgressSnapshot(LearningScope.personal);
+    expect(
+      after.events.where((event) => event.activityId == 'path.speaking.v1'),
+      isEmpty,
+      reason: '訂正と自己比較を終えていないのでnode完了・XPを作らない',
+    );
+    expect(after.wallet.xp, before.wallet.xp);
+    expect(after.challengeHearts?.current, 4);
+    expect(after.activeNeeds, hasLength(1));
+    expect(after.activeNeeds.single.needCode, wrongOption.needCode);
+    expect(
+      after.events.where(
+        (event) => event.activityId == 'path.speaking.need.v1',
+      ),
+      hasLength(1),
+    );
   });
 
   testWidgets('同じ4時学習日の実eventから聞く完了・話す未完了を別表示する', (tester) async {
@@ -2766,6 +2979,87 @@ void main() {
     expect(
       snapshot.events.last.outcome,
       LearningAttemptOutcome.structuredSuccess,
+    );
+  });
+
+  testWidgets('Notationの誤答直後にsystem backしてもheartとcanonical needを両方保存する', (
+    tester,
+  ) async {
+    final store = _CountingHeartStore();
+    await _seedNodes(store, const [GamePathNodeKind.lesson]);
+    final before = await store.learningProgressSnapshot(LearningScope.personal);
+    await tester.pumpWidget(_app(store));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('game-tab-notation')));
+    await tester.pumpAndSettle();
+    final entry = find.byKey(
+      const ValueKey('notation-entry-notation:v1:motion:fall'),
+    );
+    await tester.scrollUntilVisible(
+      entry,
+      180,
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('notation-lab-hub')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.tap(entry);
+    await tester.pumpAndSettle();
+
+    final notationScroll = find
+        .descendant(
+          of: find.byKey(const ValueKey('science-notation-scroll')),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    Future<void> notationTap(String key) async {
+      final target = find.byKey(ValueKey(key));
+      await tester.scrollUntilVisible(target, 160, scrollable: notationScroll);
+      await tester.pump();
+      await tester.tap(target);
+      await tester.pumpAndSettle();
+    }
+
+    await notationTap('notation-order-token-direction');
+    await notationTap('notation-order-token-origin');
+    await notationTap('notation-submit');
+    expect(find.text('ここで一度、見直す'), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    final after = await store.learningProgressSnapshot(LearningScope.personal);
+    expect(after.wallet.xp, before.wallet.xp);
+    expect(after.challengeHearts?.current, 4);
+    expect(store.appliedHeartLosses, 1);
+    expect(after.activeNeeds, hasLength(1));
+    expect(after.activeNeeds.single.skillId, 'motion/fall');
+    expect(after.activeNeeds.single.needCode, 'science.fall.notation.arrow');
+    final needEvents = after.events
+        .where((event) => event.activityId == 'notation.need.v1')
+        .toList();
+    expect(needEvents, hasLength(1));
+    expect(needEvents.single.outcome, LearningAttemptOutcome.retryNeeded);
+    expect(
+      after.events.where((event) => event.activityId == 'notation.v1'),
+      isEmpty,
+      reason: '訂正前なのでNotation完了やXPを作らない',
+    );
+    final persistedFixedFields = <String>[
+      for (final event in needEvents) ...[
+        event.eventId,
+        event.nodeId,
+        event.activityId,
+      ],
+      for (final need in after.activeNeeds) ...[need.skillId, need.needCode],
+    ].join('|');
+    expect(persistedFixedFields, isNot(contains('direction')));
+    expect(persistedFixedFields, isNot(contains('origin')));
+    expect(
+      (await store.recentSessions()).expand((session) => session.transcript),
+      isEmpty,
+      reason: '並べた回答やchoice IDを旧逐語sessionへ残さない',
     );
   });
 
@@ -3963,6 +4257,61 @@ void main() {
     });
   }
 
+  testWidgets('Matchのneed保存失敗時はheart commitを進めずheart-onlyを防ぐ', (tester) async {
+    final store = _FailOptionalMatchNeedStore();
+    await _seedNodes(store, const [
+      GamePathNodeKind.lesson,
+      GamePathNodeKind.practice,
+      GamePathNodeKind.story,
+      GamePathNodeKind.listening,
+      GamePathNodeKind.speaking,
+    ]);
+    await tester.pumpWidget(_app(store));
+    await tester.pumpAndSettle();
+
+    await _openOptionalPracticeMode(tester, 'match');
+    await _tapMiniGameControl(
+      tester,
+      scrollKey: 'science-match-scroll',
+      controlKey: 'match-start',
+    );
+    await _tapMiniGameControl(
+      tester,
+      scrollKey: 'science-match-scroll',
+      controlKey: 'match-target-reason',
+    );
+    await _tapMiniGameControl(
+      tester,
+      scrollKey: 'science-match-scroll',
+      controlKey: 'match-submit',
+    );
+    await _tapMiniGameControl(
+      tester,
+      scrollKey: 'science-match-scroll',
+      controlKey: 'match-retry',
+    );
+
+    final snapshot = await store.learningProgressSnapshot(
+      LearningScope.personal,
+    );
+    expect(store.failedNeedWrites, 1);
+    expect(store.appliedHeartLosses, 0);
+    expect(snapshot.challengeHearts?.current, 5);
+    expect(snapshot.activeNeeds, isEmpty);
+    expect(
+      snapshot.events.where(
+        (event) => event.activityId == 'practice.match.need.v1',
+      ),
+      isEmpty,
+    );
+    final run = snapshot.runs.singleWhere(
+      (item) => item.nodeId.startsWith('optional-heart:v1:match:'),
+    );
+    expect(run.activityIndex, 0);
+    expect(run.challengeHearts, 5);
+    expect(find.byKey(const ValueKey('match-retry')), findsOneWidget);
+  });
+
   for (final challenge in const [
     (
       mode: 'match',
@@ -4773,6 +5122,7 @@ void main() {
       LearningScope.personal,
     );
     expect(afterPartial.challengeHearts?.current, 5);
+    expect(store.spendRequests, 1);
     expect(
       afterPartial.runs.singleWhere((run) => run.nodeId == id).activityIndex,
       0,
@@ -4793,6 +5143,7 @@ void main() {
     final recovered = await store.learningProgressSnapshot(
       LearningScope.personal,
     );
+    expect(store.spendRequests, 2);
     expect(recovered.challengeHearts?.current, 4);
     expect(
       recovered.runs.singleWhere((run) => run.nodeId == id).activityIndex,

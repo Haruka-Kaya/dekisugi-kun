@@ -243,6 +243,8 @@ class _PredictionStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _Surface(label: '今回の問い', text: prompt, interpretEmphasis: true),
+        const SizedBox(height: 12),
+        const _TeachBackNotice(),
         const SizedBox(height: 16),
         TextField(
           key: const ValueKey('science-lesson-prediction'),
@@ -263,6 +265,45 @@ class _PredictionStep extends StatelessWidget {
       key: const ValueKey('science-lesson-reveal'),
       onPressed: onContinue,
       child: const Text('予想を置いて、教材を読む'),
+    ),
+  );
+}
+
+class _TeachBackNotice extends StatelessWidget {
+  const _TeachBackNotice();
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    container: true,
+    label: 'この教材のあと、デキすぎ君へ理由と条件を自分の言葉で説明します',
+    child: ExcludeSemantics(
+      child: Container(
+        padding: const EdgeInsets.all(GameTokens.spaceMd),
+        decoration: BoxDecoration(
+          color: context.gamePalette.surfaceRaised,
+          borderRadius: BorderRadius.circular(GameTokens.radiusMd),
+          border: Border.all(color: context.gamePalette.border),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.record_voice_over_rounded,
+              size: GameTokens.statusIconSize,
+              color: context.gamePalette.pathActive,
+            ),
+            const SizedBox(width: GameTokens.spaceSm),
+            Expanded(
+              child: Text(
+                'このあと、デキすぎ君へ説明します。答えだけでなく「なぜ」と「どんな条件で」を拾ってください。',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: context.gamePalette.ink,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     ),
   );
 }

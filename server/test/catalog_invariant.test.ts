@@ -5,6 +5,11 @@ import { describe, it } from 'node:test'
 import { parseInput } from '../api/director.js'
 import unitsHandler from '../api/units.js'
 import { MISCONCEPTIONS, misconceptionsFor } from '../lib/misconceptions.js'
+import {
+  CURRICULUM_COVERAGE_MANIFEST,
+  CURRICULUM_FIELDS,
+  CURRICULUM_SAFETY_LEVELS,
+} from '../lib/curriculum-coverage.js'
 import { type Req, type Res } from '../lib/http.js'
 import {
   BUNDLED_UNIT_CATALOG_SCHEMA_VERSION,
@@ -23,7 +28,12 @@ import {
 } from '../lib/local-practice-variants.js'
 import {
   NOTATION_LABS,
+  NOTATION_TASK_KINDS,
+  canonicalNotationTasks,
+  isNotationArrangeTask,
   notationLabFor,
+  publicNotationLab,
+  type TaggedNotationLab,
   validateNotationLab,
 } from '../lib/notation-labs.js'
 import {
@@ -50,9 +60,31 @@ const EXPECTED_STORY_SIGNATURES = {
   currentMagneticField: ['方位磁針が聞いた電流のひそひそ話', '先生の監督する低電圧実験台。抵抗を入れた導線の下に方位磁針を置く。', 'ひそひそ話の内容は「右、いや左」でした。'],
   magneticForce: ['電気ブランコ反転裁判', '先生の監督する低電圧の電気ブランコ実験。変える条件は毎回一つだけ。', 'ブランコは無罪。気分で動いたのは、ぼくの仮説でした。'],
   electromagneticInduction: ['眠る磁石と無言の検流計', '先生の監督する実験台。電源をつながないコイルと検流計へ棒磁石を近づける。', '検流計の目覚まし時計は、磁束の変化でした。'],
+  density: ['そっくりボトルの重さ交換事件', '家庭科室の安定した机。同じ容器に同じ体積の水と食用油を入れ、ふたを閉めてある。', '密度は育たず、育ったのは容器を洗う仕事だけでした。'],
+  cells: ['消えた葉緑体と根っこの証言', '理科室の画像資料コーナー。葉の細胞、根の細胞、動物組織の顕微鏡画像を並べている。', '葉緑体は欠席、でも根っこの植物籍はそのままでした。'],
+  humidityClouds: ['コップの外だけ局地雨', '教室の机。乾いた同じコップを並べ、片方だけに冷水を入れて外側を観察する。', 'コップの局地雨、予報範囲は半径5センチでした。'],
+  strataRelativeAge: ['紙の崖に残った斜め線のアリバイ', '図書室の大机。色紙の地層模型に、下の3層を切る斜め線と、それを覆う上層がある。', '紙の崖は動かず、ぼくの年代順だけが大逆転していました。'],
+  gasProperties: ['透明気体の捕集法取り違え事件', '理科室の資料机。酸素・二酸化炭素・水素・アンモニアの固定性質表と捕集法カードが並ぶ。', '透明気体チーム、性質表を読んだら全員別ポジションでした。'],
+  stateChangeMass: ['消えた液体1.5グラムの行方', '教室の測定資料コーナー。開いた皿と密閉袋の蒸発前後データを画面で比較している。', '1.5グラムは消失せず、測定範囲の外へお引っ越しでした。'],
+  photosynthesisRespiration: ['植物工場の夜勤呼吸員', '図書室のデータ端末。水草の明所・暗所における酸素変化の固定グラフを開いている。', '呼吸員は夜勤専属ではなく、まさかの24時間シフトでした。'],
+  digestionAbsorption: ['栄養分の小腸入国審査', '保健室前の教材机。消化管図と栄養分カードを使い、食べ物や人体試料には触れず考える。', '栄養分の通行証は「消化ずみ」、入国ゲートは小腸でした。'],
+  fronts: ['天気図に残った暖気の足あと', '放送室の資料画面。過去の温暖前線と気温・雲・降水の時系列を室内で確認する。', '暖気の足あとは地下ではなく、雲の階段に残っていました。'],
+  pressurePatternsWind: ['等圧線ぎゅうぎゅう区画の強風予告', '気象資料室。過去の天気図で等圧線間隔と同時刻の観測風速を照合している。', '等圧線は通行止めロープではなく、風の坂道の等高線でした。'],
+  volcanoEarthquakes: ['火山マークと震央マークの別行動', '防災学習室。公的な火山・震央・プレート境界の過去分布図を重ねている。', '地図ではご近所、事件簿では別々の担当でした。'],
+  dailyMotionSeasons: ['星空カレンダー一日と一年の混線', 'プラネタリウム教室。同じ場所の一晩と、同時刻で月を変えた星空シミュレーションを比べる。', '星空カレンダー、24時間欄と12か月欄を同じマスに書いていました。'],
 } as const
 
-type PublicConcept = { key: string; label: string; storyTitle: string }
+type PublicConcept = {
+  key: string
+  label: string
+  storyTitle: string
+  field: string
+  grade: number
+  curriculumRefs: unknown[]
+  prerequisites: string[]
+  difficulty: number
+  safety: { level: string; guidance: string }
+}
 type PublicSection = {
   conceptKey: string
   body: string[]
@@ -87,34 +119,7 @@ type PublicSection = {
       meaning: string
     }
   }[]
-  notationLab: {
-    orderTasks: {
-      id: string
-      needCode: string
-      title: string
-      prompt: string
-      traceGuide: string
-      tokens: { id: string; label: string }[]
-      correctOrderIds: string[]
-      solutionSummary: string
-    }[]
-    symbolMatch: {
-      needCode: string
-      prompt: string
-      choices: { id: string; label: string }[]
-      correctChoiceId: string
-      solutionSummary: string
-    }
-    graphRead: {
-      needCode: string
-      prompt: string
-      graphNotation: string[]
-      graphSemanticsLabel: string
-      choices: { id: string; label: string }[]
-      correctChoiceId: string
-      solutionSummary: string
-    }
-  }
+  notationLab: TaggedNotationLab
 }
 type PublicUnit = {
   id: string
@@ -149,12 +154,36 @@ function getUnits(query: Req['query'] = {}): CapturedResponse {
 }
 
 describe('学習ミッションのカタログ不変条件', () => {
-  it('11概念のSpeaking目標を正本化し、欠落・未知field・短文・重複を拒否する', () => {
+  it('Stage 1の4単元が各3概念を1本のPathへ統合する', () => {
+    const expectedStage1 = {
+      'matter-properties': ['density', 'gasProperties', 'stateChangeMass'],
+      'living-body': ['cells', 'photosynthesisRespiration', 'digestionAbsorption'],
+      'weather-change': ['humidityClouds', 'fronts', 'pressurePatternsWind'],
+      'earth-history': ['strataRelativeAge', 'volcanoEarthquakes', 'dailyMotionSeasons'],
+    } as const
+
+    assert.equal(UNITS.length, 8)
+    assert.equal(UNITS.flatMap((unit) => unit.concepts).length, 23)
+    for (const [unitId, conceptKeys] of Object.entries(expectedStage1)) {
+      const unit = unitById(unitId)
+      assert.ok(unit, `${unitId}: Stage 1 unitが無い`)
+      assert.deepEqual(
+        unit.concepts.map((concept) => concept.key),
+        conceptKeys,
+      )
+      assert.deepEqual(
+        unit.sections.map((section) => section.conceptKey),
+        conceptKeys,
+      )
+    }
+  })
+
+  it('23概念のSpeaking目標を正本化し、欠落・未知field・短文・重複を拒否する', () => {
     const sections = UNITS.flatMap((unit) => unit.sections)
-    assert.equal(sections.length, 11)
+    assert.equal(sections.length, 23)
     assert.equal(
       new Set(sections.map((section) => section.conceptKey)).size,
-      11,
+      23,
       'Speaking目標が概念と1対1でない',
     )
     for (const section of sections) {
@@ -225,11 +254,11 @@ describe('学習ミッションのカタログ不変条件', () => {
     }
   })
 
-  it('全11conceptが3周で異なる問い・正答位置・誤答だけのヒントを持つ', () => {
+  it('全23conceptが3周で異なる問い・正答位置・誤答だけのヒントを持つ', () => {
     assert.deepEqual(validateCatalog(), [])
 
     const sections = UNITS.flatMap((unit) => unit.sections)
-    assert.equal(sections.length, 11)
+    assert.equal(sections.length, 23)
     const correctPositions = new Set<number>()
 
     for (const section of sections) {
@@ -330,11 +359,7 @@ describe('学習ミッションのカタログ不変条件', () => {
       }
 
       const notation = notationLabFor(section.conceptKey)!
-      const codes = [
-        ...notation.orderTasks.map((task) => task.needCode),
-        notation.symbolMatch.needCode,
-        notation.graphRead.needCode,
-      ]
+      const codes = canonicalNotationTasks(notation).map((task) => task.needCode)
       notationCount += codes.length
       for (const code of codes) {
         assert.match(
@@ -345,14 +370,14 @@ describe('学習ミッションのカタログ不変条件', () => {
       }
     }
 
-    assert.equal(cognitiveCount, 33)
-    assert.equal(wrongOptionCount, 66)
-    assert.equal(notationCount, 44)
-    assert.equal(practiceCodes.size, 33)
-    assert.equal(notationCodes.size, 44)
+    assert.equal(cognitiveCount, 69)
+    assert.equal(wrongOptionCount, 138)
+    assert.equal(notationCount, 80)
+    assert.equal(practiceCodes.size, 69)
+    assert.equal(notationCodes.size, 80)
   })
 
-  it('全11concept×3stageのListening聞き取り/意味needを別codeで公開する', () => {
+  it('全23concept×3stageのListening聞き取り/意味needを別codeで公開する', () => {
     const codes = new Set<string>()
     let variantCount = 0
     for (const unit of UNITS) {
@@ -383,54 +408,62 @@ describe('学習ミッションのカタログ不変条件', () => {
         }
       }
     }
-    assert.equal(variantCount, 33)
-    assert.equal(codes.size, 66)
+    assert.equal(variantCount, 69)
+    assert.equal(codes.size, 138)
     assert.throws(() => scienceListeningNeedCodes('unknown-concept', 'foundation'))
   })
 
-  it('全11conceptの式・単位・矢印・graphがserver正本から損失なく公開される', () => {
+  it('全23conceptのNotationをcanonical tagged unionへ損失なく公開し、6種類を網羅する', () => {
     const sections = UNITS.flatMap((unit) => unit.sections)
-    assert.equal(sections.length, 11)
+    assert.equal(sections.length, 23)
     assert.deepEqual(
       new Set(Object.keys(NOTATION_LABS)),
       new Set(sections.map((section) => section.conceptKey)),
     )
+    const usedKinds = new Set<string>()
+    let taskCount = 0
 
     for (const section of sections) {
       const source = notationLabFor(section.conceptKey)
       assert.ok(source, `${section.conceptKey}: Notation正本が無い`)
+      const canonical = canonicalNotationTasks(source)
       const unit = UNITS.find((candidate) => candidate.sections.includes(section))!
       const published = publicUnitDetail(unit).sections.find(
         (candidate) => candidate.conceptKey === section.conceptKey,
       )!
-      assert.deepEqual(published.notationLab, source)
+      assert.deepEqual(published.notationLab, publicNotationLab(source))
       assert.notEqual(published.notationLab, source, '公開形は正本の参照を共有しない')
-      assert.equal(published.notationLab.orderTasks.length, 2)
-      for (const task of published.notationLab.orderTasks) {
-        assert.notDeepEqual(
-          task.tokens.map((token) => token.id),
-          task.correctOrderIds,
-          `${section.conceptKey}/${task.id}: 表示順が正答順`,
-        )
-      }
-      assert.ok(
-        published.notationLab.symbolMatch.choices.some(
-          (choice) => choice.id === published.notationLab.symbolMatch.correctChoiceId,
-        ),
-      )
-      assert.ok(published.notationLab.graphRead.graphNotation.length >= 2)
-      assert.ok(published.notationLab.graphRead.graphSemanticsLabel.trim())
-      assert.ok(
-        published.notationLab.graphRead.choices.some(
-          (choice) => choice.id === published.notationLab.graphRead.correctChoiceId,
-        ),
-      )
+      assert.notEqual(published.notationLab.tasks, canonical)
+      assert.equal(published.notationLab.tasks.length, canonical.length)
+      taskCount += canonical.length
+      assert.deepEqual(validateNotationLab(published.notationLab), [], section.conceptKey)
+
+      published.notationLab.tasks.forEach((task, index) => {
+        assert.deepEqual(task, canonical[index], `${section.conceptKey}/${task.id}: task投影が損失`)
+        assert.notEqual(task, canonical[index], `${section.conceptKey}/${task.id}: task参照を共有`)
+        usedKinds.add(task.kind)
+        if (isNotationArrangeTask(task)) {
+          assert.notDeepEqual(
+            task.tokens.map((token) => token.id),
+            task.correctOrderIds,
+            `${section.conceptKey}/${task.id}: 表示順が正答順`,
+          )
+        } else {
+          assert.ok(task.representationSemanticsLabel.trim())
+          assert.ok(
+            task.choices.some((choice) => choice.id === task.correctChoiceId),
+            `${section.conceptKey}/${task.id}: 正答choiceが無い`,
+          )
+        }
+      })
     }
 
+    assert.equal(taskCount, 80)
+    assert.deepEqual([...usedKinds].sort(), [...NOTATION_TASK_KINDS].sort())
     assert.equal(notationLabFor('unknown-concept'), undefined)
   })
 
-  it('全11 Storyが固有の事件名・舞台・落ちを持ち、foundation正本へ完全一致する', () => {
+  it('全23 Storyが固有の事件名・舞台・落ちを持ち、foundation正本へ完全一致する', () => {
     const seenLineIds = new Set<string>()
     const publishedStories = []
     for (const unit of UNITS) {
@@ -486,25 +519,29 @@ describe('学習ミッションのカタログ不変条件', () => {
         publishedStories.push(publicStory)
       }
     }
-    assert.equal(publishedStories.length, 11)
-    assert.equal(new Set(publishedStories.map((story) => story.id)).size, 11)
-    assert.equal(new Set(publishedStories.map((story) => story.title)).size, 11)
-    assert.equal(new Set(publishedStories.map((story) => story.setting)).size, 11)
-    assert.equal(new Set(publishedStories.map((story) => story.punchline.text)).size, 11)
+    assert.equal(publishedStories.length, 23)
+    assert.equal(new Set(publishedStories.map((story) => story.id)).size, 23)
+    assert.equal(new Set(publishedStories.map((story) => story.title)).size, 23)
+    assert.equal(new Set(publishedStories.map((story) => story.setting)).size, 23)
+    assert.equal(new Set(publishedStories.map((story) => story.punchline.text)).size, 23)
   })
 
-  it('22 trace taskを公開し、未知field・欠落・範囲外・短すぎ・重複参照を拒否する', () => {
-    const tasks = Object.values(NOTATION_LABS).flatMap((lab) => lab.orderTasks)
+  it('既存22 trace taskを維持し、不正なtrace・taskを拒否する', () => {
+    const tasks = Object.values(NOTATION_LABS)
+      .flatMap(canonicalNotationTasks)
+      .filter(isNotationArrangeTask)
+      .filter((task) => task.tracePattern != null)
     assert.equal(tasks.length, 22)
     assert.equal(new Set(tasks.map((task) => task.id)).size, 22)
     for (const task of tasks) {
-      assert.ok(task.tracePattern.semanticsLabel.trim())
-      assert.ok(task.tracePattern.strokes.length >= 1)
+      const trace = task.tracePattern!
+      assert.ok(trace.semanticsLabel.trim())
+      assert.ok(trace.strokes.length >= 1)
       assert.equal(
-        new Set(task.tracePattern.strokeOrderIds).size,
-        task.tracePattern.strokes.length,
+        new Set(trace.strokeOrderIds).size,
+        trace.strokes.length,
       )
-      for (const stroke of task.tracePattern.strokes) {
+      for (const stroke of trace.strokes) {
         assert.ok(stroke.points.length >= 3)
         assert.ok(stroke.points.every(
           (point) => point.x >= 0 && point.x <= 1 && point.y >= 0 && point.y <= 1,
@@ -512,21 +549,30 @@ describe('学習ミッションのカタログ不変条件', () => {
       }
     }
 
-    const source = notationLabFor('fall')!
+    const source = publicNotationLab(notationLabFor('fall')!)
     const broken = () => structuredClone(source)
+    const firstTrace = (lab: TaggedNotationLab) => {
+      const task = lab.tasks.find(
+        (candidate) => isNotationArrangeTask(candidate) && candidate.tracePattern != null,
+      )
+      if (task == null || !isNotationArrangeTask(task) || task.tracePattern == null) {
+        throw new Error('fixtureにtrace taskが無い')
+      }
+      return task.tracePattern
+    }
 
     const missing = broken()
-    missing.orderTasks[0]!.tracePattern.strokes = []
+    firstTrace(missing).strokes = []
     assert.ok(validateNotationLab(missing).some((problem) => problem.includes('trace')))
 
-    const missingPattern = broken()
-    delete (missingPattern.orderTasks[0]! as { tracePattern?: unknown }).tracePattern
+    const missingField = broken()
+    delete (firstTrace(missingField) as { strokes?: unknown }).strokes
     assert.ok(
-      validateNotationLab(missingPattern).some((problem) => problem.includes('必須field欠落')),
+      validateNotationLab(missingField).some((problem) => problem.includes('必須field欠落')),
     )
 
     const unknownField = broken()
-    Object.assign(unknownField.orderTasks[0]!.tracePattern.strokes[0]!, {
+    Object.assign(firstTrace(unknownField).strokes[0]!, {
       futureGestureAnswer: true,
     })
     assert.ok(
@@ -534,27 +580,50 @@ describe('学習ミッションのカタログ不変条件', () => {
     )
 
     const outOfRange = broken()
-    outOfRange.orderTasks[0]!.tracePattern.strokes[0]!.points[0]!.x = 1.1
+    firstTrace(outOfRange).strokes[0]!.points[0]!.x = 1.1
     assert.ok(validateNotationLab(outOfRange).some((problem) => problem.includes('範囲外')))
 
     const tooShort = broken()
-    tooShort.orderTasks[0]!.tracePattern.strokes[0]!.points = [
+    firstTrace(tooShort).strokes[0]!.points = [
       { x: 0.1, y: 0.1 },
       { x: 0.2, y: 0.1 },
     ]
     assert.ok(validateNotationLab(tooShort).some((problem) => problem.includes('短すぎる')))
 
     const duplicateReference = broken()
-    const firstId = duplicateReference.orderTasks[0]!.tracePattern.strokeOrderIds[0]!
-    duplicateReference.orderTasks[0]!.tracePattern.strokeOrderIds = [firstId, firstId, firstId]
+    const duplicateTrace = firstTrace(duplicateReference)
+    const firstId = duplicateTrace.strokeOrderIds[0]!
+    duplicateTrace.strokeOrderIds = [firstId, firstId, firstId]
     assert.ok(
       validateNotationLab(duplicateReference).some(
         (problem) => problem.includes('strokeOrderIds'),
       ),
     )
+
+    const duplicateTask = broken()
+    duplicateTask.tasks[1]!.id = duplicateTask.tasks[0]!.id
+    assert.ok(validateNotationLab(duplicateTask).some((problem) => problem.includes('重複')))
+
+    const mismatchedLegacyNeed = broken()
+    const legacyArrange = mismatchedLegacyNeed.tasks.find(isNotationArrangeTask)
+    if (legacyArrange == null) throw new Error('fixtureにarrange taskが無い')
+    legacyArrange.kind = legacyArrange.kind === 'sequence' ? 'modelBuild' : 'sequence'
+    assert.ok(
+      validateNotationLab(mismatchedLegacyNeed).some(
+        (problem) => problem.includes('task kind'),
+      ),
+    )
+
+    const badChoice = publicNotationLab(notationLabFor('cells')!)
+    const choiceTask = badChoice.tasks.find((task) => !isNotationArrangeTask(task))
+    if (choiceTask == null || isNotationArrangeTask(choiceTask)) {
+      throw new Error('fixtureにchoice taskが無い')
+    }
+    choiceTask.correctChoiceId = 'missing-choice'
+    assert.ok(validateNotationLab(badChoice).some((problem) => problem.includes('choices')))
   })
 
-  it('33variantが監査どおり異なる認知操作を持ち、表示順で正答を示さない', () => {
+  it('69variantが監査どおり異なる認知操作を持ち、表示順で正答を示さない', () => {
     const expected = {
       fall: [
         ['singleSelect', 'prediction'],
@@ -611,6 +680,66 @@ describe('学習ミッションのカタログ不変条件', () => {
         ['classify', 'conditionClassify'],
         ['classify', 'experimentPlan'],
       ],
+      density: [
+        ['classify', 'quantityCompare'],
+        ['singleSelect', 'experimentPlan'],
+        ['sequence', 'causalOrder'],
+      ],
+      cells: [
+        ['classify', 'conditionClassify'],
+        ['sequence', 'experimentPlan'],
+        ['singleSelect', 'experimentPlan'],
+      ],
+      humidityClouds: [
+        ['sequence', 'causalOrder'],
+        ['classify', 'conditionClassify'],
+        ['singleSelect', 'prediction'],
+      ],
+      strataRelativeAge: [
+        ['sequence', 'causalOrder'],
+        ['classify', 'causalOrder'],
+        ['singleSelect', 'prediction'],
+      ],
+      gasProperties: [
+        ['classify', 'conditionClassify'],
+        ['sequence', 'experimentPlan'],
+        ['singleSelect', 'experimentPlan'],
+      ],
+      stateChangeMass: [
+        ['sequence', 'causalOrder'],
+        ['classify', 'conditionClassify'],
+        ['singleSelect', 'quantityCompare'],
+      ],
+      photosynthesisRespiration: [
+        ['classify', 'conditionClassify'],
+        ['singleSelect', 'quantityCompare'],
+        ['sequence', 'causalOrder'],
+      ],
+      digestionAbsorption: [
+        ['sequence', 'causalOrder'],
+        ['classify', 'experimentPlan'],
+        ['singleSelect', 'prediction'],
+      ],
+      fronts: [
+        ['sequence', 'causalOrder'],
+        ['classify', 'conditionClassify'],
+        ['singleSelect', 'prediction'],
+      ],
+      pressurePatternsWind: [
+        ['classify', 'quantityCompare'],
+        ['singleSelect', 'prediction'],
+        ['sequence', 'causalOrder'],
+      ],
+      volcanoEarthquakes: [
+        ['classify', 'conditionClassify'],
+        ['sequence', 'causalOrder'],
+        ['singleSelect', 'prediction'],
+      ],
+      dailyMotionSeasons: [
+        ['classify', 'conditionClassify'],
+        ['sequence', 'causalOrder'],
+        ['singleSelect', 'prediction'],
+      ],
     } as const
     const directSignals: Readonly<Record<string, readonly RegExp[]>> = {
       fall: [/平らな紙.*丸めた紙/, /着地時刻.*空気.*抵抗/, /質量.*高さ.*着く時刻/],
@@ -635,6 +764,66 @@ describe('学習ミッションのカタログ不変条件', () => {
         /磁石を止める.*N極を抜く.*N極を入れる/,
         /閉回路.*開回路/,
         /磁石.*速さ.*回路全体の抵抗/,
+      ],
+      density: [
+        /容器を含む全体の質量.*液体の体積.*水か食用油/,
+        /各試料の質量と体積.*質量÷体積/,
+        /PとQそれぞれの質量と体積.*質量を体積で割る/,
+      ],
+      cells: [
+        /細胞壁.*細胞膜.*葉緑体.*細胞質/,
+        /倍率・染色・採取部位.*境界や内部/,
+        /細胞壁.*採取部位・観察条件/,
+      ],
+      humidityClouds: [
+        /凝結.*コップに触れた.*露点/,
+        /湿度80%.*湿度40%.*開始時の気温/,
+        /膨張・冷却.*露点.*凝結/,
+      ],
+      strataRelativeAge: [
+        /緑.*青・黄・白.*横切る/,
+        /断層Fに切られた地層A.*断層Fの活動.*地層D/,
+        /火山灰の特徴.*化石.*上下関係/,
+      ],
+      gasProperties: [
+        /酸素.*水素.*アンモニア.*二酸化炭素/,
+        /上方置換.*水に非常に溶けやすい.*アルカリ性/,
+        /固定反応記録.*Xを酸素.*Yを二酸化炭素/,
+      ],
+      stateChangeMass: [
+        /全質量.*液体の粒子配置.*密閉容器/,
+        /皿A.*袋B.*測定値/,
+        /全質量.*粒子種類.*体積.*配置/,
+      ],
+      photosynthesisRespiration: [
+        /明所.*暗所.*光合成.*呼吸/,
+        /正味0.*つり合う/,
+        /酸素消費.*葉を除く.*茎の細胞は呼吸/,
+      ],
+      digestionAbsorption: [
+        /柔毛.*大きな栄養分.*酵素/,
+        /酵素X.*酵素Y.*デンプン.*タンパク質/,
+        /柔毛のあるB.*表面積.*吸収/,
+      ],
+      fronts: [
+        /気温.*暖気.*上昇.*層状/,
+        /暖気が緩やか.*寒気が暖気.*狭い範囲.*広い範囲/,
+        /通過傾向.*降水強度.*他条件/,
+      ],
+      pressurePatternsWind: [
+        /等圧線間隔.*気圧差/,
+        /Aは気圧傾度/,
+        /低圧側.*地表摩擦.*自転.*曲げ/,
+      ],
+      volcanoEarthquakes: [
+        /プレート境界.*岩盤.*ずれ.*マグマ.*上昇/,
+        /爆発的.*粘り気.*気体/,
+        /到着差12秒.*Q.*遠い.*別条件/,
+      ],
+      dailyMotionSeasons: [
+        /一晩.*同時刻.*月.*公転.*自転/,
+        /円弧.*地球が西から東.*天球が東から西/,
+        /地軸の傾き.*日射角度.*昼の長さ/,
       ],
     }
     const usedKinds = new Set<string>()
@@ -722,7 +911,7 @@ describe('学習ミッションのカタログ不変条件', () => {
 
     assert.deepEqual([...usedKinds].sort(), [...COGNITIVE_TASK_KINDS].sort())
     assert.deepEqual([...usedOperations].sort(), [...COGNITIVE_OPERATIONS].sort())
-    assert.deepEqual(selectPositions, [3, 3, 3])
+    assert.deepEqual(selectPositions, [7, 7, 7])
   })
 
   it('全conceptにsectionと固定misconceptionがちょうど1つずつ対応する', () => {
@@ -760,9 +949,151 @@ describe('学習ミッションのカタログ不変条件', () => {
     }
   })
 
+  it('23conceptのcoverage metadataをMEXT本文の印刷ページ番号（PageLabels）・前提・安全条件と1対1で公開する', () => {
+    const conceptKeys = UNITS.flatMap((unit) =>
+      unit.concepts.map((concept) => concept.key),
+    )
+    const coverageEntries = Object.values(CURRICULUM_COVERAGE_MANIFEST)
+    assert.deepEqual(new Set(Object.keys(CURRICULUM_COVERAGE_MANIFEST)), new Set(conceptKeys))
+    assert.equal(coverageEntries.length, 23)
+    assert.deepEqual(
+      new Set(coverageEntries.map((entry) => entry.field)),
+      new Set(CURRICULUM_FIELDS),
+      '物質・エネルギー・生命・地球の4領域をcoverageしていない',
+    )
+
+    const stage1Slice = {
+      density: { unitId: 'matter-properties', field: 'matter', grade: 1, pages: [35, 36, 37], safety: 'homeSafe', prerequisites: [] },
+      gasProperties: { unitId: 'matter-properties', field: 'matter', grade: 1, pages: [36, 37], safety: 'referenceOnly', prerequisites: [] },
+      stateChangeMass: { unitId: 'matter-properties', field: 'matter', grade: 1, pages: [38, 39], safety: 'referenceOnly', prerequisites: [] },
+      cells: { unitId: 'living-body', field: 'life', grade: 2, pages: [86, 87], safety: 'referenceOnly', prerequisites: [] },
+      photosynthesisRespiration: { unitId: 'living-body', field: 'life', grade: 2, pages: [87, 88], safety: 'referenceOnly', prerequisites: ['cells'] },
+      digestionAbsorption: { unitId: 'living-body', field: 'life', grade: 2, pages: [89, 90], safety: 'referenceOnly', prerequisites: ['cells'] },
+      humidityClouds: { unitId: 'weather-change', field: 'earth', grade: 2, pages: [94, 95], safety: 'homeSafe', prerequisites: [] },
+      fronts: { unitId: 'weather-change', field: 'earth', grade: 2, pages: [94, 95], safety: 'referenceOnly', prerequisites: ['humidityClouds'] },
+      pressurePatternsWind: { unitId: 'weather-change', field: 'earth', grade: 2, pages: [95, 96, 97], safety: 'referenceOnly', prerequisites: ['fronts'] },
+      strataRelativeAge: { unitId: 'earth-history', field: 'earth', grade: 1, pages: [81, 82], safety: 'homeSafe', prerequisites: [] },
+      volcanoEarthquakes: { unitId: 'earth-history', field: 'earth', grade: 1, pages: [82, 83, 84], safety: 'referenceOnly', prerequisites: ['strataRelativeAge'] },
+      dailyMotionSeasons: { unitId: 'earth-history', field: 'earth', grade: 3, pages: [104, 105, 106], safety: 'referenceOnly', prerequisites: [] },
+    } as const
+
+    for (const [conceptKey, expected] of Object.entries(stage1Slice)) {
+      const coverage = CURRICULUM_COVERAGE_MANIFEST[conceptKey]!
+      assert.equal(coverage.unitId, expected.unitId)
+      assert.equal(coverage.field, expected.field)
+      assert.equal(coverage.grade, expected.grade)
+      assert.deepEqual(coverage.curriculumRefs[0]?.pages, expected.pages)
+      assert.equal(coverage.safety.level, expected.safety)
+      assert.deepEqual(coverage.prerequisites, expected.prerequisites)
+    }
+
+    const legacyPages = {
+      fall: [54, 56],
+      inertia: [54, 55],
+      friction: [56, 57],
+      throwUp: [55, 56],
+      actionReaction: [55],
+      balance: [54, 55],
+      pressure: [92, 93],
+      buoyancy: [52, 53],
+      currentMagneticField: [44, 45],
+      magneticForce: [44, 45],
+      electromagneticInduction: [44, 45],
+    } as const
+    for (const [conceptKey, expectedPages] of Object.entries(legacyPages)) {
+      assert.deepEqual(
+        CURRICULUM_COVERAGE_MANIFEST[conceptKey]!.curriculumRefs[0]?.pages,
+        expectedPages,
+        `${conceptKey}: MEXT公式PDFに印刷された本文ページ番号（PageLabels）からずれている`,
+      )
+    }
+
+    const stage1TryIts = Object.fromEntries(
+      UNITS.flatMap((unit) => unit.sections)
+        .filter((section) => Object.hasOwn(stage1Slice, section.conceptKey))
+        .map((section) => [section.conceptKey, section.tryIt]),
+    )
+    assert.match(stage1TryIts.density!, /口に入れず.*こぼれたらすぐ拭/)
+    assert.match(stage1TryIts.cells!, /家庭で人体から試料を取ったり、染色液を使ったりはしません/)
+    assert.match(stage1TryIts.humidityClouds!, /安定した机.*密閉加熱や加圧はしません/)
+    assert.match(stage1TryIts.strataRelativeAge!, /崖や工事現場には近づかず、岩石も採取しません/)
+    const referenceOnlySafetySignals: Readonly<Record<string, RegExp>> = {
+      gasProperties: /(学校配布|教科書).*(家庭|自分で).*(気体を発生|薬品|火).*(しません|行わない)/,
+      stateChangeMass: /学校配布.*家庭で加熱・冷却・密閉実験は行いません/,
+      photosynthesisRespiration: /学校配布.*薬品や火を使ったりしません/,
+      digestionAbsorption: /教科書.*食べ物・薬品・人体試料を使う実験は行いません/,
+      fronts: /公開した過去.*雷雨時や荒天時に屋外観察へ出ません/,
+      pressurePatternsWind: /過去の地上天気図.*台風や強風を屋外で観察せず/,
+      volcanoEarthquakes: /公的機関が公開.*被災地や火山へ出かけず/,
+      dailyMotionSeasons: /教室内.*太陽を直接見たり、夜間に一人で屋外観察したりしません/,
+    }
+    for (const [conceptKey, signal] of Object.entries(referenceOnlySafetySignals)) {
+      assert.match(
+        stage1TryIts[conceptKey]!,
+        signal,
+        `${conceptKey}: referenceOnlyの固定資料と禁止条件がtryItに無い`,
+      )
+    }
+
+    for (const unit of UNITS) {
+      const published = publicUnitDetail(unit)
+      for (const concept of published.concepts) {
+        const coverage = CURRICULUM_COVERAGE_MANIFEST[concept.key]
+        assert.ok(coverage, `${concept.key}: coverage manifestが無い`)
+        assert.equal(coverage.unitId, unit.id, `${concept.key}: unitIdが不一致`)
+        assert.equal(concept.field, coverage.field)
+        assert.equal(concept.grade, coverage.grade)
+        assert.deepEqual(concept.curriculumRefs, coverage.curriculumRefs)
+        assert.notEqual(concept.curriculumRefs, coverage.curriculumRefs)
+        assert.deepEqual(concept.prerequisites, coverage.prerequisites)
+        assert.equal(concept.difficulty, coverage.difficulty)
+        assert.deepEqual(concept.safety, coverage.safety)
+        assert.ok(CURRICULUM_SAFETY_LEVELS.includes(coverage.safety.level))
+        assert.ok(coverage.safety.guidance.trim().length >= 12)
+        assert.ok(coverage.curriculumRefs.length >= 1)
+        for (const reference of coverage.curriculumRefs) {
+          assert.equal(reference.document, 'mext-jhs-science-2017')
+          assert.match(reference.url, /^https:\/\/www\.mext\.go\.jp\//)
+          assert.ok(reference.section.trim())
+          assert.ok(reference.pages.length >= 1)
+          assert.ok(reference.pages.every((page) => Number.isInteger(page) && page > 0))
+        }
+        assert.equal(new Set(coverage.prerequisites).size, coverage.prerequisites.length)
+        assert.ok(!coverage.prerequisites.includes(concept.key))
+        assert.ok(
+          coverage.prerequisites.every((prerequisite) => conceptKeys.includes(prerequisite)),
+          `${concept.key}: 未知のprerequisite`,
+        )
+      }
+    }
+  })
+
+  it('一覧APIはschema v10のexact envelopeだけを返す', () => {
+    const listResponse = getUnits({ lang: 'ja' })
+    const listEnvelope = listResponse.body as {
+      schemaVersion: unknown
+      units: PublicUnit[]
+    }
+    assert.deepEqual(
+      Object.keys(listEnvelope).sort(),
+      ['schemaVersion', 'units'],
+      '一覧responseのroot契約に未知fieldが混じっている',
+    )
+    assert.equal(
+      listEnvelope.schemaVersion,
+      BUNDLED_UNIT_CATALOG_SCHEMA_VERSION,
+      '一覧responseがsv10として識別できない',
+    )
+    assert.ok(Array.isArray(listEnvelope.units))
+  })
+
   it('Pickerに公開する全ミッションがMaterialとDirectorの同じconceptへ進める', () => {
     const listResponse = getUnits({ lang: 'ja' })
-    const listed = (listResponse.body as { units: PublicUnit[] }).units
+    const listEnvelope = listResponse.body as {
+      schemaVersion: unknown
+      units: PublicUnit[]
+    }
+    const listed = listEnvelope.units
 
     assert.deepEqual(
       listed.map((unit) => unit.id),
@@ -771,8 +1102,8 @@ describe('学習ミッションのカタログ不変条件', () => {
     )
     assert.equal(
       new Set(listed.flatMap((unit) => unit.concepts.map((concept) => concept.storyTitle))).size,
-      11,
-      'Story一覧で11件の固有事件名を公開していない',
+      23,
+      'Story一覧で23件の固有事件名を公開していない',
     )
 
     for (const summary of listed) {
@@ -949,7 +1280,7 @@ describe('学習ミッションのカタログ不変条件', () => {
     assert.match(induction.tryIt, /電源はつながず/)
   })
 
-  it('2・3周目も11conceptの成立条件を外さず、別の科学的判断を要求する', () => {
+  it('2・3周目も23conceptの成立条件を外さず、別の科学的判断を要求する', () => {
     function text(unitId: string, conceptKey: string): string {
       const unit = unitById(unitId)!
       const section = unit.sections.find((candidate) => candidate.conceptKey === conceptKey)!
@@ -999,9 +1330,57 @@ describe('学習ミッションのカタログ不変条件', () => {
     const induction = text('current-magnetism', 'electromagneticInduction')
     assert.match(induction, /磁束の変化によって誘導電圧.*回路が開いていると/)
     assert.match(induction, /回路全体の抵抗も同じ/)
+
+    const density = text('matter-properties', 'density')
+    assert.match(density, /質量と体積.*質量÷体積/)
+    assert.match(density, /PとQ.*同じ密度.*この結果だけで物質名.*断定できません/)
+
+    const gas = text('matter-properties', 'gasProperties')
+    assert.match(gas, /水に非常に溶けやすく.*上方置換/)
+    assert.match(gas, /Xは酸素.*Yは二酸化炭素.*種類固有の反応/)
+
+    const stateChange = text('matter-properties', 'stateChangeMass')
+    assert.match(stateChange, /開いた皿A.*気体を逃さない袋B.*系の境界/)
+    assert.match(stateChange, /全質量.*体積や粒子配置は変わる場合/)
+
+    const cells = text('living-body', 'cells')
+    assert.match(cells, /倍率・染色・採取部位/)
+    assert.match(cells, /表面と内部.*葉緑体.*どちらも植物体をつくる細胞/)
+
+    const photosynthesis = text('living-body', 'photosynthesisRespiration')
+    assert.match(photosynthesis, /弱い光.*呼吸による放出.*ほぼつり合い/)
+    assert.match(photosynthesis, /葉がなく.*茎の呼吸.*酸素消費/)
+
+    const digestion = text('living-body', 'digestionAbsorption')
+    assert.match(digestion, /酵素X.*デンプン.*酵素Y.*タンパク質/)
+    assert.match(digestion, /柔毛.*表面積.*吸収/)
+
+    const humidity = text('weather-change', 'humidityClouds')
+    assert.match(humidity, /湿度80%.*湿度40%.*先に露点/)
+    assert.match(humidity, /上昇.*膨張.*冷え.*露点.*雲粒/)
+
+    const fronts = text('weather-change', 'fronts')
+    assert.match(fronts, /温暖前線.*寒冷前線.*暖気の持ち上げられる傾き/)
+    assert.match(fronts, /寒冷前線通過.*水蒸気量・地形・前線速度/)
+
+    const wind = text('weather-change', 'pressurePatternsWind')
+    assert.match(wind, /等圧線間隔.*気圧傾度.*局地地形/)
+    assert.match(wind, /摩擦で風速.*自転による.*曲げ効果.*低圧側/)
+
+    const strata = text('earth-history', 'strataRelativeAge')
+    assert.match(strata, /断層F.*切られた.*DがFを覆って切られていない/)
+    assert.match(strata, /火山灰層.*鍵層.*化石.*上下関係/)
+
+    const volcanoes = text('earth-history', 'volcanoEarthquakes')
+    assert.match(volcanoes, /粘り気が大きい.*気体が抜けにくく.*爆発的/)
+    assert.match(volcanoes, /P波.*S波.*到着差.*震源から遠い.*地盤/)
+
+    const sky = text('earth-history', 'dailyMotionSeasons')
+    assert.match(sky, /北の空.*天の北極.*南の空.*円弧/)
+    assert.match(sky, /北半球.*南半球.*地軸が傾いたまま公転.*太陽距離/)
   })
 
-  it('33の具体場面それぞれに、checkpointと別の直接な結果と理由が対応する', () => {
+  it('69の具体場面それぞれに、checkpointと別の直接な結果と理由が対応する', () => {
     const signals: Readonly<Record<string, readonly RegExp[]>> = {
       fall: [
         /丸めた紙が先.*平らな紙.*遅く/,
@@ -1057,6 +1436,66 @@ describe('学習ミッションのカタログ不変条件', () => {
         /N極.*入れる間.*止めるとゼロ.*抜く間.*反対方向/,
         /閉回路と開回路.*誘導電圧.*閉回路.*検流計.*開回路.*流れません/,
         /速く入れる.*誘導電圧.*検流計.*大きく振れ/,
+      ],
+      density: [
+        /水.*食用油.*重く.*単位体積当たり/,
+        /2\.7 g\/cm³.*2\.6 g\/cm³.*A.*質量を体積で割/,
+        /PとQ.*2\.7 g\/cm³.*同じ密度.*断定できません/,
+      ],
+      cells: [
+        /細胞を区切る境界.*細胞壁.*倍率.*染色.*採取部位/,
+        /Aは植物由来.*葉緑体がない.*Bは動物細胞.*確認が必要/,
+        /表面と内部.*役割の違い.*植物体をつくる細胞/,
+      ],
+      humidityClouds: [
+        /冷水.*外側.*水滴.*露点.*凝結/,
+        /空気A.*先に露点.*凝結.*湿度80%/,
+        /気圧低下.*膨張して冷え.*露点.*雲粒/,
+      ],
+      strataRelativeAge: [
+        /青、黄、白.*3層を切る線.*緑.*下の層ほど/,
+        /断層F.*A・B・C.*地層D.*切る関係/,
+        /火山灰層.*同時期の鍵層.*化石X.*前.*化石Y.*後.*同じ鍵層である根拠/,
+      ],
+      gasProperties: [
+        /酸素と水素は水上置換.*アンモニアは上方置換.*二酸化炭素は下方置換/,
+        /気体Aはアンモニア.*水上置換ではなく上方置換.*アルカリ性/,
+        /Xは酸素.*Yは二酸化炭素.*石灰水を白濁/,
+      ],
+      stateChangeMass: [
+        /密閉容器.*液体が気体.*全質量.*同じ/,
+        /A.*質量は減り.*B.*袋全体の質量は変わりません.*系の境界/,
+        /袋全体の質量と粒子の種類は変わりません.*体積.*粒子配置/,
+      ],
+      photosynthesisRespiration: [
+        /明所.*酸素が正味で増え.*暗所.*減り.*呼吸.*どちら/,
+        /弱い光.*光合成.*呼吸.*つり合い.*強い光.*光合成/,
+        /A.*葉の光合成.*酸素が正味で増え.*B.*葉がなく呼吸.*酸素消費/,
+      ],
+      digestionAbsorption: [
+        /大きな栄養分.*小さな物質.*小腸の柔毛.*血液やリンパ/,
+        /X.*デンプン.*Y.*タンパク質.*基質特異性/,
+        /B.*表面積が大きい.*Aより吸収.*柔毛/,
+      ],
+      fronts: [
+        /層状の雲.*降水が続き.*通過後に気温が上がる.*暖気.*緩やかに上昇/,
+        /Aは温暖前線.*広い範囲.*Bは寒冷前線.*狭い範囲/,
+        /寒冷前線通過.*全て.*同じ強さ.*とは言えません.*水蒸気量・地形/,
+      ],
+      pressurePatternsWind: [
+        /等圧線が狭い区域.*観測風速.*大きく.*気圧差/,
+        /A.*気圧差が大きい.*Bより風が強い.*気圧傾度/,
+        /地表.*摩擦で遅く.*等圧線を斜めに横切.*低気圧側/,
+      ],
+      volcanoEarthquakes: [
+        /プレート境界.*火山と震央が多い.*一致しない.*岩盤のずれ.*マグマの上昇/,
+        /A.*比較的穏やか.*B.*爆発的.*粘り気.*気体が抜けにくく/,
+        /Q.*震源から遠い.*揺れの強さ.*決まりません.*規模や地盤/,
+      ],
+      dailyMotionSeasons: [
+        /一晩に星が東から西.*月を進める.*自転.*公転/,
+        /北の空.*天の北極.*円弧.*南の空.*東から昇って西/,
+        /Nは夏.*Sは冬.*地軸が傾いたまま公転.*太陽距離.*ほぼ同じ/,
       ],
     }
 

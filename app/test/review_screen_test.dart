@@ -289,6 +289,25 @@ void main() {
             key: 'fall',
             label: '落下の速さ',
             storyTitle: '紙ひこうき部、落下レース中止事件',
+            field: UnitCurriculumField.energy,
+            grade: 3,
+            curriculumRefs: [
+              UnitCurriculumReference(
+                document: 'mext-jhs-science-2017',
+                section: '第1分野 (5)(イ)',
+                pages: [54, 56],
+                url:
+                    'https://www.mext.go.jp/component/a_menu/education/'
+                    'micro_detail/__icsFiles/afieldfile/2019/03/18/'
+                    '1387018_005.pdf',
+              ),
+            ],
+            prerequisites: [],
+            difficulty: 1,
+            safety: UnitSafety(
+              level: UnitSafetyLevel.referenceOnly,
+              guidance: 'テストfixtureでは観察を行わない。',
+            ),
           ),
         ],
         sectionCount: 1,
@@ -314,7 +333,7 @@ void main() {
       ],
     );
     await store.setSetting(
-      'units.v9.detail.force-motion',
+      'units.v10.detail.force-motion',
       jsonEncode(detail.toJson()),
     );
     await store.upsertReviews([item()]);

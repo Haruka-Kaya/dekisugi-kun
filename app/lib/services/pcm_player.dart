@@ -57,6 +57,9 @@ class PcmPlayer {
   final Queue<Uint8List> _pending = Queue<Uint8List>();
   final _level = StreamController<double>.broadcast();
   int _pendingBytes = 0;
+  Completer<bool>? _trackedDrain;
+  bool _trackedDrainFed = false;
+  int _trackedDrainFeedsInFlight = 0;
   bool _ready = false;
   bool _disposed = false;
 
@@ -95,12 +98,33 @@ class PcmPlayer {
     _sink.start();
   }
 
+  /// 1件のPCMを積み、nativeへ実際にfeedされたあとキューが空になるまで追跡する。
+  ///
+  /// 返るFutureがtrueになるのは、少なくとも1回[PcmSink.feed]へ渡し、その後の
+  /// native callbackが残り0 frameを報告した場合だけ。[stopNow]・[dispose]・次の
+  /// 追跡開始ではfalseになる。時間の推定だけで「聞き終えた」とは判定しない。
+  Future<bool> enqueueUntilDrained(Uint8List pcm) {
+    if (_disposed || pcm.length < 2) return Future<bool>.value(false);
+    _completeTrackedDrain(false);
+    final completer = Completer<bool>();
+    _trackedDrain = completer;
+    _trackedDrainFed = false;
+    try {
+      enqueue(pcm);
+    } catch (_) {
+      _completeTrackedDrain(false);
+      rethrow;
+    }
+    return completer.future;
+  }
+
   /// 割り込み。**再生待ちを捨てる。**
   ///
   /// すでに native に渡した分は鳴り切る（最大 [maxResidual]）。
   /// ここで `setup` をやり直せば即座に黙らせられるが、AudioTrack を作り直すので
   /// プツッと鳴るうえ、次の発話までの遅延が増える。割り切って捨てるだけにする。
   void stopNow() {
+    _completeTrackedDrain(false);
     _pending.clear();
     _pendingBytes = 0;
     // 捨てた瞬間に静かになったことを伝える。
@@ -122,15 +146,52 @@ class PcmPlayer {
 
   /// native から「キューが減った」と呼ばれる。要求量だけ渡す。
   void _onFeed(int remainingFrames) {
+    unawaited(_feedNext(remainingFrames));
+  }
+
+  Future<void> _feedNext(int remainingFrames) async {
     if (_disposed) return;
     final chunk = _take(_chunkFrames * 2);
     if (chunk == null) {
       // 渡すものが無い＝鳴り終わる。次の enqueue で start() が掛かる
       _level.add(0);
+      if (_trackedDrainFed &&
+          _trackedDrainFeedsInFlight == 0 &&
+          remainingFrames <= 0) {
+        _completeTrackedDrain(true);
+      }
       return;
     }
     _level.add(_peakOf(chunk));
-    _sink.feed(PcmArrayInt16(bytes: ByteData.sublistView(chunk)));
+    final tracker = _trackedDrain;
+    if (tracker != null && identical(_trackedDrain, tracker)) {
+      _trackedDrainFeedsInFlight++;
+    }
+    try {
+      await _sink.feed(PcmArrayInt16(bytes: ByteData.sublistView(chunk)));
+      // feed()を呼んだだけではnativeへ渡せた証拠にならない。非同期処理が実際に
+      // 完了し、かつ同じ追跡再生がまだ有効な場合だけdrain可能にする。
+      if (tracker != null && identical(_trackedDrain, tracker)) {
+        _trackedDrainFeedsInFlight--;
+        _trackedDrainFed = true;
+      }
+    } catch (_) {
+      if (tracker != null && identical(_trackedDrain, tracker)) {
+        _trackedDrainFeedsInFlight--;
+        _completeTrackedDrain(false);
+      }
+      // native callback上へ例外を投げ直すと呼び出し元のawaitでは回収できない。
+      // 追跡Futureをfalse完了し、所有側がfailedへ閉じる。
+      return;
+    }
+  }
+
+  void _completeTrackedDrain(bool completed) {
+    final tracker = _trackedDrain;
+    _trackedDrain = null;
+    _trackedDrainFed = false;
+    _trackedDrainFeedsInFlight = 0;
+    if (tracker != null && !tracker.isCompleted) tracker.complete(completed);
   }
 
   /// PCM16 リトルエンディアンのピークを 0.0〜1.0 で返す。
@@ -180,7 +241,7 @@ abstract class PcmSink {
   Future<void> setup({required int sampleRate, required int channelCount});
   Future<void> setFeedThreshold(int frames);
   void setFeedCallback(void Function(int remainingFrames)? cb);
-  void feed(PcmArrayInt16 buffer);
+  Future<void> feed(PcmArrayInt16 buffer);
   void start();
   Future<void> release();
 }
@@ -210,7 +271,7 @@ class FlutterPcmSink implements PcmSink {
       FlutterPcmSound.setFeedCallback(cb);
 
   @override
-  void feed(PcmArrayInt16 buffer) => FlutterPcmSound.feed(buffer);
+  Future<void> feed(PcmArrayInt16 buffer) => FlutterPcmSound.feed(buffer);
 
   @override
   void start() => FlutterPcmSound.start();

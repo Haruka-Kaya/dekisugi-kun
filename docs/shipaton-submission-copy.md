@@ -1,5 +1,11 @@
 # Shipaton 2026 submission copy
 
+> [!CAUTION]
+> **ARCHIVED RESEARCH / LEGACY SUBMISSION CANDIDATE — DO NOT SUBMIT.**
+> This is not the current production source of truth. Its Live-AI,
+> free-response, RevenueCat, and demo wording is preserved only as historical
+> material and must not be distributed or pasted into Devpost or store copy.
+
 Updated: 2026-08-10
 
 This file is the English source of truth for the Devpost submission. Do not add

@@ -1,5 +1,10 @@
 import { MISCONCEPTIONS } from './misconceptions.js'
 import {
+  CURRICULUM_COVERAGE_MANIFEST,
+  CURRICULUM_FIELDS,
+  CURRICULUM_SAFETY_LEVELS,
+} from './curriculum-coverage.js'
+import {
   COGNITIVE_OPERATIONS,
   COGNITIVE_TASK_KINDS,
   LOCAL_PRACTICE_STAGES,
@@ -19,6 +24,8 @@ import {
   storyConceptKeys,
   validateScienceStory,
 } from './science-stories.js'
+import { STAGE1_EXPANSION_UNITS } from './stage1-expansion-units.js'
+import { STAGE1_PROOF_UNITS } from './stage1-proof-units.js'
 
 /**
  * 単元と、その中で生徒に説明してもらいたい概念。
@@ -120,6 +127,62 @@ export type Unit = {
   /** 読む教材。**説明フェーズでは画面から隠す**（C2） */
   sections: Section[]
 }
+
+/**
+ * proof sliceで出荷済みの4単元へ、同じunit IDの追加conceptを統合する。
+ *
+ * 単元を二重に公開するとPath/Pickerが分断されるため、追加正本は
+ * concept/sectionだけを足す。対応先不在・題名不一致・重複は起動前に拒否する。
+ */
+function mergeStage1Units(
+  proofUnits: readonly Unit[],
+  expansionUnits: readonly Unit[],
+): Unit[] {
+  const expansionById = new Map(expansionUnits.map((unit) => [unit.id, unit]))
+  if (expansionById.size !== expansionUnits.length) {
+    throw new Error('Stage 1 expansionのunit IDが重複しています')
+  }
+
+  const merged = proofUnits.map((proof) => {
+    const expansion = expansionById.get(proof.id)
+    if (expansion == null) {
+      throw new Error(`Stage 1 expansionに対応するunitがありません: ${proof.id}`)
+    }
+    if (expansion.title !== proof.title) {
+      throw new Error(`Stage 1 unitの題名が一致しません: ${proof.id}`)
+    }
+    expansionById.delete(proof.id)
+
+    const conceptKeys = [
+      ...proof.concepts.map((concept) => concept.key),
+      ...expansion.concepts.map((concept) => concept.key),
+    ]
+    if (new Set(conceptKeys).size !== conceptKeys.length) {
+      throw new Error(`Stage 1 unitのconceptが重複しています: ${proof.id}`)
+    }
+
+    return {
+      ...proof,
+      brief: `${proof.brief}${expansion.brief}`,
+      concepts: [...proof.concepts, ...expansion.concepts],
+      sections: [...proof.sections, ...expansion.sections],
+    }
+  })
+
+  if (expansionById.size > 0) {
+    throw new Error(
+      `Stage 1 expansionが未知のunitを指しています: ${[
+        ...expansionById.keys(),
+      ].join(',')}`,
+    )
+  }
+  return merged
+}
+
+const STAGE1_UNITS = mergeStage1Units(
+  STAGE1_PROOF_UNITS,
+  STAGE1_EXPANSION_UNITS,
+)
 
 export const UNITS: Unit[] = [
   {
@@ -841,6 +904,7 @@ export const UNITS: Unit[] = [
       },
     ],
   },
+  ...STAGE1_UNITS,
 ]
 
 const BY_ID = new Map(UNITS.map((u) => [u.id, u]))
@@ -961,6 +1025,56 @@ export function validateCatalog(): string[] {
   const storyTitles = new Set<string>()
   const storySettings = new Set<string>()
   const storyPunchlines = new Set<string>()
+
+  const catalogConceptEntries = UNITS.flatMap((unit) =>
+    unit.concepts.map((concept) => ({ unitId: unit.id, conceptKey: concept.key })),
+  )
+  const manifestEntries = Object.values(CURRICULUM_COVERAGE_MANIFEST)
+  if (manifestEntries.length !== catalogConceptEntries.length) {
+    problems.push('curriculum coverage manifestが全conceptと1対1でない')
+  }
+  for (const { unitId, conceptKey } of catalogConceptEntries) {
+    const coverage = CURRICULUM_COVERAGE_MANIFEST[conceptKey]
+    if (coverage == null || coverage.unitId !== unitId || coverage.conceptKey !== conceptKey) {
+      problems.push(`${unitId}/${conceptKey}: curriculum coverageが無いか対応先が不正`)
+      continue
+    }
+    if (!CURRICULUM_FIELDS.includes(coverage.field)
+      || !Number.isInteger(coverage.grade) || coverage.grade < 1 || coverage.grade > 3
+      || !Number.isInteger(coverage.difficulty)
+      || coverage.difficulty < 1 || coverage.difficulty > 5) {
+      problems.push(`${unitId}/${conceptKey}: field・grade・difficultyが不正`)
+    }
+    if (coverage.curriculumRefs.length === 0
+      || coverage.curriculumRefs.some((entry) =>
+        entry.document !== 'mext-jhs-science-2017'
+        || !entry.section.trim()
+        || !entry.url.startsWith('https://www.mext.go.jp/')
+        || entry.pages.length === 0
+        || entry.pages.some((page) => !Number.isInteger(page) || page < 1)
+      )) {
+      problems.push(`${unitId}/${conceptKey}: MEXT curriculumRefsが空または不正`)
+    }
+    if (!CURRICULUM_SAFETY_LEVELS.includes(coverage.safety.level)
+      || !coverage.safety.guidance.trim()) {
+      problems.push(`${unitId}/${conceptKey}: safety分類または具体的な安全条件が無い`)
+    }
+    if (coverage.prerequisites.includes(conceptKey)
+      || new Set(coverage.prerequisites).size !== coverage.prerequisites.length
+      || coverage.prerequisites.some(
+        (key) => !catalogConceptEntries.some((entry) => entry.conceptKey === key),
+      )) {
+      problems.push(`${unitId}/${conceptKey}: prerequisitesが自己参照・重複・未知concept`)
+    }
+  }
+  for (const entry of manifestEntries) {
+    if (!catalogConceptEntries.some(
+      (candidate) => candidate.unitId === entry.unitId
+        && candidate.conceptKey === entry.conceptKey,
+    )) {
+      problems.push(`${entry.unitId}/${entry.conceptKey}: manifestが存在しない教材を指す`)
+    }
+  }
 
   for (const u of UNITS) {
     const seen = new Set<string>()

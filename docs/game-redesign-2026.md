@@ -6,16 +6,16 @@ UIにポイントや色を足すのではなく、学習行為そのものをゲ
 1ノードごとに要求する認知行為を変え、`予想 → 図式化 → 物語で判断 →
 聞き取る → 説明する → 誤概念を直す → 別場面へ使う`を一本道に編成する。
 
-既存の11概念×A/B/C（foundation / conditions / transfer）を科学内容の正本とし、
+8単元23概念×A/B/C（foundation / conditions / transfer）を科学内容の正本とし、
 Path・Story・Labは参照する。正答や説明を別画面に複製しない。
-教材はcatalog schema v9、個人学習と結晶経済・端末内League履歴の保存契約はSessionStore v13とする。
+教材はcatalog schema v10、個人学習と結晶経済・端末内League履歴の保存契約はSessionStore v13とする。
 
 ## アプリ構造
 
 | タブ | 役割 | コア体験 |
 |---|---|---|
 | 学ぶ | 縦型Learning Path | 必修ノード、埋め込み復習、章ボス |
-| 物語 | 理科の事件簿 | 11件の固有事件名、固定人物と会話、途中予想、人物別反応、科学的解決と短い落ち |
+| 物語 | 理科の事件簿 | 23件の固有事件名、固定人物と会話、途中予想、人物別反応、科学的解決と短い落ち |
 | 練習 | Personalized Practice | 期限が来た概念、Repair、Listen/Speak、任意Timed |
 | 記号 | Notation Lab | 力の矢印と式を実際になぞり、単位・グラフも構造操作で確かめる |
 | 競う | 意味ある週次挑戦 | 成人onlineは管理LAN上の実参加者5〜8人、local-onlyは同じ端末を手渡す代替。周回稼ぎを認めない |
@@ -169,17 +169,18 @@ dashed、完了済みはsolid。Unit bannerは固定高にせず、単元・目�
 
 ## 学習上の不変条件
 
-1. 11概念すべてにLearn/Diagram/Story/Listen/Speak/Bossがある。
+1. 23概念すべてにLearn/Diagram/Story/Listen/Speak/Bossがある。
 2. A/B/Cの3variantを各章で必ず使う。
 3. Repair Hubに出すのはcatalogへ一意対応できるcanonical active needだけ。期限復習はPersonalized
    Practice、中断runはResumeへ分離する。Timedは任意で、いずれも次章解放を止めない。
 4. Storyの全分岐は有限で、観察・訂正へ合流する。
-5. Speakはschema v9の固定目標語句を先に確認する。声はAndroid / iOSの端末内ASR候補が
-   catalogの許可表記と正規化後に完全一致した場合だけgateを通し、その後に録音または文字 →
-   再生/再読 → 正本との自己比較で完了する。cloud認識へfallbackしない。
-6. 自由記述・録音・ASRへ意味類似やconfidenceによる自動正誤を付けない。ASR候補はRAM内の
-   完全一致にだけ使い保存・送信しない。文字代替は固定目標文そのものだけを受理し、完了時に
-   「発音は未確認です」と表示する。
+5. Speakは教材と正解を隠したまま、stageごとの問いに音声または文字で説明する。音声はRAM内で
+   録音し、実際に最後まで再生した後だけ次へ進む。文字は本人が明示的に読み返す。自由説明の
+   長さ、意味類似、confidenceを正誤判定や進行条件に使わない。
+6. その説明後にcatalog固定checkpointを1問だけ問い返す。正解ならcanonical needの
+   `demonstrated`、誤答なら同needの`observed`とheart 1個だけを通知し、正解を先出しせず
+   ヒントを使った再録音／再入力と再生／再読を必須にする。録音、自由文、ASR候補、選択肢ID、
+   反応時間は保存・送信しない。権限拒否・端末音声失敗時は訂正状態を保ったまま文字へ退避する。
 7. Bossは全問回答後まで正解・hintを開示しない。
 8. Unit Legendaryはunit内の全Boss後、最後のBoss完了日より後かつ期限到来後。
    「習得」ではなく「高難度課題クリア」と表示し、次の期限が来たら再挑戦状態へ戻す。
@@ -190,7 +191,8 @@ dashed、完了済みはsolid。Unit bannerは固定高にせず、単元・目�
     target IDや誤答本文を保存しない。自由記述・音声はneed判定に使わない。
 12. Listeningは音声を最後まで聞いた後だけprivate文字起こしを入力し、教材の固定文との差を確認して
     条件を判断する。同梱人音声がある場合はそれを優先し、無ければ端末TTSと出所を明示する。Speakingは
-    発音gate後に自分の録音または文字を再生・再読する。日次カードは同一4時学習日の実eventから個別に完了表示する。
+    正解非表示の説明→実再生／明示再読→固定問い返し→必要なら訂正→自己比較を通す。日次カードは
+    同一4時学習日の実eventから個別に完了表示する。
 13. Story一覧の事件名は各Sectionの固定Story正本から公開し、概念labelから汎用生成しない。
     一覧・詳細・同梱assetの事件名を一致させ、選択・回答・再生履歴は保存しない。
 14. Notationの正答提出後はcatalog固定strokeをpointerで順になぞるまで完了にしない。
@@ -201,10 +203,10 @@ dashed、完了済みはsolid。Unit bannerは固定高にせず、単元・目�
 自動検証はFlutter全テスト / analyze、server typecheck / test / catalog check、Memory / SQLiteの
 同一contract、6タブroute、320×568・文字200%・light/dark・Reduce Motion・Semantics、
 700dp以上の可読幅とgridを対象にする。iOS Simulatorのbuild / launchと画面確認は行うが、
-Simulatorを端末内ASR、マイク、TTSの実機証拠には数えない。
+Simulatorを実マイク録音・再生、権限ダイアログ、TTSの実機証拠には数えない。
 
-完成宣言の前に残る人間・物理環境のgateは、Android / iOS物理端末での端末内ASR・マイク拒否・
-TTS中断と最新6タブの目視、Friends 2台、League 5台相当の実機LAN、初見学習者による
+完成宣言の前に残る人間・物理環境のgateは、Android / iOS物理端末でのマイク許可／拒否・
+録音の実再生・TTS中断と最新6タブの目視、Friends 2台、League 5台相当の実機LAN、初見学習者による
 5〜10分pilotである。Store提出はこれらを通した後の別工程とする。
 
 ローカルでgreenでも、必要な新規production / test / asset / workflowがGit未追跡なら配布成果物には

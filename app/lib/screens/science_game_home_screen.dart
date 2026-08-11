@@ -147,7 +147,7 @@ class ScienceGameHomeScreen extends StatefulWidget {
 class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     with WidgetsBindingObserver {
   static const _courseId = 'science-ja-v1';
-  static const _contentVersion = 'catalog-v9';
+  static const _contentVersion = 'catalog-v10';
 
   final _gameProjection = const LearningGameProjection();
   final _contentProjection = const GameContentProjection();
@@ -1186,12 +1186,12 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       nodeId: target.nodeId,
     );
     if (existing != null) {
+      final persisted = await store.snapshot(widget.scope);
       final retryPrefix =
           'event:${existing.runId}:need:${existing.activityIndex}:';
-      final currentRetryWasPartiallySaved =
-          (_snapshot?.events ?? const <LearningEventRecord>[]).any(
-            (event) => event.eventId.startsWith(retryPrefix),
-          );
+      final currentRetryWasPartiallySaved = persisted.events.any(
+        (event) => event.eventId.startsWith(retryPrefix),
+      );
       final reopenedAt = now.toUtc();
       if (currentRetryWasPartiallySaved ||
           !reopenedAt.isAfter(existing.updatedAt)) {
@@ -1308,6 +1308,25 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       run: run,
       onApply: _applyFixedTaskHeartLoss,
     );
+    final observedNeedWrites = _ObservedNeedWriteQueue(
+      onPersist: (evidence) => _recordActivityObservedNeed(
+        target: target,
+        run: run,
+        evidence: evidence,
+        origin: repairTarget != null
+            ? LearningOrigin.practice
+            : eventOrigin ?? _originFor(target.kind),
+      ),
+    );
+    void recordNeedEvidence(LearningNeedEvidence evidence) {
+      needEvidence.record(evidence);
+      observedNeedWrites.record(evidence);
+    }
+
+    void reportHeartLoss(LearningHeartLossEvidence evidence) {
+      heartLosses.reportAfter(evidence, beforeApply: observedNeedWrites.drain);
+    }
+
     Future<void>? save;
     BuildContext? activityContext;
     Future<void> startCompletionSave() {
@@ -1315,6 +1334,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       if (existing != null) return existing;
       late final Future<void> work;
       work = () async {
+        await observedNeedWrites.drain();
         await heartLosses.drain();
         final action = await _commitNode(
           target: target,
@@ -1359,6 +1379,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
           run: run,
           needEvidence: needEvidence,
           afterRecorded: () async {
+            await observedNeedWrites.drain();
             await heartLosses.drain();
             await _ensureUnclearedRunAdvanced(run);
           },
@@ -1386,8 +1407,8 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
             presentation: ScienceLegendaryPresentation.spacedReview,
             onCompleted: completed,
             onNotCleared: notCleared,
-            onNeedEvidence: needEvidence.record,
-            onHeartLoss: heartLosses.report,
+            onNeedEvidence: recordNeedEvidence,
+            onHeartLoss: reportHeartLoss,
             onReturnToPath: () => returnToPath(routeContext),
           ),
           GamePathNodeKind.practice => ScienceDiagramScreen(
@@ -1395,8 +1416,8 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
             conceptLabel: target.conceptLabel,
             practiceAttempt: attempt,
             onCompleted: completed,
-            onNeedEvidence: needEvidence.record,
-            onHeartLoss: heartLosses.report,
+            onNeedEvidence: recordNeedEvidence,
+            onHeartLoss: reportHeartLoss,
             onReturnToPath: () => returnToPath(routeContext),
           ),
           GamePathNodeKind.story => ScienceStoryScreen(
@@ -1404,8 +1425,8 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
             conceptLabel: target.conceptLabel,
             practiceAttempt: attempt,
             onCompleted: completed,
-            onNeedEvidence: needEvidence.record,
-            onHeartLoss: heartLosses.report,
+            onNeedEvidence: recordNeedEvidence,
+            onHeartLoss: reportHeartLoss,
             onReturnToPath: () => returnToPath(routeContext),
           ),
           GamePathNodeKind.listening => ScienceListeningScreen(
@@ -1414,8 +1435,8 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
             practiceAttempt: attempt,
             repairNeedCode: repairTarget?.needCode,
             onCompleted: completed,
-            onNeedEvidence: needEvidence.record,
-            onHeartLoss: heartLosses.report,
+            onNeedEvidence: recordNeedEvidence,
+            onHeartLoss: reportHeartLoss,
             onReturnToPath: () => returnToPath(routeContext),
           ),
           GamePathNodeKind.speaking => ScienceSpeakListenScreen(
@@ -1423,6 +1444,8 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
             conceptLabel: target.conceptLabel,
             practiceAttempt: attempt,
             onCompleted: completed,
+            onNeedEvidence: recordNeedEvidence,
+            onHeartLoss: reportHeartLoss,
             onReturnToPath: () => returnToPath(routeContext),
           ),
           GamePathNodeKind.challenge => OfflinePracticeScreen(
@@ -1431,8 +1454,8 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
             missionKind: MissionKind.caseRetry,
             practiceAttempt: attempt,
             onCheckpointCompleted: startCompletionSave,
-            onNeedEvidence: needEvidence.record,
-            onHeartLoss: heartLosses.report,
+            onNeedEvidence: recordNeedEvidence,
+            onHeartLoss: reportHeartLoss,
           ),
           GamePathNodeKind.legendary => ScienceLegendaryScreen(
             section: section,
@@ -1445,8 +1468,8 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
             },
             onCompleted: completed,
             onNotCleared: notCleared,
-            onNeedEvidence: needEvidence.record,
-            onHeartLoss: heartLosses.report,
+            onNeedEvidence: recordNeedEvidence,
+            onHeartLoss: reportHeartLoss,
             onReturnToPath: () => returnToPath(routeContext),
           ),
         };
@@ -1468,6 +1491,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     );
     try {
       await Navigator.of(context).push(route);
+      await observedNeedWrites.drain();
       await heartLosses.drain();
     } finally {
       _endActivityStatus(activityStatus);
@@ -1485,6 +1509,23 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       run: run,
       onApply: _applyFixedTaskHeartLoss,
     );
+    final observedNeedWrites = _ObservedNeedWriteQueue(
+      onPersist: (evidence) => _recordActivityObservedNeed(
+        target: target,
+        run: run,
+        evidence: evidence,
+        origin: LearningOrigin.challenge,
+      ),
+    );
+    void recordNeedEvidence(LearningNeedEvidence evidence) {
+      needEvidence.record(evidence);
+      observedNeedWrites.record(evidence);
+    }
+
+    void reportHeartLoss(LearningHeartLossEvidence evidence) {
+      heartLosses.reportAfter(evidence, beforeApply: observedNeedWrites.drain);
+    }
+
     final conceptsByKey = {
       for (final concept in target.unit.concepts) concept.key: concept,
     };
@@ -1506,6 +1547,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     BuildContext? activityContext;
     void completed() {
       save ??= _guardRouteSave(() async {
+        await observedNeedWrites.drain();
         await heartLosses.drain();
         final action = await _commitUnitLegendary(
           target: target,
@@ -1524,6 +1566,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
 
     void notCleared() {
       save ??= _guardRouteSave(() async {
+        await observedNeedWrites.drain();
         await _recordUnitLegendaryFailure(
           target: target,
           run: run,
@@ -1553,8 +1596,8 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
                 challenges: challenges,
                 isUnlocked: _nodeFor(target.nodeId)?.canOpen ?? false,
                 onCompleted: completed,
-                onNeedEvidence: needEvidence.record,
-                onHeartLoss: heartLosses.report,
+                onNeedEvidence: recordNeedEvidence,
+                onHeartLoss: reportHeartLoss,
                 onNotCleared: notCleared,
                 onReturnToPath: () => returnToPath(routeContext),
               ),
@@ -1562,6 +1605,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
           },
         ),
       );
+      await observedNeedWrites.drain();
       await heartLosses.drain();
     } finally {
       _endActivityStatus(activityStatus);
@@ -1819,6 +1863,61 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     await afterRecorded();
   }
 
+  /// 固定課題の誤答を、heart消費より先に独立したneed eventとして保存する。
+  ///
+  /// 画面を訂正途中で閉じてもRepair対象だけを失わないための境界。回答本文・
+  /// 選択肢IDは受け取らず、catalogの一般化needだけを冪等に保存する。通常完了時の
+  /// eventにも同じneedが含まれるが、projectorは同一codeを重複加算しない。
+  Future<void> _recordActivityObservedNeed({
+    required _NodeTarget target,
+    required LearningRun run,
+    required LearningNeedEvidence evidence,
+    required LearningOrigin origin,
+    String? nodeId,
+    String? activityId,
+    LearningActivityKind? activityKind,
+  }) async {
+    final matchesTarget = target.kind == GamePathNodeKind.legendary
+        ? target.unit.concepts.any(
+            (concept) => concept.key == evidence.conceptKey,
+          )
+        : evidence.conceptKey == target.conceptKey;
+    if (evidence.kind != LearningNeedEvidenceKind.observed || !matchesTarget) {
+      return;
+    }
+    final now = DateTime.now();
+    final observedAt = run.updatedAt.toUtc();
+    final learningDay = dayKeyOf(observedAt.toLocal());
+    final skillId = '${target.unit.id}/${evidence.conceptKey}';
+    final observedNeeds = <String, Set<String>>{
+      skillId: {evidence.needCode},
+    };
+    final event = LearningEventCommand(
+      eventId:
+          'need:v3:${run.runId}:${run.activityIndex}:$learningDay:'
+          '${_stableNeedFingerprint(observedNeeds)}',
+      scope: widget.scope,
+      origin: widget.schoolMode ? LearningOrigin.schoolAssignment : origin,
+      courseId: _courseId,
+      nodeId: nodeId ?? target.nodeId,
+      activityId: activityId ?? 'path.${target.kind.name}.need.v1',
+      skillIds: {skillId},
+      activityKind: activityKind ?? _activityKindFor(target.kind),
+      outcome: LearningAttemptOutcome.retryNeeded,
+      evidence: LearningEvidenceLevel.participation,
+      contentVersion: _contentVersion,
+      learningDay: learningDay,
+      occurredAt: observedAt,
+      practiceNeedCodes: observedNeeds,
+    );
+    try {
+      await _progressStore(now).commit(event);
+    } catch (_) {
+      if (mounted) _message('見つけた復習ポイントを端末へ保存できませんでした。');
+      rethrow;
+    }
+  }
+
   /// 任意ミニゲームで見つけた固定needだけを保存する。
   ///
   /// Path node、XP、streak、questは進めず、回答・選択肢・時間も保存しない。
@@ -2060,8 +2159,34 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
         run: run,
         onApply: _applyFixedTaskHeartLoss,
       );
+      final observedNeedWrites = _ObservedNeedWriteQueue(
+        onPersist: (evidence) => _recordActivityObservedNeed(
+          target: target,
+          run: run,
+          evidence: evidence,
+          origin: repairTarget != null
+              ? LearningOrigin.practice
+              : LearningOrigin.lab,
+          nodeId: run.nodeId,
+          activityId: 'notation.need.v1',
+          activityKind: LearningActivityKind.equation,
+        ),
+      );
+      void recordNeedEvidence(LearningNeedEvidence evidence) {
+        needEvidence.record(evidence);
+        observedNeedWrites.record(evidence);
+      }
+
+      void reportHeartLoss(LearningHeartLossEvidence evidence) {
+        heartLosses.reportAfter(
+          evidence,
+          beforeApply: observedNeedWrites.drain,
+        );
+      }
+
       Future<bool> allowRetry() async {
         try {
+          await observedNeedWrites.drain();
           await heartLosses.drain();
         } catch (_) {
           return false;
@@ -2083,11 +2208,12 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
                   practiceAttempt: attempt,
                   content: content,
                   focusNeedCode: focusNeedCode,
-                  onNeedEvidence: needEvidence.record,
-                  onHeartLoss: heartLosses.report,
+                  onNeedEvidence: recordNeedEvidence,
+                  onHeartLoss: reportHeartLoss,
                   onRetryRequested: allowRetry,
                   onCompleted: () {
                     save ??= () async {
+                      await observedNeedWrites.drain();
                       await heartLosses.drain();
                       final action = await _commitNotation(
                         target: target,
@@ -2108,6 +2234,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
             },
           ),
         );
+        await observedNeedWrites.drain();
         await heartLosses.drain();
       } finally {
         _endActivityStatus(activityStatus);
@@ -2939,10 +3066,31 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
         run: run,
         onApply: _applyFixedTaskHeartLoss,
       );
+      final observedNeedWrites = _ObservedNeedWriteQueue(
+        onPersist: (evidence) => _recordActivityObservedNeed(
+          target: target,
+          run: run,
+          evidence: evidence,
+          origin: LearningOrigin.practice,
+        ),
+      );
+      void recordNeedEvidence(LearningNeedEvidence evidence) {
+        needEvidence.record(evidence);
+        observedNeedWrites.record(evidence);
+      }
+
+      void reportHeartLoss(LearningHeartLossEvidence evidence) {
+        heartLosses.reportAfter(
+          evidence,
+          beforeApply: observedNeedWrites.drain,
+        );
+      }
+
       Future<void>? save;
       BuildContext? activityContext;
       void completed() {
         save ??= _guardRouteSave(() async {
+          await observedNeedWrites.drain();
           await heartLosses.drain();
           final action = await _commitNode(
             target: target,
@@ -2976,8 +3124,8 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
                   conceptLabel: mission.conceptLabel,
                   practiceAttempt: mission.practiceAttempt,
                   onCompleted: completed,
-                  onNeedEvidence: needEvidence.record,
-                  onHeartLoss: heartLosses.report,
+                  onNeedEvidence: recordNeedEvidence,
+                  onHeartLoss: reportHeartLoss,
                   onReturnToPath: () => returnToPractice(routeContext),
                 ),
                 DailyAudioMissionKind.speaking => ScienceSpeakListenScreen(
@@ -2985,6 +3133,8 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
                   conceptLabel: mission.conceptLabel,
                   practiceAttempt: mission.practiceAttempt,
                   onCompleted: completed,
+                  onNeedEvidence: recordNeedEvidence,
+                  onHeartLoss: reportHeartLoss,
                   onReturnToPath: () => returnToPractice(routeContext),
                 ),
               };
@@ -2996,6 +3146,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
             },
           ),
         );
+        await observedNeedWrites.drain();
         await heartLosses.drain();
       } finally {
         _endActivityStatus(activityStatus);
@@ -3073,8 +3224,17 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
         run: run,
         onApply: _applyFixedTaskHeartLoss,
       );
+      final observedNeedWrites = _ObservedNeedWriteQueue(
+        onPersist: (evidence) => _recordOptionalPracticeNeed(
+          target: target,
+          mode: mode,
+          evidence: evidence,
+          run: run,
+        ),
+      );
       Future<bool> allowRetry() async {
         try {
+          await observedNeedWrites.drain();
           await heartLosses.drain();
         } catch (_) {
           return false;
@@ -3082,27 +3242,25 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
         return _ensureNormalLearningCanStart();
       }
 
-      final pendingNeedWrites = <Future<void>>[];
       void reportNeed(LearningNeedEvidence evidence) {
-        if (evidence.kind != LearningNeedEvidenceKind.observed) return;
-        pendingNeedWrites.add(
-          _guardRouteSave(
-            _recordOptionalPracticeNeed(
-              target: target,
-              mode: mode,
-              evidence: evidence,
-              run: run,
-            ),
-          ),
+        observedNeedWrites.record(evidence);
+      }
+
+      void reportHeartLoss(LearningHeartLossEvidence evidence) {
+        heartLosses.reportAfter(
+          evidence,
+          beforeApply: observedNeedWrites.drain,
         );
       }
 
       void finish(BuildContext routeContext) {
-        unawaited(() async {
-          await Future.wait(pendingNeedWrites);
-          await heartLosses.drain();
-          if (routeContext.mounted) Navigator.of(routeContext).pop();
-        }());
+        unawaited(
+          _guardRouteSave(() async {
+            await observedNeedWrites.drain();
+            await heartLosses.drain();
+            if (routeContext.mounted) Navigator.of(routeContext).pop();
+          }()),
+        );
       }
 
       final activityStatus = _beginActivityStatus();
@@ -3121,11 +3279,9 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
                     practiceAttempt: attempt,
                   ),
                   onNeedEvidence: reportNeed,
-                  onHeartLoss: heartLosses.report,
+                  onHeartLoss: reportHeartLoss,
                   onRetryRequested: allowRetry,
-                  onCompleted: () {
-                    if (routeContext.mounted) Navigator.of(routeContext).pop();
-                  },
+                  onCompleted: () => finish(routeContext),
                 ),
                 PracticeModeKind.lightning => ScienceLightningScreen(
                   section: section,
@@ -3133,7 +3289,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
                   practiceAttempt: attempt,
                   content: ScienceActivityContent.lightningFor(section),
                   onNeedEvidence: reportNeed,
-                  onHeartLoss: heartLosses.report,
+                  onHeartLoss: reportHeartLoss,
                   onRetryRequested: allowRetry,
                   onCompleted: () => finish(routeContext),
                 ),
@@ -3142,14 +3298,14 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
                   conceptLabel: target.conceptLabel,
                   practiceAttempt: attempt,
                   onNeedEvidence: reportNeed,
-                  onHeartLoss: heartLosses.report,
+                  onHeartLoss: reportHeartLoss,
                   onFinished: () => finish(routeContext),
                 ),
               },
             ),
           ),
         );
-        await Future.wait(pendingNeedWrites);
+        await observedNeedWrites.drain();
         await heartLosses.drain();
       } finally {
         _endActivityStatus(activityStatus);
@@ -3372,6 +3528,30 @@ final class _PendingHeartLoss {
   final DateTime occurredAt;
 }
 
+/// 同一routeで観測したcanonical needを一度だけ書き、heartの前提にする。
+final class _ObservedNeedWriteQueue {
+  _ObservedNeedWriteQueue({required this.onPersist});
+
+  final Future<void> Function(LearningNeedEvidence evidence) onPersist;
+  final Map<String, Future<void>> _writes = {};
+
+  void record(LearningNeedEvidence evidence) {
+    if (evidence.kind != LearningNeedEvidenceKind.observed) return;
+    final key = '${evidence.conceptKey}:${evidence.needCode}';
+    if (_writes.containsKey(key)) return;
+    final work = onPersist(evidence);
+    _writes[key] = work;
+    // callback直後に失敗してもunhandledにせず、drain側には元のerrorを残す。
+    unawaited(work.then<void>((_) {}, onError: (Object _, StackTrace _) {}));
+  }
+
+  Future<void> drain() async {
+    for (final write in _writes.values) {
+      await write;
+    }
+  }
+}
+
 /// 画面内の同期callbackを、保存順が確定した冪等heart lossへ直列化する。
 ///
 /// fixed task ID自体は保存せずfingerprintだけをloss IDへ使う。選択内容は
@@ -3388,7 +3568,12 @@ final class _HeartLossQueue {
   Object? _firstError;
   StackTrace? _firstStack;
 
-  void report(LearningHeartLossEvidence evidence) {
+  void report(LearningHeartLossEvidence evidence) => reportAfter(evidence);
+
+  void reportAfter(
+    LearningHeartLossEvidence evidence, {
+    Future<void> Function()? beforeApply,
+  }) {
     final activityIndex = ++_nextActivityIndex;
     final now = DateTime.now();
     final loss = _PendingHeartLoss(
@@ -3403,6 +3588,7 @@ final class _HeartLossQueue {
     _pending = _pending
         .then((_) async {
           if (_firstError != null) return;
+          if (beforeApply != null) await beforeApply();
           await onApply(loss);
         })
         .catchError((Object error, StackTrace stack) {
@@ -3514,7 +3700,7 @@ String _completionMessage(GamePathNodeKind kind, bool foundRepairNeed) {
     GamePathNodeKind.practice => '条件を構造で確かめて、次の一歩を開きました。',
     GamePathNodeKind.story => '物語の中の思い込みを見つけ、科学の説明へつなげました。',
     GamePathNodeKind.listening => '聞いた説明を条件と結び付け、次の一歩を開きました。',
-    GamePathNodeKind.speaking => '目標の説明を確かめて、自分の声または文字で振り返りました。',
+    GamePathNodeKind.speaking => '自分の声または文字で教え、問い返しを考えて説明を磨きました。',
     GamePathNodeKind.challenge => '別の場面へ考え方を使い、章ボスをクリアしました。',
     GamePathNodeKind.legendary => 'ヒントなしの固定課題を最後まで確かめました。',
   };

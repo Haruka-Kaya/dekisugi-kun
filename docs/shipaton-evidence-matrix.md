@@ -1,5 +1,11 @@
 # Shipaton 2026 claim and evidence matrix
 
+> [!CAUTION]
+> **ARCHIVED RESEARCH / LEGACY CANDIDATE — DO NOT DISTRIBUTE OR SUBMIT.**
+> This is not the current production source of truth. The Live-AI,
+> free-response, store-build, and submission claims below are retained only for
+> historical traceability and must not be copied into a release or application.
+
 Updated: 2026-08-10
 
 Use this matrix before changing the Devpost copy, store listing, screenshots, or

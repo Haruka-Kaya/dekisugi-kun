@@ -1,4 +1,6 @@
 import type { LocalPracticeVariant } from './local-practice-variants.js'
+import { STAGE1_EXPANSION_STORY_SOURCES } from './stage1-expansion-stories.js'
+import { STAGE1_PROOF_STORY_SOURCES } from './stage1-proof-stories.js'
 
 /**
  * Science Stories の固定会話正本。
@@ -42,7 +44,7 @@ export type ScienceStory = {
   punchline: ScienceStoryLine
 }
 
-type StorySource = Omit<
+export type StorySource = Omit<
   ScienceStory,
   'choiceLine' | 'scientificResolution' | 'foundationNeedCode'
 > & {
@@ -312,6 +314,8 @@ const STORY_SOURCES: Readonly<Record<string, StorySource>> = {
     ],
     line('electromagneticInduction.punchline', 'dekisugi', '検流計の目覚まし時計は、磁束の変化でした。'),
   ),
+  ...STAGE1_PROOF_STORY_SOURCES,
+  ...STAGE1_EXPANSION_STORY_SOURCES,
 }
 
 /** Story一覧でも詳細と同じ固定事件名を使うための、正本への読み取り口。 */

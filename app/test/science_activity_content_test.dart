@@ -1,5 +1,6 @@
 import 'package:dekisugi/learning/services/science_activity_content.dart';
 import 'package:dekisugi/models/unit.dart';
+import 'package:dekisugi/screens/science_notation_lab_screen.dart';
 import 'package:dekisugi/services/session_store.dart';
 import 'package:dekisugi/services/units_client.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('Matchはcanonical対応を保ったまま全11concept・3variantの正答位置を分散する', () async {
+  test('Matchはcanonical対応を保ったまま全23concept・3variantの正答位置を分散する', () async {
     final client = UnitsClient(baseUrl: '', store: MemorySessionStore());
     final summaries = await client.list();
     var conceptCount = 0;
@@ -86,7 +87,7 @@ void main() {
       }
     }
 
-    expect(conceptCount, 11);
+    expect(conceptCount, 23);
     expect(
       presentationSignatures.length,
       3,
@@ -136,10 +137,13 @@ void main() {
     );
   });
 
-  test('同梱catalogの全11concept・22 trace・needCodeをUIへ損失なく変換する', () async {
+  test('同梱catalogの全23concept・80 task・22 traceをUIへ損失なく変換する', () async {
     final client = UnitsClient(baseUrl: '', store: MemorySessionStore());
     final summaries = await client.list();
     var count = 0;
+    var taskCount = 0;
+    var traceCount = 0;
+    final taskKinds = <LocalNotationTaskKind>{};
 
     for (final summary in summaries) {
       final detail = await client.detail(summary.id);
@@ -153,92 +157,76 @@ void main() {
         expect(source, isNotNull, reason: '${summary.id}/${concept.key}');
         expect(converted, isNotNull, reason: '${summary.id}/${concept.key}');
 
-        expect(converted!.orderTasks.length, source!.orderTasks.length);
-        for (var index = 0; index < source.orderTasks.length; index++) {
-          final left = converted.orderTasks[index];
-          final right = source.orderTasks[index];
+        expect(converted!.tasks.length, source!.tasks.length);
+        for (var index = 0; index < source.tasks.length; index++) {
+          final left = converted.tasks[index];
+          final right = source.tasks[index];
+          taskCount++;
+          taskKinds.add(right.kind);
           expect(left.id, right.id);
+          expect(left.kind, right.kind);
           expect(left.title, right.title);
           expect(left.prompt, right.prompt);
-          expect(left.traceGuide, right.traceGuide);
-          expect(
-            left.tracePattern.semanticsLabel,
-            right.tracePattern.semanticsLabel,
-          );
-          expect(
-            left.tracePattern.strokeOrderIds,
-            right.tracePattern.strokeOrderIds,
-          );
-          expect(
-            left.tracePattern.strokes.length,
-            right.tracePattern.strokes.length,
-          );
-          for (
-            var strokeIndex = 0;
-            strokeIndex < right.tracePattern.strokes.length;
-            strokeIndex++
-          ) {
-            final convertedStroke = left.tracePattern.strokes[strokeIndex];
-            final sourceStroke = right.tracePattern.strokes[strokeIndex];
-            expect(convertedStroke.id, sourceStroke.id);
-            expect(convertedStroke.label, sourceStroke.label);
-            expect(
-              convertedStroke.points.map((point) => [point.x, point.y]),
-              sourceStroke.points.map((point) => [point.x, point.y]),
-            );
-          }
-          expect(
-            left.tokens.map((token) => (token.id, token.label)),
-            right.tokens.map((token) => (token.id, token.label)),
-          );
-          expect(left.correctOrderIds, right.correctOrderIds);
           expect(left.solutionSummary, right.solutionSummary);
           expect(left.needCode, right.needCode);
+          switch ((left, right)) {
+            case (
+              ScienceNotationArrangeTask left,
+              LocalNotationArrangeTask right,
+            ):
+              expect(left.guide, right.guide);
+              expect(
+                left.tokens.map((token) => (token.id, token.label)),
+                right.tokens.map((token) => (token.id, token.label)),
+              );
+              expect(left.correctOrderIds, right.correctOrderIds);
+              expect(left.tracePattern == null, right.tracePattern == null);
+              final rightTrace = right.tracePattern;
+              final leftTrace = left.tracePattern;
+              if (rightTrace == null || leftTrace == null) break;
+              traceCount++;
+              expect(leftTrace.semanticsLabel, rightTrace.semanticsLabel);
+              expect(leftTrace.strokeOrderIds, rightTrace.strokeOrderIds);
+              expect(leftTrace.strokes.length, rightTrace.strokes.length);
+              for (
+                var strokeIndex = 0;
+                strokeIndex < rightTrace.strokes.length;
+                strokeIndex++
+              ) {
+                final convertedStroke = leftTrace.strokes[strokeIndex];
+                final sourceStroke = rightTrace.strokes[strokeIndex];
+                expect(convertedStroke.id, sourceStroke.id);
+                expect(convertedStroke.label, sourceStroke.label);
+                expect(
+                  convertedStroke.points.map((point) => [point.x, point.y]),
+                  sourceStroke.points.map((point) => [point.x, point.y]),
+                );
+              }
+            case (
+              ScienceNotationChoiceTask left,
+              LocalNotationChoiceTask right,
+            ):
+              expect(left.representation, right.representation);
+              expect(
+                left.representationSemanticsLabel,
+                right.representationSemanticsLabel,
+              );
+              expect(
+                left.choices.map((choice) => (choice.id, choice.label)),
+                right.choices.map((choice) => (choice.id, choice.label)),
+              );
+              expect(left.correctChoiceId, right.correctChoiceId);
+            default:
+              fail('${summary.id}/${concept.key}/$index: task型が変わった');
+          }
         }
-        expect(converted.symbolMatch.prompt, source.symbolMatch.prompt);
-        expect(
-          converted.symbolMatch.choices.map(
-            (choice) => (choice.id, choice.label),
-          ),
-          source.symbolMatch.choices.map((choice) => (choice.id, choice.label)),
-        );
-        expect(
-          converted.symbolMatch.correctChoiceId,
-          source.symbolMatch.correctChoiceId,
-        );
-        expect(
-          converted.symbolMatch.solutionSummary,
-          source.symbolMatch.solutionSummary,
-        );
-        expect(converted.symbolMatch.needCode, source.symbolMatch.needCode);
-        expect(converted.graphRead.prompt, source.graphRead.prompt);
-        expect(
-          converted.graphRead.graphNotation,
-          source.graphRead.graphNotation,
-        );
-        expect(
-          converted.graphRead.graphSemanticsLabel,
-          source.graphRead.graphSemanticsLabel,
-        );
-        expect(
-          converted.graphRead.choices.map(
-            (choice) => (choice.id, choice.label),
-          ),
-          source.graphRead.choices.map((choice) => (choice.id, choice.label)),
-        );
-        expect(
-          converted.graphRead.correctChoiceId,
-          source.graphRead.correctChoiceId,
-        );
-        expect(
-          converted.graphRead.solutionSummary,
-          source.graphRead.solutionSummary,
-        );
-        expect(converted.graphRead.needCode, source.graphRead.needCode);
       }
     }
 
-    expect(count, 11);
+    expect(count, 23);
+    expect(taskCount, 80);
+    expect(traceCount, 22);
+    expect(taskKinds, LocalNotationTaskKind.values.toSet());
   });
 
   test('正本を持たない未知conceptへ式や単位を推測しない', () async {

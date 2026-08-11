@@ -51,11 +51,11 @@ class UnitsClient {
 
   bool get isConfigured => baseUrl.isNotEmpty;
 
-  // schemaを保存keyへ含め、Listening専用needの無いv8以前をv9として
-  // 推測せず同梱正本へ退避する。
-  static const _listKey = 'units.v9.list';
+  // schemaを保存keyへ含め、coverageとtagged Notationの無いv9以前を
+  // v10として推測せず同梱正本へ退避する。
+  static const _listKey = 'units.v10.list';
   static const _bundledCatalogAsset = 'assets/catalog/units.ja.json';
-  String _detailKey(String unitId) => 'units.v9.detail.$unitId';
+  String _detailKey(String unitId) => 'units.v10.detail.$unitId';
 
   /// 単元の一覧。新しいもの、保存したもの、同梱教材の順で返す。
   Future<List<UnitSummary>> list() async {
@@ -104,14 +104,19 @@ class UnitsClient {
     try {
       final res = await _dio.get<Object?>('$baseUrl/api/units');
       if (res.statusCode != 200) return null;
-      final raw = (res.data as Map?)?['units'];
-      if (raw is! List) return null;
-      return raw
-          .whereType<Map>()
-          .map((u) => UnitSummary.fromJson(u.cast<String, Object?>()))
-          .nonNulls
-          .where(_isUsableSummary)
-          .toList();
+      final envelope = res.data;
+      if (envelope is! Map ||
+          envelope.length != 2 ||
+          envelope.keys.any(
+            (key) =>
+                key is! String ||
+                !const {'schemaVersion', 'units'}.contains(key),
+          ) ||
+          envelope['schemaVersion'] != 10) {
+        return null;
+      }
+
+      return _parseSummaryList(envelope['units']);
     } catch (e) {
       debugPrint('単元一覧の取得に失敗: $e');
       return null;
@@ -127,7 +132,7 @@ class UnitsClient {
       );
       if (res.statusCode != 200) return null;
       final envelope = res.data;
-      if (envelope is! Map || envelope['schemaVersion'] != 9) return null;
+      if (envelope is! Map || envelope['schemaVersion'] != 10) return null;
       final raw = envelope['unit'];
       if (raw is! Map) return null;
       final detail = UnitDetail.fromJson(raw.cast<String, Object?>());
@@ -144,14 +149,7 @@ class UnitsClient {
     final raw = await _store.getSetting(_listKey);
     if (raw == null) return const [];
     try {
-      final list = jsonDecode(raw);
-      if (list is! List) return const [];
-      return list
-          .whereType<Map>()
-          .map((u) => UnitSummary.fromJson(u.cast<String, Object?>()))
-          .nonNulls
-          .where(_isUsableSummary)
-          .toList();
+      return _parseSummaryList(jsonDecode(raw)) ?? const [];
     } catch (e) {
       debugPrint('保存した単元一覧を読めなかった: $e');
       return const [];
@@ -181,7 +179,7 @@ class UnitsClient {
     try {
       final raw = await _assetBundle.loadString(_bundledCatalogAsset);
       final json = jsonDecode(raw);
-      // v9からListeningの聞き取り/意味needも別々に必須。
+      // v10からcoverageと概念固有のNotation task unionも必須。
       // 旧版や未知schemaから誤診対象を推測せず、catalog全体を拒否する。
       if (json is! Map ||
           json.length != 3 ||
@@ -189,7 +187,7 @@ class UnitsClient {
             (key) =>
                 !const {'schemaVersion', 'language', 'units'}.contains(key),
           ) ||
-          json['schemaVersion'] != 9 ||
+          json['schemaVersion'] != 10 ||
           json['language'] != 'ja') {
         return null;
       }
@@ -221,6 +219,29 @@ class UnitsClient {
       summary.title.trim().isNotEmpty &&
       summary.concepts.isNotEmpty &&
       summary.sectionCount > 0;
+
+  /// 一覧は1単元でも壊れていれば全体を拒否する。
+  ///
+  /// onlineとv10 cacheで同じfail-closed規則を使い、壊れた要素だけを
+  /// `nonNulls`で落として別の単元を部分採用しない。
+  static List<UnitSummary>? _parseSummaryList(Object? rawUnits) {
+    if (rawUnits is! List || rawUnits.isEmpty) return null;
+    final summaries = <UnitSummary>[];
+    final unitIds = <String>{};
+    for (final rawUnit in rawUnits) {
+      if (rawUnit is! Map || rawUnit.keys.any((key) => key is! String)) {
+        return null;
+      }
+      final summary = UnitSummary.fromJson(rawUnit.cast<String, Object?>());
+      if (summary == null ||
+          !_isUsableSummary(summary) ||
+          !unitIds.add(summary.id)) {
+        return null;
+      }
+      summaries.add(summary);
+    }
+    return summaries;
+  }
 
   static bool _isUsableDetail(UnitDetail detail) {
     if (!_isUsableSummary(detail.summary) ||

@@ -55,11 +55,854 @@ type UnitText = {
   concepts: Record<string, { label: string; intent: string }>
   sections: Record<
     string,
-    { title: string; body: string[]; tryIt: string; localCheckpoint: LocalCheckpoint }
+    {
+      title: string
+      body: string[]
+      tryIt: string
+      localSpeakingPractice: { targetPhrase: string; acceptedTranscripts: string[] }
+      localCheckpoint: LocalCheckpoint
+    }
   >
 }
 
+/**
+ * Stage 1 proof slice translations live together so that later concepts can be
+ * added to each curriculum unit without having to edit the legacy physics map.
+ * Keys remain the Japanese source catalog's stable unit/concept identifiers.
+ */
+const EN_STAGE1_PROOF_UNITS: Record<string, UnitText> = {
+  'matter-properties': {
+    title: 'Properties of Everyday Materials',
+    brief:
+      'Compare material properties by controlling mass and volume instead of relying only on appearance '
+      + 'or size. Begin with density and use evidence to judge whether samples could be the same material.',
+    concepts: {
+      density: {
+        label: 'Density',
+        intent:
+          'That density is mass per unit volume and, under the same conditions, is basically unchanged '
+          + 'for the same material even when its amount or shape changes. Complete only when the learner '
+          + 'can explain that mass alone, volume alone, or floating and sinking alone cannot identify a '
+          + 'material, and that both mass and volume must be measured and compared.',
+      },
+    },
+    sections: {
+      density: {
+        title: 'When size is controlled, what does a difference in mass tell us?',
+        localSpeakingPractice: {
+          targetPhrase: 'Density is mass per unit volume and is independent of sample size',
+          acceptedTranscripts: [
+            'Density is mass per unit volume and is independent of sample size',
+          ],
+        },
+        body: [
+          'Hold a wooden block and a metal block of the same size, and the metal feels heavier. '
+          + 'But comparing only the masses of a large wooden block and a small metal block cannot separate '
+          + 'a difference in material from a difference in amount. We therefore compare equal volumes.',
+          'The mass of 1 cm³ of a material is called its **density**. Density is calculated as mass divided '
+          + 'by volume and is often expressed in g/cm³. Under the same conditions, including temperature, '
+          + 'cutting a sample of one material in half reduces its mass and volume in the same proportion, '
+          + 'so its density is basically unchanged.',
+          'Both mass and volume are needed to compare density. For an irregular solid, one method is to '
+          + 'measure its mass and, if the material can safely be placed in water, find its volume from the '
+          + 'rise in water level. This method cannot be used unchanged for substances that dissolve in or '
+          + 'react with water.',
+          '“Larger” does not necessarily mean “denser”, and neither does “heavier”. Whether an object floats '
+          + 'or sinks results from comparing the object’s overall average density with the liquid’s density '
+          + 'and other relevant conditions. Floating or sinking alone cannot identify one particular material.',
+        ],
+        tryIt:
+          'With permission, prepare two identical small containers with secure lids. Put the same volume of '
+          + 'water in one and cooking oil in the other, close them firmly, support them in your hands, and '
+          + 'compare their masses. Explain what this equal-volume comparison reveals. Do not taste the '
+          + 'liquids, and wipe up any spill immediately.',
+        localCheckpoint: {
+          lure:
+            'If a rod made from one material is cut in half, its mass halves, so its density also halves.',
+          options: [
+            {
+              id: 'ratio-stays',
+              text:
+                'Its mass and volume both halve in the same proportion, so its density does not change.',
+            },
+            {
+              id: 'mass-only-halves',
+              text: 'Only its mass halves, so its density also halves.',
+              hint: 'When the rod is cut, consider what happens to volume as well as mass.',
+            },
+            {
+              id: 'surface-doubles',
+              text: 'The new cut surface makes its density double.',
+              hint: 'Check whether surface area or the number of cut faces appears in the density formula.',
+            },
+          ],
+          correctOptionId: 'ratio-stays',
+          explanation:
+            'Density is mass divided by volume. Cutting one material in half reduces both mass and volume '
+            + 'in the same proportion, so under the same conditions, including temperature, its density '
+            + 'does not change.',
+        },
+      },
+    },
+  },
+  'living-body': {
+    title: 'Living Bodies',
+    brief:
+      'Examine plants and animals down to the scale of cells, then organize their shared and differing '
+      + 'structures from observable evidence.',
+    concepts: {
+      cells: {
+        label: 'Living Things and Cells',
+        intent:
+          'That living bodies are made of cells and that cells share basic structures such as a cell '
+          + 'membrane and cytoplasm. Complete only when the learner can distinguish plant features such as '
+          + 'cell walls and vacuoles, and chloroplasts in photosynthetic cells, without claiming that every '
+          + 'plant cell has all of them, using evidence from the image.',
+      },
+    },
+    sections: {
+      cells: {
+        title: 'The small units shared by plants and animals',
+        localSpeakingPractice: {
+          targetPhrase: 'Living things are made of cells and plant and animal cells differ',
+          acceptedTranscripts: [
+            'Living things are made of cells and plant and animal cells differ',
+          ],
+        },
+        body: [
+          'Under a microscope, onion epidermis and animal tissue show many small compartments. Each one is '
+          + 'a **cell**. A multicellular organism consists of many cells that form tissues and organs and '
+          + 'work together.',
+          'Plant and animal cells share basic structures, including a **cell membrane** around the cell and '
+          + '**cytoplasm** inside it. Appearance depends on observation conditions, so a structure that is '
+          + 'not visible in one image cannot simply be declared absent.',
+          'Plant cells have a **cell wall** outside the cell membrane, and some have a conspicuous vacuole. '
+          + 'Cells that carry out photosynthesis, such as many leaf cells, contain **chloroplasts**. However, '
+          + 'some plant cells, including root cells, do not have chloroplasts.',
+          'It is unsafe to conclude “square means plant” or “no visible chloroplast means animal” from '
+          + 'shape or one structure alone. Check the magnification, staining, and sampled tissue, and combine '
+          + 'several features before making a judgment.',
+        ],
+        tryIt:
+          'Place microscope images of plant and animal cells from school materials or a textbook side by '
+          + 'side, then make a table of features found in both and features characteristic of one group. '
+          + 'Do not collect samples from a human body or use stains at home.',
+        localCheckpoint: {
+          lure: 'A cell with no visible chloroplast cannot be a plant cell.',
+          options: [
+            {
+              id: 'shape-alone',
+              text: 'Correct. Chloroplasts must be visible in every tissue of a plant.',
+              hint:
+                'Think about tissues such as roots, which receive little light and are not primarily '
+                + 'photosynthetic.',
+            },
+            {
+              id: 'multiple-features',
+              text:
+                'Some plant cells have no chloroplasts. Check several features, such as a cell wall, '
+                + 'together with the tissue sampled.',
+            },
+            {
+              id: 'all-animal',
+              text: 'Every cell with no visible chloroplast is an animal cell.',
+              hint:
+                'Reconsider whether one structure not being visible can uniquely separate plant and '
+                + 'animal cells.',
+            },
+          ],
+          correctOptionId: 'multiple-features',
+          explanation:
+            'Chloroplasts occur in photosynthetic plant cells, but cells in roots and some other tissues '
+            + 'may not have them. Judge from several features, such as a cell wall, together with the tissue '
+            + 'from which the image was taken.',
+        },
+      },
+    },
+  },
+  'weather-change': {
+    title: 'Changes in Weather',
+    brief:
+      'Use the relationship between water vapor in air and temperature to reason step by step about the '
+      + 'formation of dew, fog, and clouds.',
+    concepts: {
+      humidityClouds: {
+        label: 'Humidity and Cloud Formation',
+        intent:
+          'That cooling lowers the maximum amount of water vapor air can contain, and upon reaching the '
+          + 'dew point, excess water vapor condenses. Complete only when the learner can explain that clouds '
+          + 'are not water vapor itself but tiny water droplets or ice crystals, and connect their formation '
+          + 'with expanding and cooling rising air.',
+      },
+    },
+    sections: {
+      humidityClouds: {
+        title: 'From invisible water vapor to visible droplets',
+        localSpeakingPractice: {
+          targetPhrase: 'When air cools to its dew point water vapor condenses into tiny droplets',
+          acceptedTranscripts: [
+            'When air cools to its dew point water vapor condenses into tiny droplets',
+          ],
+        },
+        body: [
+          'Water vapor is a gas and is normally invisible. The maximum amount of water vapor that air can '
+          + 'contain depends on temperature and generally becomes smaller as temperature falls. Humidity '
+          + 'expresses how much water vapor is actually present relative to the maximum possible at that '
+          + 'temperature.',
+          'If air is cooled while its amount of water vapor remains nearly constant, its humidity rises. '
+          + 'Eventually it reaches the **dew point**, the temperature at which the vapor becomes saturated. '
+          + 'With further cooling, excess water vapor changes into tiny liquid droplets. This change is '
+          + 'called **condensation**.',
+          'When air near the ground cools and droplets remain suspended, fog forms. High in the atmosphere, '
+          + 'collections of droplets or ice crystals form clouds. A cloud is not transparent water vapor '
+          + 'itself. Its tiny particles scatter light, so the cloud appears white or gray.',
+          'As air rises into lower surrounding pressure, it expands and cools. If it then reaches the dew '
+          + 'point, condensation begins. However, rising air does not always make a cloud: the outcome also '
+          + 'depends on the air’s water-vapor content and temperature.',
+        ],
+        tryIt:
+          'Place two identical dry cups side by side and put cold water in only one. After several minutes, '
+          + 'observe the outside surfaces and explain where any droplets came from by comparing the cold cup '
+          + 'with the room-temperature cup. Work on a stable table; do not heat or pressurize a sealed container.',
+        localCheckpoint: {
+          lure: 'Clouds look white because water vapor gas itself is white.',
+          options: [
+            {
+              id: 'white-gas',
+              text: 'Water vapor is a white gas, so a large amount becomes visible as a cloud.',
+              hint:
+                'Distinguish the invisible region immediately by a kettle’s spout from the white region '
+                + 'a short distance away.',
+            },
+            {
+              id: 'dust-only',
+              text: 'Clouds contain no water; only airborne dust looks white.',
+              hint: 'Connect rain and snow with the state of the particles that make up a cloud.',
+            },
+            {
+              id: 'droplets-or-ice',
+              text:
+                'Tiny water droplets or ice crystals formed by condensation scatter light and become visible.',
+            },
+          ],
+          correctOptionId: 'droplets-or-ice',
+          explanation:
+            'Water vapor is an invisible gas. A cloud becomes visible because cooling and related processes '
+            + 'cause water vapor to condense into tiny water droplets or ice crystals that scatter light.',
+        },
+      },
+    },
+  },
+  'earth-history': {
+    title: 'Earth and Space',
+    brief:
+      'Use the order of rock layers and relationships in which one feature cuts or displaces another to '
+      + 'reconstruct the sequence of events in Earth’s past.',
+    concepts: {
+      strataRelativeAge: {
+        label: 'Rock Strata and Relative Age',
+        intent:
+          'That where strata have not been substantially overturned, lower layers are older, and an event '
+          + 'such as faulting that cuts strata is younger than the layers it cuts. Complete only when the '
+          + 'learner can combine fossils and marker beds to infer a supported sequence of events rather than '
+          + 'an absolute number of years.',
+      },
+    },
+    sections: {
+      strataRelativeAge: {
+        title: 'Reading layers as a sequence of events in Earth history',
+        localSpeakingPractice: {
+          targetPhrase: 'In unoverturned strata lower layers were deposited first and are older',
+          acceptedTranscripts: [
+            'In unoverturned strata lower layers were deposited first and are older',
+          ],
+        },
+        body: [
+          'Sand, mud, volcanic ash, and other deposits can accumulate in sequence and solidify into strata. '
+          + 'Where the strata have not later been substantially overturned, an earlier layer lies below and '
+          + 'a newer layer is deposited on top. This reveals relative order, not a numerical age in years.',
+          'If a fault or an igneous intrusion crosses layers, the cutting event happened after the cut layers '
+          + 'formed. Conversely, a layer that covers the fault and is not cut by it was deposited after the '
+          + 'fault moved.',
+          'To compare strata at separate locations, a distinctive volcanic-ash bed or similar feature can '
+          + 'serve as a **marker bed**. Fossils provide another clue to depositional environment and '
+          + 'geologic age. Do not identify corresponding layers from color or thickness alone.',
+          '“Higher always means younger” is conditional on the layers not having been overturned by folding '
+          + 'or faulting. Approaching an outcrop can itself be dangerous, so at home use photographs, column '
+          + 'diagrams, or paper models. Do not enter cliffs or construction sites.',
+        ],
+        tryIt:
+          'Stack blue, yellow, and white sheets in that order from bottom to top inside a clear folder, and '
+          + 'draw one line across all three. Then place a green sheet on top without extending the line '
+          + 'through it, and explain the order of deposition and line drawing. Do not approach outdoor cliffs '
+          + 'or construction sites, and do not collect rocks.',
+        localCheckpoint: {
+          lure:
+            'In strata that have not been overturned, upper layers are older because they stayed nearer '
+            + 'the surface longer.',
+          options: [
+            {
+              id: 'lower-first',
+              text:
+                'Lower layers were deposited first and later layers accumulated above them, so lower '
+                + 'layers are older.',
+            },
+            {
+              id: 'upper-older',
+              text: 'Upper layers are nearer the surface and are found first, so they are older.',
+              hint: 'Follow the order in which sediment was deposited from the bottom up, not the order found.',
+            },
+            {
+              id: 'same-age',
+              text: 'All strata at one location formed at the same time regardless of their vertical order.',
+              hint: 'Ask whether the next deposit could be placed above before the lower layer existed.',
+            },
+          ],
+          correctOptionId: 'lower-first',
+          explanation:
+            'Where strata have not been overturned, later deposits accumulate on top of earlier ones. '
+            + 'Lower layers are therefore older and upper layers younger.',
+        },
+      },
+    },
+  },
+}
+
+/** The eight concepts appended to the four proof units in `units.ts`. */
+const EN_STAGE1_EXPANSION_UNITS: Record<string, UnitText> = {
+  'matter-properties': {
+    title: 'Properties of Everyday Materials',
+    brief:
+      ' Use particle models and measurements to explain gases and changes of state under stated conditions.',
+    concepts: {
+      gasProperties: {
+        label: 'Producing and Identifying Gases',
+        intent:
+          'Complete when the learner can read fixed data showing that gases such as oxygen, carbon dioxide, '
+          + 'hydrogen, and ammonia differ in water solubility, density relative to air, and reactions, then '
+          + 'choose a collection method and identifying evidence suited to those properties.',
+      },
+      stateChangeMass: {
+        label: 'Changes of State and Mass',
+        intent:
+          'Complete when the learner can explain that a change of state leaves the particle type and total '
+          + 'mass of a closed system unchanged while changing particle spacing and motion, and distinguish '
+          + 'this from an apparent mass change in an open system.',
+      },
+    },
+    sections: {
+      gasProperties: {
+        title: 'Choose how to collect and identify a gas from its properties',
+        localSpeakingPractice: {
+          targetPhrase: 'Choose a gas collection method from water solubility and density relative to air',
+          acceptedTranscripts: [
+            'Choose a gas collection method from water solubility and density relative to air',
+          ],
+        },
+        body: [
+          'Although gases can be difficult to tell apart by appearance, their water solubility, density '
+          + 'relative to air, and particular reactions differ by gas. Combine several pieces of fixed data '
+          + 'rather than relying on only one property.',
+          'Oxygen and hydrogen are only slightly soluble in water and do not readily react with it, so they '
+          + 'can be collected over water with little mixing with air. Do not use collection over water for '
+          + 'a highly water-soluble gas; instead use its density difference from air.',
+          'Ammonia is extremely soluble in water and less dense than air, so it can be collected by upward '
+          + 'displacement of air. Carbon dioxide is denser than air, so it can be collected by downward '
+          + 'displacement. Carbon dioxide also dissolves in water, so choose the method according to the '
+          + 'purpose and required purity.',
+          'Reference data can identify oxygen by its support of combustion, carbon dioxide by turning limewater '
+          + 'milky, and ammonia by dissolving in water to give an alkaline solution. Because hydrogen is '
+          + 'flammable and ammonia is irritating, never produce or burn gases or smell them at home.',
+        ],
+        tryIt:
+          'Using a school-provided table of oxygen, carbon dioxide, hydrogen, and ammonia, first read water '
+          + 'solubility and then density relative to air. Match cards for possible collection methods and '
+          + 'identifying evidence. At home, do not produce, heat, or burn gases, and never smell them directly.',
+        localCheckpoint: {
+          lure:
+            'All gases are invisible, so they have the same properties and should all be collected over water.',
+          options: [
+            {
+              id: 'property-based-method',
+              text:
+                'Check water solubility first; if collection over water is unsuitable, choose an air-displacement method from the gas’s density.',
+            },
+            {
+              id: 'all-water-collection',
+              text: 'Collect every gas over water regardless of how soluble it is.',
+              hint: 'Consider what happens when a gas such as ammonia, which is extremely soluble, enters water.',
+            },
+            {
+              id: 'appearance-identifies',
+              text: 'All colorless gases are the same, so there is no need to compare reactions or density.',
+              hint: 'Use the table to compare whether colorless oxygen, carbon dioxide, and hydrogen share all properties.',
+            },
+          ],
+          correctOptionId: 'property-based-method',
+          explanation:
+            'First check water solubility. If collection over water is unsuitable, use whether the gas is '
+            + 'less or more dense than air to choose an air-displacement method.',
+        },
+      },
+      stateChangeMass: {
+        title: 'The form changes, but the mass of a closed system does not',
+        localSpeakingPractice: {
+          targetPhrase: 'During a change of state the total mass of a closed system stays the same',
+          acceptedTranscripts: [
+            'During a change of state the total mass of a closed system stays the same',
+          ],
+        },
+        body: [
+          'A change between solid, liquid, and gas is called a change of state. It does not create a new '
+          + 'substance; it changes how particles of the same substance are arranged, spaced, and moving.',
+          'If no matter enters or leaves a closed system, the total mass, including the container, is unchanged '
+          + 'by a change of state. Even when a liquid becomes an invisible gas, its particles remain inside '
+          + 'the closed container.',
+          'When liquid evaporates from an open container, the mass remaining on the balance decreases. Mass '
+          + 'has not vanished: gaseous matter moved into the surroundings and left the measured system.',
+          'Melting and boiling points depend on the substance and on conditions such as pressure. Do not '
+          + 'confuse a change of state with decomposition or a reaction that forms a different substance '
+          + 'merely from appearance.',
+        ],
+        tryIt:
+          'Read a school-provided record of a liquid becoming a gas in a sealed container. Enter the total '
+          + 'container mass before and after and mark where the particles are in a diagram. Do not perform '
+          + 'heating, cooling, or sealed-container experiments at home.',
+        localCheckpoint: {
+          lure: 'When a liquid becomes an invisible gas, that part of its mass disappears.',
+          options: [
+            {
+              id: 'closed-same-mass',
+              text: 'In a closed system the gas remains inside, so the total mass including the container is unchanged.',
+            },
+            {
+              id: 'gas-lost',
+              text: 'A gas has no mass, so the total mass falls by the amount that changed from liquid to gas.',
+              hint: 'Separate whether a gas has mass from whether it left the system being measured.',
+            },
+            {
+              id: 'phase-changes-mass',
+              text: 'Solid, liquid, and gas have different particle types, so every change of state changes total mass.',
+              hint: 'Check whether the substance stays the same or a different substance forms.',
+            },
+          ],
+          correctOptionId: 'closed-same-mass',
+          explanation:
+            'No matter leaves a closed system, so a change of state preserves the total number of particles '
+            + 'and the total mass.',
+        },
+      },
+    },
+  },
+  'living-body': {
+    title: 'Living Bodies',
+    brief:
+      ' Follow how plants and animals take in matter, transform it, and use it for life processes.',
+    concepts: {
+      photosynthesisRespiration: {
+        label: 'Photosynthesis and Respiration',
+        intent:
+          'Complete when the learner can explain, with light, organ, and time conditions, that plants '
+          + 'continually respire and also photosynthesize in light, while distinguishing the net exchange '
+          + 'of gases from the two processes themselves.',
+      },
+      digestionAbsorption: {
+        label: 'Digestion and Absorption',
+        intent:
+          'Complete when the learner can explain that digestion breaks large nutrient molecules into small '
+          + 'absorbable substances, most of which enter the body through villi in the small intestine, while '
+          + 'distinguishing passage through the digestive tract from entry into the body.',
+      },
+    },
+    sections: {
+      photosynthesisRespiration: {
+        title: 'Plants both make and use organic matter',
+        localSpeakingPractice: {
+          targetPhrase: 'Plants photosynthesize in light and also respire throughout day and night',
+          acceptedTranscripts: [
+            'Plants photosynthesize in light and also respire throughout day and night',
+          ],
+        },
+        body: [
+          'In photosynthesis, cells with chloroplasts use light energy to make organic matter from carbon '
+          + 'dioxide and water, releasing oxygen. Light is required, so photosynthesis does not proceed in '
+          + 'dark conditions.',
+          'In respiration, cells use organic matter and oxygen to release energy available for life processes, '
+          + 'producing carbon dioxide and water. Plant cells are alive, so they respire in both light and darkness.',
+          'The net gas change observed around a leaf in light is the difference between photosynthesis and '
+          + 'respiration. A net increase in oxygen does not mean respiration stopped. In weak light, the '
+          + 'change from respiration may exceed that from photosynthesis.',
+          'Roots and other tissues without chloroplasts also respire. When considering the matter balance of '
+          + 'a whole plant, control the organ, light intensity, time, temperature, and other conditions.',
+        ],
+        tryIt:
+          'Read school-provided gas-change data for an aquatic plant in light and darkness. Record the '
+          + 'presence of photosynthesis, the presence of respiration, and the net oxygen change in separate '
+          + 'columns. Do not seal up plants or use chemicals or flames.',
+        localCheckpoint: {
+          lure: 'In daylight, plants perform only photosynthesis and respire only at night.',
+          options: [
+            {
+              id: 'both-processes',
+              text: 'In light, plants both photosynthesize and respire; in darkness they still respire.',
+            },
+            {
+              id: 'only-photosynthesis',
+              text: 'In light, plants stop respiration completely and perform only photosynthesis.',
+              hint: 'Consider whether plant cells still need energy for life processes while it is light.',
+            },
+            {
+              id: 'respiration-night-only',
+              text: 'Plant respiration begins at sunset and stops at sunrise.',
+              hint: 'Check whether respiration is a process that directly requires light.',
+            },
+          ],
+          correctOptionId: 'both-processes',
+          explanation:
+            'Plants respire throughout day and night. In light, photosynthesis also proceeds, and the '
+            + 'observed gas change is the difference between the two processes.',
+        },
+      },
+      digestionAbsorption: {
+        title: 'How food becomes usable inside the body',
+        localSpeakingPractice: {
+          targetPhrase: 'Digested nutrients are broken down and mostly absorbed in the small intestine',
+          acceptedTranscripts: [
+            'Digested nutrients are broken down and mostly absorbed in the small intestine',
+          ],
+        },
+        body: [
+          'Chewing is a physical change that increases surface area and helps food mix with digestive fluids. '
+          + 'Digestive enzymes break starch, proteins, fats, and other nutrients into smaller substances that '
+          + 'can be absorbed.',
+          'Each enzyme has particular substrates and suitable conditions. One enzyme does not digest every '
+          + 'nutrient; different digestive fluids act in the mouth, stomach, small intestine, and other locations.',
+          'Most digested nutrients enter blood capillaries or lymphatic vessels mainly through the villi of '
+          + 'the small intestine. Simply passing through the inside of the digestive tract does not yet mean '
+          + 'a substance has been absorbed into the body.',
+          'The large intestine absorbs water and other substances. The stomach does not absorb every nutrient, '
+          + 'and the small intestine does not perform digestion without also absorbing nutrients.',
+        ],
+        tryIt:
+          'Using a textbook diagram of the digestive tract and nutrient cards, draw separate arrows for '
+          + 'where starch and other nutrients are broken down and where the resulting substances are absorbed. '
+          + 'Do not experiment with food, chemicals, or human samples.',
+        localCheckpoint: {
+          lure: 'All food is absorbed in the stomach and then digested into smaller pieces in the small intestine.',
+          options: [
+            {
+              id: 'digest-then-absorb',
+              text: 'Digestion breaks nutrients into smaller substances, most of which are absorbed mainly through the small intestine.',
+            },
+            {
+              id: 'stomach-absorbs-all',
+              text: 'The stomach absorbs every nutrient directly into the blood without breaking it down.',
+              hint: 'Separate the process that makes large nutrient molecules absorbable from the main site of absorption.',
+            },
+            {
+              id: 'intestine-only-digests',
+              text: 'Only digestion occurs in the small intestine; no nutrient absorption occurs there.',
+              hint: 'Check how villi and their capillaries in the small intestine are involved.',
+            },
+          ],
+          correctOptionId: 'digest-then-absorb',
+          explanation:
+            'Digestive enzymes break nutrients into absorbable substances, most of which enter the body '
+            + 'through villi in the small intestine.',
+        },
+      },
+    },
+  },
+  'weather-change': {
+    title: 'Changes in Weather',
+    brief:
+      ' Read fronts, pressure patterns, and wind as changes over time using weather maps and cross-sections.',
+    concepts: {
+      fronts: {
+        label: 'Fronts and Weather',
+        intent:
+          'Complete when the learner can treat a front as a boundary between air masses with different '
+          + 'properties, distinguish typical warm- and cold-front cross-sections, clouds, and precipitation, '
+          + 'and explain that actual weather also varies with water-vapor content, terrain, and other conditions.',
+      },
+      pressurePatternsWind: {
+        label: 'Pressure Patterns and Wind',
+        intent:
+          'Complete when the learner can explain the basic role of pressure differences in producing wind, '
+          + 'distinguish the apparent deflection from Earth’s rotation and the effect of surface friction, '
+          + 'and infer wind strength conditionally from isobar spacing.',
+      },
+    },
+    sections: {
+      fronts: {
+        title: 'How does weather change when an air-mass boundary passes?',
+        localSpeakingPractice: {
+          targetPhrase: 'A front is a boundary between air masses and can bring clouds and precipitation',
+          acceptedTranscripts: [
+            'A front is a boundary between air masses and can bring clouds and precipitation',
+          ],
+        },
+        body: [
+          'An air mass is a large body of air with similar temperature and humidity. The region near the '
+          + 'boundary where air masses with different properties meet is called a front. When less-dense '
+          + 'warm air is lifted over denser cold air, clouds are more likely to form.',
+          'At a warm front, advancing warm air rises gradually over cold air. Layered clouds and sustained '
+          + 'precipitation tend to occur across a broad area ahead of the front, and temperature tends to '
+          + 'rise after it passes.',
+          'At a cold front, advancing cold air moves underneath warm air and lifts it relatively rapidly. '
+          + 'Tall clouds and heavy precipitation can occur in a narrower area, and temperature tends to fall '
+          + 'after the front passes.',
+          'These are representative tendencies. Water-vapor content, front speed, season, and terrain change '
+          + 'the area and intensity of clouds and rain, so do not use the symbol alone to declare local weather.',
+        ],
+        tryIt:
+          'In the classroom, place past weather maps and cloud images published by a meteorological agency '
+          + 'side by side. Make a time-series table of temperature and precipitation before, during, and '
+          + 'after a front passes. Do not go outside to observe during thunderstorms or severe weather.',
+        localCheckpoint: {
+          lure: 'At a warm front, heavy warm air dives under cold air and causes sudden cooling.',
+          options: [
+            {
+              id: 'warm-over-cold',
+              text: 'At a warm front, warm air rises gradually over cold air, and temperature tends to rise after passage.',
+            },
+            {
+              id: 'cold-over-warm',
+              text: 'At a warm front, cold air rides over warm air, and passage always causes sudden cooling.',
+              hint: 'Check the density difference and which air mass is advancing at a warm front.',
+            },
+            {
+              id: 'no-boundary',
+              text: 'A front forms in the middle of air with uniform properties and is unrelated to an air-mass boundary.',
+              hint: 'Recall what boundary a front represents on a weather map.',
+            },
+          ],
+          correctOptionId: 'warm-over-cold',
+          explanation:
+            'At a warm front, advancing warm air rises gradually over cold air and tends to produce clouds '
+            + 'and precipitation across a broad area.',
+        },
+      },
+      pressurePatternsWind: {
+        title: 'Reading wind from the spacing of isobars',
+        localSpeakingPractice: {
+          targetPhrase: 'Pressure differences produce wind which is affected by rotation and friction',
+          acceptedTranscripts: [
+            'Pressure differences produce wind which is affected by rotation and friction',
+          ],
+        },
+        body: [
+          'At the same altitude, a pressure difference produces a force on air from the high-pressure side '
+          + 'toward the low-pressure side, creating wind. Closer isobars indicate a larger pressure change '
+          + 'over the same distance, so wind generally tends to be stronger.',
+          'Large-scale wind is affected not only by pressure differences but also by apparent deflection due '
+          + 'to Earth’s rotation. In the Northern Hemisphere this effect deflects motion to the right, and '
+          + 'upper-air winds run approximately parallel to isobars.',
+          'Near the surface, friction with the ground reduces wind speed and changes the deflection, so wind '
+          + 'crosses isobars at an angle toward lower pressure. Terrain and temperature differences between '
+          + 'land and sea also affect local winds.',
+          'Wind does not necessarily blow “in a straight line from high to low” or in one fixed direction '
+          + 'whenever pressure is low. Check the hemisphere, surface versus upper air, and the shape and '
+          + 'spacing of the isobars.',
+        ],
+        tryIt:
+          'On a past surface weather map from a meteorological agency, choose one region with widely spaced '
+          + 'isobars and one with closely spaced isobars, then compare observed wind speeds at the same time. '
+          + 'Do not go outside to observe a typhoon or strong winds; use only published data.',
+        localCheckpoint: {
+          lure: 'Wind is pushed from low pressure to high pressure, opposite to the pressure difference.',
+          options: [
+            {
+              id: 'high-to-low',
+              text: 'The pressure-gradient force points from high toward low pressure, while rotation and friction also alter the observed wind.',
+            },
+            {
+              id: 'coriolis-alone',
+              text: 'Earth’s rotation alone creates wind, which blows with the same strength even without a pressure difference.',
+              hint: 'Separate the force that starts air moving from the effect that deflects its path.',
+            },
+            {
+              id: 'low-to-high',
+              text: 'Air flows from low toward high pressure, and closer isobars mean weaker wind.',
+              hint: 'Check the direction of the pressure-gradient force and the meaning of isobar spacing.',
+            },
+          ],
+          correctOptionId: 'high-to-low',
+          explanation:
+            'The pressure-gradient force points from high toward low pressure, but the wind we observe is '
+            + 'also affected by Earth’s rotation and friction.',
+        },
+      },
+    },
+  },
+  'earth-history': {
+    title: 'Earth and Space',
+    brief:
+      ' Interpret activity inside Earth and the apparent motion of celestial objects using records, models, and time scales.',
+    concepts: {
+      volcanoEarthquakes: {
+        label: 'Volcanoes and Earthquakes',
+        intent:
+          'Complete when the learner can relate both volcanoes and earthquakes to plate motion while '
+          + 'explaining that eruption style depends on magma properties and shaking on conditions such as '
+          + 'focus, distance, and ground, without treating the two as the same phenomenon.',
+      },
+      dailyMotionSeasons: {
+        label: 'Daily Motion and Seasons',
+        intent:
+          'Complete when the learner can explain daily celestial motion by Earth’s rotation and annual '
+          + 'changes in constellations, the Sun, and seasons by revolution and axial tilt, without claiming '
+          + 'that distance from the Sun alone causes the seasons.',
+      },
+    },
+    sections: {
+      volcanoEarthquakes: {
+        title: 'Related activity inside Earth, but different evidence',
+        localSpeakingPractice: {
+          targetPhrase: 'Volcanoes and earthquakes relate to plate motion but are not the same event',
+          acceptedTranscripts: [
+            'Volcanoes and earthquakes relate to plate motion but are not the same event',
+          ],
+        },
+        body: [
+          'An earthquake occurs when underground rock suddenly slips and stored energy travels as seismic '
+          + 'waves. The underground point where slipping begins is the focus, and the point directly above '
+          + 'it on the surface is the epicenter. Shaking depends not only on distance but also on magnitude '
+          + 'and ground conditions.',
+          'In a volcanic eruption, underground magma rises and material reaches the surface partly because '
+          + 'dissolved gases expand. Differences in magma viscosity, gas content, and other properties '
+          + 'produce different eruption styles and volcano shapes.',
+          'Volcanoes and earthquakes both tend to be distributed near plate boundaries, but they do not '
+          + 'necessarily occur at the same place and time. Read evidence specific to each, including their '
+          + 'distributions, earthquake foci, and erupted materials.',
+          'Treat disaster safety as part of the topic by checking official hazard maps and evacuation '
+          + 'information. Do not visit eruption or earthquake sites, cliffs, or restricted areas to observe them.',
+        ],
+        tryIt:
+          'Overlay past epicenter maps, volcano-distribution maps, and plate-boundary maps published by public '
+          + 'agencies. Record shared patterns and nonmatching locations separately. Do not travel to disaster '
+          + 'areas or volcanoes; use published materials only.',
+        localCheckpoint: {
+          lure:
+            'Volcanoes and earthquakes have the same mechanism, so they always occur together everywhere '
+            + 'and can be explained by exactly the same evidence.',
+          options: [
+            {
+              id: 'evidence-specific',
+              text: 'Both relate to plate motion, but eruptions and sudden rock slip are different phenomena requiring their own evidence.',
+            },
+            {
+              id: 'same-everywhere',
+              text: 'At every point on a plate boundary, an eruption and an earthquake occur at the same time.',
+              hint: 'Separate a distributional tendency from a guaranteed match at every location and time.',
+            },
+            {
+              id: 'one-event',
+              text: 'Seismic waves and volcanic ash are the same material and are observed in exactly the same way.',
+              hint: 'Check the difference between waves transmitted by an earthquake and matter emitted by an eruption.',
+            },
+          ],
+          correctOptionId: 'evidence-specific',
+          explanation:
+            'Both relate to activity inside Earth and plate motion, but an earthquake involves sudden rock '
+            + 'slip whereas an eruption involves rising magma, so they are different phenomena.',
+        },
+      },
+      dailyMotionSeasons: {
+        title: 'Separating motion over one day from change over one year',
+        localSpeakingPractice: {
+          targetPhrase: 'Rotation explains daily motion and revolution with axial tilt explains seasons',
+          acceptedTranscripts: [
+            'Rotation explains daily motion and revolution with axial tilt explains seasons',
+          ],
+        },
+        body: [
+          'The daily motion in which the Sun and stars appear to circle from east to west is an apparent '
+          + 'motion caused by Earth rotating from west to east. It is not caused by the distance to the '
+          + 'stars changing greatly within one day.',
+          'Earth revolves around the Sun while its rotation axis remains tilted. Over a year, this changes '
+          + 'the Sun’s noon altitude and the length of daylight, altering both the intensity and duration '
+          + 'of solar energy received at the surface.',
+          'Northern Hemisphere summers have a higher Sun and longer days, so the received energy is greater. '
+          + 'The main cause of seasons is axial tilt together with revolution, not distance from the Sun. '
+          + 'The Southern Hemisphere has the opposite season at the same time.',
+          'Distinguish the movement of stars over one night from the annual change in which constellations '
+          + 'are visible at the same clock time in different seasons. Do not draw conclusions from a diagram '
+          + 'without controlling observation time, direction, and latitude.',
+        ],
+        tryIt:
+          'Use a classroom celestial-sphere simulation to record star positions over one night at one '
+          + 'location, then change the month and record constellations at the same clock time. Never look '
+          + 'directly at the Sun or observe outdoors alone at night.',
+        localCheckpoint: {
+          lure:
+            'Daily motion occurs because the Sun and stars orbit Earth every day, and seasons depend only '
+            + 'on Earth’s distance from the Sun.',
+          options: [
+            {
+              id: 'rotation-revolution',
+              text: 'Earth’s rotation explains daily motion, while its revolution with a tilted axis explains seasonal change.',
+            },
+            {
+              id: 'earth-still',
+              text: 'Earth is stationary and every celestial object orbits it in about 24 hours.',
+              hint: 'Match Earth’s rotation direction with the apparent direction of celestial motion.',
+            },
+            {
+              id: 'sun-distance-only',
+              text: 'Seasons depend only on being nearer or farther from the Sun; axial tilt is irrelevant.',
+              hint: 'Ask whether that explains opposite seasons in the Northern and Southern Hemispheres.',
+            },
+          ],
+          correctOptionId: 'rotation-revolution',
+          explanation:
+            'Earth’s rotation produces the apparent daily motion. Seasons occur because axial tilt changes '
+            + 'solar conditions as Earth revolves around the Sun.',
+        },
+      },
+    },
+  },
+}
+
+/** Mirror the concept/section merge in `units.ts` without replacing proof text. */
+function mergeStage1UnitTexts(
+  proof: Record<string, UnitText>,
+  expansion: Record<string, UnitText>,
+): Record<string, UnitText> {
+  const merged: Record<string, UnitText> = { ...proof }
+  for (const [unitId, added] of Object.entries(expansion)) {
+    const existing = merged[unitId]
+    if (existing == null) throw new Error(`English proof unit is missing: ${unitId}`)
+    if (existing.title !== added.title) {
+      throw new Error(`English Stage 1 unit title differs: ${unitId}`)
+    }
+    for (const conceptKey of Object.keys(added.concepts)) {
+      if (Object.hasOwn(existing.concepts, conceptKey)) {
+        throw new Error(`English Stage 1 concept is duplicated: ${unitId}/${conceptKey}`)
+      }
+    }
+    for (const conceptKey of Object.keys(added.sections)) {
+      if (Object.hasOwn(existing.sections, conceptKey)) {
+        throw new Error(`English Stage 1 section is duplicated: ${unitId}/${conceptKey}`)
+      }
+    }
+    merged[unitId] = {
+      ...existing,
+      brief: `${existing.brief}${added.brief}`,
+      concepts: { ...existing.concepts, ...added.concepts },
+      sections: { ...existing.sections, ...added.sections },
+    }
+  }
+  return merged
+}
+
+const EN_STAGE1_UNITS = mergeStage1UnitTexts(
+  EN_STAGE1_PROOF_UNITS,
+  EN_STAGE1_EXPANSION_UNITS,
+)
+
 const EN_UNITS: Record<string, UnitText> = {
+  ...EN_STAGE1_UNITS,
   'force-motion': {
     title: 'Force and Motion',
     brief:
@@ -100,6 +943,10 @@ const EN_UNITS: Record<string, UnitText> = {
     sections: {
       fall: {
         title: 'What decides how fast something falls',
+        localSpeakingPractice: {
+          targetPhrase: 'Ignoring air resistance falling speed does not depend on weight',
+          acceptedTranscripts: ['Ignoring air resistance falling speed does not depend on weight'],
+        },
         body: [
           'Imagine dropping a bowling ball and a baseball from the same height at the same moment. '
           + 'It feels as though the heavy one should land first. In fact they land together.',
@@ -148,6 +995,10 @@ const EN_UNITS: Record<string, UnitText> = {
       },
       inertia: {
         title: 'Staying in motion takes no force',
+        localSpeakingPractice: {
+          targetPhrase: 'With zero net force an object keeps the same speed and direction',
+          acceptedTranscripts: ['With zero net force an object keeps the same speed and direction'],
+        },
         body: [
           'When a train stops suddenly your body pitches forward. Nothing pushed you forward. '
           + 'Your body was moving, and it simply kept moving.',
@@ -195,6 +1046,10 @@ const EN_UNITS: Record<string, UnitText> = {
       },
       friction: {
         title: 'So why does it stop?',
+        localSpeakingPractice: {
+          targetPhrase: 'Friction and air resistance oppose an object’s motion',
+          acceptedTranscripts: ['Friction and air resistance oppose an object’s motion'],
+        },
         body: [
           'If inertia is real, the coin you flicked should keep going forever. '
           + 'It actually stops after a few tens of centimetres. Something is working against the motion.',
@@ -241,6 +1096,10 @@ const EN_UNITS: Record<string, UnitText> = {
       },
       throwUp: {
         title: 'The force on a ball thrown straight up',
+        localSpeakingPractice: {
+          targetPhrase: 'Even at the highest point downward gravity acts on the object',
+          acceptedTranscripts: ['Even at the highest point downward gravity acts on the object'],
+        },
         body: [
           'Throw a ball straight up: it slows down, hangs for an instant at the top, and comes back down.',
           '**When air resistance is negligible**, throughout all of that '
@@ -312,6 +1171,12 @@ const EN_UNITS: Record<string, UnitText> = {
     sections: {
       actionReaction: {
         title: 'Push, and you get pushed back just as hard',
+        localSpeakingPractice: {
+          targetPhrase: 'Action and reaction are equal and opposite forces on different objects',
+          acceptedTranscripts: [
+            'Action and reaction are equal and opposite forces on different objects',
+          ],
+        },
         body: [
           'Push a wall with your hand and your hand hurts. '
           + 'You are the one pushing — yet you are being pushed back.',
@@ -363,6 +1228,10 @@ const EN_UNITS: Record<string, UnitText> = {
       },
       balance: {
         title: 'Balanced does not mean stopped',
+        localSpeakingPractice: {
+          targetPhrase: 'An object can keep moving even when the net force is zero',
+          acceptedTranscripts: ['An object can keep moving even when the net force is zero'],
+        },
         body: [
           'A book on a desk does not move. Gravity acts downward on the book, while the desk '
           + 'pushes upward on it. Both individual forces still exist; because they are equal and '
@@ -440,6 +1309,10 @@ const EN_UNITS: Record<string, UnitText> = {
     sections: {
       pressure: {
         title: 'Same force, different area, different effect',
+        localSpeakingPractice: {
+          targetPhrase: 'Pressure is force divided by area',
+          acceptedTranscripts: ['Pressure is force divided by area'],
+        },
         body: [
           'On a drawing pin, the head touching your finger is broad and the point touching the board is sharp. '
           + 'Even when the same size of force is transmitted, the broad head does not dig into your finger, '
@@ -484,6 +1357,10 @@ const EN_UNITS: Record<string, UnitText> = {
       },
       buoyancy: {
         title: 'What sets the buoyant force',
+        localSpeakingPractice: {
+          targetPhrase: 'Buoyant force equals the weight of the displaced liquid',
+          acceptedTranscripts: ['Buoyant force equals the weight of the displaced liquid'],
+        },
         body: [
           'You feel lighter in water because things in water get pushed upward. '
           + 'That upward push is **buoyancy**.',
@@ -571,6 +1448,10 @@ const EN_UNITS: Record<string, UnitText> = {
     sections: {
       currentMagneticField: {
         title: 'Current creates a field outside the wire too',
+        localSpeakingPractice: {
+          targetPhrase: 'Reversing the current reverses the magnetic field',
+          acceptedTranscripts: ['Reversing the current reverses the magnetic field'],
+        },
         body: [
           'Place a wire near a compass and pass current through it: the needle deflects. '
           + 'A needle outside the wire moves because **the current creates a magnetic field in the '
@@ -626,6 +1507,12 @@ const EN_UNITS: Record<string, UnitText> = {
       },
       magneticForce: {
         title: 'Reverse one direction, and the force reverses',
+        localSpeakingPractice: {
+          targetPhrase: 'Reversing either the current or the magnetic field reverses the force',
+          acceptedTranscripts: [
+            'Reversing either the current or the magnetic field reverses the force',
+          ],
+        },
         body: [
           'Put a wire in the field from a magnet and pass current through it: the wire experiences a force. '
           + 'This force comes from the interaction between field and current. With no current or no external '
@@ -677,6 +1564,10 @@ const EN_UNITS: Record<string, UnitText> = {
       },
       electromagneticInduction: {
         title: 'Changing magnetic flux can produce current',
+        localSpeakingPractice: {
+          targetPhrase: 'Changing magnetic flux induces a voltage in a coil',
+          acceptedTranscripts: ['Changing magnetic flux induces a voltage in a coil'],
+        },
         body: [
           'Move a magnet toward or away from a coil connected to a galvanometer and the needle moves. '
           + '**Magnetic flux** summarizes the field passing through the coil, including field strength, '
@@ -829,6 +1720,116 @@ const EN_MISCONCEPTIONS: Record<string, MisconceptionText> = {
     lure:
       'As long as the magnet is inside the coil, it keeps producing current even when it is still — right?',
   },
+  M12: {
+    correct:
+      'Density is mass per unit volume. Under the same conditions, changing the amount or shape of one '
+      + 'material changes its mass and volume in the same proportion, so its density is basically unchanged.',
+    misconception:
+      'A larger or heavier object must always have a greater density.',
+    lure:
+      'Even for the same material, a larger piece is heavier, so its density is greater too — right?',
+  },
+  M13: {
+    correct:
+      'Living bodies are made of cells, and plant and animal cells have both shared basic structures and '
+      + 'differences. Some plant cells have no chloroplasts, so one feature alone is not enough to classify them.',
+    misconception:
+      'Every plant cell has chloroplasts, and any cell with no visible chloroplast is an animal cell.',
+    lure:
+      'Every plant cell should have visible chloroplasts, so if I cannot see any, it must be an animal cell — right?',
+  },
+  M14: {
+    correct:
+      'Water vapor is an invisible gas. Clouds consist of tiny water droplets or ice crystals formed when '
+      + 'water vapor condenses through cooling and related processes.',
+    misconception:
+      'A cloud is a collection of white, visible water vapor gas.',
+    lure:
+      'A cloud is just white water vapor gathering in the sky where we can see it — right?',
+  },
+  M15: {
+    correct:
+      'Where strata have not been substantially overturned, lower layers were deposited first and are older. '
+      + 'A fault or other event that cuts layers happened after the layers it cuts formed.',
+    misconception:
+      'Upper strata are older because they are found first near the surface, and lower strata are younger.',
+    lure:
+      'We find the upper layers first, so the top must be older and the bottom younger — right?',
+  },
+  M16: {
+    correct:
+      'Gases differ in water solubility, density relative to air, and reactions with other substances, '
+      + 'so each gas must be collected and identified using methods suited to its properties.',
+    misconception:
+      'All invisible gases have the same properties and can be collected in the same way.',
+    lure:
+      'All gases are invisible, so we can always collect them the same way over water — right?',
+  },
+  M17: {
+    correct:
+      'A change of state can alter particle spacing, motion, and volume, but when no matter enters or leaves '
+      + 'a closed system, its total mass does not change.',
+    misconception:
+      'When a liquid becomes a gas, its particles disappear and mass decreases even in a sealed container.',
+    lure:
+      'Once a liquid evaporates and becomes invisible, its mass decreases even inside a sealed container — right?',
+  },
+  M18: {
+    correct:
+      'Plants photosynthesize in chloroplasts when light is available, while their cells respire throughout '
+      + 'day and night. The net gas exchange depends on the rates of both processes.',
+    misconception:
+      'Plants perform photosynthesis but do not respire.',
+    lure:
+      'Plants take in carbon dioxide, so they do not respire at all — right?',
+  },
+  M19: {
+    correct:
+      'Digestion breaks substances in food into small absorbable substances. Absorption is the separate '
+      + 'process by which they enter the body, mainly through the wall of the small intestine.',
+    misconception:
+      'The moment food is digested in the stomach, all of it is absorbed into the blood there.',
+    lure:
+      'Once food is digested in the stomach, all of it is absorbed into the blood right there — correct?',
+  },
+  M20: {
+    correct:
+      'A front lies near where the boundary between air masses with different properties meets the surface. '
+      + 'Clouds, precipitation, temperature, and wind change according to the movement of warm and cold air.',
+    misconception:
+      'A front is simply a line tracing rain clouds, and every type produces the same changes when it passes.',
+    lure:
+      'A front just traces the rain clouds, so every type brings the same weather as it passes — right?',
+  },
+  M21: {
+    correct:
+      'Pressure differences help drive wind, but its actual direction is also affected by Earth’s rotation '
+      + 'and surface friction; in the Northern Hemisphere winds circulate differently around highs and lows.',
+    misconception:
+      'Everywhere on a weather map, wind blows in a straight line from the center of high pressure to the center of low pressure.',
+    lure:
+      'On a weather map, wind blows straight from the center of a high to the center of a low — right?',
+  },
+  M22: {
+    correct:
+      'Volcanoes and earthquakes both relate to activity inside Earth and plate motion, and their distributions '
+      + 'share patterns. However, an eruption involves rising magma while an earthquake involves sudden rock '
+      + 'slip, so they are different phenomena and do not necessarily occur together.',
+    misconception:
+      'Volcanoes and earthquakes are one phenomenon with the same mechanism and always occur at the same '
+      + 'place and time on a plate boundary.',
+    lure:
+      'Volcanoes and earthquakes have the same mechanism, so they always occur together at plate boundaries — right?',
+  },
+  M23: {
+    correct:
+      'The apparent daily motion of celestial objects is mainly relative motion caused by Earth’s rotation. '
+      + 'Seasonal changes in day length and the Sun’s noon altitude result from Earth revolving with a tilted axis.',
+    misconception:
+      'Seasons occur because Earth moves closer to the Sun in summer and farther away in winter.',
+    lure:
+      'Summer is hot and winter is cold because Earth moves closer to the Sun in summer — right?',
+  },
 }
 
 // ── 差し替え ────────────────────────────────────────────────
@@ -851,6 +1852,7 @@ export function localizeUnit(unit: Unit, lang: Lang): Unit {
           title: st.title,
           body: st.body,
           tryIt: st.tryIt,
+          localSpeakingPractice: st.localSpeakingPractice,
           localCheckpoint: st.localCheckpoint,
         }
       : s
@@ -876,6 +1878,7 @@ export function missingTranslations(
   misconceptions: Misconception[],
 ): string[] {
   const problems: string[] = []
+  const unitsById = new Map(units.map((unit) => [unit.id, unit]))
   for (const u of units) {
     const t = EN_UNITS[u.id]
     if (!t) {
@@ -897,5 +1900,42 @@ export function missingTranslations(
   for (const m of misconceptions) {
     if (!EN_MISCONCEPTIONS[m.id]) problems.push(`誤概念の英語が無い: ${m.id}`)
   }
+  for (const [unitId, translated] of Object.entries(EN_UNITS)) {
+    const source = unitsById.get(unitId)
+    if (source == null) {
+      problems.push(`原本に無い単元の英語がある: ${unitId}`)
+      continue
+    }
+    const sourceConcepts = new Set(source.concepts.map((concept) => concept.key))
+    const sourceSections = new Set(source.sections.map((section) => section.conceptKey))
+    for (const conceptKey of Object.keys(translated.concepts)) {
+      if (!sourceConcepts.has(conceptKey)) {
+        problems.push(`原本に無い概念の英語がある: ${unitId}/${conceptKey}`)
+      }
+    }
+    for (const conceptKey of Object.keys(translated.sections)) {
+      if (!sourceSections.has(conceptKey)) {
+        problems.push(`原本に無い教材の英語がある: ${unitId}/${conceptKey}`)
+      }
+    }
+  }
+  const sourceMisconceptionIds = new Set(misconceptions.map((m) => m.id))
+  for (const id of Object.keys(EN_MISCONCEPTIONS)) {
+    if (!sourceMisconceptionIds.has(id)) {
+      problems.push(`原本に無い誤概念の英語がある: ${id}`)
+    }
+  }
   return problems
+}
+
+/**
+ * Catalog validation entry point used by release checks. Kept separate from the
+ * diagnostic helper name so callers can express intent without changing the
+ * established translation-key semantics.
+ */
+export function validateTranslations(
+  units: Unit[],
+  misconceptions: Misconception[],
+): string[] {
+  return missingTranslations(units, misconceptions)
 }

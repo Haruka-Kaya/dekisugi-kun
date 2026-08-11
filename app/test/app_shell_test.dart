@@ -247,7 +247,7 @@ Map<String, Object?> _scienceStory(String prefix) {
 }
 
 String get _localCatalogJson => jsonEncode({
-  'schemaVersion': 9,
+  'schemaVersion': 10,
   'language': 'ja',
   'units': [
     {
@@ -255,8 +255,54 @@ String get _localCatalogJson => jsonEncode({
       'title': '端末内テスト単元',
       'brief': '2概念の決定論fixture',
       'concepts': [
-        {'key': 'first', 'label': '最初の考え', 'storyTitle': 'firstの固定事件'},
-        {'key': 'second', 'label': '次の考え', 'storyTitle': 'secondの固定事件'},
+        {
+          'key': 'first',
+          'label': '最初の考え',
+          'storyTitle': 'firstの固定事件',
+          'field': 'energy',
+          'grade': 3,
+          'curriculumRefs': [
+            {
+              'document': 'mext-jhs-science-2017',
+              'section': '第1分野 (5)(イ)',
+              'pages': [55],
+              'url':
+                  'https://www.mext.go.jp/component/a_menu/education/'
+                  'micro_detail/__icsFiles/afieldfile/2019/03/18/'
+                  '1387018_005.pdf',
+            },
+          ],
+          'prerequisites': <String>[],
+          'difficulty': 1,
+          'safety': {
+            'level': 'referenceOnly',
+            'guidance': 'テストfixtureでは観察を行わない。',
+          },
+        },
+        {
+          'key': 'second',
+          'label': '次の考え',
+          'storyTitle': 'secondの固定事件',
+          'field': 'energy',
+          'grade': 3,
+          'curriculumRefs': [
+            {
+              'document': 'mext-jhs-science-2017',
+              'section': '第1分野 (5)(イ)',
+              'pages': [56],
+              'url':
+                  'https://www.mext.go.jp/component/a_menu/education/'
+                  'micro_detail/__icsFiles/afieldfile/2019/03/18/'
+                  '1387018_005.pdf',
+            },
+          ],
+          'prerequisites': ['first'],
+          'difficulty': 1,
+          'safety': {
+            'level': 'referenceOnly',
+            'guidance': 'テストfixtureでは観察を行わない。',
+          },
+        },
       ],
       'sectionCount': 2,
       'sections': [

@@ -17,7 +17,7 @@ void main() {
     final root =
         jsonDecode(await File('assets/catalog/units.ja.json').readAsString())
             as Map<String, Object?>;
-    expect(root['schemaVersion'], 9);
+    expect(root['schemaVersion'], 10);
     catalog = [
       for (final raw in root['units']! as List)
         UnitDetail.fromJson((raw as Map).cast<String, Object?>())!,
@@ -32,7 +32,9 @@ void main() {
     final secondSkill = '${firstUnit.id}/${secondSection.conceptKey}';
     final practiceCode =
         firstSection.localPracticeVariants.first.cognitiveTask.needCode!;
-    final notationCode = firstSection.notationLab!.graphRead.needCode!;
+    final notationCode = firstSection.notationLab!.tasks
+        .firstWhere((task) => task.kind == LocalNotationTaskKind.graphRead)
+        .needCode!;
     final snapshot = _snapshot(
       scope: LearningScope.personal,
       activeNeeds: [
@@ -143,6 +145,135 @@ void main() {
     });
     expect(plan.unmappedActiveNeeds, hasLength(1));
     expect(plan.unmappedActiveNeeds.single.needCode, endsWith('.unknown'));
+  });
+
+  test('Stage 1新12概念の全Notation needをkindに応じたRepair routeへ損失なく索引する', () {
+    const expectedUnits = {
+      'density': 'matter-properties',
+      'gasProperties': 'matter-properties',
+      'stateChangeMass': 'matter-properties',
+      'cells': 'living-body',
+      'photosynthesisRespiration': 'living-body',
+      'digestionAbsorption': 'living-body',
+      'humidityClouds': 'weather-change',
+      'fronts': 'weather-change',
+      'pressurePatternsWind': 'weather-change',
+      'strataRelativeAge': 'earth-history',
+      'volcanoEarthquakes': 'earth-history',
+      'dailyMotionSeasons': 'earth-history',
+    };
+    final activeNeeds = <LearningActiveNeed>[];
+    final expectedKinds = <String, LearningRepairActivityKind>{};
+
+    for (final entry in expectedUnits.entries) {
+      final unit = catalog.firstWhere((unit) => unit.id == entry.value);
+      final section = unit.sectionFor(entry.key)!;
+      expect(section.notationLab!.tasks, hasLength(3));
+      final skillId = '${unit.id}/${section.conceptKey}';
+      for (final task in section.notationLab!.tasks) {
+        final needCode = task.needCode!;
+        activeNeeds.add(_need(skillId, needCode));
+        expectedKinds['$skillId\u0000$needCode'] = switch (task.kind) {
+          LocalNotationTaskKind.modelBuild || LocalNotationTaskKind.sequence =>
+            LearningRepairActivityKind.notationOrder,
+          LocalNotationTaskKind.symbolMatch =>
+            LearningRepairActivityKind.notationSymbol,
+          LocalNotationTaskKind.labelDiagram ||
+          LocalNotationTaskKind.tableRead ||
+          LocalNotationTaskKind.graphRead =>
+            LearningRepairActivityKind.notationGraph,
+        };
+      }
+    }
+
+    final plan = const LearningRepairPlanner().build(
+      snapshot: _snapshot(
+        scope: LearningScope.personal,
+        activeNeeds: activeNeeds,
+      ),
+      catalog: catalog,
+      today: '2026-08-10',
+    );
+
+    expect(plan.targets, hasLength(36));
+    expect(plan.unmappedActiveNeeds, isEmpty);
+    expect(plan.unmappedDueSkillIds, isEmpty);
+    for (final target in plan.targets) {
+      expect(
+        target.activityKind,
+        expectedKinds['${target.skillId}\u0000${target.needCode}'],
+      );
+    }
+  });
+
+  test('Notationの未知needとcatalog内の重複needを推測せずfail closedにする', () {
+    final sourceNotation = firstSection.notationLab!;
+    final duplicatedTask = sourceNotation.tasks.first;
+    final unknownNeedCode =
+        'science.${firstSection.conceptKey}.notation.unknown';
+    final malformedUnknownTask = switch (duplicatedTask) {
+      LocalNotationArrangeTask task => LocalNotationArrangeTask(
+        kind: task.kind,
+        id: '${task.id}.unknown-need',
+        needCode: unknownNeedCode,
+        title: task.title,
+        prompt: task.prompt,
+        solutionSummary: task.solutionSummary,
+        guide: task.guide,
+        tokens: task.tokens,
+        correctOrderIds: task.correctOrderIds,
+        tracePattern: task.tracePattern,
+      ),
+      LocalNotationChoiceTask task => LocalNotationChoiceTask(
+        kind: task.kind,
+        id: '${task.id}.unknown-need',
+        needCode: unknownNeedCode,
+        title: task.title,
+        prompt: task.prompt,
+        solutionSummary: task.solutionSummary,
+        representation: task.representation,
+        representationSemanticsLabel: task.representationSemanticsLabel,
+        choices: task.choices,
+        correctChoiceId: task.correctChoiceId,
+      ),
+    };
+    final duplicateSection = Section(
+      conceptKey: firstSection.conceptKey,
+      title: firstSection.title,
+      body: firstSection.body,
+      tryIt: firstSection.tryIt,
+      localCheckpoint: firstSection.localCheckpoint,
+      localSpeakingPractice: firstSection.localSpeakingPractice,
+      localPracticeVariants: firstSection.localPracticeVariants,
+      notationLab: LocalNotationLab.tagged(
+        tasks: [...sourceNotation.tasks, duplicatedTask, malformedUnknownTask],
+      ),
+      scienceStory: firstSection.scienceStory,
+    );
+    final duplicateUnit = UnitDetail(
+      summary: firstUnit.summary,
+      sections: [duplicateSection, ...firstUnit.sections.skip(1)],
+    );
+    final skillId = '${duplicateUnit.id}/${duplicateSection.conceptKey}';
+    final duplicateNeedCode = duplicatedTask.needCode!;
+
+    final plan = const LearningRepairPlanner().build(
+      snapshot: _snapshot(
+        scope: LearningScope.personal,
+        activeNeeds: [
+          _need(skillId, duplicateNeedCode),
+          _need(skillId, unknownNeedCode),
+        ],
+      ),
+      catalog: [duplicateUnit],
+      today: '2026-08-10',
+    );
+
+    expect(plan.targets, isEmpty);
+    expect(plan.unmappedActiveNeeds.map((need) => need.needCode).toSet(), {
+      duplicateNeedCode,
+      unknownNeedCode,
+    });
   });
 
   test('不正なtodayを黙って期限判定に使わない', () {

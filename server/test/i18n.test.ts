@@ -7,10 +7,11 @@ import {
   localizeUnit,
   missingTranslations,
   parseLang,
+  validateTranslations,
 } from '../lib/i18n.js'
 import { liveSessionConfig, systemInstruction } from '../lib/live-config.js'
 import { MISCONCEPTIONS } from '../lib/misconceptions.js'
-import { UNITS, unitById } from '../lib/units.js'
+import { UNITS, unitById, validateLocalSpeakingPractice } from '../lib/units.js'
 
 /** 日本語の文字が混ざっていないか。**訳し漏れは1文だけ混ざるので目で見つけにくい** */
 const JA = /[぀-ヿ一-龯]/
@@ -20,6 +21,12 @@ describe('英語への差し替え', () => {
     // 抜けると、英語の会話の途中に日本語が1文だけ混ざる。
     // 落ちないので気づけないまま出荷される
     assert.deepEqual(missingTranslations(UNITS, MISCONCEPTIONS), [])
+    assert.deepEqual(validateTranslations(UNITS, MISCONCEPTIONS), [])
+    assert.equal(UNITS.flatMap((unit) => unit.concepts).length, 23)
+    assert.deepEqual(
+      MISCONCEPTIONS.map((misconception) => misconception.id),
+      Array.from({ length: 23 }, (_, index) => `M${String(index + 1).padStart(2, '0')}`),
+    )
   })
 
   it('単元・概念・教材のどこにも日本語が残らない', () => {
@@ -37,6 +44,21 @@ describe('英語への差し替え', () => {
         for (const [i, b] of s.body.entries()) {
           assert.ok(!JA.test(b), `${u.id}/${s.conceptKey}: 本文${i} に日本語`)
         }
+        assert.ok(
+          !JA.test(s.localSpeakingPractice.targetPhrase),
+          `${u.id}/${s.conceptKey}: Speaking目標に日本語`,
+        )
+        for (const [i, accepted] of s.localSpeakingPractice.acceptedTranscripts.entries()) {
+          assert.ok(
+            !JA.test(accepted),
+            `${u.id}/${s.conceptKey}: Speaking受理候補${i}に日本語`,
+          )
+        }
+        assert.deepEqual(
+          validateLocalSpeakingPractice(s.localSpeakingPractice),
+          [],
+          `${u.id}/${s.conceptKey}: 英語Speaking正本が不正`,
+        )
         assert.ok(
           !JA.test(s.localCheckpoint.lure),
           `${u.id}/${s.conceptKey}: checkpoint lure に日本語`,
@@ -91,6 +113,10 @@ describe('英語への差し替え', () => {
           en.sections[i]!.localCheckpoint.correctOptionId,
           u.sections[i]!.localCheckpoint.correctOptionId,
         )
+        assert.equal(
+          en.sections[i]!.localSpeakingPractice.acceptedTranscripts.length > 0,
+          true,
+        )
       }
       assert.deepEqual(en.concepts.map((c) => c.weight), u.concepts.map((c) => c.weight))
     }
@@ -106,6 +132,10 @@ describe('英語への差し替え', () => {
     const forceBalance = localizeUnit(unitById('force-balance')!, 'en')
     const pressureBuoyancy = localizeUnit(unitById('pressure-buoyancy')!, 'en')
     const currentMagnetism = localizeUnit(unitById('current-magnetism')!, 'en')
+    const matterProperties = localizeUnit(unitById('matter-properties')!, 'en')
+    const livingBody = localizeUnit(unitById('living-body')!, 'en')
+    const weatherChange = localizeUnit(unitById('weather-change')!, 'en')
+    const earthHistory = localizeUnit(unitById('earth-history')!, 'en')
 
     const inertia = forceMotion.concepts.find((concept) => concept.key === 'inertia')!
     assert.match(inertia.intent, /net force.*zero/i)
@@ -182,6 +212,129 @@ describe('英語への差し替え', () => {
     assert.match(inductionText, /generator.*change the magnetic flux through the coil/i)
     assert.match(inductionText, /direct current.*one direction.*alternating current.*periodically/i)
     assert.match(induction.tryIt, /no power supply attached/i)
+
+    const density = matterProperties.sections.find(
+      (section) => section.conceptKey === 'density',
+    )!
+    assert.match(density.body.join(''), /mass divided by volume/i)
+    assert.match(density.body.join(''), /same conditions.*temperature/i)
+    assert.match(density.body.join(''), /dissolve in or react with water/i)
+    assert.match(density.tryIt, /with permission/i)
+    assert.match(density.tryIt, /do not taste.*wipe up any spill immediately/i)
+    assert.match(density.localCheckpoint.explanation, /mass and volume.*same proportion/i)
+
+    const gasProperties = matterProperties.sections.find(
+      (section) => section.conceptKey === 'gasProperties',
+    )!
+    const gasText = gasProperties.body.join('')
+    assert.match(gasText, /water solubility.*density relative to air.*reactions/i)
+    assert.match(gasText, /ammonia.*extremely soluble.*less dense than air/i)
+    assert.match(gasText, /carbon dioxide.*denser than air.*dissolves in water/i)
+    assert.match(gasProperties.tryIt, /do not produce, heat, or burn gases.*never smell them directly/i)
+
+    const stateChangeMass = matterProperties.sections.find(
+      (section) => section.conceptKey === 'stateChangeMass',
+    )!
+    const stateText = stateChangeMass.body.join('')
+    assert.match(stateText, /closed system.*total mass.*unchanged/i)
+    assert.match(stateText, /open container.*mass.*decreases.*has not vanished/i)
+    assert.match(stateChangeMass.tryIt, /do not perform heating, cooling, or sealed-container experiments at home/i)
+
+    const cells = livingBody.sections.find((section) => section.conceptKey === 'cells')!
+    assert.match(cells.body.join(''), /structure.*not visible.*cannot simply be declared absent/i)
+    assert.match(cells.body.join(''), /root cells.*do not have chloroplasts/i)
+    assert.match(cells.tryIt, /do not collect samples from a human body or use stains at home/i)
+    assert.match(cells.localCheckpoint.explanation, /several features.*tissue/i)
+
+    const photosynthesis = livingBody.sections.find(
+      (section) => section.conceptKey === 'photosynthesisRespiration',
+    )!
+    const photosynthesisText = photosynthesis.body.join('')
+    assert.match(photosynthesisText, /photosynthesis does not proceed in dark conditions/i)
+    assert.match(photosynthesisText, /respire in both light and darkness/i)
+    assert.match(photosynthesisText, /net gas change.*difference between photosynthesis and respiration/i)
+    assert.match(photosynthesis.tryIt, /do not seal up plants or use chemicals or flames/i)
+
+    const digestion = livingBody.sections.find(
+      (section) => section.conceptKey === 'digestionAbsorption',
+    )!
+    const digestionText = digestion.body.join('')
+    assert.match(digestionText, /digestive enzymes.*smaller substances.*absorbed/i)
+    assert.match(digestionText, /villi of the small intestine/i)
+    assert.match(digestionText, /digestive tract does not yet mean.*absorbed into the body/i)
+    assert.match(digestion.tryIt, /do not experiment with food, chemicals, or human samples/i)
+
+    const humidityClouds = weatherChange.sections.find(
+      (section) => section.conceptKey === 'humidityClouds',
+    )!
+    const cloudText = humidityClouds.body.join('')
+    assert.match(cloudText, /water vapor is a gas and is normally invisible/i)
+    assert.match(cloudText, /dew point.*further cooling.*condensation/i)
+    assert.match(cloudText, /rising air does not always make a cloud/i)
+    assert.match(humidityClouds.tryIt, /stable table/i)
+    assert.match(humidityClouds.tryIt, /do not heat or pressurize a sealed container/i)
+    assert.match(humidityClouds.localCheckpoint.explanation, /droplets or ice crystals.*scatter light/i)
+
+    const fronts = weatherChange.sections.find((section) => section.conceptKey === 'fronts')!
+    const frontsText = fronts.body.join('')
+    assert.match(frontsText, /boundary where air masses with different properties meet/i)
+    assert.match(frontsText, /warm front.*rises gradually.*cold front.*underneath warm air/i)
+    assert.match(frontsText, /representative tendencies.*water-vapor content.*terrain/i)
+    assert.match(fronts.tryIt, /do not go outside.*thunderstorms or severe weather/i)
+
+    const pressureWind = weatherChange.sections.find(
+      (section) => section.conceptKey === 'pressurePatternsWind',
+    )!
+    const pressureWindText = pressureWind.body.join('')
+    assert.match(pressureWindText, /high-pressure side.*low-pressure side/i)
+    assert.match(pressureWindText, /closer isobars.*wind generally tends to be stronger/i)
+    assert.match(pressureWindText, /Earth’s rotation.*surface.*friction/i)
+    assert.match(pressureWind.tryIt, /do not go outside.*typhoon or strong winds/i)
+
+    const strata = earthHistory.sections.find(
+      (section) => section.conceptKey === 'strataRelativeAge',
+    )!
+    const strataText = strata.body.join('')
+    assert.match(strataText, /have not later been substantially overturned.*earlier layer lies below/i)
+    assert.match(strataText, /fault.*cutting event happened after the cut layers/i)
+    assert.match(strataText, /relative order, not a numerical age in years/i)
+    assert.match(strata.tryIt, /do not approach outdoor cliffs or construction sites/i)
+    assert.match(strata.tryIt, /do not collect rocks/i)
+
+    const volcanoes = earthHistory.sections.find(
+      (section) => section.conceptKey === 'volcanoEarthquakes',
+    )!
+    const volcanoText = volcanoes.body.join('')
+    assert.match(volcanoText, /earthquake.*rock suddenly slips.*volcanic eruption.*magma rises/i)
+    assert.match(volcanoText, /do not necessarily occur at the same place and time/i)
+    assert.match(volcanoes.tryIt, /do not travel to disaster areas or volcanoes.*published materials only/i)
+    assert.match(volcanoes.localCheckpoint.lure, /same mechanism.*always occur together/i)
+
+    const seasons = earthHistory.sections.find(
+      (section) => section.conceptKey === 'dailyMotionSeasons',
+    )!
+    const seasonsText = seasons.body.join('')
+    assert.match(seasonsText, /daily motion.*Earth rotating/i)
+    assert.match(seasonsText, /main cause of seasons is axial tilt together with revolution, not distance/i)
+    assert.match(seasonsText, /Southern Hemisphere has the opposite season/i)
+    assert.match(seasons.tryIt, /never look directly at the Sun or observe outdoors alone at night/i)
+
+    const translatedMisconceptions = new Map(
+      MISCONCEPTIONS.map((m) => [m.id, localizeMisconception(m, 'en')]),
+    )
+    assert.match(translatedMisconceptions.get('M12')!.correct, /mass per unit volume.*same proportion/i)
+    assert.match(translatedMisconceptions.get('M13')!.correct, /plant cells have no chloroplasts/i)
+    assert.match(translatedMisconceptions.get('M14')!.correct, /invisible gas.*droplets or ice crystals/i)
+    assert.match(translatedMisconceptions.get('M15')!.correct, /not been substantially overturned.*lower layers.*older/i)
+    assert.match(translatedMisconceptions.get('M16')!.correct, /water solubility.*density relative to air.*reactions/i)
+    assert.match(translatedMisconceptions.get('M17')!.correct, /closed system.*total mass does not change/i)
+    assert.match(translatedMisconceptions.get('M18')!.correct, /respire throughout day and night.*net gas exchange/i)
+    assert.match(translatedMisconceptions.get('M19')!.correct, /digestion.*absorbable.*small intestine/i)
+    assert.match(translatedMisconceptions.get('M20')!.correct, /boundary between air masses.*temperature.*wind/i)
+    assert.match(translatedMisconceptions.get('M21')!.correct, /pressure differences.*rotation.*friction/i)
+    assert.match(translatedMisconceptions.get('M22')!.correct, /rising magma.*sudden rock slip.*do not necessarily occur together/i)
+    assert.match(translatedMisconceptions.get('M22')!.lure, /same mechanism.*always occur together/i)
+    assert.match(translatedMisconceptions.get('M23')!.correct, /daily motion.*rotation.*revolving with a tilted axis/i)
   })
 
   it('ja では原本をそのまま返す', () => {

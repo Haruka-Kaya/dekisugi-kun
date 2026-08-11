@@ -73,7 +73,10 @@ class FakeSink implements PcmSink {
   @override
   void setFeedCallback(void Function(int remainingFrames)? cb) {}
   @override
-  void feed(PcmArrayInt16 buffer) => fed.add(buffer.bytes.lengthInBytes);
+  Future<void> feed(PcmArrayInt16 buffer) async {
+    fed.add(buffer.bytes.lengthInBytes);
+  }
+
   @override
   void start() => started = true;
   @override

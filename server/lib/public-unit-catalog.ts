@@ -1,4 +1,5 @@
 import type { Unit } from './units.js'
+import { curriculumCoverageFor } from './curriculum-coverage.js'
 import { localPracticeVariantsFor } from './local-practice-variants.js'
 import { notationLabFor, publicNotationLab } from './notation-labs.js'
 import { scienceStoryFor, scienceStoryTitleFor } from './science-stories.js'
@@ -18,13 +19,26 @@ export function publicUnitSummary(unit: Unit) {
     brief: unit.brief,
     concepts: unit.concepts.map((concept) => {
       const storyTitle = scienceStoryTitleFor(concept.key)
+      const coverage = curriculumCoverageFor(concept.key)
       if (storyTitle == null) {
         throw new Error(`Science Storyが無いconcept: ${concept.key}`)
+      }
+      if (coverage == null || coverage.unitId !== unit.id) {
+        throw new Error(`curriculum coverageが無いconcept: ${concept.key}`)
       }
       return {
         key: concept.key,
         label: concept.label,
         storyTitle,
+        field: coverage.field,
+        grade: coverage.grade,
+        curriculumRefs: coverage.curriculumRefs.map((entry) => ({
+          ...entry,
+          pages: [...entry.pages],
+        })),
+        prerequisites: [...coverage.prerequisites],
+        difficulty: coverage.difficulty,
+        safety: { ...coverage.safety },
       }
     }),
     sectionCount: unit.sections.length,
@@ -69,9 +83,9 @@ export function publicUnitDetail(unit: Unit) {
   }
 }
 
-// v9: Listeningの文字起こしと科学的意味判断を別needとして正本化。
-// v8以前を混ぜると聞き取り誤差を科学の誤概念へ誤診するため拒否する。
-export const BUNDLED_UNIT_CATALOG_SCHEMA_VERSION = 9 as const
+// v10: curriculum coverageと、領域固有のNotation tagged unionを正本化。
+// v9以前を混ぜると新taskと安全条件を推測することになるため拒否する。
+export const BUNDLED_UNIT_CATALOG_SCHEMA_VERSION = 10 as const
 
 /**
  * アプリに同梱する日本語教材カタログを組み立てる。

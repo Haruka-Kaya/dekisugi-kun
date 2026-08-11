@@ -1,4 +1,12 @@
 import type { LocalCheckpoint } from './units.js'
+import {
+  STAGE1_EXPANSION_COGNITIVE_TASKS,
+  STAGE1_EXPANSION_PRACTICE_PLANS,
+} from './stage1-expansion-practice.js'
+import {
+  STAGE1_PROOF_COGNITIVE_TASKS,
+  STAGE1_PROOF_PRACTICE_PLANS,
+} from './stage1-proof-practice.js'
 
 /**
  * 同じ概念を繰り返すときの、端末内練習の認知的な進み方。
@@ -85,14 +93,14 @@ export type LocalPracticeVariant = {
   }
 }
 
-type PromptPair = Pick<LocalPracticeVariant, 'recallPrompt' | 'reasoningPrompt'>
+export type PromptPair = Pick<LocalPracticeVariant, 'recallPrompt' | 'reasoningPrompt'>
 
-type VariantWithoutTask = Omit<
+export type VariantWithoutTask = Omit<
   LocalPracticeVariant,
   'stage' | 'cognitiveTask' | 'listeningNeedCodes'
 >
 
-type LocalPracticePlan = {
+export type LocalPracticePlan = {
   foundation: PromptPair & Pick<LocalPracticeVariant, 'expectedOutcome' | 'expectedReason'>
   conditions: VariantWithoutTask
   transfer: VariantWithoutTask
@@ -1019,9 +1027,11 @@ const PLANS: Readonly<Record<string, LocalPracticePlan>> = {
       },
     },
   },
+  ...STAGE1_PROOF_PRACTICE_PLANS,
+  ...STAGE1_EXPANSION_PRACTICE_PLANS,
 }
 
-type CognitiveTaskPlan = Record<LocalPracticeStage, CognitiveTask>
+export type CognitiveTaskPlan = Record<LocalPracticeStage, CognitiveTask>
 
 function singleSelectTask(
   operation: CognitiveOperation,
@@ -1572,6 +1582,8 @@ const COGNITIVE_TASKS: Readonly<Record<string, CognitiveTaskPlan>> = {
       },
     ),
   },
+  ...STAGE1_PROOF_COGNITIVE_TASKS,
+  ...STAGE1_EXPANSION_COGNITIVE_TASKS,
 }
 
 const ANSWER_SIGNALING_ID =

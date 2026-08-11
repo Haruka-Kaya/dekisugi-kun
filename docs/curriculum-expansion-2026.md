@@ -11,10 +11,14 @@
 
 ## 現在地
 
-現行4単元・11概念は、力と運動、力のつり合い、圧力・浮力、電流と磁界に集中している。
-Path、Story、Listening、Speaking、Notation、Boss、A/B/Cの学習ループは成立しているが、
-中学理科全体としては第1分野の一部である。テスト件数が多くても、カリキュラム範囲の広さとは
-分けて評価する。
+catalog schema v10では、従来の力学・圧力／浮力・電流／磁界4単元11概念に、
+身の回りの物質・生物の体・天気の変化・大地と宇宙の4単元12概念を加えた。
+合計は8単元23概念で、第1分野と第2分野の両方にproduction Pathを持つ。
+
+各概念は同じ正本から、Learn、Diagram、固有Story、Listening、Teach-back、Boss、
+foundation / conditions / transfer、Notation、canonical Repairを生成する。これは第1段階の
+領域横断を完了したという意味であり、中学理科の全単元を網羅したという意味ではない。
+化学変化、イオン、生命の連続性、科学技術と自然環境は次段階に残る。
 
 ## 拡張順
 
@@ -41,7 +45,8 @@ Path、Story、Listening、Speaking、Notation、Boss、A/B/Cの学習ループ�
 3. single select / classify / sequenceのうち最低2種類を3周で使う。
 4. 固定人物による固有Science Story。選択別反応、科学的解決、短い落ちを持つ。
 5. 記号・モデル・順序・グラフを扱うNotation。物理の矢印や式を無理に流用しない。
-6. 短いSpeaking目標語句と、端末内認識で許す表記揺れ。全文や録音は保存しない。
+6. 教材を隠して音声または文字で説明し、stageごとの固定問い返しへ答えてから説明を
+   言い直すTeach-back。自由説明を自動採点せず、全文や録音を保存しない。
 7. 誤答本文と選択肢IDから独立したcanonical need code。exact Repair成功でだけ解消する。
 8. Learn → Diagram/構造操作 → Story → Listen → Speak → Bossの必修PathとUnit末Legendary。
 9. 320×568・文字200%、light/dark、両OS Reduce Motion、48dp、Semantics。
@@ -57,6 +62,7 @@ Path、Story、Listening、Speaking、Notation、Boss、A/B/Cの学習ループ�
 
 ## 完成判定
 
-第1段階の4単元が実Pathから完走でき、既存物理単元と同じ保存・復習・heart・Repair契約を通るまで、
-「中学理科コース完成」とは表示しない。全領域の授業順や所要時間は教員pilotで確認し、
-学習指導要領への対応表だけで学習効果を断定しない。
+第1段階の4単元は実Pathへ接続し、既存物理単元と同じ保存・復習・heart・Repair契約を通す。
+ただし残る段階2・3を実装し、全領域の授業順と所要時間を教員pilotで確認するまでは、
+「中学理科全範囲を完成」と表示しない。学習指導要領への対応表や自動テストだけで
+学習効果を断定せず、初見学習者と教員による内容・語彙・安全性の確認を別gateにする。

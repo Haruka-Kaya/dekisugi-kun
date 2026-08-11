@@ -1,5 +1,11 @@
 # Shipaton 2026 demo capture sheet
 
+> [!CAUTION]
+> **ARCHIVED VIDEO PLAN / LEGACY CANDIDATE — DO NOT DISTRIBUTE OR SUBMIT.**
+> This is not the current production source of truth. The old Live-AI,
+> free-response, shot list, hashes, and paired SRT are retained only for
+> historical traceability; none is approved production evidence.
+
 Updated: 2026-08-10
 
 This is the shot-by-shot source of truth for the public demo. The final export

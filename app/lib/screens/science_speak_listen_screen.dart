@@ -2,19 +2,23 @@ import 'dart:async';
 
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
+import '../learning/domain/learning_heart.dart';
+import '../learning/domain/learning_need.dart';
 import '../models/game_path.dart';
 import '../models/unit.dart';
-import '../services/local_pronunciation_practice.dart';
+import '../services/local_narration.dart';
 import '../services/local_voice_practice.dart';
 import '../ui/_material.dart';
+import '../widgets/game_activity_scaffold.dart';
+import '../widgets/learning_path.dart';
 import '../widgets/readable_width.dart';
-import '../widgets/science_challenge_support.dart';
 
-/// 教材を閉じたまま、声または文字で科学を説明し、自分で比較する画面。
+/// 教材を閉じ、生徒がデキすぎ君へ教えてから固定の問い返しに答える画面。
 ///
-/// 音声は16kHz PCMとしてRAMに最大60秒だけ保持し、端末外へ送らない。文字も
-/// このStateのcontroller以外へ渡さない。どちらも自動採点せず、正本との比較後に
-/// 本人が「残す／直す」を選んで初めて完了できる。
+/// 自由発話・自由記述は採点しない。概念の確認はcatalogにある固定3択だけを
+/// 端末内で照合する。音声は16kHz PCMとしてRAMに最大60秒だけ保持し、文字、
+/// 選択内容、認識結果とともに保存・送信しない。完了callbackへ渡すのは一般化
+/// needと固定課題位置だけで、回答そのものは含めない。
 class ScienceSpeakListenScreen extends StatefulWidget {
   const ScienceSpeakListenScreen({
     super.key,
@@ -23,19 +27,30 @@ class ScienceSpeakListenScreen extends StatefulWidget {
     required this.practiceAttempt,
     required this.onCompleted,
     this.onReturnToPath,
-    this.pronunciationPractice,
+    this.onNeedEvidence,
+    this.onHeartLoss,
+    this.narration,
     this.voicePractice,
   });
 
   final Section section;
   final String conceptLabel;
   final int practiceAttempt;
+
+  /// 回答を渡さず、固定問い返しの構造成功・誤答needだけを通知する。
+  final LearningNeedEvidenceReported? onNeedEvidence;
+
+  /// 誤答した固定課題位置だけを通知する。選択肢IDは渡さない。
+  final LearningHeartLossReported? onHeartLoss;
+
+  /// 回答をRAMから破棄し、比較完了画面へ移ったあと一度だけ呼ぶ。
   final VoidCallback onCompleted;
+
   final VoidCallback? onReturnToPath;
 
-  /// テスト用の差し替え口。認識候補を画面へ公開しないservice単位で渡す。
+  /// テスト用の差し替え口。画面に表示済みの固定質問だけを渡す。
   @visibleForTesting
-  final LocalPronunciationPractice? pronunciationPractice;
+  final LocalNarration? narration;
 
   /// テスト用の差し替え口。渡した場合も画面が所有し、route終了時にdisposeする。
   @visibleForTesting
@@ -46,231 +61,227 @@ class ScienceSpeakListenScreen extends StatefulWidget {
       _ScienceSpeakListenScreenState();
 }
 
-enum _ExplainStep { pronunciation, choose, voice, text, compare, complete }
+enum _ExplainStep { choose, voice, text, followUp, compare, complete }
 
 enum _AnswerRoute { voice, text }
 
-class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen> {
+class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
+    with WidgetsBindingObserver {
   final _text = TextEditingController();
-  final _pronunciationText = TextEditingController();
   final _scroll = ScrollController();
   late final LocalVoicePractice _voice;
-  LocalPronunciationPractice? _pronunciation;
+  late final LocalNarration _narration;
   StreamSubscription<LocalVoicePracticeSnapshot>? _voiceSubscription;
-  StreamSubscription<LocalPronunciationSnapshot>? _pronunciationSubscription;
 
-  _ExplainStep _step = _ExplainStep.pronunciation;
+  _ExplainStep _step = _ExplainStep.choose;
   _AnswerRoute? _answerRoute;
   late LocalVoicePracticeSnapshot _voiceSnapshot;
-  LocalPronunciationSnapshot _pronunciationSnapshot =
-      const LocalPronunciationSnapshot(LocalPronunciationState.unavailable);
   String? _submittedText;
   String? _revisionBaseline;
-  bool _pronunciationTextMode = false;
-  bool _pronunciationVerifiedByVoice = false;
-  bool _pronunciationStopBusy = false;
-  bool _voicePlayed = false;
+  String? _selectedOptionId;
+  String? _wrongOptionId;
+  bool _isRevision = false;
+  bool _textReviewed = false;
   bool _voiceBusy = false;
+  bool _questionSpeaking = false;
+  bool _questionUnavailable = false;
+  bool _needEvidenceReported = false;
+  bool _heartLossReported = false;
+  bool _hadWrongAnswer = false;
   bool _completionStarted = false;
   bool _returnStarted = false;
+  int _narrationEpoch = 0;
 
   LocalPracticeVariant get _variant =>
       widget.section.practiceVariantForAttempt(widget.practiceAttempt);
 
-  @override
-  void initState() {
-    super.initState();
-    _voice = widget.voicePractice ?? LocalVoicePractice();
-    _voiceSnapshot = _voice.snapshot;
-    _voiceSubscription = _voice.changes.listen((snapshot) {
-      if (mounted) setState(() => _voiceSnapshot = snapshot);
-    });
-    final speaking = widget.section.localSpeakingPractice;
-    if (speaking != null) {
-      _pronunciation =
-          widget.pronunciationPractice ??
-          LocalPronunciationPractice(
-            targetPhrase: speaking.targetPhrase,
-            acceptedTranscripts: speaking.acceptedTranscripts,
-          );
-      _pronunciationSnapshot = _pronunciation!.snapshot;
-      _pronunciationSubscription = _pronunciation!.changes.listen((snapshot) {
-        if (mounted) setState(() => _pronunciationSnapshot = snapshot);
-      });
-    }
-    _text.addListener(_onTextChanged);
-    _pronunciationText.addListener(_onPronunciationTextChanged);
-  }
+  LocalCheckpoint get _checkpoint => _variant.checkpoint;
 
-  void _onTextChanged() {
-    if (mounted && _step == _ExplainStep.text) setState(() {});
-  }
+  String get _spokenQuestion =>
+      '教えてくれてありがとう。デキすぎ君から一問。${_checkpoint.lure} '
+      'この考えを科学的に直しているのはどれ？';
 
-  void _onPronunciationTextChanged() {
-    if (mounted && _step == _ExplainStep.pronunciation) setState(() {});
-  }
+  LocalCheckpointOption? get _wrongOption =>
+      _wrongOptionId == null ? null : _checkpoint.optionFor(_wrongOptionId!);
 
-  @override
-  void dispose() {
-    _text.removeListener(_onTextChanged);
-    _text.clear();
-    _text.dispose();
-    _pronunciationText.removeListener(_onPronunciationTextChanged);
-    _pronunciationText.clear();
-    _pronunciationText.dispose();
-    _scroll.dispose();
-    unawaited(_voiceSubscription?.cancel());
-    unawaited(_pronunciationSubscription?.cancel());
-    unawaited(_voice.dispose());
-    unawaited(_pronunciation?.dispose());
-    super.dispose();
-  }
+  bool get _voicePlaying =>
+      _voiceSnapshot.state == LocalVoicePracticeState.playing;
 
-  bool get _canSubmitText {
+  bool get _canAdvanceVoice =>
+      !_voiceBusy &&
+      _voiceSnapshot.state == LocalVoicePracticeState.recorded &&
+      _voiceSnapshot.hasRecording &&
+      _voiceSnapshot.playbackCompleted;
+
+  bool get _voiceRevisionFallbackAllowed =>
+      _isRevision &&
+      (_voiceSnapshot.state == LocalVoicePracticeState.permissionDenied ||
+          _voiceSnapshot.state == LocalVoicePracticeState.failed);
+
+  bool get _canReviewText {
     final answer = _text.text.trim();
     if (answer.isEmpty) return false;
     final baseline = _revisionBaseline;
     return baseline == null || answer != baseline;
   }
 
-  bool get _typedTargetMatches =>
-      _pronunciation?.matchesTypedTarget(_pronunciationText.text) ?? false;
-
-  bool get _canSubmitVoice =>
-      !_voiceBusy &&
-      _voiceSnapshot.hasRecording &&
-      _voiceSnapshot.state != LocalVoicePracticeState.recording &&
-      _voicePlayed;
-
-  void _startPronunciationRecognition() {
-    final practice = _pronunciation;
-    if (_step != _ExplainStep.pronunciation ||
-        practice == null ||
-        _pronunciationSnapshot.state == LocalPronunciationState.listening) {
-      return;
+  GameCharacterReaction get _characterReaction {
+    if (_questionSpeaking) return GameCharacterReaction.speaking;
+    if (_voiceSnapshot.state == LocalVoicePracticeState.recording ||
+        _voiceSnapshot.state == LocalVoicePracticeState.playing) {
+      return GameCharacterReaction.listening;
     }
-    FocusManager.instance.primaryFocus?.unfocus();
-    _pronunciationText.clear();
-    setState(() {
-      _pronunciationTextMode = false;
-      _pronunciationVerifiedByVoice = false;
-    });
-    unawaited(practice.start());
+    return switch (_step) {
+      _ExplainStep.choose => GameCharacterReaction.invite,
+      _ExplainStep.voice || _ExplainStep.text =>
+        _isRevision
+            ? GameCharacterReaction.encourage
+            : GameCharacterReaction.listening,
+      _ExplainStep.followUp => GameCharacterReaction.thinking,
+      _ExplainStep.compare => GameCharacterReaction.encourage,
+      _ExplainStep.complete => GameCharacterReaction.celebrate,
+    };
   }
 
-  Future<void> _stopPronunciationRecognition() async {
-    final practice = _pronunciation;
-    if (_step != _ExplainStep.pronunciation ||
-        practice == null ||
-        _pronunciationSnapshot.state != LocalPronunciationState.listening ||
-        _pronunciationStopBusy) {
-      return;
+  @override
+  void initState() {
+    super.initState();
+    _voice = widget.voicePractice ?? LocalVoicePractice();
+    _narration = widget.narration ?? PlatformLocalNarration();
+    _voiceSnapshot = _voice.snapshot;
+    _voiceSubscription = _voice.changes.listen((snapshot) {
+      if (mounted) setState(() => _voiceSnapshot = snapshot);
+    });
+    _text.addListener(_onTextChanged);
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  void _onTextChanged() {
+    if (!mounted || _step != _ExplainStep.text) return;
+    setState(() => _textReviewed = false);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) return;
+    unawaited(_suspendAudio());
+  }
+
+  Future<void> _suspendAudio() async {
+    await _stopQuestionNarration();
+    if (_voice.snapshot.state == LocalVoicePracticeState.recording) {
+      await _voice.stopRecording();
     }
-    setState(() => _pronunciationStopBusy = true);
-    await practice.stop();
-    if (mounted) setState(() => _pronunciationStopBusy = false);
+    await _voice.stopPlayback();
+    if (mounted) setState(() => _voiceSnapshot = _voice.snapshot);
   }
 
-  Future<void> _usePronunciationText() async {
-    if (_step != _ExplainStep.pronunciation || _pronunciation == null) return;
-    FocusManager.instance.primaryFocus?.unfocus();
-    await _pronunciation!.cancelAttempt();
-    if (!mounted) return;
-    setState(() {
-      _pronunciationTextMode = true;
-      _pronunciationVerifiedByVoice = false;
-    });
-    _toTop();
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _narrationEpoch++;
+    _text.removeListener(_onTextChanged);
+    _text.clear();
+    _text.dispose();
+    _scroll.dispose();
+    final voiceSubscription = _voiceSubscription;
+    _voiceSubscription = null;
+    // State.disposeはFutureを返せない。所有resourceの各cleanupを独立に試し、
+    // どれかが同期・非同期例外になってもunhandled Futureと後続skipを作らない。
+    unawaited(_disposeOwnedAudio(voiceSubscription));
+    super.dispose();
   }
 
-  void _continueAfterRecognizedPhrase() {
-    if (_step != _ExplainStep.pronunciation ||
-        _pronunciationSnapshot.state != LocalPronunciationState.matched) {
-      return;
+  Future<void> _disposeOwnedAudio(
+    StreamSubscription<LocalVoicePracticeSnapshot>? voiceSubscription,
+  ) async {
+    Future<void> ignoreFailure(Future<void> Function() cleanup) async {
+      try {
+        await cleanup();
+      } catch (_) {
+        // routeは既に破棄済み。例外をUIへ戻さず、残りのcleanupを続ける。
+      }
     }
-    setState(() {
-      _pronunciationVerifiedByVoice = true;
-      _pronunciationTextMode = false;
-      _step = _ExplainStep.choose;
-    });
-    _toTop();
-  }
 
-  void _continueAfterTypedPhrase() {
-    if (_step != _ExplainStep.pronunciation || !_typedTargetMatches) return;
-    FocusManager.instance.primaryFocus?.unfocus();
-    _pronunciationText.clear();
-    setState(() {
-      _pronunciationVerifiedByVoice = false;
-      _pronunciationTextMode = false;
-      _step = _ExplainStep.choose;
-    });
-    _toTop();
-  }
-
-  void _leaveUnavailableSpeaking() {
-    if (_step != _ExplainStep.pronunciation || _returnStarted) return;
-    _returnStarted = true;
-    final callback = widget.onReturnToPath;
-    if (callback != null) {
-      callback();
-    } else {
-      Navigator.maybePop(context);
+    // cancellationが端末都合で止まっても、native音声のdisposeを待たせない。
+    final cleanups = <Future<void>>[
+      ignoreFailure(_narration.dispose),
+      ignoreFailure(_voice.dispose),
+    ];
+    if (voiceSubscription != null) {
+      cleanups.add(ignoreFailure(voiceSubscription.cancel));
     }
+    await Future.wait(cleanups);
   }
 
   Future<void> _chooseVoice() async {
-    if (_step != _ExplainStep.choose && _step != _ExplainStep.text) return;
+    final canSwitch =
+        _step == _ExplainStep.choose ||
+        (_step == _ExplainStep.text && !_isRevision);
+    if (!canSwitch) return;
     FocusManager.instance.primaryFocus?.unfocus();
     _text.clear();
     _submittedText = null;
     setState(() {
       _answerRoute = _AnswerRoute.voice;
       _step = _ExplainStep.voice;
-      _voicePlayed = false;
+      _isRevision = false;
       _revisionBaseline = null;
+      _textReviewed = false;
     });
     _toTop();
   }
 
   Future<void> _chooseText() async {
-    if (_step != _ExplainStep.choose && _step != _ExplainStep.voice) return;
+    final revisionFallback =
+        _step == _ExplainStep.voice && _voiceRevisionFallbackAllowed;
+    final canSwitch =
+        _step == _ExplainStep.choose ||
+        (_step == _ExplainStep.voice && (!_isRevision || revisionFallback));
+    if (!canSwitch) return;
     FocusManager.instance.primaryFocus?.unfocus();
     await _voice.clear();
     if (!mounted) return;
     setState(() {
+      _voiceSnapshot = _voice.snapshot;
       _answerRoute = _AnswerRoute.text;
       _step = _ExplainStep.text;
-      _voicePlayed = false;
+      _isRevision = revisionFallback;
       _revisionBaseline = null;
+      _textReviewed = false;
     });
     _toTop();
   }
 
   Future<void> _startRecording() async {
-    if (_step != _ExplainStep.voice || _voiceBusy) return;
-    setState(() {
-      _voiceBusy = true;
-      _voicePlayed = false;
-    });
-    await _voice.startRecording();
-    if (mounted) {
-      setState(() {
-        _voiceBusy = false;
-        _voiceSnapshot = _voice.snapshot;
-      });
+    if (_step != _ExplainStep.voice || _voiceBusy || _voicePlaying) return;
+    await _stopQuestionNarration();
+    if (!mounted || _step != _ExplainStep.voice) return;
+    setState(() => _voiceBusy = true);
+    try {
+      await _voice.startRecording();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _voiceBusy = false;
+          _voiceSnapshot = _voice.snapshot;
+        });
+      }
     }
   }
 
   Future<void> _stopRecording() async {
     if (_step != _ExplainStep.voice || _voiceBusy) return;
     setState(() => _voiceBusy = true);
-    await _voice.stopRecording();
-    if (mounted) {
-      setState(() {
-        _voiceBusy = false;
-        _voiceSnapshot = _voice.snapshot;
-      });
+    try {
+      await _voice.stopRecording();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _voiceBusy = false;
+          _voiceSnapshot = _voice.snapshot;
+        });
+      }
     }
   }
 
@@ -278,79 +289,239 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen> {
     final canPlay =
         _step == _ExplainStep.voice ||
         (_step == _ExplainStep.compare && _answerRoute == _AnswerRoute.voice);
-    if (!canPlay || _voiceBusy) return;
-    setState(() => _voiceBusy = true);
-    final started = await _voice.playRecording();
+    if (!canPlay || _voiceBusy || _voicePlaying) return;
+    await _stopQuestionNarration();
     if (!mounted) return;
-    setState(() {
-      _voiceBusy = false;
-      _voiceSnapshot = _voice.snapshot;
-      if (started) _voicePlayed = true;
-    });
+    setState(() => _voiceBusy = true);
+    try {
+      await _voice.playRecording();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _voiceBusy = false;
+          _voiceSnapshot = _voice.snapshot;
+        });
+      }
+    }
   }
 
   Future<void> _recordAgain() async {
     if (_step != _ExplainStep.voice || _voiceBusy) return;
     setState(() => _voiceBusy = true);
-    await _voice.clear();
-    if (!mounted) return;
-    setState(() {
-      _voiceBusy = false;
-      _voiceSnapshot = _voice.snapshot;
-      _voicePlayed = false;
-    });
+    try {
+      await _voice.clear();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _voiceBusy = false;
+          _voiceSnapshot = _voice.snapshot;
+        });
+      }
+    }
+    if (!mounted || _step != _ExplainStep.voice) return;
     await _startRecording();
   }
 
-  void _submitVoice() {
-    if (_step != _ExplainStep.voice || !_canSubmitVoice) return;
-    setState(() {
-      _answerRoute = _AnswerRoute.voice;
-      _step = _ExplainStep.compare;
-      _revisionBaseline = null;
-    });
-    _toTop();
+  Future<void> _advanceVoice() async {
+    if (_step != _ExplainStep.voice || !_canAdvanceVoice) return;
+    await _voice.stopPlayback();
+    if (!mounted || _step != _ExplainStep.voice || !_canAdvanceVoice) return;
+    _answerRoute = _AnswerRoute.voice;
+    _advanceAfterTeaching();
   }
 
-  void _submitText() {
-    if (_step != _ExplainStep.text || !_canSubmitText) return;
+  void _reviewText() {
+    if (_step != _ExplainStep.text || !_canReviewText) return;
     FocusManager.instance.primaryFocus?.unfocus();
+    setState(() => _textReviewed = true);
+  }
+
+  void _advanceText() {
+    if (_step != _ExplainStep.text || !_canReviewText || !_textReviewed) {
+      return;
+    }
+    FocusManager.instance.primaryFocus?.unfocus();
+    _submittedText = _text.text.trim();
+    _answerRoute = _AnswerRoute.text;
+    _advanceAfterTeaching();
+  }
+
+  void _advanceAfterTeaching() {
+    if (_isRevision) {
+      setState(() {
+        _step = _ExplainStep.compare;
+        _isRevision = false;
+        _revisionBaseline = null;
+        _textReviewed = false;
+      });
+      _toTop();
+      return;
+    }
+
     setState(() {
-      _submittedText = _text.text.trim();
-      _answerRoute = _AnswerRoute.text;
-      _step = _ExplainStep.compare;
-      _revisionBaseline = null;
+      _step = _ExplainStep.followUp;
+      _selectedOptionId = null;
+      _wrongOptionId = null;
+      _questionUnavailable = false;
+    });
+    _toTop();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _step == _ExplainStep.followUp) {
+        unawaited(_speakQuestion());
+      }
+    });
+  }
+
+  Future<void> _speakQuestion() async {
+    if (_step != _ExplainStep.followUp || _questionSpeaking) return;
+    final epoch = ++_narrationEpoch;
+    setState(() {
+      _questionSpeaking = true;
+      _questionUnavailable = false;
+    });
+    final completed = await _narration.speak(_spokenQuestion);
+    if (!mounted || epoch != _narrationEpoch) return;
+    setState(() {
+      _questionSpeaking = false;
+      _questionUnavailable = !completed;
+    });
+  }
+
+  Future<void> _stopQuestionNarration() async {
+    _narrationEpoch++;
+    if (mounted && _questionSpeaking) {
+      setState(() => _questionSpeaking = false);
+    }
+    await _narration.stop();
+  }
+
+  void _selectFollowUpOption(String optionId) {
+    if (_step != _ExplainStep.followUp ||
+        _questionSpeaking ||
+        _wrongOptionId != null ||
+        _checkpoint.optionFor(optionId) == null) {
+      return;
+    }
+    setState(() => _selectedOptionId = optionId);
+  }
+
+  void _submitFollowUp() {
+    if (_step != _ExplainStep.followUp ||
+        _questionSpeaking ||
+        _wrongOptionId != null ||
+        _selectedOptionId == null) {
+      return;
+    }
+    final selected = _checkpoint.optionFor(_selectedOptionId!);
+    if (selected == null) return;
+    final correct = selected.id == _checkpoint.correctOptionId;
+    _reportNeed(
+      selected,
+      correct
+          ? LearningNeedEvidenceKind.demonstrated
+          : LearningNeedEvidenceKind.observed,
+    );
+
+    if (correct) {
+      unawaited(_stopQuestionNarration());
+      setState(() => _step = _ExplainStep.compare);
+      _toTop();
+      return;
+    }
+
+    _reportHeartLoss();
+    setState(() {
+      _hadWrongAnswer = true;
+      _wrongOptionId = selected.id;
     });
     _toTop();
   }
 
-  Future<void> _revise() async {
-    if (_step != _ExplainStep.compare) return;
-    if (_answerRoute == _AnswerRoute.voice) {
+  void _reportNeed(
+    LocalCheckpointOption option,
+    LearningNeedEvidenceKind kind,
+  ) {
+    final generalizedCode =
+        option.needCode ??
+        _checkpoint.options
+            .where((candidate) => candidate.id != _checkpoint.correctOptionId)
+            .map((candidate) => candidate.needCode)
+            .nonNulls
+            .firstOrNull;
+    if (_needEvidenceReported || generalizedCode == null) return;
+    _needEvidenceReported = true;
+    widget.onNeedEvidence?.call(
+      LearningNeedEvidence(
+        conceptKey: widget.section.conceptKey,
+        needCode: generalizedCode,
+        kind: kind,
+      ),
+    );
+  }
+
+  void _reportHeartLoss() {
+    if (_heartLossReported) return;
+    _heartLossReported = true;
+    widget.onHeartLoss?.call(
+      LearningHeartLossEvidence(
+        fixedTaskId: 'speaking:${widget.practiceAttempt}:follow-up',
+      ),
+    );
+  }
+
+  Future<void> _beginRequiredRevision() async {
+    if (_step != _ExplainStep.followUp || _wrongOption == null) return;
+    await _stopQuestionNarration();
+    if (!mounted) return;
+    await _openRevision();
+  }
+
+  Future<void> _reviseFromComparison() async {
+    if (_step != _ExplainStep.compare || _voicePlaying) return;
+    await _openRevision();
+  }
+
+  Future<void> _openRevision() async {
+    final route = _answerRoute;
+    if (route == null) return;
+    if (route == _AnswerRoute.voice) {
       await _voice.clear();
       if (!mounted) return;
       setState(() {
-        _voicePlayed = false;
+        _voiceSnapshot = _voice.snapshot;
         _step = _ExplainStep.voice;
+        _isRevision = true;
+        _revisionBaseline = null;
       });
     } else {
+      final baseline = _submittedText ?? _text.text.trim();
+      _text.text = baseline;
+      _text.selection = TextSelection.collapsed(offset: _text.text.length);
       setState(() {
-        _revisionBaseline = _submittedText;
         _step = _ExplainStep.text;
+        _isRevision = true;
+        _revisionBaseline = baseline;
+        _textReviewed = false;
       });
     }
     _toTop();
   }
 
   Future<void> _keepAndComplete() async {
-    if (_step != _ExplainStep.compare || _completionStarted) return;
+    if (_step != _ExplainStep.compare || _completionStarted || _voicePlaying) {
+      return;
+    }
     _completionStarted = true;
+    await _stopQuestionNarration();
     await _voice.clear();
     if (!mounted || _step != _ExplainStep.compare) return;
     _text.clear();
     _submittedText = null;
     _revisionBaseline = null;
+    _selectedOptionId = null;
+    _wrongOptionId = null;
     setState(() {
+      _voiceSnapshot = _voice.snapshot;
       _step = _ExplainStep.complete;
     });
     widget.onCompleted();
@@ -383,10 +554,7 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen> {
               conceptLabel: widget.conceptLabel,
               stageLabel: _variant.stage.label,
               step: _step,
-              listening:
-                  _pronunciationSnapshot.state ==
-                      LocalPronunciationState.listening ||
-                  _voiceSnapshot.state == LocalVoicePracticeState.recording,
+              reaction: _characterReaction,
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -403,287 +571,96 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen> {
   }
 
   Widget _body() => switch (_step) {
-    _ExplainStep.pronunciation =>
-      widget.section.localSpeakingPractice == null
-          ? _MissingSpeakingTarget(onReturnToPath: _leaveUnavailableSpeaking)
-          : _PronunciationGate(
-              targetPhrase: widget.section.localSpeakingPractice!.targetPhrase,
-              snapshot: _pronunciationSnapshot,
-              textMode: _pronunciationTextMode,
-              stopBusy: _pronunciationStopBusy,
-              textController: _pronunciationText,
-              typedTargetMatches: _typedTargetMatches,
-              onStart: _startPronunciationRecognition,
-              onStop: _stopPronunciationRecognition,
-              onUseText: _usePronunciationText,
-              onContinueVoice: _continueAfterRecognizedPhrase,
-              onContinueText: _continueAfterTypedPhrase,
-            ),
     _ExplainStep.choose => _ChooseRoute(
-      prompts: _PromptSet.fromVariant(_variant),
+      prompt: _TeachingPrompt.fromVariant(_variant),
       onVoice: _chooseVoice,
       onText: _chooseText,
     ),
     _ExplainStep.voice => _VoiceAnswer(
-      prompts: _PromptSet.fromVariant(_variant),
+      prompt: _TeachingPrompt.fromVariant(_variant),
       snapshot: _voiceSnapshot,
       busy: _voiceBusy,
-      played: _voicePlayed,
-      canSubmit: _canSubmitVoice,
+      isRevision: _isRevision,
+      revisionHint: _wrongOption?.hint,
+      canAdvance: _canAdvanceVoice,
+      allowRouteSwitch: !_isRevision || _voiceRevisionFallbackAllowed,
+      routeSwitchIsFallback: _voiceRevisionFallbackAllowed,
       onStart: _startRecording,
       onStop: _stopRecording,
       onPlay: _playRecording,
       onRecordAgain: _recordAgain,
       onUseText: _chooseText,
-      onSubmit: _submitVoice,
+      onAdvance: _advanceVoice,
     ),
     _ExplainStep.text => _TextAnswer(
-      prompts: _PromptSet.fromVariant(_variant),
+      prompt: _TeachingPrompt.fromVariant(_variant),
       controller: _text,
-      isRevision: _revisionBaseline != null,
-      canSubmit: _canSubmitText,
+      isRevision: _isRevision,
+      revisionHint: _wrongOption?.hint,
+      canReview: _canReviewText,
+      reviewed: _textReviewed,
+      allowRouteSwitch: !_isRevision,
+      onReview: _reviewText,
       onUseVoice: _chooseVoice,
-      onSubmit: _submitText,
+      onAdvance: _advanceText,
+    ),
+    _ExplainStep.followUp => _FollowUp(
+      spokenQuestion: _spokenQuestion,
+      checkpoint: _checkpoint,
+      selectedOptionId: _selectedOptionId,
+      wrongOption: _wrongOption,
+      speaking: _questionSpeaking,
+      narrationUnavailable: _questionUnavailable,
+      reaction: _characterReaction,
+      onReadQuestion: _speakQuestion,
+      onStopQuestion: _stopQuestionNarration,
+      onSelect: _selectFollowUpOption,
+      onSubmit: _submitFollowUp,
+      onRevise: _beginRequiredRevision,
     ),
     _ExplainStep.compare => _SelfComparison(
       route: _answerRoute!,
       submittedText: _submittedText,
       outcome: _variant.expectedOutcome,
       reason: _variant.expectedReason,
+      checkpointCorrection:
+          _checkpoint.optionFor(_checkpoint.correctOptionId)?.text ?? '',
+      checkpointExplanation: _checkpoint.explanation,
+      revisedAfterHint: _hadWrongAnswer,
+      voicePlaying: _voicePlaying,
       onReplay: _answerRoute == _AnswerRoute.voice ? _playRecording : null,
-      onRevise: _revise,
+      onRevise: _reviseFromComparison,
       onKeep: _keepAndComplete,
     ),
     _ExplainStep.complete => _Complete(
-      pronunciationVerifiedByVoice: _pronunciationVerifiedByVoice,
+      usedVoice: _answerRoute == _AnswerRoute.voice,
+      revisedAfterHint: _hadWrongAnswer,
       onReturnToPath: _returnToPath,
     ),
   };
 }
 
-class _PronunciationGate extends StatelessWidget {
-  const _PronunciationGate({
-    required this.targetPhrase,
-    required this.snapshot,
-    required this.textMode,
-    required this.stopBusy,
-    required this.textController,
-    required this.typedTargetMatches,
-    required this.onStart,
-    required this.onStop,
-    required this.onUseText,
-    required this.onContinueVoice,
-    required this.onContinueText,
-  });
+class _TeachingPrompt {
+  const _TeachingPrompt({required this.label, required this.text});
 
-  final String targetPhrase;
-  final LocalPronunciationSnapshot snapshot;
-  final bool textMode;
-  final bool stopBusy;
-  final TextEditingController textController;
-  final bool typedTargetMatches;
-  final VoidCallback onStart;
-  final VoidCallback onStop;
-  final VoidCallback onUseText;
-  final VoidCallback onContinueVoice;
-  final VoidCallback onContinueText;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = context.gamePalette;
-    final listening = snapshot.state == LocalPronunciationState.listening;
-    final matched = snapshot.state == LocalPronunciationState.matched;
-    final voiceUnavailable = switch (snapshot.state) {
-      LocalPronunciationState.permissionDenied ||
-      LocalPronunciationState.unavailable => true,
-      _ => false,
-    };
-    final statusText = switch (snapshot.state) {
-      LocalPronunciationState.noSpeech =>
-        '声を認識できませんでした。静かな場所で、目標語句を最初から話してください。',
-      LocalPronunciationState.unrelatedSpeech =>
-        '目標語句とは一致しませんでした。別の発話では完了になりません。',
-      LocalPronunciationState.permissionDenied =>
-        'マイクまたは音声認識の権限がありません。文字で確認できますが、発音確認にはなりません。',
-      LocalPronunciationState.unavailable =>
-        'この端末には日本語のオンデバイス音声認識がありません。クラウドへは送らず、文字で確認します。',
-      LocalPronunciationState.failed =>
-        '端末内の音声認識を完了できませんでした。達成にはせず、もう一度試すか文字で確認してください。',
-      _ => null,
-    };
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '目標語句を、声で確かめる',
-          style: theme.textTheme.headlineSmall?.jaWeight(FontWeight.w700),
+  factory _TeachingPrompt.fromVariant(LocalPracticeVariant variant) =>
+      switch (variant.stage) {
+        LocalPracticeStage.foundation => _TeachingPrompt(
+          label: '原理を思い出す',
+          text: variant.recallPrompt,
         ),
-        const SizedBox(height: 8),
-        Text(
-          '端末内の音声認識が、この固定語句と完全に一致したときだけ声の確認を通過します。発音の点数づけはしません。',
-          style: theme.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
+        LocalPracticeStage.conditions => _TeachingPrompt(
+          label: '理由と条件を説明する',
+          text: variant.reasoningPrompt,
         ),
-        const SizedBox(height: 16),
-        Semantics(
-          key: const ValueKey('science-speaking-target'),
-          container: true,
-          label: '目標語句。$targetPhrase',
-          child: ExcludeSemantics(
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: colors.surfaceRaised,
-                borderRadius: BorderRadius.circular(GameTokens.radiusSheet),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '目標語句',
-                    style: theme.textTheme.labelMedium
-                        ?.copyWith(color: colors.ink)
-                        .jaWeight(FontWeight.w700),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    targetPhrase,
-                    style: theme.textTheme.titleLarge
-                        ?.copyWith(color: colors.ink)
-                        .jaWeight(FontWeight.w700),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        LocalPracticeStage.transfer => _TeachingPrompt(
+          label: '別の場面へ使う',
+          text: variant.transferPrompt,
         ),
-        const SizedBox(height: 16),
-        if (matched) ...[
-          _Notice(text: '端末内認識が目標語句と一致しました。認識結果は保存しません。'),
-          const SizedBox(height: 12),
-          _Action(
-            buttonKey: const ValueKey('science-speaking-continue-voice'),
-            label: '声の確認を終えて、説明へ進む',
-            icon: Icons.check_circle_outline,
-            onPressed: onContinueVoice,
-          ),
-        ] else if (textMode) ...[
-          Text(
-            '文字で目標語句を確認する',
-            style: theme.textTheme.titleSmall?.jaWeight(FontWeight.w700),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '目標語句を省略せず入力します。この経路は発音達成とは表示されません。',
-            style: theme.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            key: const ValueKey('science-speaking-target-text'),
-            controller: textController,
-            maxLength: 120,
-            minLines: 2,
-            maxLines: 4,
-            decoration: const InputDecoration(hintText: '上の目標語句を、最初から最後まで入力する'),
-          ),
-          const SizedBox(height: 10),
-          _Action(
-            buttonKey: const ValueKey('science-speaking-continue-text'),
-            label: typedTargetMatches ? '文字で確認して、説明へ進む' : '目標語句と同じ文を入力する',
-            icon: Icons.keyboard_outlined,
-            onPressed: typedTargetMatches ? onContinueText : null,
-          ),
-          const SizedBox(height: 8),
-          TextButton.icon(
-            key: const ValueKey('science-speaking-retry-voice'),
-            onPressed: voiceUnavailable ? null : onStart,
-            icon: const Icon(Icons.mic_none),
-            label: const Text('声で確認する'),
-            style: TextButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
-            ),
-          ),
-        ] else ...[
-          if (statusText != null) ...[
-            _Notice(text: statusText),
-            const SizedBox(height: 12),
-          ],
-          _Action(
-            buttonKey: listening
-                ? const ValueKey('science-speaking-stop-recognition')
-                : const ValueKey('science-speaking-start-recognition'),
-            label: listening
-                ? '話し終えたら止める'
-                : snapshot.state == LocalPronunciationState.idle
-                ? '端末内で声を確認する'
-                : 'もう一度、声を確認する',
-            icon: listening ? Icons.stop : Icons.mic,
-            onPressed: listening
-                ? (stopBusy ? null : onStop)
-                : (voiceUnavailable ? null : onStart),
-          ),
-          const SizedBox(height: 8),
-          TextButton.icon(
-            key: const ValueKey('science-speaking-use-text'),
-            onPressed: onUseText,
-            icon: const Icon(Icons.keyboard_outlined),
-            label: const Text('マイクを使わず、文字で確認する'),
-            style: TextButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
+      };
 
-class _MissingSpeakingTarget extends StatelessWidget {
-  const _MissingSpeakingTarget({required this.onReturnToPath});
-
-  final VoidCallback onReturnToPath;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        'Speakingを開始できません',
-        style: Theme.of(
-          context,
-        ).textTheme.headlineSmall?.jaWeight(FontWeight.w700),
-      ),
-      const SizedBox(height: 12),
-      const _Notice(text: '教材カタログに固定の目標語句がありません。別の文を推測して達成にはしません。'),
-      const SizedBox(height: 12),
-      _Action(
-        buttonKey: const ValueKey('science-speaking-missing-return'),
-        label: '学習パスへ戻る',
-        icon: Icons.route_outlined,
-        onPressed: onReturnToPath,
-      ),
-    ],
-  );
-}
-
-class _PromptSet {
-  const _PromptSet({
-    required this.recall,
-    required this.reasoning,
-    required this.transfer,
-  });
-
-  factory _PromptSet.fromVariant(LocalPracticeVariant variant) => _PromptSet(
-    recall: variant.recallPrompt,
-    reasoning: variant.reasoningPrompt,
-    transfer: variant.transferPrompt,
-  );
-
-  final String recall;
-  final String reasoning;
-  final String transfer;
+  final String label;
+  final String text;
 }
 
 class _Header extends StatelessWidget {
@@ -691,78 +668,74 @@ class _Header extends StatelessWidget {
     required this.conceptLabel,
     required this.stageLabel,
     required this.step,
-    required this.listening,
+    required this.reaction,
   });
 
   final String conceptLabel;
   final String stageLabel;
   final _ExplainStep step;
-  final bool listening;
+  final GameCharacterReaction reaction;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = context.gamePalette;
     final stepLabel = switch (step) {
-      _ExplainStep.pronunciation => '目標語句を確認',
-      _ExplainStep.choose => '説明方法を選ぶ',
-      _ExplainStep.voice || _ExplainStep.text => '教材を隠して説明',
-      _ExplainStep.compare => '教材と自己比較',
-      _ExplainStep.complete => '比較完了',
+      _ExplainStep.choose => '教え方を選ぶ',
+      _ExplainStep.voice || _ExplainStep.text => '教材を隠して教える',
+      _ExplainStep.followUp => 'デキすぎ君の問い返し',
+      _ExplainStep.compare => '教材と振り返る',
+      _ExplainStep.complete => '教え返し完了',
     };
-    final mascotReaction = listening
-        ? GameCharacterReaction.listening
-        : switch (step) {
-            _ExplainStep.pronunciation ||
-            _ExplainStep.choose => GameCharacterReaction.invite,
-            _ExplainStep.voice ||
-            _ExplainStep.text => GameCharacterReaction.thinking,
-            _ExplainStep.compare => GameCharacterReaction.encourage,
-            _ExplainStep.complete => GameCharacterReaction.celebrate,
-          };
     return Semantics(
       container: true,
       label:
-          'スピークとリッスン。$conceptLabel。$stageLabel。$stepLabel。'
-          'デキすぎ君。${mascotReaction.semanticsLabel}',
+          'ティーチバック。$conceptLabel。$stageLabel。$stepLabel。'
+          'デキすぎ君。${reaction.semanticsLabel}',
       child: ExcludeSemantics(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: ReadableWidth(
             tight: true,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox.square(
-                  dimension: GameTokens.heroLeadingSize,
-                  child: ScienceActivityMascotBadge(
-                    icon: Icons.mic_rounded,
-                    accent: context.gamePalette.pathReview,
-                    onAccent: context.gamePalette.onPathReview,
-                    mascotReaction: mascotReaction,
-                  ),
+                PathMascotPreview(
+                  key: const ValueKey('science-teach-back-character'),
+                  reaction: reaction,
+                  size: 72,
+                  style: GameActivityScaffold.mascotStyleOf(context),
                 ),
-                const SizedBox(height: GameTokens.spaceSm),
-                Text(
-                  'SPEAK & LISTEN  /  $stageLabel',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelMedium
-                      ?.copyWith(color: colors.pathReview)
-                      .jaWeight(FontWeight.w700),
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  conceptLabel,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleLarge?.jaWeight(FontWeight.w700),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  stepLabel,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.inkMuted,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'TEACH BACK  /  $stageLabel',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelMedium
+                            ?.copyWith(color: colors.pathReview)
+                            .jaWeight(FontWeight.w700),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        conceptLabel,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleLarge?.jaWeight(
+                          FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        stepLabel,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colors.inkMuted,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -776,12 +749,12 @@ class _Header extends StatelessWidget {
 
 class _ChooseRoute extends StatelessWidget {
   const _ChooseRoute({
-    required this.prompts,
+    required this.prompt,
     required this.onVoice,
     required this.onText,
   });
 
-  final _PromptSet prompts;
+  final _TeachingPrompt prompt;
   final VoidCallback onVoice;
   final VoidCallback onText;
 
@@ -793,30 +766,30 @@ class _ChooseRoute extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '教材を閉じて、自分の説明をつくる',
+          'デキすぎ君に、あなたが教える番',
           style: theme.textTheme.headlineSmall?.jaWeight(FontWeight.w700),
         ),
         const SizedBox(height: 8),
         Text(
-          '声と文字は同じ課題です。声は端末内で自分が聞き返すためだけに使い、送信も採点もしません。',
+          '教材の答えは隠れたままです。説明のあと、デキすぎ君から固定の質問が1つ返ってきます。自由説明は採点も送信もしません。',
           style: theme.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
         ),
         const SizedBox(height: 18),
-        _Prompts(prompts: prompts),
+        _Prompt(prompt: prompt),
         const SizedBox(height: 20),
         _RouteButton(
           buttonKey: const ValueKey('science-explain-choose-voice'),
           icon: Icons.mic_none,
-          title: '声で説明する',
-          body: '最大60秒録音し、自分で再生してから比べる',
+          title: '声で教える',
+          body: '最大60秒。録音を最後まで聞いてから、問い返しへ進む',
           onPressed: onVoice,
         ),
         const SizedBox(height: 10),
         _RouteButton(
           buttonKey: const ValueKey('science-explain-choose-text'),
           icon: Icons.keyboard_outlined,
-          title: '文字で説明する',
-          body: '同じ3つの問いに、ひとつの文章で答える',
+          title: '文字で教える',
+          body: '同じ問いへの説明を書き、読み返してから進む',
           onPressed: onText,
         ),
       ],
@@ -826,44 +799,55 @@ class _ChooseRoute extends StatelessWidget {
 
 class _VoiceAnswer extends StatelessWidget {
   const _VoiceAnswer({
-    required this.prompts,
+    required this.prompt,
     required this.snapshot,
     required this.busy,
-    required this.played,
-    required this.canSubmit,
+    required this.isRevision,
+    required this.revisionHint,
+    required this.canAdvance,
+    required this.allowRouteSwitch,
+    required this.routeSwitchIsFallback,
     required this.onStart,
     required this.onStop,
     required this.onPlay,
     required this.onRecordAgain,
     required this.onUseText,
-    required this.onSubmit,
+    required this.onAdvance,
   });
 
-  final _PromptSet prompts;
+  final _TeachingPrompt prompt;
   final LocalVoicePracticeSnapshot snapshot;
   final bool busy;
-  final bool played;
-  final bool canSubmit;
+  final bool isRevision;
+  final String? revisionHint;
+  final bool canAdvance;
+  final bool allowRouteSwitch;
+  final bool routeSwitchIsFallback;
   final VoidCallback onStart;
   final VoidCallback onStop;
   final VoidCallback onPlay;
   final VoidCallback onRecordAgain;
   final VoidCallback onUseText;
-  final VoidCallback onSubmit;
+  final VoidCallback onAdvance;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = context.gamePalette;
     final recording = snapshot.state == LocalVoicePracticeState.recording;
+    final playing = snapshot.state == LocalVoicePracticeState.playing;
     final denied = snapshot.state == LocalVoicePracticeState.permissionDenied;
     final failed = snapshot.state == LocalVoicePracticeState.failed;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _HiddenMaterialNotice(),
+        if (isRevision) ...[
+          const SizedBox(height: 12),
+          _RevisionHint(hint: revisionHint),
+        ],
         const SizedBox(height: 14),
-        _Prompts(prompts: prompts),
+        _Prompt(prompt: prompt),
         const SizedBox(height: 18),
         Container(
           width: double.infinity,
@@ -875,7 +859,11 @@ class _VoiceAnswer extends StatelessWidget {
           child: Column(
             children: [
               Icon(
-                recording ? Icons.mic : Icons.graphic_eq,
+                recording
+                    ? Icons.mic
+                    : playing
+                    ? Icons.hearing
+                    : Icons.graphic_eq,
                 size: 42,
                 color: colors.onPathReview,
               ),
@@ -883,8 +871,14 @@ class _VoiceAnswer extends StatelessWidget {
               Text(
                 recording
                     ? '録音中  ${_durationLabel(snapshot.duration)} / 1:00'
+                    : playing
+                    ? '自分の説明を最後まで再生中'
                     : snapshot.hasRecording
-                    ? '${_durationLabel(snapshot.duration)} の説明をRAMに保持中'
+                    ? snapshot.playbackCompleted
+                          ? '${_durationLabel(snapshot.duration)} の説明を最後まで聞きました'
+                          : '${_durationLabel(snapshot.duration)} の説明をRAMに保持中'
+                    : isRevision
+                    ? 'ヒントを使い、同じ声の方法で言い直します。'
                     : '最大60秒。録音後に必ず自分で聞き返します。',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium
@@ -903,7 +897,7 @@ class _VoiceAnswer extends StatelessWidget {
               else if (!snapshot.hasRecording)
                 _Action(
                   buttonKey: const ValueKey('science-explain-start-recording'),
-                  label: '録音を始める',
+                  label: isRevision ? '言い直しを録音する' : '録音を始める',
                   icon: Icons.mic,
                   onPressed: busy ? null : onStart,
                   light: true,
@@ -911,19 +905,19 @@ class _VoiceAnswer extends StatelessWidget {
               else ...[
                 _Action(
                   buttonKey: const ValueKey('science-explain-play-recording'),
-                  label: snapshot.state == LocalVoicePracticeState.playing
-                      ? '再生中'
-                      : played
+                  label: playing
+                      ? '最後まで再生中'
+                      : snapshot.playbackCompleted
                       ? 'もう一度聞く'
-                      : '自分の説明を聞く',
+                      : '自分の説明を最後まで聞く',
                   icon: Icons.play_arrow,
-                  onPressed: busy ? null : onPlay,
+                  onPressed: busy || playing ? null : onPlay,
                   light: true,
                 ),
                 const SizedBox(height: 8),
                 TextButton.icon(
                   key: const ValueKey('science-explain-record-again'),
-                  onPressed: busy ? null : onRecordAgain,
+                  onPressed: busy || playing ? null : onRecordAgain,
                   icon: Icon(Icons.refresh, color: colors.onPathReview),
                   label: Text(
                     '録り直す',
@@ -940,28 +934,36 @@ class _VoiceAnswer extends StatelessWidget {
         if (denied || failed) ...[
           const SizedBox(height: 12),
           _Notice(
-            text: denied
-                ? 'マイクを使えませんでした。権限を変えなくても、文字で同じ課題を最後まで進められます。'
-                : '録音を続けられませんでした。音声は保存されていません。文字で同じ課題を続けられます。',
+            text: isRevision
+                ? 'マイクを使えませんでした。今回だけ文字へ切り替え、同じヒントから言い直せます。'
+                : denied
+                ? 'マイクを使えませんでした。最初の説明なら、権限を変えず文字で同じ課題を進められます。'
+                : '録音を続けられませんでした。音声は保存されていません。',
           ),
         ],
         const SizedBox(height: 14),
         _Action(
           buttonKey: const ValueKey('science-explain-submit-voice'),
-          label: played ? 'この説明を教材と比べる' : '先に自分の説明を聞く',
-          icon: Icons.compare_arrows,
-          onPressed: canSubmit ? onSubmit : null,
+          label: canAdvance
+              ? isRevision
+                    ? '言い直しを終えて、教材と比べる'
+                    : 'デキすぎ君の質問へ'
+              : '録音を最後まで聞く',
+          icon: isRevision ? Icons.compare_arrows : Icons.question_answer,
+          onPressed: canAdvance ? onAdvance : null,
         ),
-        const SizedBox(height: 8),
-        TextButton.icon(
-          key: const ValueKey('science-explain-use-text'),
-          onPressed: onUseText,
-          icon: const Icon(Icons.keyboard_outlined),
-          label: const Text('文字で説明する'),
-          style: TextButton.styleFrom(
-            minimumSize: const Size(double.infinity, 48),
+        if (allowRouteSwitch) ...[
+          const SizedBox(height: 8),
+          TextButton.icon(
+            key: const ValueKey('science-explain-use-text'),
+            onPressed: onUseText,
+            icon: const Icon(Icons.keyboard_outlined),
+            label: Text(routeSwitchIsFallback ? '文字で言い直す' : '文字で教える'),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(double.infinity, 48),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -969,20 +971,28 @@ class _VoiceAnswer extends StatelessWidget {
 
 class _TextAnswer extends StatelessWidget {
   const _TextAnswer({
-    required this.prompts,
+    required this.prompt,
     required this.controller,
     required this.isRevision,
-    required this.canSubmit,
+    required this.revisionHint,
+    required this.canReview,
+    required this.reviewed,
+    required this.allowRouteSwitch,
+    required this.onReview,
     required this.onUseVoice,
-    required this.onSubmit,
+    required this.onAdvance,
   });
 
-  final _PromptSet prompts;
+  final _TeachingPrompt prompt;
   final TextEditingController controller;
   final bool isRevision;
-  final bool canSubmit;
+  final String? revisionHint;
+  final bool canReview;
+  final bool reviewed;
+  final bool allowRouteSwitch;
+  final VoidCallback onReview;
   final VoidCallback onUseVoice;
-  final VoidCallback onSubmit;
+  final VoidCallback onAdvance;
 
   @override
   Widget build(BuildContext context) {
@@ -992,11 +1002,15 @@ class _TextAnswer extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _HiddenMaterialNotice(),
+        if (isRevision) ...[
+          const SizedBox(height: 12),
+          _RevisionHint(hint: revisionHint),
+        ],
         const SizedBox(height: 14),
-        _Prompts(prompts: prompts),
+        _Prompt(prompt: prompt),
         const SizedBox(height: 16),
         Text(
-          isRevision ? '教材と比べて、説明を直す' : '3つをつないで説明する',
+          isRevision ? 'ヒントを使って、説明を言い直す' : 'この問いを、自分の言葉で教える',
           style: theme.textTheme.titleSmall?.jaWeight(FontWeight.w700),
         ),
         const SizedBox(height: 8),
@@ -1007,29 +1021,250 @@ class _TextAnswer extends StatelessWidget {
           maxLines: 10,
           maxLength: 4000,
           decoration: InputDecoration(
-            hintText: '結論、理由・条件、別の場面の予想を、自分の言葉でつなげる',
+            hintText: '問いへの答えと根拠を、自分の言葉で説明する',
             filled: true,
             fillColor: colors.surfaceRaised,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         _Action(
-          buttonKey: const ValueKey('science-explain-submit-text'),
-          label: 'この説明を教材と比べる',
-          icon: Icons.compare_arrows,
-          onPressed: canSubmit ? onSubmit : null,
+          buttonKey: const ValueKey('science-explain-review-text'),
+          label: reviewed ? '読み返し確認済み' : '自分の説明を読み返した',
+          icon: reviewed
+              ? Icons.check_circle_outline
+              : Icons.chrome_reader_mode,
+          onPressed: canReview && !reviewed ? onReview : null,
         ),
         const SizedBox(height: 8),
-        TextButton.icon(
-          key: const ValueKey('science-explain-use-voice'),
-          onPressed: onUseVoice,
-          icon: const Icon(Icons.mic_none),
-          label: const Text('声で説明する'),
-          style: TextButton.styleFrom(
-            minimumSize: const Size(double.infinity, 48),
-          ),
+        _Action(
+          buttonKey: const ValueKey('science-explain-submit-text'),
+          label: reviewed
+              ? isRevision
+                    ? '言い直しを終えて、教材と比べる'
+                    : 'デキすぎ君の質問へ'
+              : '先に自分の説明を読み返す',
+          icon: isRevision ? Icons.compare_arrows : Icons.question_answer,
+          onPressed: canReview && reviewed ? onAdvance : null,
         ),
+        if (allowRouteSwitch) ...[
+          const SizedBox(height: 8),
+          TextButton.icon(
+            key: const ValueKey('science-explain-use-voice'),
+            onPressed: onUseVoice,
+            icon: const Icon(Icons.mic_none),
+            label: const Text('声で教える'),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(double.infinity, 48),
+            ),
+          ),
+        ],
       ],
+    );
+  }
+}
+
+class _FollowUp extends StatelessWidget {
+  const _FollowUp({
+    required this.spokenQuestion,
+    required this.checkpoint,
+    required this.selectedOptionId,
+    required this.wrongOption,
+    required this.speaking,
+    required this.narrationUnavailable,
+    required this.reaction,
+    required this.onReadQuestion,
+    required this.onStopQuestion,
+    required this.onSelect,
+    required this.onSubmit,
+    required this.onRevise,
+  });
+
+  final String spokenQuestion;
+  final LocalCheckpoint checkpoint;
+  final String? selectedOptionId;
+  final LocalCheckpointOption? wrongOption;
+  final bool speaking;
+  final bool narrationUnavailable;
+  final GameCharacterReaction reaction;
+  final VoidCallback onReadQuestion;
+  final VoidCallback onStopQuestion;
+  final ValueChanged<String> onSelect;
+  final VoidCallback onSubmit;
+  final VoidCallback onRevise;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = context.gamePalette;
+    final lockedWrong = wrongOption != null;
+    return Semantics(
+      key: const ValueKey('science-explain-follow-up'),
+      container: true,
+      label: lockedWrong
+          ? 'デキすぎ君の問い返し。選んだ考えをヒントから言い直します。'
+          : 'デキすぎ君の問い返し。$spokenQuestion。固定の3択から選びます。',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: colors.surfaceRaised,
+              borderRadius: BorderRadius.circular(GameTokens.radiusSheet),
+              border: Border.all(color: colors.border),
+            ),
+            child: Column(
+              children: [
+                PathMascotPreview(
+                  key: const ValueKey('science-follow-up-character'),
+                  reaction: reaction,
+                  size: 112,
+                  style: GameActivityScaffold.mascotStyleOf(context),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  speaking ? 'デキすぎ君が質問しています' : 'デキすぎ君からの問い返し',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelLarge
+                      ?.copyWith(color: colors.pathReview)
+                      .jaWeight(FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  spokenQuestion,
+                  key: const ValueKey('science-explain-spoken-question'),
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleLarge?.jaWeight(FontWeight.w700),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  key: const ValueKey('science-explain-read-question'),
+                  onPressed: speaking ? onStopQuestion : onReadQuestion,
+                  icon: Icon(speaking ? Icons.stop : Icons.record_voice_over),
+                  label: Text(speaking ? '読み上げを止める' : '質問をもう一度聞く'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (narrationUnavailable) ...[
+            const SizedBox(height: 12),
+            const _Notice(text: '端末の読み上げを使えません。画面の質問を読んで、そのまま続けられます。'),
+          ],
+          const SizedBox(height: 18),
+          if (lockedWrong) ...[
+            _RevisionHint(
+              hint: wrongOption!.hint,
+              attemptedText: wrongOption!.text,
+            ),
+            const SizedBox(height: 14),
+            _Action(
+              buttonKey: const ValueKey('science-explain-start-revision'),
+              label: 'ヒントを使って、同じ方法で言い直す',
+              icon: Icons.replay,
+              onPressed: onRevise,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '他の選択肢を順番に試す代わりに、自分の説明を直します。正しい答えは比較まで表示しません。',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.inkMuted,
+              ),
+            ),
+          ] else ...[
+            Text(
+              '答えを1つ選ぶ',
+              style: theme.textTheme.titleMedium?.jaWeight(FontWeight.w700),
+            ),
+            const SizedBox(height: 10),
+            for (var i = 0; i < checkpoint.options.length; i++) ...[
+              _CheckpointOptionButton(
+                option: checkpoint.options[i],
+                index: i,
+                selected: selectedOptionId == checkpoint.options[i].id,
+                onPressed: speaking
+                    ? null
+                    : () => onSelect(checkpoint.options[i].id),
+              ),
+              if (i != checkpoint.options.length - 1)
+                const SizedBox(height: 10),
+            ],
+            const SizedBox(height: 16),
+            _Action(
+              buttonKey: const ValueKey('science-explain-submit-follow-up'),
+              label: 'この答えで決める',
+              icon: Icons.fact_check_outlined,
+              onPressed: selectedOptionId == null || speaking ? null : onSubmit,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '自由説明は採点しません。この固定問題だけを端末内で確認し、選択内容は保存しません。',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.inkMuted,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CheckpointOptionButton extends StatelessWidget {
+  const _CheckpointOptionButton({
+    required this.option,
+    required this.index,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  final LocalCheckpointOption option;
+  final int index;
+  final bool selected;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = context.gamePalette;
+    return OutlinedButton(
+      key: ValueKey('science-explain-follow-up-option-${option.id}'),
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 58),
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        side: BorderSide(
+          color: selected ? colors.pathReview : colors.border,
+          width: selected ? 2 : 1,
+        ),
+        backgroundColor: selected ? colors.surfaceRaised : null,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(GameTokens.radiusMd),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: selected ? colors.pathReview : colors.surfaceRaised,
+              borderRadius: BorderRadius.circular(GameTokens.radiusSm),
+              border: Border.all(color: colors.border),
+            ),
+            child: selected
+                ? Icon(Icons.check, size: 18, color: colors.onPathReview)
+                : Text('${index + 1}', style: theme.textTheme.labelMedium),
+          ),
+          const SizedBox(width: 11),
+          Expanded(child: Text(option.text, style: theme.textTheme.bodyMedium)),
+        ],
+      ),
     );
   }
 }
@@ -1040,6 +1275,10 @@ class _SelfComparison extends StatelessWidget {
     required this.submittedText,
     required this.outcome,
     required this.reason,
+    required this.checkpointCorrection,
+    required this.checkpointExplanation,
+    required this.revisedAfterHint,
+    required this.voicePlaying,
     required this.onReplay,
     required this.onRevise,
     required this.onKeep,
@@ -1049,6 +1288,10 @@ class _SelfComparison extends StatelessWidget {
   final String? submittedText;
   final String outcome;
   final String reason;
+  final String checkpointCorrection;
+  final String checkpointExplanation;
+  final bool revisedAfterHint;
+  final bool voicePlaying;
   final VoidCallback? onReplay;
   final VoidCallback onRevise;
   final VoidCallback onKeep;
@@ -1060,62 +1303,38 @@ class _SelfComparison extends StatelessWidget {
     return Semantics(
       key: const ValueKey('science-explain-comparison'),
       container: true,
-      label: '教材との自己比較。現象の結果。$outcome。理由と条件。$reason。説明を残すか直すか選びます。',
+      label:
+          '教材との振り返り。現象の結果。$outcome。理由と条件。$reason。'
+          '問い返しの直し方。$checkpointCorrection。$checkpointExplanation。'
+          '回答は保存せず進捗だけ記録します。',
       child: ExcludeSemantics(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '自分の説明と、教材を比べる',
+              revisedAfterHint ? '言い直した説明と、教材を比べる' : '教えた内容と、教材を比べる',
               style: theme.textTheme.headlineSmall?.jaWeight(FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
-              'ここでは自動採点しません。足りない条件や理由があるかを、自分で決めます。',
+              '自由説明そのものは自動採点していません。固定の問い返しと教材を使い、足りない条件や理由を自分で確かめます。',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colors.inkMuted,
               ),
             ),
             const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: colors.surfaceRaised,
-                borderRadius: BorderRadius.circular(GameTokens.radiusLg),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '教材の観察',
-                    style: theme.textTheme.labelMedium
-                        ?.copyWith(color: colors.ink)
-                        .jaWeight(FontWeight.w700),
-                  ),
-                  const SizedBox(height: 7),
-                  Text(
-                    outcome,
-                    style: theme.textTheme.bodyLarge
-                        ?.copyWith(color: colors.ink)
-                        .jaWeight(FontWeight.w700),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '理由と条件',
-                    style: theme.textTheme.labelMedium
-                        ?.copyWith(color: colors.ink)
-                        .jaWeight(FontWeight.w700),
-                  ),
-                  const SizedBox(height: 7),
-                  Text(
-                    reason,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colors.ink,
-                    ),
-                  ),
-                ],
-              ),
+            _ComparisonCard(
+              title: '教材の観察',
+              primary: outcome,
+              secondaryTitle: '理由と条件',
+              secondary: reason,
+            ),
+            const SizedBox(height: 12),
+            _ComparisonCard(
+              title: 'デキすぎ君の問いの直し方',
+              primary: checkpointCorrection,
+              secondaryTitle: 'なぜそう直す？',
+              secondary: checkpointExplanation,
             ),
             const SizedBox(height: 12),
             Container(
@@ -1140,9 +1359,9 @@ class _SelfComparison extends StatelessWidget {
                       buttonKey: const ValueKey(
                         'science-explain-replay-comparison',
                       ),
-                      label: '録音をもう一度聞く',
+                      label: voicePlaying ? '再生中' : '録音をもう一度聞く',
                       icon: Icons.play_arrow,
-                      onPressed: onReplay,
+                      onPressed: voicePlaying ? null : onReplay,
                       light: true,
                     )
                   else
@@ -1158,16 +1377,16 @@ class _SelfComparison extends StatelessWidget {
             const SizedBox(height: 18),
             _Action(
               buttonKey: const ValueKey('science-explain-keep'),
-              label: 'この説明を残して終える',
+              label: '比較を終えて、進捗だけ記録',
               icon: Icons.check,
-              onPressed: onKeep,
+              onPressed: voicePlaying ? null : onKeep,
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               key: const ValueKey('science-explain-revise'),
-              onPressed: onRevise,
+              onPressed: voicePlaying ? null : onRevise,
               icon: const Icon(Icons.edit_outlined),
-              label: const Text('説明を直して、もう一度比べる'),
+              label: const Text('説明をもう一度直す'),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 52),
                 padding: const EdgeInsets.symmetric(
@@ -1183,27 +1402,89 @@ class _SelfComparison extends StatelessWidget {
   }
 }
 
+class _ComparisonCard extends StatelessWidget {
+  const _ComparisonCard({
+    required this.title,
+    required this.primary,
+    required this.secondaryTitle,
+    required this.secondary,
+  });
+
+  final String title;
+  final String primary;
+  final String secondaryTitle;
+  final String secondary;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = context.gamePalette;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.surfaceRaised,
+        borderRadius: BorderRadius.circular(GameTokens.radiusLg),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.labelMedium
+                ?.copyWith(color: colors.ink)
+                .jaWeight(FontWeight.w700),
+          ),
+          const SizedBox(height: 7),
+          Text(
+            primary,
+            style: theme.textTheme.bodyLarge
+                ?.copyWith(color: colors.ink)
+                .jaWeight(FontWeight.w700),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            secondaryTitle,
+            style: theme.textTheme.labelMedium
+                ?.copyWith(color: colors.ink)
+                .jaWeight(FontWeight.w700),
+          ),
+          const SizedBox(height: 7),
+          Text(
+            secondary,
+            style: theme.textTheme.bodyMedium?.copyWith(color: colors.ink),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Complete extends StatelessWidget {
   const _Complete({
-    required this.pronunciationVerifiedByVoice,
+    required this.usedVoice,
+    required this.revisedAfterHint,
     required this.onReturnToPath,
   });
 
-  final bool pronunciationVerifiedByVoice;
+  final bool usedVoice;
+  final bool revisedAfterHint;
   final VoidCallback onReturnToPath;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = context.gamePalette;
+    final routeLabel = usedVoice ? '声' : '文字';
+    final revisionLabel = revisedAfterHint ? 'ヒントから言い直し、' : '';
     return Column(
       children: [
         Semantics(
           key: const ValueKey('science-explain-finished'),
           container: true,
-          label: pronunciationVerifiedByVoice
-              ? '自己比較完了。目標語句を端末内の声認識で確認し、説明を教材の観察と理由まで比べました。'
-              : '自己比較完了。目標語句を文字で確認し、説明を教材の観察と理由まで比べました。発音は確認していません。',
+          label:
+              'ティーチバック完了。$routeLabelで教え、$revisionLabel固定の問い返しと教材を比べました。'
+              '回答、選択内容、音声は保存せず、進捗だけを記録しました。',
           child: ExcludeSemantics(
             child: Container(
               width: double.infinity,
@@ -1215,10 +1496,14 @@ class _Complete extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Icon(Icons.hearing_outlined, size: 40, color: colors.ink),
+                  PathMascotPreview(
+                    reaction: GameCharacterReaction.celebrate,
+                    size: 120,
+                    style: GameActivityScaffold.mascotStyleOf(context),
+                  ),
                   const SizedBox(height: 12),
                   Text(
-                    '自己比較まで完了',
+                    'デキすぎ君に教えられた！',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineSmall
                         ?.copyWith(color: colors.ink)
@@ -1226,9 +1511,7 @@ class _Complete extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    pronunciationVerifiedByVoice
-                        ? '目標語句は端末内で声を確認済みです。回答・認識結果は保存せず、音声もRAMから破棄しました。'
-                        : '目標語句は文字で確認しました。発音は未確認です。回答と音声は保存していません。',
+                    '$routeLabelで教えた内容と選択した答えは保存していません。端末には学習進捗だけを記録しました。',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colors.ink,
@@ -1254,35 +1537,10 @@ class _Complete extends StatelessWidget {
   }
 }
 
-class _Prompts extends StatelessWidget {
-  const _Prompts({required this.prompts});
-
-  final _PromptSet prompts;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _Prompt(number: 1, label: '思い出す', text: prompts.recall),
-        const SizedBox(height: 8),
-        _Prompt(number: 2, label: '理由・条件', text: prompts.reasoning),
-        const SizedBox(height: 8),
-        _Prompt(number: 3, label: '別の場面', text: prompts.transfer),
-      ],
-    );
-  }
-}
-
 class _Prompt extends StatelessWidget {
-  const _Prompt({
-    required this.number,
-    required this.label,
-    required this.text,
-  });
+  const _Prompt({required this.prompt});
 
-  final int number;
-  final String label;
-  final String text;
+  final _TeachingPrompt prompt;
 
   @override
   Widget build(BuildContext context) {
@@ -1307,11 +1565,10 @@ class _Prompt extends StatelessWidget {
               color: colors.pathReview,
               borderRadius: BorderRadius.circular(GameTokens.radiusSm),
             ),
-            child: Text(
-              '$number',
-              style: theme.textTheme.labelLarge
-                  ?.copyWith(color: colors.onPathReview)
-                  .jaWeight(FontWeight.w700),
+            child: Icon(
+              Icons.question_mark,
+              size: 19,
+              color: colors.onPathReview,
             ),
           ),
           const SizedBox(width: 11),
@@ -1320,13 +1577,13 @@ class _Prompt extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  label,
+                  prompt.label,
                   style: theme.textTheme.labelMedium
                       ?.copyWith(color: colors.pathReview)
                       .jaWeight(FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
-                Text(text, style: theme.textTheme.bodyMedium),
+                Text(prompt.text, style: theme.textTheme.bodyMedium),
               ],
             ),
           ),
@@ -1355,13 +1612,81 @@ class _HiddenMaterialNotice extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              '教材は隠れています。答えを見ずに、自分の言葉で説明します。',
+              '教材と正しい答えは隠れています。デキすぎ君へ、自分の言葉で教えます。',
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: colors.ink)
                   .jaWeight(FontWeight.w700),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RevisionHint extends StatelessWidget {
+  const _RevisionHint({this.hint, this.attemptedText});
+
+  final String? hint;
+  final String? attemptedText;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = context.gamePalette;
+    return Semantics(
+      key: const ValueKey('science-explain-follow-up-hint'),
+      liveRegion: true,
+      container: true,
+      label:
+          'もう一度考えるヒント。${attemptedText == null ? '' : '選んだ考え。$attemptedText。'}'
+          '${hint ?? '条件と理由をもう一度つなげます。'}',
+      child: ExcludeSemantics(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: colors.surfaceRaised,
+            borderRadius: BorderRadius.circular(GameTokens.radiusMd),
+            border: Border.all(color: colors.pathReview, width: 2),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.lightbulb_outline, color: colors.pathReview),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ここをもう一度考えよう',
+                      style: theme.textTheme.labelLarge
+                          ?.copyWith(color: colors.ink)
+                          .jaWeight(FontWeight.w700),
+                    ),
+                    if (attemptedText != null) ...[
+                      const SizedBox(height: 5),
+                      Text(
+                        '選んだ考え: $attemptedText',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colors.inkMuted,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 5),
+                    Text(
+                      hint ?? '条件と理由をもう一度つなげます。',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colors.ink,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

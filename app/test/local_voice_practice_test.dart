@@ -10,7 +10,15 @@ import 'package:flutter_test/flutter_test.dart';
 class _FakeMic extends MicStream {
   _FakeMic({this.allowed = true});
 
-  final bool allowed;
+  bool allowed;
+  Completer<bool>? startGate;
+  int? throwOnStartCall;
+  int? throwOnStopCall;
+  final Set<int> throwOnStopCalls = <int>{};
+  bool throwOnEveryStop = false;
+  bool stopThrowsSynchronously = false;
+  bool throwOnDisposeAfterCleanup = false;
+  bool preserveStartedOnDisposeFailure = false;
   final _chunks = StreamController<Uint8List>.broadcast();
   final _levels = StreamController<double>.broadcast();
   bool started = false;
@@ -30,14 +38,25 @@ class _FakeMic extends MicStream {
   @override
   Future<bool> start({bool speakerphone = true}) async {
     startCalls++;
-    started = allowed;
-    return allowed;
+    if (throwOnStartCall == startCalls) throw StateError('mic start failed');
+    final result = startGate == null ? allowed : await startGate!.future;
+    started = result;
+    return result;
   }
 
   @override
-  Future<void> stop() async {
+  Future<void> stop() {
     stopCalls++;
+    final fails =
+        throwOnEveryStop ||
+        throwOnStopCall == stopCalls ||
+        throwOnStopCalls.contains(stopCalls);
+    if (fails) {
+      if (stopThrowsSynchronously) throw StateError('mic stop failed');
+      return Future<void>.error(StateError('mic stop failed'));
+    }
     started = false;
+    return Future<void>.value();
   }
 
   void emit(Uint8List bytes) => _chunks.add(bytes);
@@ -45,9 +64,12 @@ class _FakeMic extends MicStream {
   @override
   Future<void> dispose() async {
     disposed = true;
-    started = false;
+    if (!preserveStartedOnDisposeFailure) started = false;
     await _chunks.close();
     await _levels.close();
+    if (throwOnDisposeAfterCleanup) {
+      throw StateError('mic dispose failed');
+    }
   }
 }
 
@@ -57,6 +79,13 @@ class _FakeSink implements PcmSink {
   int startCalls = 0;
   int fedBytes = 0;
   bool released = false;
+  bool throwOnSetup = false;
+  bool throwOnStart = false;
+  bool throwOnFeed = false;
+
+  void requestFeed([int remainingFrames = 0]) {
+    callback?.call(remainingFrames);
+  }
 
   @override
   Future<void> setLogLevel(LogLevel level) async {}
@@ -66,6 +95,7 @@ class _FakeSink implements PcmSink {
     required int sampleRate,
     required int channelCount,
   }) async {
+    if (throwOnSetup) throw StateError('player setup failed');
     this.sampleRate = sampleRate;
   }
 
@@ -78,12 +108,16 @@ class _FakeSink implements PcmSink {
   }
 
   @override
-  void feed(PcmArrayInt16 buffer) {
+  Future<void> feed(PcmArrayInt16 buffer) async {
+    if (throwOnFeed) throw StateError('player feed failed');
     fedBytes += buffer.bytes.lengthInBytes;
   }
 
   @override
-  void start() => startCalls++;
+  void start() {
+    startCalls++;
+    if (throwOnStart) throw StateError('player enqueue failed');
+  }
 
   @override
   Future<void> release() async {
@@ -160,8 +194,240 @@ void main() {
     await practice.clear();
     expect(practice.snapshot.state, LocalVoicePracticeState.idle);
     expect(practice.snapshot.recordedBytes, 0);
+    expect(practice.snapshot.playbackCompleted, isFalse);
     expect(player.pendingBytes, 0);
     await practice.dispose();
+  });
+
+  test('録音を自然終了まで再生した場合だけplaybackCompletedになる', () async {
+    final mic = _FakeMic();
+    final sink = _FakeSink();
+    final practice = LocalVoicePractice(
+      mic: mic,
+      player: PcmPlayer(sink: sink, playbackSampleRate: MicStream.sampleRate),
+    );
+
+    await practice.startRecording();
+    mic.emit(Uint8List(3200));
+    await _flushAsync();
+    await practice.stopRecording();
+    expect(practice.snapshot.playbackCompleted, isFalse);
+
+    expect(await practice.playRecording(), isTrue);
+    expect(practice.snapshot.playbackCompleted, isFalse);
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    expect(practice.snapshot.state, LocalVoicePracticeState.playing);
+    expect(
+      practice.snapshot.playbackCompleted,
+      isFalse,
+      reason: 'wall timerだけでは実際に聞き終えた証拠にならない',
+    );
+
+    sink.requestFeed();
+    await _flushAsync();
+    sink.requestFeed();
+    await _flushAsync();
+    expect(practice.snapshot.playbackCompleted, isFalse);
+    sink.requestFeed();
+    await _flushAsync();
+    expect(practice.snapshot.state, LocalVoicePracticeState.recorded);
+    expect(practice.snapshot.playbackCompleted, isTrue);
+
+    expect(await practice.playRecording(), isTrue);
+    sink.requestFeed();
+    await practice.stopPlayback();
+    expect(practice.snapshot.state, LocalVoicePracticeState.recorded);
+    expect(
+      practice.snapshot.playbackCompleted,
+      isFalse,
+      reason: '途中停止を説明の聞き返し完了にしない',
+    );
+    await practice.dispose();
+  });
+
+  test('遅いmic.start中のstopは復帰後のhidden micとtimerを残さない', () async {
+    final mic = _FakeMic()..startGate = Completer<bool>();
+    final practice = LocalVoicePractice(
+      mic: mic,
+      player: PcmPlayer(
+        sink: _FakeSink(),
+        playbackSampleRate: MicStream.sampleRate,
+      ),
+      recordingLimit: const Duration(milliseconds: 20),
+    );
+
+    final starting = practice.startRecording();
+    await _flushAsync();
+    expect(practice.snapshot.state, LocalVoicePracticeState.recording);
+
+    await practice.stopRecording();
+    expect(practice.snapshot.state, LocalVoicePracticeState.idle);
+    expect(mic.started, isFalse);
+
+    mic.startGate!.complete(true);
+    expect(await starting, isFalse);
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+
+    expect(mic.started, isFalse, reason: '遅れて成功したnative micを即停止する');
+    expect(practice.snapshot.state, LocalVoicePracticeState.idle);
+    expect(mic.stopCalls, greaterThanOrEqualTo(2));
+    await practice.dispose();
+  });
+
+  test('mic start/stopとplayer init/enqueue例外をfailedへ正規化する', () async {
+    final startMic = _FakeMic()..throwOnStartCall = 1;
+    final startPractice = LocalVoicePractice(
+      mic: startMic,
+      player: PcmPlayer(
+        sink: _FakeSink(),
+        playbackSampleRate: MicStream.sampleRate,
+      ),
+    );
+    expect(await startPractice.startRecording(), isFalse);
+    expect(startPractice.snapshot.state, LocalVoicePracticeState.failed);
+    await startPractice.dispose();
+
+    final stopMic = _FakeMic()..throwOnStopCall = 1;
+    final stopPractice = LocalVoicePractice(
+      mic: stopMic,
+      player: PcmPlayer(
+        sink: _FakeSink(),
+        playbackSampleRate: MicStream.sampleRate,
+      ),
+    );
+    expect(await stopPractice.startRecording(), isTrue);
+    stopMic.emit(Uint8List(3200));
+    await _flushAsync();
+    await stopPractice.stopRecording();
+    expect(stopPractice.snapshot.state, LocalVoicePracticeState.failed);
+    await stopPractice.dispose();
+
+    for (final failure in <String>['init', 'enqueue', 'feed']) {
+      final mic = _FakeMic();
+      final sink = _FakeSink();
+      final practice = LocalVoicePractice(
+        mic: mic,
+        player: PcmPlayer(sink: sink, playbackSampleRate: MicStream.sampleRate),
+      );
+      await practice.startRecording();
+      mic.emit(Uint8List(3200));
+      await _flushAsync();
+      await practice.stopRecording();
+      if (failure == 'init') {
+        sink.throwOnSetup = true;
+      } else {
+        if (failure == 'enqueue') {
+          sink.throwOnStart = true;
+        } else {
+          sink.throwOnFeed = true;
+        }
+      }
+
+      final started = await practice.playRecording();
+      if (failure == 'feed') {
+        expect(started, isTrue);
+        sink.requestFeed();
+        await _flushAsync();
+      } else {
+        expect(started, isFalse);
+      }
+      expect(practice.snapshot.state, LocalVoicePracticeState.failed);
+      expect(practice.snapshot.playbackCompleted, isFalse);
+      await practice.dispose();
+    }
+  });
+
+  test('stop失敗後のclearは停止を再試行し、成功後だけidleへ戻す', () async {
+    final mic = _FakeMic()..throwOnStopCall = 1;
+    final practice = LocalVoicePractice(
+      mic: mic,
+      player: PcmPlayer(
+        sink: _FakeSink(),
+        playbackSampleRate: MicStream.sampleRate,
+      ),
+    );
+
+    expect(await practice.startRecording(), isTrue);
+    await practice.stopRecording();
+    expect(practice.snapshot.state, LocalVoicePracticeState.failed);
+    expect(mic.started, isTrue, reason: 'stop例外後はnative録音の可能性が残る');
+
+    await practice.clear();
+
+    expect(mic.stopCalls, 2);
+    expect(mic.started, isFalse);
+    expect(practice.snapshot.state, LocalVoicePracticeState.idle);
+    await practice.dispose();
+  });
+
+  test('clearで停止再試行も失敗した場合はidleへ偽装せずfailedを維持する', () async {
+    final mic = _FakeMic()..throwOnStopCalls.addAll(<int>{1, 2});
+    final practice = LocalVoicePractice(
+      mic: mic,
+      player: PcmPlayer(
+        sink: _FakeSink(),
+        playbackSampleRate: MicStream.sampleRate,
+      ),
+    );
+
+    expect(await practice.startRecording(), isTrue);
+    await practice.stopRecording();
+    await practice.clear();
+
+    expect(mic.stopCalls, 2);
+    expect(mic.started, isTrue);
+    expect(practice.snapshot.state, LocalVoicePracticeState.failed);
+    await practice.dispose();
+  });
+
+  test('stop失敗後のdisposeは停止を再試行してからmicを解放する', () async {
+    final mic = _FakeMic()..throwOnStopCall = 1;
+    final practice = LocalVoicePractice(
+      mic: mic,
+      player: PcmPlayer(
+        sink: _FakeSink(),
+        playbackSampleRate: MicStream.sampleRate,
+      ),
+    );
+
+    expect(await practice.startRecording(), isTrue);
+    await practice.stopRecording();
+    expect(mic.started, isTrue);
+
+    await practice.dispose();
+
+    expect(mic.stopCalls, 2);
+    expect(mic.started, isFalse);
+    expect(mic.disposed, isTrue);
+    expect(practice.snapshot.state, LocalVoicePracticeState.disposed);
+  });
+
+  test('stop連続失敗とmic dispose例外でもplayer・subscription・changesを全解放する', () async {
+    final mic = _FakeMic()
+      ..throwOnEveryStop = true
+      ..stopThrowsSynchronously = true
+      ..throwOnDisposeAfterCleanup = true
+      ..preserveStartedOnDisposeFailure = true;
+    final sink = _FakeSink();
+    final player = PcmPlayer(
+      sink: sink,
+      playbackSampleRate: MicStream.sampleRate,
+    );
+    await player.init();
+    final practice = LocalVoicePractice(mic: mic, player: player);
+    final changesDone = Completer<void>();
+    practice.changes.listen((_) {}, onDone: changesDone.complete);
+    expect(await practice.startRecording(), isTrue);
+
+    await expectLater(practice.dispose(), throwsA(isA<StateError>()));
+
+    expect(mic.stopCalls, 2, reason: 'route dispose中にbest-effortを複数回行う');
+    expect(mic.disposed, isTrue);
+    expect(mic.started, isTrue, reason: '停止もdisposeも未保証ならfalseへ偽装しない');
+    expect(sink.released, isTrue, reason: 'mic失敗と独立してplayerを解放する');
+    expect(practice.snapshot.state, LocalVoicePracticeState.disposed);
+    expect(practice.snapshot.recordedBytes, 0);
+    await changesDone.future;
   });
 
   test('60秒を超える設定を受けても60秒・1920000byteへ丸める', () async {

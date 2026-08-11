@@ -1,16 +1,17 @@
 # ゲーム全面刷新 — 完成条件と現在証拠
 
-更新日: 2026-08-10
+更新日: 2026-08-12
 
 この表は「それらしい画面がある」ではなく、production導線・保存契約・E2E・実機表示の4点で完成を判定する。
 安全上の代替や縮小実装は、元の要求と同等でない限り完成に数えない。
 
 | 明示要件 | 現在状態 | 完成を証明する一次証拠 | 残作業 |
 |---|---|---|---|
+| 中学理科教材の広さ | 第1段階実装済み（全範囲ではない） | MEXT理科編を参照するcatalog schema v10、8単元23概念、69のfoundation / conditions / transfer variant、23固有Story、23×3のListening聞き取り／意味need、80 tagged notation task。server正本・公開JSON・同梱asset・Dart parserをexact keysで同期し、未知fieldをfail-closed | 化学変化、イオン、生命の連続性、科学技術・自然環境は次段階。教員による学年配置・用語・安全性pilotが必要 |
 | すごろく型Learning Path | 実装済み | `GamePathProjection`、`PathScreen`、蛇行connector、状態別の形・icon・文言、外周リング付き「次はここ」、深い進捗のcold launch自動可視化、Home journey E2E、iPhone 17 Simulator実画面 | なし |
-| Stories＋読み聞かせ | 実装済み（実機音声QA待ち） | schema v9の11固有episode、一覧の固有事件名、固定人物・公開順会話・3選択肢別反応・科学的解決・落ち、可視sceneだけを読むWidget / MethodChannel contract＋Android / iOS native bridge実装 | Android / iOS実機で声質と中断を最終確認する |
-| 日次Listening / Speaking | 実装済み（実機音声QA待ち） | Listeningは音声完了後だけprivate文字起こし→教材文比較→意味判断へ進み、schema v9で11concept×3stageの聞き取りneedと意味needを別code化。同梱人音声と端末TTS fallbackを出所表示し、再生不能では完了・rewardを作らない。Speakingはschema v9の`localSpeakingPractice`、Android `createOnDeviceSpeechRecognizer` / iOS `requiresOnDeviceRecognition`の端末内限定bridge、認識候補の正規化後完全一致gate、目標文そのものだけを受理する文字代替。別mission planner・別screen・同日完了投影・Home E2E | 現catalogには人音声assetが無いためTTS fallback。Android / iOS実機で端末内ASR、マイク拒否、TTS / 将来の人音声中断を最終確認する |
-| 理科の文字学習相当（式・単位・矢印・グラフ） | 実装済み | catalog schema v9、22固定trace、pointer順序・距離・lift判定、screen reader順序確認、token・symbol・graph、exact Repair E2E | なし |
+| Stories＋読み聞かせ | 実装済み（実機音声QA待ち） | schema v10の23固有episode、一覧の固有事件名、固定人物・公開順会話・3選択肢別反応・科学的解決・落ち、可視sceneだけを読むWidget / MethodChannel contract＋Android / iOS native bridge実装 | Android / iOS実機で声質と中断を最終確認する |
+| 日次Listening / Speaking | 実装済み（実機音声QA待ち） | Listeningは音声完了後だけprivate文字起こし→教材文比較→意味判断へ進み、schema v10で23concept×3stageの聞き取りneedと意味needを別code化。同梱人音声と端末TTS fallbackを出所表示し、再生不能では完了・rewardを作らない。Speakingは正解非表示のstage別単一promptへ音声または文字で説明し、音声は実feed/drain完了まで再生、文字は明示再読後に固定問い返しへ進む。誤答はcanonical need＋heart 1回だけを保存し、ヒント後の言い直しと再生／再読を必須にする。録音・自由文・選択肢IDはRAM外へ出さないHome E2E | 現catalogには人音声assetが無いためListeningはTTS fallback。Android / iOS物理端末でマイク許可／拒否、録音の実再生、TTS / 将来の人音声中断を最終確認する |
+| 理科の文字学習相当（式・単位・矢印・グラフ） | 実装済み | catalog schema v10、物理のstrokeに加えて分類・順序・モデル・グラフを表すtagged notation task、pointer順序・距離・lift判定、screen reader順序確認、exact Repair E2E | なし |
 | Streak | 実装済み | 4時学習日投影、meaningful event限定、利用可能なfreezeは学習前から1日の欠けを仮保護し、未保護の欠けだけ1日ごと7日減衰。長期離脱→0の回帰 | 物理端末で午前4時境界を確認 |
 | Streak Freeze | 実装済み | Memory / SQLite共通contract、週1自動利用、結晶補充、同週／週跨ぎ／03:59→04:00のpure projection。完了前に減衰して完了後に突然復活せず、freeze日は継続を維持するが学習日数には加算しない | 物理端末で午前4時境界を確認 |
 | 他の学習者との週次League | 実装済み（複数実機QA待ち） | onlineは自己署名TLS＋証明書pinのLAN coordinatorと5〜8個の独立credentialによる匿名順位。room削除前に104週・最大4096件の最小terminal receiptへ確定し、offline端末はMemory / SQLite保存成功→membership削除の順でexact-once回収する。local-onlyは同じ端末を手渡す実在2〜8枠を使い、保存済み終了run週を古い順・最大104週/passでcatch-upし、5〜8人の週だけslot 1の実順位からBronze→Diamondを最大±1段で原子的・冪等確定する。空週と5人未満はtier履歴を捏造せず、旧4段XP tier・架空相手を主表示しない。client / server / store / Home E2E | onlineは5台相当の実機LAN参加・再接続・週終了、local-onlyは実在5〜8人の端末手渡し・週跨ぎを最終確認する |
@@ -31,22 +32,22 @@
 - Notationの「なぞる」は、catalogに固定した正規化strokeを実際のpointerで順に通る操作を指す。説明文、token並べ替え、完了ボタンだけをfinger tracingの代用にしない
 - 指軌跡はWidget State内だけに置き、保存・送信・need DTOへ含めない。画面外、順序違い、離れすぎた軌跡は完了にせず、Reduce Motionとscreen reader向けには同じ意味を順序操作で確認できる代替を用意する
 - catalogは未知field、欠落stroke、範囲外座標、短すぎるstroke、重複IDをfail-closedし、server正本と同梱assetの一致を機械検証する
-- 実装証拠は、11件の固有title/setting/punchline fixture、一覧・詳細・assetのtitle一致、22件のtrace invariant、全分岐/TTS停止/pointer/a11y/320×568・文字200% widget testで固定する
+- 実装証拠は、23件の固有title/setting/punchline fixture、一覧・詳細・assetのtitle一致、80件のtagged notation invariant、全分岐/TTS停止/pointer/a11y/320×568・文字200% widget testで固定する
 
 ## Speaking / Practice / Quest の完成境界
 
-- Speakingはcatalog schema v9の`targetPhrase`と明示した表記揺れだけを正本にする。Android / iOSともオンデバイス認識を強制し、通常・cloud recognizerへfallbackしない。候補はRAM内の完全一致判定にだけ使い、画面、LearningEvent、Store、networkへ出さない
-- 声の経路は無音・無関係な発話・認識失敗で先へ進めず、正規化後に正本と完全一致した場合だけ発音gateを通す。端末内認識が使えない場合の文字代替も`targetPhrase`そのものだけを受理し、完了画面に「発音は未確認です」と表示するため、文字一致を発音確認の証拠にしない
+- Speakingはcatalog schema v10のstage別promptと固定checkpointを正本にする。自由説明は採点せず、音声と文字を同格に扱う。最初の説明中は目標語句、期待結果、理由、正答、他stageのpromptをWidget/Semanticsの双方で先出ししない
+- 声の経路はPCMをRAMだけに保持し、nativeへ実際にfeedして自然drainしたときだけ「聞き返した」とする。途中停止、権限拒否、native例外、background、route破棄を完了扱いにしない。固定問い返しの誤答では選び直しを許さず、canonical needとheartを一度だけ通知して、同じ方法の言い直しと再生／再読を必須にする。権限拒否・端末失敗時だけ訂正状態のまま文字へ退避する
 - Repair Hubに出すのは同じscopeのcatalog対応済みactive needだけ。期限復習はPersonalized Practice、中断runはResumeへ分離し、未知・競合needを推測して課題へ結び付けない。Matchはcatalog variantのcanonical needを使い、誤答本文やtarget IDを保存せず、同じneedに対応する構造課題のexact Repair成功だけで解消する
 - personal daily questは到達可能な8種類から4時学習日ordinalで1種類を決定論的に選び、表示前にprogress 0でmaterializeして同日definitionを途中変更しない。meaningful event 1件で進み1結晶、候補0ではdailyを作らない。school dailyは1件・無報酬、personal monthlyは同じ台帳の12件で8結晶と固定badgeを付与する
 
 ## 全体gate
 
-- 自動: Flutter 1175/1175・analyze 0、server 370/370・typecheck・catalog check・依存脆弱性0、Memory / SQLite同一contract
+- 自動: Flutter 1209/1209・analyze 0、server 373/373・typecheck・catalog check・依存脆弱性0、Memory / SQLite同一contract
 - 自動UI: 6タブroute、320×568・文字200%・light/dark・Reduce Motion・Semantics、700dp以上の可読幅とgrid
-- build: Android debug APKとiOS Simulator debug buildは成功。物理端末・配布署名の証拠には数えない
+- build: Android release APKはupload key `CN=Haruka Kaya`のv2署名・zipalignを検証済み（SHA-256 `1e1f3f53b979f67984f768b18b2fd087cfe621fda50e800c39b3115b09dfe236`）。iOS Simulator debug buildも成功。APKのローカル署名はPlay受理、iOS実機署名、Store公開の証拠には数えない
 - Git成果物: 必要な新規production / test / asset / workflowを意図的に追跡し、clean checkout CIが通るまで未完
-- Simulator: iOS build / launchと主要画面の目視。Simulatorは端末内ASR、マイク、TTSの実機証拠には数えない
-- 未完の物理端末: Android / iOSの端末内ASR・マイク拒否・TTS中断、最新6タブの最終目視
+- Simulator: iOS build / launchと主要画面の目視。Simulatorは実マイク録音・再生、権限ダイアログ、TTSの実機証拠には数えない
+- 未完の物理端末: Android / iOSのマイク許可／拒否、録音の実再生、TTS中断、最新6タブの最終目視
 - 未完の複数端末: Friends 2台、League 5台相当の実機LAN参加・再接続・退出
 - 未完の人間評価: 初見学習者による5〜10分pilot（所要時間、中断点、再挑戦率）

@@ -319,6 +319,25 @@ Map<String, Object?> unitJson({List<Map<String, Object?>>? sections}) {
           'key': section['conceptKey'],
           'label': '${section['conceptKey']}の考え',
           'storyTitle': '${section['conceptKey']} 固有の事件',
+          'field': 'energy',
+          'grade': 3,
+          'curriculumRefs': [
+            {
+              'document': 'mext-jhs-science-2017',
+              'section': '第1分野 (5) 運動とエネルギー',
+              'pages': [61, 62],
+              'url':
+                  'https://www.mext.go.jp/component/a_menu/education/'
+                  'micro_detail/__icsFiles/afieldfile/2019/03/18/'
+                  '1387018_005.pdf',
+            },
+          ],
+          'prerequisites': <String>[],
+          'difficulty': 2,
+          'safety': {
+            'level': 'homeSafe',
+            'guidance': '同じ紙を手の高さから落とし、踏み台は使わない。',
+          },
         },
     ],
     'sectionCount': resolvedSections.length,
@@ -384,6 +403,26 @@ void main() {
               as Map<String, Object?>)['storyTitle'] =
           '詳細と異なる事件名';
       expect(UnitDetail.fromJson(mismatchedTitle), isNull);
+
+      final missingCoverage = unitJson();
+      ((missingCoverage['concepts']! as List).first as Map<String, Object?>)
+          .remove('curriculumRefs');
+      expect(UnitDetail.fromJson(missingCoverage), isNull);
+
+      final selfPrerequisite = unitJson();
+      final selfConcept =
+          (selfPrerequisite['concepts']! as List).first as Map<String, Object?>;
+      selfConcept['prerequisites'] = [selfConcept['key']];
+      expect(UnitDetail.fromJson(selfPrerequisite), isNull);
+
+      final unknownSafety = unitJson();
+      final safetyConcept =
+          (unknownSafety['concepts']! as List).first as Map<String, Object?>;
+      safetyConcept['safety'] = {
+        ...(safetyConcept['safety']! as Map<String, Object?>),
+        'futureRisk': true,
+      };
+      expect(UnitDetail.fromJson(unknownSafety), isNull);
     });
 
     test('保存して読み戻せる', () {
@@ -484,6 +523,74 @@ void main() {
       final id = (duplicatePattern['strokeOrderIds']! as List).first;
       duplicatePattern['strokeOrderIds'] = [id, id];
       expect(rejects(duplicateRef), isTrue);
+    });
+
+    test('v10 Notation tagged unionは6kindを厳格に読み、trace無しarrangeも損失しない', () {
+      Map<String, Object?> tagged() =>
+          (jsonDecode(
+                    jsonEncode(
+                      LocalNotationLab.fromJson(
+                        notationLabJson('fall'),
+                      )!.toJson(),
+                    ),
+                  )
+                  as Map)
+              .cast<String, Object?>();
+      bool rejects(Map<String, Object?> notation) {
+        final section = sectionJson('fall')..['notationLab'] = notation;
+        return UnitDetail.fromJson(unitJson(sections: [section])) == null;
+      }
+
+      final withoutTrace = tagged();
+      final arrange = (withoutTrace['tasks']! as List)
+          .cast<Map<String, Object?>>()
+          .first;
+      arrange.remove('tracePattern');
+      final parsed = UnitDetail.fromJson(
+        unitJson(
+          sections: [sectionJson('fall')..['notationLab'] = withoutTrace],
+        ),
+      );
+      expect(parsed, isNotNull);
+      expect(
+        (parsed!.sectionFor('fall')!.notationLab!.tasks.first
+                as LocalNotationArrangeTask)
+            .tracePattern,
+        isNull,
+      );
+      expect(
+        parsed.sectionFor('fall')!.notationLab!.toJson(),
+        withoutTrace,
+        reason: 'tagged unionのfieldを往復で落とした',
+      );
+
+      final unknownTaskField = tagged();
+      ((unknownTaskField['tasks']! as List).first
+              as Map<String, Object?>)['futureAnswer'] =
+          true;
+      expect(rejects(unknownTaskField), isTrue);
+
+      final mismatchedLegacyNeed = tagged();
+      ((mismatchedLegacyNeed['tasks']! as List).first
+              as Map<String, Object?>)['kind'] =
+          'modelBuild';
+      expect(rejects(mismatchedLegacyNeed), isTrue);
+
+      final shownInAnswerOrder = tagged();
+      final shownTask =
+          (shownInAnswerOrder['tasks']! as List).first as Map<String, Object?>;
+      shownTask['tokens'] = [
+        {'id': 'origin', 'label': '始点'},
+        {'id': 'direction', 'label': '向き'},
+      ];
+      expect(rejects(shownInAnswerOrder), isTrue);
+
+      final missingRepresentation = tagged();
+      final choiceTask = (missingRepresentation['tasks']! as List)
+          .cast<Map<String, Object?>>()
+          .firstWhere((task) => task['kind'] == 'graphRead');
+      choiceTask.remove('representation');
+      expect(rejects(missingRepresentation), isTrue);
     });
 
     test('Science Storyは未知field・欠落会話・参照不整合・foundation不一致をfail-closedにする', () {
@@ -878,7 +985,7 @@ void main() {
       final store = MemorySessionStore();
       final c = client({
         'GET https://example.test/api/units': () =>
-            json200('{"schemaVersion":9,"unit":${jsonEncode(unitJson())}}'),
+            json200('{"schemaVersion":10,"unit":${jsonEncode(unitJson())}}'),
       }, store);
 
       final got = await c.detail('force-motion');
@@ -893,7 +1000,7 @@ void main() {
       final store = MemorySessionStore();
       final ok = client({
         'GET https://example.test/api/units': () =>
-            json200('{"schemaVersion":9,"unit":${jsonEncode(unitJson())}}'),
+            json200('{"schemaVersion":10,"unit":${jsonEncode(unitJson())}}'),
       }, store);
       await ok.detail('force-motion');
 
@@ -931,13 +1038,13 @@ void main() {
       );
     });
 
-    test('v9同梱カタログの全Speaking・Story・trace・固定needが揃う', () async {
+    test('v10同梱カタログの全coverage・Story・Notation・固定needが揃う', () async {
       final c = UnitsClient(baseUrl: '', store: MemorySessionStore());
       final list = await c.list();
-      expect(list, hasLength(4));
+      expect(list, hasLength(8));
       expect(
         list.fold<int>(0, (count, unit) => count + unit.concepts.length),
-        11,
+        23,
       );
 
       final currentMagnetism = list.firstWhere(
@@ -952,9 +1059,11 @@ void main() {
       var cognitiveNeedCount = 0;
       var wrongNeedCount = 0;
       var notationNeedCount = 0;
+      var notationTraceCount = 0;
       final practiceNeedCodes = <String>{};
       final notationNeedCodes = <String>{};
       final storyTitles = <String>{};
+      final curriculumFields = <UnitCurriculumField>{};
 
       for (final summary in list) {
         final detail = await c.detail(summary.id);
@@ -967,11 +1076,16 @@ void main() {
             section!.scienceStory?.title,
             reason: '${summary.id}/${concept.key}: 一覧と詳細の事件名が不一致',
           );
+          curriculumFields.add(concept.field);
+          expect(concept.grade, inInclusiveRange(1, 3));
+          expect(concept.curriculumRefs, isNotEmpty);
+          expect(concept.difficulty, inInclusiveRange(1, 5));
+          expect(concept.safety.guidance.trim(), isNotEmpty);
           storyTitles.add(concept.storyTitle);
           final variants = section.localPracticeVariants;
           final notation = section.notationLab;
           expect(notation, isNotNull, reason: '${summary.id}/${concept.key}');
-          expect(notation!.orderTasks, hasLength(2));
+          expect(notation!.tasks, hasLength(inInclusiveRange(3, 4)));
           expect(section.scienceStory, isNotNull);
           expect(section.localSpeakingPractice, isNotNull);
           expect(
@@ -987,45 +1101,41 @@ void main() {
             'science.${concept.key}.foundation',
           );
           expect(
-            notation.orderTasks.map((task) => task.id).toSet(),
-            hasLength(2),
+            notation.tasks.map((task) => task.id).toSet(),
+            hasLength(notation.tasks.length),
           );
-          for (final task in notation.orderTasks) {
+          for (final task in notation.tasks) {
             notationNeedCount++;
             notationNeedCodes.add(task.needCode!);
-            expect(task.tokens, hasLength(greaterThanOrEqualTo(2)));
-            expect(task.tracePattern.strokes, isNotEmpty);
             expect(
-              task.tracePattern.strokeOrderIds.toSet(),
-              task.tracePattern.strokes.map((stroke) => stroke.id).toSet(),
+              task.needCode,
+              startsWith('science.${concept.key}.notation.'),
             );
-            expect(
-              task.tokens.map((token) => token.id),
-              isNot(task.correctOrderIds),
-              reason: '${summary.id}/${concept.key}/${task.id}: 表示順で正答を示す',
-            );
+            switch (task) {
+              case LocalNotationArrangeTask():
+                expect(task.tokens, hasLength(greaterThanOrEqualTo(2)));
+                expect(
+                  task.tokens.map((token) => token.id),
+                  isNot(task.correctOrderIds),
+                  reason: '${summary.id}/${concept.key}/${task.id}: 表示順で正答を示す',
+                );
+                final trace = task.tracePattern;
+                if (trace != null) {
+                  notationTraceCount++;
+                  expect(trace.strokes, isNotEmpty);
+                  expect(
+                    trace.strokeOrderIds.toSet(),
+                    trace.strokes.map((stroke) => stroke.id).toSet(),
+                  );
+                }
+              case LocalNotationChoiceTask():
+                expect(task.choices, hasLength(greaterThanOrEqualTo(2)));
+                expect(
+                  task.choices.map((choice) => choice.id),
+                  contains(task.correctChoiceId),
+                );
+            }
           }
-          expect(
-            notation.symbolMatch.choices,
-            hasLength(greaterThanOrEqualTo(2)),
-          );
-          notationNeedCount++;
-          notationNeedCodes.add(notation.symbolMatch.needCode!);
-          expect(
-            notation.symbolMatch.choices.map((choice) => choice.id),
-            contains(notation.symbolMatch.correctChoiceId),
-          );
-          expect(
-            notation.graphRead.graphNotation,
-            hasLength(greaterThanOrEqualTo(2)),
-          );
-          expect(notation.graphRead.graphSemanticsLabel.trim(), isNotEmpty);
-          expect(
-            notation.graphRead.choices.map((choice) => choice.id),
-            contains(notation.graphRead.correctChoiceId),
-          );
-          notationNeedCount++;
-          notationNeedCodes.add(notation.graphRead.needCode!);
           expect(variants, hasLength(3));
           expect(
             variants.map((variant) => variant.stage),
@@ -1098,17 +1208,20 @@ void main() {
           }
         }
       }
-      expect(cognitiveNeedCount, 33);
-      expect(wrongNeedCount, 66);
-      expect(notationNeedCount, 44);
-      expect(practiceNeedCodes, hasLength(33));
-      expect(notationNeedCodes, hasLength(44));
-      expect(storyTitles, hasLength(11));
+      expect(cognitiveNeedCount, 69);
+      expect(wrongNeedCount, 138);
+      expect(notationNeedCount, 80);
+      expect(notationTraceCount, 22);
+      expect(practiceNeedCodes, hasLength(69));
+      expect(notationNeedCodes, hasLength(80));
+      expect(storyTitles, hasLength(23));
+      expect(curriculumFields, UnitCurriculumField.values.toSet());
     });
 
     test('一覧も保存して出す', () async {
       final store = MemorySessionStore();
       final body = jsonEncode({
+        'schemaVersion': 10,
         'units': [unitJson()..remove('sections')],
       });
       final ok = client({
@@ -1123,6 +1236,133 @@ void main() {
       expect(list.length, 1);
       expect(list.first.concepts.length, 2);
       expect(list.first.brief, 'ざっくりした紹介。', reason: '同梱一覧より端末キャッシュを優先する');
+    });
+
+    test('online一覧の未知schemaはv10として部分採用しない', () async {
+      final online = unitJson()
+        ..remove('sections')
+        ..['brief'] = 'onlineの一覧。';
+      final bundled = unitJson()..['brief'] = '同梱正本の一覧。';
+      final c = UnitsClient(
+        baseUrl: 'https://example.test',
+        store: MemorySessionStore(),
+        dio: fakeDio({
+          'GET https://example.test/api/units': () => json200(
+            jsonEncode({
+              'schemaVersion': 11,
+              'units': [online],
+            }),
+          ),
+        }),
+        assetBundle: _JsonAssetBundle(
+          jsonEncode({
+            'schemaVersion': 10,
+            'language': 'ja',
+            'units': [bundled],
+          }),
+        ),
+      );
+
+      final got = await c.list();
+      expect(got, hasLength(1));
+      expect(got.single.brief, '同梱正本の一覧。');
+    });
+
+    test('online一覧のroot未知fieldがあれば全体を拒否する', () async {
+      final online = unitJson()
+        ..remove('sections')
+        ..['brief'] = 'onlineの一覧。';
+      final bundled = unitJson()..['brief'] = '同梱正本の一覧。';
+      final c = UnitsClient(
+        baseUrl: 'https://example.test',
+        store: MemorySessionStore(),
+        dio: fakeDio({
+          'GET https://example.test/api/units': () => json200(
+            jsonEncode({
+              'schemaVersion': 10,
+              'units': [online],
+              'unexpected': true,
+            }),
+          ),
+        }),
+        assetBundle: _JsonAssetBundle(
+          jsonEncode({
+            'schemaVersion': 10,
+            'language': 'ja',
+            'units': [bundled],
+          }),
+        ),
+      );
+
+      final got = await c.list();
+      expect(got, hasLength(1));
+      expect(got.single.brief, '同梱正本の一覧。');
+    });
+
+    test('online一覧は壊れたunitが1件でもあれば全体を拒否する', () async {
+      final validOnline = unitJson()
+        ..remove('sections')
+        ..['brief'] = '部分採用してはいけないonline一覧。';
+      final brokenOnline = Map<String, Object?>.from(validOnline)
+        ..['id'] = 'broken-unit'
+        ..['title'] = '';
+      final bundled = unitJson()..['brief'] = '同梱正本の一覧。';
+      final c = UnitsClient(
+        baseUrl: 'https://example.test',
+        store: MemorySessionStore(),
+        dio: fakeDio({
+          'GET https://example.test/api/units': () => json200(
+            jsonEncode({
+              'schemaVersion': 10,
+              'units': [validOnline, brokenOnline],
+            }),
+          ),
+        }),
+        assetBundle: _JsonAssetBundle(
+          jsonEncode({
+            'schemaVersion': 10,
+            'language': 'ja',
+            'units': [bundled],
+          }),
+        ),
+      );
+
+      final got = await c.list();
+      expect(got, hasLength(1));
+      expect(got.single.brief, '同梱正本の一覧。');
+    });
+
+    test('v10 cache一覧も壊れたunitを部分採用せず同梱へ退避する', () async {
+      final cached = unitJson()
+        ..remove('sections')
+        ..['brief'] = '部分採用してはいけないcache一覧。';
+      final brokenCached = Map<String, Object?>.from(cached)
+        ..['id'] = 'broken-cache-unit'
+        ..['unexpected'] = true;
+      final store = MemorySessionStore();
+      await store.setSetting(
+        'units.v10.list',
+        jsonEncode([cached, brokenCached]),
+      );
+      final bundled = unitJson()..['brief'] = '同梱正本の一覧。';
+      final c = UnitsClient(
+        baseUrl: 'https://example.test',
+        store: store,
+        dio: fakeDio({
+          'GET https://example.test/api/units': () => jsonRes(503, '{}'),
+        }),
+        assetBundle: _JsonAssetBundle(
+          jsonEncode({
+            'schemaVersion': 10,
+            'language': 'ja',
+            'units': [bundled],
+          }),
+        ),
+      );
+
+      final got = await c.list();
+      expect(got, hasLength(1));
+      expect(got.single.brief, '同梱正本の一覧。');
     });
 
     test('接続先が無ければ通信しない', () async {
@@ -1146,7 +1386,7 @@ void main() {
       expect((await c.detail('force-motion'))?.sectionFor('fall'), isNotNull);
     });
 
-    test('v6保存keyとneed正本の無い旧cacheは捨ててv9同梱教材へ退避する', () async {
+    test('無version保存keyとneed正本の無い旧cacheは捨ててv10同梱教材へ退避する', () async {
       final store = MemorySessionStore();
       final oldDetail = unitJson();
       for (final section
@@ -1166,19 +1406,19 @@ void main() {
       expect(
         got?.sectionFor('fall')?.localCheckpoint.lure,
         isNot('重いものほど先に着く。'),
-        reason: '旧キャッシュではなく正本から生成したv9同梱教材を使う',
+        reason: '旧キャッシュではなく正本から生成したv10同梱教材を使う',
       );
     });
 
-    test('v8 cache keyとListening need無しdetailをv9へ混ぜない', () async {
+    test('v9 cache keyの一覧とdetailをv10へ混ぜない', () async {
       final store = MemorySessionStore();
       await store.setSetting(
-        'units.v8.list',
+        'units.v9.list',
         jsonEncode([
           {
-            'id': 'v8-only',
+            'id': 'v9-only',
             'title': '旧一覧',
-            'brief': 'v9へ混ぜない',
+            'brief': 'v10へ混ぜない',
             'concepts': const <Object?>[],
             'sectionCount': 1,
           },
@@ -1187,15 +1427,10 @@ void main() {
       final oldDetail = unitJson();
       for (final section
           in (oldDetail['sections']! as List<Map<String, Object?>>)) {
-        section['body'] = ['v8 cacheだけの本文'];
-        for (final variant
-            in (section['localPracticeVariants']!
-                as List<Map<String, Object?>>)) {
-          variant.remove('listeningNeedCodes');
-        }
+        section['body'] = ['v9 cacheだけの本文'];
       }
       await store.setSetting(
-        'units.v8.detail.force-motion',
+        'units.v9.detail.force-motion',
         jsonEncode(oldDetail),
       );
       final c = client({
@@ -1204,10 +1439,10 @@ void main() {
 
       expect(
         (await c.list()).map((unit) => unit.id),
-        isNot(contains('v8-only')),
+        isNot(contains('v9-only')),
       );
       final got = await c.detail('force-motion');
-      expect(got?.sectionFor('fall')?.body, isNot(contains('v8 cacheだけの本文')));
+      expect(got?.sectionFor('fall')?.body, isNot(contains('v9 cacheだけの本文')));
       expect(
         got
             ?.sectionFor('fall')
@@ -1217,13 +1452,13 @@ void main() {
       );
     });
 
-    test('v8と未知schemaの同梱カタログはv9として読まない', () async {
+    test('v9と未知schemaの同梱カタログはv10として読まない', () async {
       final c = UnitsClient(
         baseUrl: '',
         store: MemorySessionStore(),
         assetBundle: _JsonAssetBundle(
           jsonEncode({
-            'schemaVersion': 8,
+            'schemaVersion': 9,
             'language': 'ja',
             'units': [unitJson()],
           }),
@@ -1238,7 +1473,7 @@ void main() {
         store: MemorySessionStore(),
         assetBundle: _JsonAssetBundle(
           jsonEncode({
-            'schemaVersion': 10,
+            'schemaVersion': 11,
             'language': 'ja',
             'units': [unitJson()],
           }),

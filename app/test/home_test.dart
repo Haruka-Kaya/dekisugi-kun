@@ -17,8 +17,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/stub_dio.dart';
 
 const _listJson = '''
-{"units":[{"id":"force-motion","title":"力と運動","brief":"ざっくり",
-"concepts":[{"key":"c0","label":"概念0","storyTitle":"概念0の事件"},{"key":"c1","label":"概念1","storyTitle":"概念1の事件"}],
+{"schemaVersion":10,"units":[{"id":"force-motion","title":"力と運動","brief":"ざっくり",
+"concepts":[
+{"key":"c0","label":"概念0","storyTitle":"概念0の事件","field":"energy","grade":3,
+"curriculumRefs":[{"document":"mext-jhs-science-2017","section":"第1分野 (5)(イ)","pages":[55],"url":"https://www.mext.go.jp/component/a_menu/education/micro_detail/__icsFiles/afieldfile/2019/03/18/1387018_005.pdf"}],
+"prerequisites":[],"difficulty":1,"safety":{"level":"referenceOnly","guidance":"テストfixtureでは観察を行わない。"}},
+{"key":"c1","label":"概念1","storyTitle":"概念1の事件","field":"energy","grade":3,
+"curriculumRefs":[{"document":"mext-jhs-science-2017","section":"第1分野 (5)(イ)","pages":[56],"url":"https://www.mext.go.jp/component/a_menu/education/micro_detail/__icsFiles/afieldfile/2019/03/18/1387018_005.pdf"}],
+"prerequisites":[],"difficulty":1,"safety":{"level":"referenceOnly","guidance":"テストfixtureでは観察を行わない。"}}],
 "sectionCount":2}]}
 ''';
 

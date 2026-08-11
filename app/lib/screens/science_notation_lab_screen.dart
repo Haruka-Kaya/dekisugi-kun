@@ -137,17 +137,144 @@ class ScienceNotationGraphTask {
 }
 
 @immutable
-class ScienceNotationLabContent {
-  const ScienceNotationLabContent({
-    required this.orderTasks,
-    required this.symbolMatch,
-    required this.graphRead,
+sealed class ScienceNotationTask {
+  const ScienceNotationTask({
+    required this.kind,
+    required this.id,
+    required this.title,
+    required this.prompt,
+    required this.solutionSummary,
+    this.needCode,
   });
 
+  final LocalNotationTaskKind kind;
+  final String id;
+  final String title;
+  final String prompt;
+  final String solutionSummary;
+  final String? needCode;
+}
+
+@immutable
+final class ScienceNotationArrangeTask extends ScienceNotationTask {
+  const ScienceNotationArrangeTask({
+    required super.kind,
+    required super.id,
+    required super.title,
+    required super.prompt,
+    required super.solutionSummary,
+    required this.guide,
+    required this.tokens,
+    required this.correctOrderIds,
+    this.tracePattern,
+    super.needCode,
+  });
+
+  final String guide;
+  final ScienceNotationTracePattern? tracePattern;
+  final List<ScienceNotationToken> tokens;
+  final List<String> correctOrderIds;
+}
+
+@immutable
+final class ScienceNotationChoiceTask extends ScienceNotationTask {
+  const ScienceNotationChoiceTask({
+    required super.kind,
+    required super.id,
+    required super.title,
+    required super.prompt,
+    required super.solutionSummary,
+    required this.representation,
+    required this.representationSemanticsLabel,
+    required this.choices,
+    required this.correctChoiceId,
+    super.needCode,
+  });
+
+  final List<String> representation;
+  final String representationSemanticsLabel;
+  final List<ScienceNotationChoice> choices;
+  final String correctChoiceId;
+}
+
+@immutable
+class ScienceNotationLabContent {
+  const ScienceNotationLabContent({
+    required List<ScienceNotationOrderTask> orderTasks,
+    required ScienceNotationSymbolTask symbolMatch,
+    required ScienceNotationGraphTask graphRead,
+  }) : _legacyOrderTasks = orderTasks,
+       _legacySymbolMatch = symbolMatch,
+       _legacyGraphRead = graphRead,
+       _taggedTasks = const [];
+
+  const ScienceNotationLabContent.tagged({
+    required List<ScienceNotationTask> tasks,
+  }) : _taggedTasks = tasks,
+       _legacyOrderTasks = null,
+       _legacySymbolMatch = null,
+       _legacyGraphRead = null;
+
+  final List<ScienceNotationTask> _taggedTasks;
+  final List<ScienceNotationOrderTask>? _legacyOrderTasks;
+  final ScienceNotationSymbolTask? _legacySymbolMatch;
+  final ScienceNotationGraphTask? _legacyGraphRead;
+
+  List<ScienceNotationTask> get tasks {
+    if (_taggedTasks.isNotEmpty) return _taggedTasks;
+    final orderTasks = _legacyOrderTasks ?? const <ScienceNotationOrderTask>[];
+    final symbol = _legacySymbolMatch;
+    final graph = _legacyGraphRead;
+    return List.unmodifiable([
+      for (var index = 0; index < orderTasks.length; index++)
+        ScienceNotationArrangeTask(
+          kind: index == 0
+              ? LocalNotationTaskKind.sequence
+              : LocalNotationTaskKind.modelBuild,
+          id: orderTasks[index].id,
+          title: orderTasks[index].title,
+          prompt: orderTasks[index].prompt,
+          solutionSummary: orderTasks[index].solutionSummary,
+          guide: orderTasks[index].traceGuide,
+          tracePattern: orderTasks[index].tracePattern,
+          tokens: orderTasks[index].tokens,
+          correctOrderIds: orderTasks[index].correctOrderIds,
+          needCode: orderTasks[index].needCode,
+        ),
+      if (symbol != null)
+        ScienceNotationChoiceTask(
+          kind: LocalNotationTaskKind.symbolMatch,
+          id: 'legacy.symbol',
+          title: '単位記号を意味と結ぶ',
+          prompt: symbol.prompt,
+          solutionSummary: symbol.solutionSummary,
+          representation: const [],
+          representationSemanticsLabel: '選択肢の記号と意味を対応させます。',
+          choices: symbol.choices,
+          correctChoiceId: symbol.correctChoiceId,
+          needCode: symbol.needCode,
+        ),
+      if (graph != null)
+        ScienceNotationChoiceTask(
+          kind: LocalNotationTaskKind.graphRead,
+          id: 'legacy.graph',
+          title: 'グラフと矢印を読む',
+          prompt: graph.prompt,
+          solutionSummary: graph.solutionSummary,
+          representation: graph.graphNotation,
+          representationSemanticsLabel: graph.graphSemanticsLabel,
+          choices: graph.choices,
+          correctChoiceId: graph.correctChoiceId,
+          needCode: graph.needCode,
+        ),
+    ]);
+  }
+
   /// 矢印のなぞりと式の組み立てを別課題として最低1つずつ渡す。
-  final List<ScienceNotationOrderTask> orderTasks;
-  final ScienceNotationSymbolTask symbolMatch;
-  final ScienceNotationGraphTask graphRead;
+  List<ScienceNotationOrderTask> get orderTasks =>
+      _legacyOrderTasks ?? const [];
+  ScienceNotationSymbolTask get symbolMatch => _legacySymbolMatch!;
+  ScienceNotationGraphTask get graphRead => _legacyGraphRead!;
 }
 
 /// 理科の記号を「なぞる・組む・読む」で扱うNotation Lab。
@@ -210,8 +337,8 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
   int get _stepCount => _stepIndexes.length;
   bool get _complete => _step >= _stepCount;
   int get _contentStep => _stepIndexes[_step];
-  bool get _isOrderStep => _contentStep < widget.content.orderTasks.length;
-  bool get _isSymbolStep => _contentStep == widget.content.orderTasks.length;
+  ScienceNotationTask get _currentTask => widget.content.tasks[_contentStep];
+  bool get _isArrangeStep => _currentTask is ScienceNotationArrangeTask;
   bool get _reviewReady => _review.text.trim().runes.length >= 6;
 
   @override
@@ -248,16 +375,17 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
 
   void _submit() {
     if (_complete || _lockedAfterWrong) return;
-    final answered = _isOrderStep ? _orderedIds.isNotEmpty : _choiceId != null;
+    final answered = _isArrangeStep
+        ? _orderedIds.isNotEmpty
+        : _choiceId != null;
     if (!answered) return;
 
-    final correct = switch ((_isOrderStep, _isSymbolStep)) {
-      (true, _) => _sameOrder(
+    final correct = switch (_currentTask) {
+      ScienceNotationArrangeTask task => _sameOrder(
         _orderedIds,
-        widget.content.orderTasks[_contentStep].correctOrderIds,
+        task.correctOrderIds,
       ),
-      (false, true) => _choiceId == widget.content.symbolMatch.correctChoiceId,
-      (false, false) => _choiceId == widget.content.graphRead.correctChoiceId,
+      ScienceNotationChoiceTask task => _choiceId == task.correctChoiceId,
     };
     if (!correct) {
       _reportNeed(_currentNeedCode, correct: false);
@@ -270,7 +398,8 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
       setState(() => _lockedAfterWrong = true);
       return;
     }
-    if (_isOrderStep) {
+    if (_currentTask case final ScienceNotationArrangeTask task
+        when task.tracePattern != null) {
       FocusManager.instance.primaryFocus?.unfocus();
       setState(() {
         _tracePending = true;
@@ -298,21 +427,14 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
   }
 
   void _finishTrace() {
-    if (!_tracePending || !_traceCompleted || !_isOrderStep) return;
+    if (!_tracePending || !_traceCompleted || !_isArrangeStep) return;
     _advanceStepAfterSuccess();
   }
 
-  String? get _currentNeedCode => _isOrderStep
-      ? widget.content.orderTasks[_contentStep].needCode
-      : _isSymbolStep
-      ? widget.content.symbolMatch.needCode
-      : widget.content.graphRead.needCode;
+  String? get _currentNeedCode => _currentTask.needCode;
 
-  String _fixedTaskIdForStep() => _isOrderStep
-      ? 'order:${widget.content.orderTasks[_contentStep].id}'
-      : _isSymbolStep
-      ? 'symbol'
-      : 'graph';
+  String _fixedTaskIdForStep() =>
+      '${_currentTask.kind.wire}:${_currentTask.id}';
 
   void _reportNeed(String? needCode, {required bool correct}) {
     if (needCode == null) return;
@@ -425,7 +547,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
         ScienceChallengeHeader(
           eyebrow: '$stepLabel  /  NOTATION LAB',
           title: widget.conceptLabel,
-          body: '記号をなぞり、式を組み、グラフを読みます。',
+          body: '記号・モデル・図表を組み立て、意味と結びます。',
           icon: Icons.draw_outlined,
           accent: colors.story,
           onAccent: colors.onStory,
@@ -440,17 +562,15 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
-        if (_isOrderStep && _tracePending)
+        if (_isArrangeStep && _tracePending)
           _buildTraceStrengthening(
             context,
-            widget.content.orderTasks[_contentStep],
+            _currentTask as ScienceNotationArrangeTask,
           )
-        else if (_isOrderStep)
-          _buildOrderTask(context, widget.content.orderTasks[_contentStep])
-        else if (_isSymbolStep)
-          _buildSymbolTask(context)
+        else if (_isArrangeStep)
+          _buildArrangeTask(context, _currentTask as ScienceNotationArrangeTask)
         else
-          _buildGraphTask(context),
+          _buildChoiceTask(context, _currentTask as ScienceNotationChoiceTask),
         if (_lockedAfterWrong) ...[
           const SizedBox(height: GameTokens.spaceLg),
           _buildReview(context),
@@ -483,12 +603,17 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
   bool get _canSubmit =>
       !_lockedAfterWrong &&
       !_tracePending &&
-      (_isOrderStep
+      (_isArrangeStep
           ? _orderedIds.length ==
-                widget.content.orderTasks[_contentStep].correctOrderIds.length
+                (_currentTask as ScienceNotationArrangeTask)
+                    .correctOrderIds
+                    .length
           : _choiceId != null);
 
-  Widget _buildOrderTask(BuildContext context, ScienceNotationOrderTask task) {
+  Widget _buildArrangeTask(
+    BuildContext context,
+    ScienceNotationArrangeTask task,
+  ) {
     final colors = context.gamePalette;
     final selectedLabels = _orderedIds
         .map((id) => task.tokens.firstWhere((token) => token.id == id).label)
@@ -502,9 +627,9 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
           Text(task.prompt),
           const SizedBox(height: GameTokens.spaceSm),
           Semantics(
-            label: 'なぞる向き。${task.traceGuide}',
+            label: 'なぞる向き。${task.guide}',
             child: Text(
-              task.traceGuide,
+              task.guide,
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: colors.inkMuted),
@@ -579,7 +704,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
 
   Widget _buildTraceStrengthening(
     BuildContext context,
-    ScienceNotationOrderTask task,
+    ScienceNotationArrangeTask task,
   ) {
     final colors = context.gamePalette;
     final canonical = task.correctOrderIds
@@ -634,7 +759,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
           const SizedBox(height: GameTokens.spaceMd),
           _NotationTraceBoard(
             key: ValueKey('notation-trace-board-${task.id}-$_traceSession'),
-            pattern: task.tracePattern,
+            pattern: task.tracePattern!,
             onCompletedChanged: (complete) {
               if (!mounted || _traceCompleted == complete) return;
               setState(() => _traceCompleted = complete);
@@ -645,19 +770,54 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
     );
   }
 
-  Widget _buildSymbolTask(BuildContext context) {
-    final task = widget.content.symbolMatch;
+  Widget _buildChoiceTask(
+    BuildContext context,
+    ScienceNotationChoiceTask task,
+  ) {
+    final colors = context.gamePalette;
     return ScienceChallengeSurface(
-      label: '単位記号を意味と結ぶ',
-      icon: Icons.straighten_outlined,
+      label: task.title,
+      icon: _choiceTaskIcon(task.kind),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(task.prompt),
+          if (task.representation.isNotEmpty) ...[
+            const SizedBox(height: GameTokens.spaceMd),
+            Semantics(
+              container: true,
+              image: true,
+              label: task.representationSemanticsLabel,
+              child: ExcludeSemantics(
+                child: Container(
+                  padding: const EdgeInsets.all(GameTokens.spaceLg),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceRaised,
+                    borderRadius: BorderRadius.circular(GameTokens.radiusSm),
+                    border: Border.all(color: colors.border),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final line in task.representation)
+                        Text(
+                          line,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(color: colors.ink)
+                              .jaWeight(FontWeight.w800),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: GameTokens.spaceLg),
           for (var index = 0; index < task.choices.length; index++) ...[
             ScienceMiniGameChoice(
-              key: ValueKey('notation-symbol-${task.choices[index].id}'),
+              key: ValueKey(
+                '${_choiceTaskKeyPrefix(task.kind)}-${task.choices[index].id}',
+              ),
               text: task.choices[index].label,
               position: index + 1,
               count: task.choices.length,
@@ -674,63 +834,19 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
     );
   }
 
-  Widget _buildGraphTask(BuildContext context) {
-    final task = widget.content.graphRead;
-    final colors = context.gamePalette;
-    return ScienceChallengeSurface(
-      label: 'グラフと矢印を読む',
-      icon: Icons.show_chart_rounded,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(task.prompt),
-          const SizedBox(height: GameTokens.spaceMd),
-          Semantics(
-            container: true,
-            image: true,
-            label: task.graphSemanticsLabel,
-            child: ExcludeSemantics(
-              child: Container(
-                padding: const EdgeInsets.all(GameTokens.spaceLg),
-                decoration: BoxDecoration(
-                  color: colors.surfaceRaised,
-                  borderRadius: BorderRadius.circular(GameTokens.radiusSm),
-                  border: Border.all(color: colors.border),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final line in task.graphNotation)
-                      Text(
-                        line,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(color: colors.ink)
-                            .jaWeight(FontWeight.w800),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: GameTokens.spaceLg),
-          for (var index = 0; index < task.choices.length; index++) ...[
-            ScienceMiniGameChoice(
-              key: ValueKey('notation-graph-${task.choices[index].id}'),
-              text: task.choices[index].label,
-              position: index + 1,
-              count: task.choices.length,
-              selected: _choiceId == task.choices[index].id,
-              onPressed: _lockedAfterWrong
-                  ? null
-                  : () => _selectChoice(task.choices[index].id),
-            ),
-            if (index < task.choices.length - 1)
-              const SizedBox(height: GameTokens.spaceSm),
-          ],
-        ],
-      ),
-    );
-  }
+  IconData _choiceTaskIcon(LocalNotationTaskKind kind) => switch (kind) {
+    LocalNotationTaskKind.labelDiagram => Icons.account_tree_outlined,
+    LocalNotationTaskKind.tableRead => Icons.table_chart_outlined,
+    LocalNotationTaskKind.graphRead => Icons.show_chart_rounded,
+    LocalNotationTaskKind.symbolMatch => Icons.straighten_outlined,
+    _ => Icons.fact_check_outlined,
+  };
+
+  String _choiceTaskKeyPrefix(LocalNotationTaskKind kind) => switch (kind) {
+    LocalNotationTaskKind.symbolMatch => 'notation-symbol',
+    LocalNotationTaskKind.graphRead => 'notation-graph',
+    _ => 'notation-${kind.wire}',
+  };
 
   Widget _buildReview(BuildContext context) {
     final colors = context.gamePalette;
@@ -1286,10 +1402,7 @@ List<int> _notationStepIndexes(
   ScienceNotationLabContent content, {
   required String? focusNeedCode,
 }) {
-  final all = List<int>.generate(
-    content.orderTasks.length + 2,
-    (index) => index,
-  );
+  final all = List<int>.generate(content.tasks.length, (index) => index);
   if (focusNeedCode == null) return all;
   final matches = [
     for (final index in all)
@@ -1306,21 +1419,11 @@ List<int> _notationStepIndexes(
 }
 
 String? _notationNeedCode(ScienceNotationLabContent content, int index) {
-  if (index < content.orderTasks.length) {
-    return content.orderTasks[index].needCode;
-  }
-  if (index == content.orderTasks.length) return content.symbolMatch.needCode;
-  return content.graphRead.needCode;
+  return content.tasks[index].needCode;
 }
 
 String _notationSolutionSummary(ScienceNotationLabContent content, int index) {
-  if (index < content.orderTasks.length) {
-    return content.orderTasks[index].solutionSummary;
-  }
-  if (index == content.orderTasks.length) {
-    return content.symbolMatch.solutionSummary;
-  }
-  return content.graphRead.solutionSummary;
+  return content.tasks[index].solutionSummary;
 }
 
 bool _sameOrder(List<String> actual, List<String> expected) {
@@ -1332,51 +1435,78 @@ bool _sameOrder(List<String> actual, List<String> expected) {
 }
 
 bool _debugValidateNotationContent(ScienceNotationLabContent content) {
-  if (content.orderTasks.length < 2 ||
-      content.symbolMatch.choices.length < 2 ||
-      content.graphRead.choices.length < 2 ||
-      content.graphRead.graphNotation.length < 2) {
+  final tasks = content.tasks;
+  if (tasks.length < 2 ||
+      tasks.length > 6 ||
+      tasks.map((task) => task.id).toSet().length != tasks.length ||
+      tasks.map((task) => task.needCode).toSet().length != tasks.length ||
+      tasks.map((task) => task.kind).toSet().length < 2 ||
+      !tasks.any((task) => task is ScienceNotationArrangeTask) ||
+      !tasks.any((task) => task is ScienceNotationChoiceTask)) {
     return false;
   }
-  for (final task in content.orderTasks) {
-    final ids = task.tokens.map((token) => token.id).toSet();
-    final strokeIds = task.tracePattern.strokes
-        .map((stroke) => stroke.id)
-        .toSet();
-    if (task.tokens.length < 2 ||
-        ids.length != task.tokens.length ||
-        task.correctOrderIds.length < 2 ||
-        task.correctOrderIds.toSet().length != task.correctOrderIds.length ||
-        !task.correctOrderIds.every(ids.contains) ||
-        task.tracePattern.semanticsLabel.trim().isEmpty ||
-        task.tracePattern.strokes.isEmpty ||
-        strokeIds.length != task.tracePattern.strokes.length ||
-        task.tracePattern.strokeOrderIds.length != strokeIds.length ||
-        task.tracePattern.strokeOrderIds.toSet().length != strokeIds.length ||
-        !task.tracePattern.strokeOrderIds.every(strokeIds.contains) ||
-        task.tracePattern.strokes.any(
-          (stroke) =>
-              stroke.label.trim().isEmpty ||
-              stroke.points.length < 3 ||
-              stroke.points.any(
-                (point) =>
-                    !point.x.isFinite ||
-                    !point.y.isFinite ||
-                    point.x < 0 ||
-                    point.x > 1 ||
-                    point.y < 0 ||
-                    point.y > 1,
-              ),
-        )) {
+  for (final task in tasks) {
+    if (task.id.trim().isEmpty ||
+        task.title.trim().isEmpty ||
+        task.prompt.trim().isEmpty ||
+        task.solutionSummary.trim().isEmpty ||
+        task.needCode?.trim().isEmpty == true) {
       return false;
     }
+    switch (task) {
+      case ScienceNotationArrangeTask():
+        final ids = task.tokens.map((token) => token.id).toSet();
+        if (task.tokens.length < 2 ||
+            task.tokens.length > 6 ||
+            ids.length != task.tokens.length ||
+            task.correctOrderIds.length != task.tokens.length ||
+            task.correctOrderIds.toSet().length != task.tokens.length ||
+            !task.correctOrderIds.every(ids.contains) ||
+            _sameOrder(
+              task.tokens.map((token) => token.id).toList(),
+              task.correctOrderIds,
+            )) {
+          return false;
+        }
+        final trace = task.tracePattern;
+        if (trace == null) continue;
+        final strokeIds = trace.strokes.map((stroke) => stroke.id).toSet();
+        if (trace.semanticsLabel.trim().isEmpty ||
+            trace.strokes.isEmpty ||
+            strokeIds.length != trace.strokes.length ||
+            trace.strokeOrderIds.length != strokeIds.length ||
+            trace.strokeOrderIds.toSet().length != strokeIds.length ||
+            !trace.strokeOrderIds.every(strokeIds.contains) ||
+            trace.strokes.any(
+              (stroke) =>
+                  stroke.label.trim().isEmpty ||
+                  stroke.points.length < 3 ||
+                  stroke.points.any(
+                    (point) =>
+                        !point.x.isFinite ||
+                        !point.y.isFinite ||
+                        point.x < 0 ||
+                        point.x > 1 ||
+                        point.y < 0 ||
+                        point.y > 1,
+                  ),
+            )) {
+          return false;
+        }
+      case ScienceNotationChoiceTask():
+        final choiceIds = task.choices.map((choice) => choice.id).toSet();
+        if (task.choices.length < 2 ||
+            task.choices.length > 5 ||
+            choiceIds.length != task.choices.length ||
+            !choiceIds.contains(task.correctChoiceId) ||
+            task.representationSemanticsLabel.trim().isEmpty ||
+            task.representation.length > 10 ||
+            (task.kind != LocalNotationTaskKind.symbolMatch &&
+                task.representation.length < 2) ||
+            task.representation.any((line) => line.trim().isEmpty)) {
+          return false;
+        }
+    }
   }
-  final symbolIds = content.symbolMatch.choices
-      .map((choice) => choice.id)
-      .toSet();
-  final graphIds = content.graphRead.choices.map((choice) => choice.id).toSet();
-  return symbolIds.length == content.symbolMatch.choices.length &&
-      symbolIds.contains(content.symbolMatch.correctChoiceId) &&
-      graphIds.length == content.graphRead.choices.length &&
-      graphIds.contains(content.graphRead.correctChoiceId);
+  return true;
 }

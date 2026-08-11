@@ -3,6 +3,43 @@ import 'dart:typed_data';
 
 import 'package:record/record.dart';
 
+/// [AudioRecorder] をテストで差し替えつつ、native解放契約を明示する境界。
+abstract interface class MicRecorder {
+  Future<bool> hasPermission();
+
+  Future<Stream<Uint8List>> startStream(RecordConfig config);
+
+  Future<bool> isRecording();
+
+  Future<void> stop();
+
+  Future<void> dispose();
+}
+
+final class _PlatformMicRecorder implements MicRecorder {
+  _PlatformMicRecorder() : _delegate = AudioRecorder();
+
+  final AudioRecorder _delegate;
+
+  @override
+  Future<bool> hasPermission() => _delegate.hasPermission();
+
+  @override
+  Future<Stream<Uint8List>> startStream(RecordConfig config) =>
+      _delegate.startStream(config);
+
+  @override
+  Future<bool> isRecording() => _delegate.isRecording();
+
+  @override
+  Future<void> stop() async {
+    await _delegate.stop();
+  }
+
+  @override
+  Future<void> dispose() => _delegate.dispose();
+}
+
 /// マイク入力を Gemini Live が受け取れる形（16kHz / モノラル / PCM16）で流す。
 ///
 /// ## ノイズ抑制について
@@ -16,21 +53,23 @@ import 'package:record/record.dart';
 /// 切るとスピーカーから出た AI の声を自分のマイクが拾い、
 /// 自分の発話で自分を割り込ませて会話が壊れる。
 class MicStream {
-  MicStream({AudioRecorder? recorder}) : _given = recorder;
+  MicStream({MicRecorder? recorder}) : _given = recorder;
 
-  final AudioRecorder? _given;
-  AudioRecorder? _created;
+  final MicRecorder? _given;
+  MicRecorder? _created;
 
   /// 録音の実体は**使うまで作らない。**
   ///
   /// コンストラクタで作ると、その場でプラットフォームチャネルを叩く。
   /// 差し替えた偽物を使うテストでも本物が生まれて
   /// `MissingPluginException` で落ちるので、遅延させる。
-  AudioRecorder get _rec => _given ?? (_created ??= AudioRecorder());
+  MicRecorder get _rec => _given ?? (_created ??= _PlatformMicRecorder());
   StreamSubscription<Uint8List>? _sub;
   final _out = StreamController<Uint8List>.broadcast();
   final _level = StreamController<double>.broadcast();
   final _chunker = PcmChunker(bytesPerChunk: chunkBytes);
+  Future<void>? _disposeInFlight;
+  bool _nativeMayBeRecording = false;
 
   /// Gemini Live の入力レート。出力の 24kHz と取り違えないこと。
   static const int sampleRate = 16000;
@@ -45,7 +84,7 @@ class MicStream {
   /// 0.0〜1.0 のピーク音量。「聞いている」表示と録音異常の判定に使う。
   Stream<double> get level => _level.stream;
 
-  bool get isRecording => _sub != null;
+  bool get isRecording => _nativeMayBeRecording;
 
   Future<bool> hasPermission() => _rec.hasPermission();
 
@@ -54,9 +93,12 @@ class MicStream {
   /// [speakerphone] を false にすると Android では通話用スピーカー（耳に当てる方）
   /// から音が出る。会話アプリとしては据え置きで使うので既定は true。
   Future<bool> start({bool speakerphone = true}) async {
-    if (_sub != null) return true;
+    if (_disposeInFlight != null) return false;
+    if (_sub != null && _nativeMayBeRecording) return true;
     if (!await _rec.hasPermission()) return false;
 
+    // startStreamが例外終了してもnative側だけ開始済みの可能性がある。
+    _nativeMayBeRecording = true;
     final stream = await _rec.startStream(
       RecordConfig(
         encoder: AudioEncoder.pcm16bits,
@@ -93,21 +135,98 @@ class MicStream {
   }
 
   Future<void> stop() async {
-    await _sub?.cancel();
-    _sub = null;
+    Object? firstError;
+    StackTrace? firstStack;
+    void remember(Object error, StackTrace stack) {
+      firstError ??= error;
+      firstStack ??= stack;
+    }
+
+    final subscription = _sub;
+    if (subscription != null) {
+      try {
+        await subscription.cancel();
+        if (identical(_sub, subscription)) _sub = null;
+      } catch (error, stack) {
+        remember(error, stack);
+      }
+    }
     // 端数を出し切る。切り捨てると語尾が落ちる
-    final tail = _chunker.flush();
-    if (tail != null) _out.add(tail);
+    try {
+      final tail = _chunker.flush();
+      if (tail != null && !_out.isClosed) _out.add(tail);
+    } catch (error, stack) {
+      remember(error, stack);
+    }
     // 一度も録音していないなら実体を作らない
     final rec = _given ?? _created;
-    if (rec != null && await rec.isRecording()) await rec.stop();
+    var nativeStopped = rec == null;
+    if (rec != null) {
+      try {
+        if (await rec.isRecording()) await rec.stop();
+        nativeStopped = true;
+      } catch (error, stack) {
+        remember(error, stack);
+      }
+    }
+    if (nativeStopped) _nativeMayBeRecording = false;
+
+    if (firstError != null) {
+      Error.throwWithStackTrace(firstError!, firstStack!);
+    }
   }
 
-  Future<void> dispose() async {
-    await stop();
-    await _out.close();
-    await _level.close();
-    await (_given ?? _created)?.dispose();
+  Future<void> dispose() => _disposeInFlight ??= _disposeImpl();
+
+  Future<void> _disposeImpl() async {
+    Object? firstError;
+    StackTrace? firstStack;
+    void remember(Object error, StackTrace stack) {
+      firstError ??= error;
+      firstStack ??= stack;
+    }
+
+    Future<void> attempt(Future<void> Function() action) async {
+      try {
+        await action();
+      } catch (error, stack) {
+        remember(error, stack);
+      }
+    }
+
+    // stopが失敗しても、subscription・recorder・両controllerを独立に片付ける。
+    await attempt(stop);
+
+    final subscription = _sub;
+    if (subscription != null) {
+      await attempt(() async {
+        await subscription.cancel();
+        if (identical(_sub, subscription)) _sub = null;
+      });
+    }
+
+    final recorder = _given ?? _created;
+    var recorderDisposed = recorder == null;
+    if (recorder != null) {
+      await attempt(() async {
+        await recorder.dispose();
+        recorderDisposed = true;
+      });
+    }
+    if (recorderDisposed) {
+      _nativeMayBeRecording = false;
+      _sub = null;
+    }
+
+    // 片方にpause中listenerがいてclose完了が遅れても、もう片方のcloseは開始する。
+    await Future.wait(<Future<void>>[
+      attempt(_out.close),
+      attempt(_level.close),
+    ]);
+
+    if (firstError != null) {
+      Error.throwWithStackTrace(firstError!, firstStack!);
+    }
   }
 }
 

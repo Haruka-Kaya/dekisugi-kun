@@ -1,6 +1,10 @@
 # Store screenshots 2026
 
-2026-08-10 時点の現在UIを、App Store Connect / Google Play の受理条件に合わせて
+> [!danger] 旧提出候補を配布・提出に使わない
+> このディレクトリの画像・SHA・撮影手順は**現行productionの正本ではない旧候補**です。
+> 現行buildから再撮影・再検証するまで、Store、Shipaton、学校向け資料へ提出してはいけません。
+
+2026-08-10 時点の旧候補UIを、App Store Connect / Google Play の受理条件に合わせて
 再撮影するための出力先です。旧 `docs/shots/` は履歴として残し、ここからは提出しません。
 
 ## 公式仕様
@@ -70,8 +74,10 @@ tools/verify-store-shots.sh
 ```
 
 検証は寸法・RGB 8-bit x 3 channel・alphaなし・形式・Googleの辺比だけでなく、
-Vision OCRで現在UIの`30秒おためしミッション` / challenge / `TUTORIAL CLEAR` /
-`答えを送らず`に加え、端末内へ残す最小情報（教材・概念・完了回数・最終完了日時）を確認します。
+Vision OCRで旧候補UIの`30秒おためしミッション` / challenge / `TUTORIAL CLEAR` /
+`答えを送らず`に加え、現行productionの保存境界を確認します。保存するのは
+教材ID・概念ID・進行・canonical need・heart・完了時刻・冪等報酬台帳だけで、
+音声・自由文・選択肢IDは保存しません。
 `Ready for Apple Intelligence`などSimulatorの通知が写った候補は出力ファイルへ昇格しません。
 iOSは`--mask=ignored`の生framebufferを、アプリのlight背景色`#F6F2E9`へlossless合成して
 RGB PNG化します。四隅も同色か機械検査するため、黒い端末マスクや透明角は残りません。
@@ -96,7 +102,7 @@ Androidの解像度overrideは撮影後にresetします。実機や既存の`do
 | `google-play/phone/01-first-mission-predict.jpg` | 予想 |
 | `google-play/phone/02-first-mission-challenge.jpg` | デキすぎ君の思い込みを訂正 |
 | `google-play/phone/03-first-mission-clear.jpg` | 条件を使った訂正の完了 |
-| `google-play/phone/04-device-only-studio.jpg` | 外部AI・学校サーバ・購入・自由記述の送信/保存を使わず、教材・概念・完了回数・最終完了日時だけ端末に残すモード |
+| `google-play/phone/04-device-only-studio.jpg` | 旧候補。現行productionでは教材ID・概念ID・進行・canonical need・heart・完了時刻・冪等報酬台帳を保存し、音声・自由文・選択肢IDは保存しない |
 
 2026-08-10の検証済みSHA-256:
 

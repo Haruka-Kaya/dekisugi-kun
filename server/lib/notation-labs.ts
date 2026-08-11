@@ -5,6 +5,9 @@
  * 公開形をAPIと同梱catalogへ同じまま載せ、端末は厳格にparseする。
  */
 
+import { STAGE1_EXPANSION_NOTATION_LABS } from './stage1-expansion-notation.js'
+import { STAGE1_PROOF_NOTATION_LABS } from './stage1-proof-notation.js'
+
 export type NotationToken = { id: string; label: string }
 export type NotationChoice = { id: string; label: string }
 
@@ -51,11 +54,51 @@ export type NotationGraphTask = {
   solutionSummary: string
 }
 
-export type NotationLab = {
+export type LegacyNotationLab = {
   orderTasks: NotationOrderTask[]
   symbolMatch: NotationSymbolTask
   graphRead: NotationGraphTask
 }
+
+export const NOTATION_TASK_KINDS = [
+  'modelBuild',
+  'labelDiagram',
+  'sequence',
+  'tableRead',
+  'graphRead',
+  'symbolMatch',
+] as const
+export type NotationTaskKind = (typeof NOTATION_TASK_KINDS)[number]
+
+type NotationTaskBase = {
+  kind: NotationTaskKind
+  id: string
+  needCode: string
+  title: string
+  prompt: string
+  solutionSummary: string
+}
+
+export type NotationArrangeTask = NotationTaskBase & {
+  kind: 'modelBuild' | 'sequence'
+  guide: string
+  tokens: NotationToken[]
+  correctOrderIds: string[]
+  /** 既存11概念の筆順を保つ。新しいモデル・順序課題では省略できる。 */
+  tracePattern?: NotationTracePattern
+}
+
+export type NotationChoiceTask = NotationTaskBase & {
+  kind: 'labelDiagram' | 'tableRead' | 'graphRead' | 'symbolMatch'
+  representation: string[]
+  representationSemanticsLabel: string
+  choices: NotationChoice[]
+  correctChoiceId: string
+}
+
+export type NotationTask = NotationArrangeTask | NotationChoiceTask
+export type TaggedNotationLab = { tasks: NotationTask[] }
+export type NotationLab = LegacyNotationLab | TaggedNotationLab
 
 type Pair = readonly [id: string, label: string]
 
@@ -183,7 +226,7 @@ function choices(entries: readonly Pair[]): NotationChoice[] {
   return entries.map(([id, label]) => ({ id, label }))
 }
 
-function notationLab(conceptKey: string, source: NotationSource): NotationLab {
+function notationLab(conceptKey: string, source: NotationSource): LegacyNotationLab {
   const needCode = (kind: 'arrow' | 'equation' | 'symbol' | 'graph') =>
     `science.${conceptKey}.notation.${kind}`
   return {
@@ -629,6 +672,8 @@ export const NOTATION_LABS: Readonly<Record<string, NotationLab>> = {
     correctGraphId: 'larger-fast',
     graphSummary: '同じ磁束変化なら、短い時間で変えるほど誘導電圧は大きくなります。',
   }),
+  ...STAGE1_PROOF_NOTATION_LABS,
+  ...STAGE1_EXPANSION_NOTATION_LABS,
 }
 
 /** 未知conceptへ似た式を推測せず、必ずundefinedへ倒す。 */
@@ -636,32 +681,95 @@ export function notationLabFor(conceptKey: string): NotationLab | undefined {
   return NOTATION_LABS[conceptKey]
 }
 
-/** 公開レスポンスへ正本の参照を漏らさないための損失なしdeep copy。 */
-export function publicNotationLab(lab: NotationLab): NotationLab {
+function isTaggedNotationLab(lab: NotationLab): lab is TaggedNotationLab {
+  return Object.hasOwn(lab, 'tasks')
+}
+
+export function isNotationArrangeTask(
+  task: NotationTask,
+): task is NotationArrangeTask {
+  return task.kind === 'modelBuild' || task.kind === 'sequence'
+}
+
+function conceptFromNeedCode(needCode: string): string {
+  return needCode.split('.')[1] ?? 'unknown'
+}
+
+/** 旧arrow/equation/symbol/graph正本も、v10のtask unionへ損失なく投影する。 */
+export function canonicalNotationTasks(lab: NotationLab): NotationTask[] {
+  if (isTaggedNotationLab(lab)) return lab.tasks
+  return [
+    ...lab.orderTasks.map((task, index): NotationArrangeTask => ({
+      kind: index === 0 ? 'sequence' : 'modelBuild',
+      id: task.id,
+      needCode: task.needCode,
+      title: task.title,
+      prompt: task.prompt,
+      guide: task.traceGuide,
+      tracePattern: task.tracePattern,
+      tokens: task.tokens,
+      correctOrderIds: task.correctOrderIds,
+      solutionSummary: task.solutionSummary,
+    })),
+    {
+      kind: 'symbolMatch',
+      id: `${conceptFromNeedCode(lab.symbolMatch.needCode)}.symbol`,
+      needCode: lab.symbolMatch.needCode,
+      title: '単位記号を意味と結ぶ',
+      prompt: lab.symbolMatch.prompt,
+      representation: [],
+      representationSemanticsLabel: '選択肢の記号と意味を対応させます。',
+      choices: lab.symbolMatch.choices,
+      correctChoiceId: lab.symbolMatch.correctChoiceId,
+      solutionSummary: lab.symbolMatch.solutionSummary,
+    },
+    {
+      kind: 'graphRead',
+      id: `${conceptFromNeedCode(lab.graphRead.needCode)}.graph`,
+      needCode: lab.graphRead.needCode,
+      title: 'グラフを読む',
+      prompt: lab.graphRead.prompt,
+      representation: lab.graphRead.graphNotation,
+      representationSemanticsLabel: lab.graphRead.graphSemanticsLabel,
+      choices: lab.graphRead.choices,
+      correctChoiceId: lab.graphRead.correctChoiceId,
+      solutionSummary: lab.graphRead.solutionSummary,
+    },
+  ]
+}
+
+function copyTracePattern(trace: NotationTracePattern): NotationTracePattern {
   return {
-    orderTasks: lab.orderTasks.map((task) => ({
+    ...trace,
+    strokes: trace.strokes.map((stroke) => ({
+      ...stroke,
+      points: stroke.points.map((point) => ({ ...point })),
+    })),
+    strokeOrderIds: [...trace.strokeOrderIds],
+  }
+}
+
+function copyNotationTask(task: NotationTask): NotationTask {
+  if (isNotationArrangeTask(task)) {
+    return {
       ...task,
       tokens: task.tokens.map((token) => ({ ...token })),
       correctOrderIds: [...task.correctOrderIds],
-      tracePattern: {
-        ...task.tracePattern,
-        strokes: task.tracePattern.strokes.map((stroke) => ({
-          ...stroke,
-          points: stroke.points.map((point) => ({ ...point })),
-        })),
-        strokeOrderIds: [...task.tracePattern.strokeOrderIds],
-      },
-    })),
-    symbolMatch: {
-      ...lab.symbolMatch,
-      choices: lab.symbolMatch.choices.map((choice) => ({ ...choice })),
-    },
-    graphRead: {
-      ...lab.graphRead,
-      graphNotation: [...lab.graphRead.graphNotation],
-      choices: lab.graphRead.choices.map((choice) => ({ ...choice })),
-    },
+      ...(task.tracePattern == null
+        ? {}
+        : { tracePattern: copyTracePattern(task.tracePattern) }),
+    }
   }
+  return {
+    ...task,
+    representation: [...task.representation],
+    choices: task.choices.map((choice) => ({ ...choice })),
+  }
+}
+
+/** 公開wireは全conceptをv10 task unionへそろえ、正本との参照共有を切る。 */
+export function publicNotationLab(lab: NotationLab): TaggedNotationLab {
+  return { tasks: canonicalNotationTasks(lab).map(copyNotationTask) }
 }
 
 function hasExactKeys(value: unknown, expected: readonly string[]): boolean {
@@ -674,174 +782,161 @@ function nonEmpty(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
 }
 
+function validateTracePattern(
+  trace: NotationTracePattern,
+  taskId: string,
+): string[] {
+  const problems: string[] = []
+  if (!hasExactKeys(trace, ['semanticsLabel', 'strokes', 'strokeOrderIds'])) {
+    return [`${taskId}: tracePatternに未知fieldまたは必須field欠落`]
+  }
+  if (!Array.isArray(trace.strokes) || !Array.isArray(trace.strokeOrderIds)) {
+    return [`${taskId}: tracePatternが空`]
+  }
+  if (trace.strokes.some((stroke) => !hasExactKeys(stroke, ['id', 'label', 'points']))) {
+    return [`${taskId}: strokeに未知fieldまたは必須field欠落`]
+  }
+  const strokeIds = trace.strokes.map((stroke) => stroke.id)
+  if (!nonEmpty(trace.semanticsLabel) || trace.strokes.length < 1) {
+    problems.push(`${taskId}: tracePatternが空`)
+  }
+  if (new Set(strokeIds).size !== strokeIds.length
+    || trace.strokes.some((stroke) => !nonEmpty(stroke.id) || !nonEmpty(stroke.label))) {
+    problems.push(`${taskId}: trace strokeが空または重複`)
+  }
+  if (trace.strokeOrderIds.length !== strokeIds.length
+    || new Set(trace.strokeOrderIds).size !== trace.strokeOrderIds.length
+    || trace.strokeOrderIds.some((id) => !strokeIds.includes(id))) {
+    problems.push(`${taskId}: strokeOrderIdsがstrokeの全順列でない`)
+  }
+  for (const stroke of trace.strokes) {
+    if (!Array.isArray(stroke.points)
+      || stroke.points.some((point) => !hasExactKeys(point, ['x', 'y']))) {
+      problems.push(`${taskId}/${stroke.id}: strokeに未知fieldまたは座標欠落`)
+      continue
+    }
+    const normalizedLength = stroke.points.slice(1).reduce((length, point, index) => {
+      const previous = stroke.points[index]!
+      return length + Math.hypot(point.x - previous.x, point.y - previous.y)
+    }, 0)
+    if (stroke.points.length < 3 || normalizedLength < 0.15
+      || stroke.points.some((point) =>
+        !Number.isFinite(point.x) || !Number.isFinite(point.y)
+        || point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1
+      )) {
+      problems.push(`${taskId}/${stroke.id}: 短すぎるstrokeまたは0..1範囲外のtrace`)
+    }
+  }
+  return problems
+}
+
 export function validateNotationLab(lab: NotationLab): string[] {
   const problems: string[] = []
-  if (!hasExactKeys(lab, ['orderTasks', 'symbolMatch', 'graphRead'])) {
+  const topLevelKeys = isTaggedNotationLab(lab)
+    ? ['tasks']
+    : ['orderTasks', 'symbolMatch', 'graphRead']
+  if (!hasExactKeys(lab, topLevelKeys)) {
     problems.push('notation lab: 未知fieldまたは必須field欠落')
   }
-  if (!Array.isArray(lab?.orderTasks)) {
-    problems.push('order taskは矢印と式の2件必要')
-    return problems
+  const tasks = canonicalNotationTasks(lab)
+  if (tasks.length < 2 || tasks.length > 6) {
+    problems.push('notation lab: taskは2〜6件必要')
   }
-  if (lab.orderTasks.length !== 2) problems.push('order taskは矢印と式の2件必要')
-  for (const task of lab.orderTasks) {
+  if (new Set(tasks.map((task) => task.id)).size !== tasks.length
+    || new Set(tasks.map((task) => task.needCode)).size !== tasks.length) {
+    problems.push('notation lab: task IDまたはneedCodeが重複')
+  }
+  if (new Set(tasks.map((task) => task.kind)).size < 2) {
+    problems.push('notation lab: 2種類以上のtask kindが必要')
+  }
+  if (!tasks.some(isNotationArrangeTask)
+    || !tasks.some((task) => !isNotationArrangeTask(task))) {
+    problems.push('notation lab: 組み立て課題と読み取り課題が両方必要')
+  }
+
+  for (const task of tasks) {
     const taskId = nonEmpty(task?.id) ? task.id : 'unknown'
+    if (!NOTATION_TASK_KINDS.includes(task.kind)
+      || !nonEmpty(task.id) || !nonEmpty(task.needCode) || !nonEmpty(task.title)
+      || !nonEmpty(task.prompt) || !nonEmpty(task.solutionSummary)) {
+      problems.push(`${taskId}: kind・ID・needCode・文言に空欄`)
+    }
+    const needMatch = /^science\.([A-Za-z][A-Za-z0-9]{0,63})\.notation\.([A-Za-z][A-Za-z0-9]{0,63})$/.exec(task.needCode)
+    const legacyKindBySuffix: Readonly<Record<string, NotationTaskKind>> = {
+      arrow: 'sequence',
+      equation: 'modelBuild',
+      symbol: 'symbolMatch',
+      graph: 'graphRead',
+    }
+    const suffix = needMatch?.[2]
+    const expectedKind = suffix == null ? undefined : legacyKindBySuffix[suffix] ?? suffix
+    if (needMatch == null || expectedKind !== task.kind) {
+      problems.push(`${taskId}: task kindと対応する安定needCodeが無い`)
+    }
+
+    if (isNotationArrangeTask(task)) {
+      const expectedKeys = task.tracePattern == null
+        ? ['kind', 'id', 'needCode', 'title', 'prompt', 'guide', 'tokens', 'correctOrderIds', 'solutionSummary']
+        : ['kind', 'id', 'needCode', 'title', 'prompt', 'guide', 'tracePattern', 'tokens', 'correctOrderIds', 'solutionSummary']
+      if (!hasExactKeys(task, expectedKeys)
+        || !Array.isArray(task.tokens) || !Array.isArray(task.correctOrderIds)) {
+        problems.push(`${taskId}: arrange taskに未知fieldまたは必須field欠落`)
+        continue
+      }
+      if (!nonEmpty(task.guide)
+        || task.tokens.some((token) => !hasExactKeys(token, ['id', 'label'])
+          || !nonEmpty(token.id) || !nonEmpty(token.label))) {
+        problems.push(`${taskId}: guideまたはtokenが空・不正`)
+      }
+      const tokenIds = task.tokens.map((token) => token.id)
+      if (tokenIds.length < 2 || tokenIds.length > 6
+        || new Set(tokenIds).size !== tokenIds.length
+        || task.correctOrderIds.length !== tokenIds.length
+        || new Set(task.correctOrderIds).size !== tokenIds.length
+        || task.correctOrderIds.some((id) => !tokenIds.includes(id))) {
+        problems.push(`${taskId}: correctOrderIdsが2〜6 tokenの全順列でない`)
+      }
+      if (JSON.stringify(task.correctOrderIds) === JSON.stringify(tokenIds)) {
+        problems.push(`${taskId}: 表示順が正答順を示している`)
+      }
+      if (task.tracePattern != null) {
+        problems.push(...validateTracePattern(task.tracePattern, taskId))
+      }
+      continue
+    }
+
     if (!hasExactKeys(task, [
+      'kind',
       'id',
       'needCode',
       'title',
       'prompt',
-      'traceGuide',
-      'tracePattern',
-      'tokens',
-      'correctOrderIds',
-      'solutionSummary',
-    ])) {
-      problems.push(`${taskId}: order taskに未知fieldまたは必須field欠落`)
-    }
-    if (!Array.isArray(task?.tokens) || !Array.isArray(task?.correctOrderIds)) {
-      problems.push(`${taskId}: tokenまたはcorrectOrderIdsが欠落`)
-      continue
-    }
-    const tokenShapeBroken = task.tokens.some(
-      (token) => !hasExactKeys(token, ['id', 'label']),
-    )
-    if (tokenShapeBroken) {
-      problems.push(`${taskId}: tokenに未知fieldまたは必須field欠落`)
-      continue
-    }
-    const tokenIds = task.tokens.map((token) => token.id)
-    if (!nonEmpty(task.id) || !nonEmpty(task.title) || !nonEmpty(task.prompt)
-      || !nonEmpty(task.traceGuide) || !nonEmpty(task.solutionSummary)) {
-      problems.push(`${taskId}: order taskに空欄`)
-    }
-    if (!nonEmpty(task.needCode)
-      || !/^science\.[A-Za-z][A-Za-z0-9]{0,63}\.notation\.(arrow|equation)$/.test(task.needCode)) {
-      problems.push(`${taskId}: 安定した一般化needCodeが無い`)
-    }
-    if (tokenIds.length < 2 || new Set(tokenIds).size !== tokenIds.length) {
-      problems.push(`${taskId}: tokenは重複しない2件以上が必要`)
-    }
-    if (
-      task.correctOrderIds.length !== tokenIds.length
-      || new Set(task.correctOrderIds).size !== tokenIds.length
-      || task.correctOrderIds.some((id) => !tokenIds.includes(id))
-    ) {
-      problems.push(`${taskId}: correctOrderIdsがtokenの全順列でない`)
-    }
-    if (JSON.stringify(task.correctOrderIds) === JSON.stringify(tokenIds)) {
-      problems.push(`${taskId}: 表示順が正答順を示している`)
-    }
-    if (task.tokens.some((token) => !nonEmpty(token.id) || !nonEmpty(token.label))) {
-      problems.push(`${taskId}: 空のtoken`)
-    }
-
-    const trace = task.tracePattern
-    if (!hasExactKeys(trace, ['semanticsLabel', 'strokes', 'strokeOrderIds'])) {
-      problems.push(`${taskId}: tracePatternに未知fieldまたは必須field欠落`)
-      continue
-    }
-    if (!Array.isArray(trace.strokes) || !Array.isArray(trace.strokeOrderIds)) {
-      problems.push(`${taskId}: tracePatternが空`)
-      continue
-    }
-    if (trace.strokes.some((stroke) => !hasExactKeys(stroke, ['id', 'label', 'points']))) {
-      problems.push(`${taskId}: strokeに未知fieldまたは必須field欠落`)
-      continue
-    }
-    const strokeIds = trace.strokes.map((stroke) => stroke.id)
-    if (!nonEmpty(trace.semanticsLabel) || trace.strokes.length < 1) {
-      problems.push(`${taskId}: tracePatternが空`)
-    }
-    if (new Set(strokeIds).size !== strokeIds.length
-      || trace.strokes.some((stroke) => !nonEmpty(stroke.id) || !nonEmpty(stroke.label))) {
-      problems.push(`${taskId}: trace strokeが空または重複`)
-    }
-    if (trace.strokeOrderIds.length !== strokeIds.length
-      || new Set(trace.strokeOrderIds).size !== trace.strokeOrderIds.length
-      || trace.strokeOrderIds.some((id) => !strokeIds.includes(id))
-      || strokeIds.some((id) => !trace.strokeOrderIds.includes(id))) {
-      problems.push(`${taskId}: strokeOrderIdsがstrokeの全順列でない`)
-    }
-    for (const stroke of trace.strokes) {
-      const strokeId = nonEmpty(stroke?.id) ? stroke.id : 'unknown-stroke'
-      if (!Array.isArray(stroke?.points)) {
-        problems.push(`${taskId}/${strokeId}: strokeに未知fieldまたはpoints欠落`)
-        continue
-      }
-      if (stroke.points.some((point) => !hasExactKeys(point, ['x', 'y']))) {
-        problems.push(`${taskId}/${strokeId}: pointに未知fieldまたは座標欠落`)
-        continue
-      }
-      const normalizedLength = stroke.points.slice(1).reduce((length, point, index) => {
-        const previous = stroke.points[index]!
-        return length + Math.hypot(point.x - previous.x, point.y - previous.y)
-      }, 0)
-      if (stroke.points.length < 3
-        || normalizedLength < 0.15
-        || stroke.points.some(
-          (point) => !Number.isFinite(point.x) || !Number.isFinite(point.y)
-            || point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1,
-        )) {
-        problems.push(`${taskId}/${strokeId}: 短すぎるstrokeまたは0..1範囲外のtrace`)
-      }
-    }
-  }
-
-  const choiceTaskEntries = [
-    ['symbolMatch', lab.symbolMatch, ['needCode', 'prompt', 'choices', 'correctChoiceId', 'solutionSummary']],
-    ['graphRead', lab.graphRead, [
-      'needCode',
-      'prompt',
-      'graphNotation',
-      'graphSemanticsLabel',
+      'representation',
+      'representationSemanticsLabel',
       'choices',
       'correctChoiceId',
       'solutionSummary',
-    ]],
-  ] as const
-  for (const [label, task, expectedKeys] of choiceTaskEntries) {
-    if (!hasExactKeys(task, expectedKeys)
-      || !Array.isArray(task?.choices)) {
-      problems.push(`${label}: 未知fieldまたは必須field欠落`)
+    ]) || !Array.isArray(task.representation) || !Array.isArray(task.choices)) {
+      problems.push(`${taskId}: choice taskに未知fieldまたは必須field欠落`)
       continue
     }
-    if (task.choices.some((choice) => !hasExactKeys(choice, ['id', 'label']))) {
-      problems.push(`${label}: choiceに未知fieldまたは必須field欠落`)
-      continue
+    if (task.choices.some((choice) => !hasExactKeys(choice, ['id', 'label'])
+      || !nonEmpty(choice.id) || !nonEmpty(choice.label))) {
+      problems.push(`${taskId}: choiceが空または不正`)
     }
     const choiceIds = task.choices.map((choice) => choice.id)
-    if (!nonEmpty(task.prompt) || !nonEmpty(task.solutionSummary)) {
-      problems.push(`${label}: promptまたはsolutionSummaryが空`)
+    if (choiceIds.length < 2 || choiceIds.length > 5
+      || new Set(choiceIds).size !== choiceIds.length
+      || !choiceIds.includes(task.correctChoiceId)) {
+      problems.push(`${taskId}: correctChoiceIdに対応する重複しない2〜5 choicesが必要`)
     }
-    if (!nonEmpty(task.needCode)
-      || !new RegExp(`^science\\.[A-Za-z][A-Za-z0-9]{0,63}\\.notation\\.${label === 'symbolMatch' ? 'symbol' : 'graph'}$`).test(task.needCode)) {
-      problems.push(`${label}: 安定した一般化needCodeが無い`)
+    const representationRequired = task.kind !== 'symbolMatch'
+    if (!nonEmpty(task.representationSemanticsLabel)
+      || task.representation.some((line) => !nonEmpty(line))
+      || (representationRequired && task.representation.length < 2)
+      || task.representation.length > 10) {
+      problems.push(`${taskId}: representationまたはSemanticsが空・過剰`)
     }
-    if (choiceIds.length < 2 || new Set(choiceIds).size !== choiceIds.length) {
-      problems.push(`${label}: choiceは重複しない2件以上が必要`)
-    }
-    if (!choiceIds.includes(task.correctChoiceId)) {
-      problems.push(`${label}: correctChoiceIdに対応するchoiceが無い`)
-    }
-    if (task.choices.some((choice) => !nonEmpty(choice.id) || !nonEmpty(choice.label))) {
-      problems.push(`${label}: 空のchoice`)
-    }
-  }
-  const graph = lab.graphRead
-  if (hasExactKeys(graph, [
-    'needCode',
-    'prompt',
-    'graphNotation',
-    'graphSemanticsLabel',
-    'choices',
-    'correctChoiceId',
-    'solutionSummary',
-  ]) && (!Array.isArray(graph.graphNotation)
-    || graph.graphNotation.length < 2
-    || graph.graphNotation.some((line) => !nonEmpty(line))
-    || !nonEmpty(graph.graphSemanticsLabel))) {
-    problems.push('graphRead: graphNotationまたはSemanticsが空')
   }
   return problems
 }

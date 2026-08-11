@@ -44,6 +44,11 @@ void main() {
     var completed = 0;
     await tester.pumpWidget(_app(onCompleted: () => completed++));
     expect(find.bySemanticsLabel('デキすぎ君。一緒に考えています'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('この教材のあと、デキすぎ君へ理由と条件を自分の言葉で説明します'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('このあと、デキすぎ君へ説明します'), findsOneWidget);
     expect(find.text('物体には重力がはたらく。'), findsNothing);
     expect(
       tester

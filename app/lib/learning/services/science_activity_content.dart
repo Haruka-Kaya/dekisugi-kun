@@ -3,7 +3,7 @@ import '../../screens/science_lightning_screen.dart';
 import '../../screens/science_match_lab_screen.dart';
 import '../../screens/science_notation_lab_screen.dart';
 
-/// catalog v9の固定教材を、回答を画面Stateの外へ出さないゲーム課題へ変換する。
+/// catalog v10の固定教材を、回答を画面Stateの外へ出さないゲーム課題へ変換する。
 final class ScienceActivityContent {
   const ScienceActivityContent._();
 
@@ -13,62 +13,64 @@ final class ScienceActivityContent {
   static ScienceNotationLabContent? notationFor(Section section) {
     final source = section.notationLab;
     if (source == null) return null;
-    return ScienceNotationLabContent(
-      orderTasks: [
-        for (final task in source.orderTasks)
-          ScienceNotationOrderTask(
-            id: task.id,
-            title: task.title,
-            prompt: task.prompt,
-            traceGuide: task.traceGuide,
-            tracePattern: ScienceNotationTracePattern(
-              semanticsLabel: task.tracePattern.semanticsLabel,
-              strokes: [
-                for (final stroke in task.tracePattern.strokes)
-                  ScienceNotationTraceStroke(
-                    id: stroke.id,
-                    label: stroke.label,
-                    points: [
-                      for (final point in stroke.points)
-                        ScienceNotationTracePoint(x: point.x, y: point.y),
-                    ],
-                  ),
-              ],
-              strokeOrderIds: [...task.tracePattern.strokeOrderIds],
-            ),
-            tokens: [
-              for (final token in task.tokens)
-                ScienceNotationToken(id: token.id, label: token.label),
-            ],
-            correctOrderIds: [...task.correctOrderIds],
-            solutionSummary: task.solutionSummary,
-            needCode: task.needCode,
-          ),
-      ],
-      symbolMatch: ScienceNotationSymbolTask(
-        prompt: source.symbolMatch.prompt,
-        choices: [
-          for (final choice in source.symbolMatch.choices)
-            ScienceNotationChoice(id: choice.id, label: choice.label),
-        ],
-        correctChoiceId: source.symbolMatch.correctChoiceId,
-        solutionSummary: source.symbolMatch.solutionSummary,
-        needCode: source.symbolMatch.needCode,
-      ),
-      graphRead: ScienceNotationGraphTask(
-        prompt: source.graphRead.prompt,
-        graphNotation: [...source.graphRead.graphNotation],
-        graphSemanticsLabel: source.graphRead.graphSemanticsLabel,
-        choices: [
-          for (final choice in source.graphRead.choices)
-            ScienceNotationChoice(id: choice.id, label: choice.label),
-        ],
-        correctChoiceId: source.graphRead.correctChoiceId,
-        solutionSummary: source.graphRead.solutionSummary,
-        needCode: source.graphRead.needCode,
-      ),
+    return ScienceNotationLabContent.tagged(
+      tasks: [for (final task in source.tasks) _notationTask(task)],
     );
   }
+
+  static ScienceNotationTask _notationTask(LocalNotationTask task) =>
+      switch (task) {
+        LocalNotationArrangeTask() => ScienceNotationArrangeTask(
+          kind: task.kind,
+          id: task.id,
+          title: task.title,
+          prompt: task.prompt,
+          solutionSummary: task.solutionSummary,
+          guide: task.guide,
+          tracePattern: _tracePattern(task.tracePattern),
+          tokens: [
+            for (final token in task.tokens)
+              ScienceNotationToken(id: token.id, label: token.label),
+          ],
+          correctOrderIds: [...task.correctOrderIds],
+          needCode: task.needCode,
+        ),
+        LocalNotationChoiceTask() => ScienceNotationChoiceTask(
+          kind: task.kind,
+          id: task.id,
+          title: task.title,
+          prompt: task.prompt,
+          solutionSummary: task.solutionSummary,
+          representation: [...task.representation],
+          representationSemanticsLabel: task.representationSemanticsLabel,
+          choices: [
+            for (final choice in task.choices)
+              ScienceNotationChoice(id: choice.id, label: choice.label),
+          ],
+          correctChoiceId: task.correctChoiceId,
+          needCode: task.needCode,
+        ),
+      };
+
+  static ScienceNotationTracePattern? _tracePattern(
+    LocalNotationTracePattern? source,
+  ) => source == null
+      ? null
+      : ScienceNotationTracePattern(
+          semanticsLabel: source.semanticsLabel,
+          strokes: [
+            for (final stroke in source.strokes)
+              ScienceNotationTraceStroke(
+                id: stroke.id,
+                label: stroke.label,
+                points: [
+                  for (final point in stroke.points)
+                    ScienceNotationTracePoint(x: point.x, y: point.y),
+                ],
+              ),
+          ],
+          strokeOrderIds: [...source.strokeOrderIds],
+        );
 
   static ScienceMatchLabContent matchFor(
     Section section, {

@@ -1,8 +1,14 @@
 # Shipaton 2026 — 勝つための提出計画
 
-更新: 2026-08-10
+更新: 2026-08-11
 
-> [!danger] 現行の Vertex ビルドは提出しない
+> [!warning] この文書は旧Live構想を含む提出計画の履歴です
+> AI後輩とのLive会話、本人発話の保存、daily Live課金を前提にした本文・台本は、
+> 現行productionの説明や提出文へ流用しないでください。現在の正本は
+> `README.md`、`docs/game-redesign-2026.md`、`docs/game-goal-completion-matrix.md`です。
+> 現行は端末内Teach-back＋固定問い返しで、音声PCM・自由文・選択肢IDを保存／送信しません。
+
+> [!danger] 旧Vertex Live経路を有効化したビルドは提出しない
 > Google Cloud Service Specific Terms §20(d) により、中高生向け本アプリで現在の
 > 生成 AI 構成を公開できない。Store 提出、審査員への外部配布、学校実証は、
 > 未成年向け利用が可能な AI 基盤への移行または Google との書面契約まで停止する。
@@ -121,7 +127,8 @@ Voiceover:
 
 ### 0:42–1:08 — Teach and face the misconception
 
-画面: 文字または音声で説明。AI後輩が固定誤概念を実際に口にし、HUDが2/3へ進む。
+画面: 文字または音声で説明し、実再生／明示再読の後にデキすぎ君が固定問い返しを出す。
+誤答ならヒントを使って説明を言い直し、正解や自由文を保存せずHUDが2/3へ進む。
 
 Student line:
 

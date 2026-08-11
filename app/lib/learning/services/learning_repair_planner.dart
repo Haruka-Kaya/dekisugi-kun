@@ -175,13 +175,12 @@ final class _RepairCatalogIndex {
     final conflictedSkills = <String>{};
 
     void addNeed(String skillId, String? needCode, _RepairCatalogEntry entry) {
-      if (needCode == null ||
-          conflictedNeeds.contains(_needKey(skillId, needCode))) {
+      if (needCode == null) {
         return;
       }
       final key = _needKey(skillId, needCode);
-      final previous = byNeed[key];
-      if (previous != null && !previous.sameTarget(entry)) {
+      if (conflictedNeeds.contains(key)) return;
+      if (byNeed.containsKey(key)) {
         byNeed.remove(key);
         conflictedNeeds.add(key);
         return;
@@ -257,38 +256,28 @@ final class _RepairCatalogIndex {
         }
 
         final notation = section.notationLab!;
-        for (final task in notation.orderTasks) {
+        final notationPrefix = 'science.${section.conceptKey}.notation.';
+        for (final task in notation.tasks) {
+          final needCode = task.needCode;
+          if (needCode == null ||
+              !needCode.startsWith(notationPrefix) ||
+              !_notationNeedMatchesTask(
+                needCode.substring(notationPrefix.length),
+                task.kind,
+              )) {
+            continue;
+          }
           addNeed(
             skillId,
-            task.needCode,
+            needCode,
             _RepairCatalogEntry(
               unitId: unit.id,
               conceptKey: section.conceptKey,
-              activityKind: LearningRepairActivityKind.notationOrder,
+              activityKind: _notationActivityKind(task.kind),
               practiceAttempt: 0,
             ),
           );
         }
-        addNeed(
-          skillId,
-          notation.symbolMatch.needCode,
-          _RepairCatalogEntry(
-            unitId: unit.id,
-            conceptKey: section.conceptKey,
-            activityKind: LearningRepairActivityKind.notationSymbol,
-            practiceAttempt: 0,
-          ),
-        );
-        addNeed(
-          skillId,
-          notation.graphRead.needCode,
-          _RepairCatalogEntry(
-            unitId: unit.id,
-            conceptKey: section.conceptKey,
-            activityKind: LearningRepairActivityKind.notationGraph,
-            practiceAttempt: 0,
-          ),
-        );
       }
     }
     for (final skillId in conflictedSkills) {
@@ -317,13 +306,35 @@ final class _RepairCatalogEntry {
   final String conceptKey;
   final LearningRepairActivityKind activityKind;
   final int practiceAttempt;
-
-  bool sameTarget(_RepairCatalogEntry other) =>
-      unitId == other.unitId &&
-      conceptKey == other.conceptKey &&
-      activityKind == other.activityKind &&
-      practiceAttempt == other.practiceAttempt;
 }
+
+LearningRepairActivityKind _notationActivityKind(LocalNotationTaskKind kind) =>
+    switch (kind) {
+      LocalNotationTaskKind.modelBuild || LocalNotationTaskKind.sequence =>
+        LearningRepairActivityKind.notationOrder,
+      LocalNotationTaskKind.symbolMatch =>
+        LearningRepairActivityKind.notationSymbol,
+      LocalNotationTaskKind.labelDiagram ||
+      LocalNotationTaskKind.tableRead ||
+      LocalNotationTaskKind.graphRead =>
+        LearningRepairActivityKind.notationGraph,
+    };
+
+bool _notationNeedMatchesTask(String suffix, LocalNotationTaskKind kind) =>
+    switch (kind) {
+      LocalNotationTaskKind.modelBuild =>
+        suffix == LocalNotationTaskKind.modelBuild.wire || suffix == 'equation',
+      LocalNotationTaskKind.sequence =>
+        suffix == LocalNotationTaskKind.sequence.wire || suffix == 'arrow',
+      LocalNotationTaskKind.symbolMatch =>
+        suffix == LocalNotationTaskKind.symbolMatch.wire || suffix == 'symbol',
+      LocalNotationTaskKind.graphRead =>
+        suffix == LocalNotationTaskKind.graphRead.wire || suffix == 'graph',
+      LocalNotationTaskKind.labelDiagram =>
+        suffix == LocalNotationTaskKind.labelDiagram.wire,
+      LocalNotationTaskKind.tableRead =>
+        suffix == LocalNotationTaskKind.tableRead.wire,
+    };
 
 String _needKey(String skillId, String needCode) => '$skillId\u0000$needCode';
 

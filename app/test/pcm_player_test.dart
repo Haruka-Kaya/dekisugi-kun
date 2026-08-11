@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dekisugi/services/pcm_player.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_pcm_sound/flutter_pcm_sound.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -11,6 +13,11 @@ class FakeSink implements PcmSink {
   bool released = false;
   int startCalls = 0;
   int? setupSampleRate;
+  bool feedOnStart = false;
+  bool throwOnFeed = false;
+  Object? asyncFeedError;
+  Completer<void>? feedGate;
+  final List<Completer<void>> feedGates = <Completer<void>>[];
 
   /// native がキューを消化して補充を求めた、という状況を作る。
   void requestFeed([int remaining = 0]) => _cb?.call(remaining);
@@ -41,10 +48,21 @@ class FakeSink implements PcmSink {
   @override
   void setFeedCallback(void Function(int)? cb) => _cb = cb;
   @override
-  void feed(PcmArrayInt16 buffer) =>
-      fed.add(Uint8List.fromList(buffer.bytes.buffer.asUint8List()));
+  Future<void> feed(PcmArrayInt16 buffer) async {
+    if (throwOnFeed) throw StateError('player feed failed');
+    final gate = feedGates.isEmpty ? feedGate : feedGates.removeAt(0);
+    if (gate != null) await gate.future;
+    final error = asyncFeedError;
+    if (error != null) throw error;
+    fed.add(Uint8List.fromList(buffer.bytes.buffer.asUint8List()));
+  }
+
   @override
-  void start() => startCalls++;
+  void start() {
+    startCalls++;
+    if (feedOnStart) _cb?.call(0);
+  }
+
   @override
   Future<void> release() async => released = true;
 }
@@ -116,6 +134,96 @@ void main() {
       player.enqueue(ramp(10));
       expect(sink.startCalls, 2);
     });
+
+    test('追跡再生は実feed後の0-frame callbackだけをnatural drainとする', () async {
+      bool? completed;
+      final draining = player.enqueueUntilDrained(ramp(2400));
+      draining.then((value) => completed = value);
+
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      expect(completed, isNull, reason: 'wall timerやenqueueだけでは完了にしない');
+
+      while (player.hasPending) {
+        sink.requestFeed();
+      }
+      await Future<void>.delayed(Duration.zero);
+      expect(completed, isNull, reason: '最後のchunkをfeedした時点ではnativeに音が残る');
+
+      sink.requestFeed(0);
+      expect(await draining, isTrue);
+      expect(completed, isTrue);
+    });
+
+    test('native startが同期feedしてもdrain追跡を失わない', () async {
+      sink.feedOnStart = true;
+
+      final draining = player.enqueueUntilDrained(ramp(2400));
+
+      expect(player.hasPending, isFalse);
+      await Future<void>.delayed(Duration.zero);
+      sink.requestFeed(0);
+      expect(await draining, isTrue);
+    });
+
+    test('native callbackのfeed例外は未処理化せず追跡失敗へ閉じる', () async {
+      sink.throwOnFeed = true;
+      final draining = player.enqueueUntilDrained(ramp(2400));
+
+      sink.requestFeed();
+
+      expect(await draining, isFalse);
+    });
+
+    test('非同期feed完了前は0-frame callbackでもnatural drainにしない', () async {
+      sink.feedGate = Completer<void>();
+      bool? completed;
+      final draining = player.enqueueUntilDrained(ramp(2400));
+      draining.then((value) => completed = value);
+
+      sink.requestFeed();
+      sink.requestFeed(0);
+      await Future<void>.delayed(Duration.zero);
+      expect(completed, isNull);
+
+      sink.feedGate!.complete();
+      await Future<void>.delayed(Duration.zero);
+      expect(completed, isNull, reason: 'feed完了は再生完了ではない');
+
+      sink.requestFeed(0);
+      expect(await draining, isTrue);
+    });
+
+    test('複数feedの一部が未完了なら0-frame callbackでもdrainにしない', () async {
+      final first = Completer<void>()..complete();
+      final second = Completer<void>();
+      sink.feedGates.addAll(<Completer<void>>[first, second]);
+      bool? completed;
+      final draining = player.enqueueUntilDrained(ramp(4800));
+      draining.then((value) => completed = value);
+
+      sink.requestFeed();
+      sink.requestFeed();
+      await Future<void>.delayed(Duration.zero);
+      sink.requestFeed(0);
+      await Future<void>.delayed(Duration.zero);
+      expect(completed, isNull);
+
+      second.complete();
+      await Future<void>.delayed(Duration.zero);
+      sink.requestFeed(0);
+      expect(await draining, isTrue);
+    });
+
+    test('非同期feed例外は未処理化せず追跡失敗へ閉じる', () async {
+      sink.feedGate = Completer<void>();
+      sink.asyncFeedError = PlatformException(code: 'async_feed_failed');
+      final draining = player.enqueueUntilDrained(ramp(2400));
+
+      sink.requestFeed();
+      sink.feedGate!.complete();
+
+      expect(await draining, isFalse);
+    });
   });
 
   group('割り込み', () {
@@ -156,6 +264,15 @@ void main() {
         sink.requestFeed();
       }
       expect(sink.allFed, equals(ramp(40, from: 7)));
+    });
+
+    test('追跡再生のstopNowはnatural completionにしない', () async {
+      final draining = player.enqueueUntilDrained(ramp(2400));
+      sink.requestFeed();
+
+      player.stopNow();
+
+      expect(await draining, isFalse);
     });
   });
 
@@ -221,6 +338,15 @@ void main() {
   });
 
   group('後始末', () {
+    test('追跡再生のdisposeはnatural completionにしない', () async {
+      final draining = player.enqueueUntilDrained(ramp(2400));
+      sink.requestFeed();
+
+      await player.dispose();
+
+      expect(await draining, isFalse);
+    });
+
     test('dispose 後は積んでも渡さない', () async {
       await player.dispose();
       player.enqueue(ramp(100));
