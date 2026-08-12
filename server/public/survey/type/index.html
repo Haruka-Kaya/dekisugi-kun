@@ -19,6 +19,7 @@
   --ink: #1A1F27;
   --muted: #5D6675;
   --accent: #2F5FA8;
+  --on-accent: #fff;
   --accent-soft: #E8EEF8;
   --ok: #1E6B52;
 }
@@ -26,6 +27,7 @@
   :root {
     --bg: #12161D; --card: #1A2029; --line: #2C3541;
     --ink: #E6EAF0; --muted: #98A2B2; --accent: #86A9E4;
+    --on-accent: #12161D;
     --accent-soft: #1E293B; --ok: #57BE9B;
   }
 }
@@ -75,7 +77,7 @@ h1 { font-size: 20px; line-height: 1.5; margin: 0 0 8px; font-weight: 400; }
   margin: 10px 0 22px;
   padding: 14px;
   font-family: inherit; font-size: 16px;
-  color: #fff; background: var(--accent);
+  color: var(--on-accent); background: var(--accent);
   border: none; border-radius: 8px;
   cursor: pointer;
 }
@@ -106,7 +108,7 @@ legend { font-size: 15px; margin-bottom: 10px; padding: 0; }
   display: inline-block; padding: 13px 22px;
   font-family: inherit; font-size: 16px;
   border-radius: 8px; border: 1px solid var(--accent);
-  background: var(--accent); color: #fff; cursor: pointer;
+  background: var(--accent); color: var(--on-accent); cursor: pointer;
 }
 .btn.ghost { background: transparent; color: var(--accent); }
 .btn:disabled { opacity: .4; cursor: default; }
@@ -121,6 +123,8 @@ textarea {
 .note { font-size: 13px; color: var(--muted); line-height: 1.8; }
 .hidden { display: none; }
 .row { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+.handoff .btn { width: 100%; text-align: center; text-decoration: none; }
+.handoff .btn.ghost { margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -137,7 +141,7 @@ textarea {
       書いてある内容はまったく同じで、<strong>行の間隔や文字の間隔だけ</strong>が違います。</p>
     <p class="q">どちらが「きれい」かではなく、<strong>10分間ずっと読み続けるならどちらを選ぶか</strong>で答えてください。</p>
     <p class="note"><strong>集めるのは学年などの選択と、あなたが選んだ答えだけです。</strong>
-      名前・学校名・メール・電話番号・SNSのIDは入力しません。端末情報やIPアドレスは回答として保存しません。答え終わると自動で送信され、回答一覧は最後の新着から90日後に自動削除されます。</p>
+      名前・学校名・メール・電話番号・SNSのIDは入力しません。端末情報やIPアドレスは回答として保存しません。重複送信を防ぐため、この調査だけの匿名番号と回答済み状態を端末に保存します。回答内容は端末には保存しません。答え終わると自動で送信され、回答一覧は最後の新着から90日後に自動削除されます。</p>
   </div>
   <button class="btn" id="go-meta">はじめる</button>
 </section>
@@ -178,10 +182,10 @@ textarea {
 <!-- ===== 4. 完了 ===== -->
 <section id="s-done" class="hidden">
   <header>
-    <h1>ありがとうございました</h1>
+    <h1 id="done-title">ありがとうございました</h1>
   </header>
   <div class="card" id="send-status-card">
-    <p class="q" id="send-status">送信しています…</p>
+    <p class="q" id="send-status" role="status" aria-live="polite">送信しています…</p>
   </div>
   <div class="card hidden" id="fallback-card">
     <p class="q">自動送信できませんでした。<strong>下のコードをコピーして渡してください。</strong></p>
@@ -192,9 +196,15 @@ textarea {
     </div>
     <p class="note" id="copied"></p>
   </div>
+  <div class="card handoff hidden" id="handoff-card">
+    <p class="q" id="handoff-message"></p>
+    <a class="btn" id="handoff-link" href="/survey/rika/">理科の考え方 調査に進む</a>
+    <button class="btn ghost" id="reset-surveys" type="button">別の人が回答する</button>
+  </div>
 </section>
 
 </div>
+<script src="../state.js"></script>
 <script>
 "use strict";
 
@@ -246,10 +256,13 @@ TRIALS.forEach((t, i) => {
 const GRADE = ['中学1年', '中学2年', '中学3年', '高校1年', '高校2年', '高校3年', 'その他'];
 const LIGHT = ['明るい', 'ふつう', '暗い'];
 const SCALE = ['標準のまま', '大きくしている', '小さくしている', 'わからない'];
+const ENDPOINT = "/api/survey";
+const SURVEY_KIND = "type";
+const OTHER_KIND = SurveyState.otherKind(SURVEY_KIND);
 
 const meta = { grade: null, light: null, scale: null };
 const answers = [];
-let idx = 0, shownAt = 0;
+let idx = 0, shownAt = 0, finishing = false;
 
 const $ = (id) => document.getElementById(id);
 
@@ -280,8 +293,15 @@ function show(id) {
   window.scrollTo(0, 0);
 }
 
-$('go-meta').addEventListener('click', () => show('s-meta'));
-$('go-task').addEventListener('click', () => { show('s-task'); render(); });
+$('go-meta').addEventListener('click', () => {
+  if (SurveyState.isComplete(SURVEY_KIND)) { showCompletedVisit(); return; }
+  show('s-meta');
+});
+$('go-task').addEventListener('click', () => {
+  if (SurveyState.isComplete(SURVEY_KIND)) { showCompletedVisit(); return; }
+  show('s-task');
+  render();
+});
 
 function applyStyle(el, cfg) {
   el.style.lineHeight = String(cfg.lh);
@@ -301,6 +321,7 @@ function render() {
 }
 
 function answer(side) {
+  if (finishing) return;
   const t = TRIALS[idx];
   answers.push({
     i: idx,
@@ -314,22 +335,18 @@ function answer(side) {
     ms: Math.round(performance.now() - shownAt)
   });
   idx++;
-  if (idx >= TRIALS.length) finish();
+  if (idx >= TRIALS.length) {
+    finishing = true;
+    finish();
+  }
   else render();
 }
 $('pick-a').addEventListener('click', () => answer('a'));
 $('pick-b').addEventListener('click', () => answer('b'));
 
-const ENDPOINT = "/api/survey";
-
-function newSessionId() {
-  if (crypto.randomUUID) return crypto.randomUUID();
-  const b = crypto.getRandomValues(new Uint8Array(16));
-  b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
-  const h = [...b].map((v) => v.toString(16).padStart(2, '0')).join('');
-  return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
-}
-const sessionId = newSessionId();
+// 同じ端末で再読み込みしても同じ回答として更新できる、調査別の匿名UUID。
+// 回答本文や2調査共通の参加者IDは端末へ保存しない。
+const sessionId = SurveyState.getSessionId(SURVEY_KIND);
 
 async function submit(json) {
   try {
@@ -338,13 +355,37 @@ async function submit(json) {
       headers: { "Content-Type": "application/json" },
       body: json,
     });
-    if (!r.ok) throw new Error("HTTP " + r.status);
+    if (r.status !== 200) throw new Error("HTTP " + r.status);
+    SurveyState.markComplete(SURVEY_KIND);
     $("send-status").textContent = "送信しました。ありがとうございました。";
+    renderHandoff();
   } catch (e) {
     // 自動送信に失敗しても回答を失わせない
     $("send-status-card").classList.add("hidden");
     $("fallback-card").classList.remove("hidden");
   }
+}
+
+function renderHandoff() {
+  const otherComplete = SurveyState.isComplete(OTHER_KIND);
+  $('handoff-card').classList.remove('hidden');
+  if (otherComplete) {
+    $('handoff-message').textContent = '2つのアンケートは両方とも回答済みです。ご協力ありがとうございました。';
+    $('handoff-link').classList.add('hidden');
+  } else {
+    $('handoff-message').textContent = '回答を保存しました。続けて、残りのアンケートにもご協力ください。';
+    $('handoff-link').classList.remove('hidden');
+  }
+}
+
+function showCompletedVisit() {
+  finishing = true;
+  $('done-title').textContent = 'このアンケートは回答済みです';
+  $('send-status').textContent = '保存済みのため、同じ回答を重複して送信しません。';
+  $('send-status-card').classList.remove('hidden');
+  $('fallback-card').classList.add('hidden');
+  renderHandoff();
+  show('s-done');
 }
 
 function finish() {
@@ -381,6 +422,20 @@ function finish() {
     URL.revokeObjectURL(a.href);
   });
 }
+
+$('reset-surveys').addEventListener('click', () => {
+  const confirmed = window.confirm(
+    'この端末に保存された、このキャンペーンの回答済み状態と匿名セッション番号を消します。別の人が回答しますか？'
+  );
+  if (!confirmed) return;
+  SurveyState.resetCampaign();
+  window.location.reload();
+});
+
+window.addEventListener('pageshow', () => {
+  if (SurveyState.isComplete(SURVEY_KIND)) showCompletedVisit();
+});
+if (SurveyState.isComplete(SURVEY_KIND)) showCompletedVisit();
 </script>
 </body>
 </html>

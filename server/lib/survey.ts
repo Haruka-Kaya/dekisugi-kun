@@ -15,7 +15,7 @@ export const MAX_RESPONSES = 5000
 /** 調査終了後に回答一覧を残し続けない。最後の新着から90日でRedis keyごと失効。 */
 export const SURVEY_IDLE_RETENTION_SECONDS = 90 * 24 * 60 * 60
 
-/** 同じ匿名sessionが1時間に送れる件数。理科は進捗4回+完了1回。 */
+/** 同じ匿名sessionが1時間に送れる件数。理科の途中保存と再送にも余裕を持たせる。 */
 export const MAX_RESPONSES_PER_SESSION_HOUR = 12
 
 /** UUIDを取り替える連投でも保存先全体を短時間で埋められない上限。 */
@@ -475,6 +475,9 @@ export function validateAnonymousSurveyResponse(
 }
 
 const listKey = (kind: SurveyKind) => `survey:${kind}`
+const sessionRecordKey = (kind: SurveyKind) => `survey:${kind}:by-session:v1`
+const sessionRevisionKey = (kind: SurveyKind) => `survey:${kind}:revision:v1`
+const sessionMutationKey = (kind: SurveyKind) => `survey:${kind}:mutation:v1`
 
 export type SaveResult =
   { ok: true; receipt: string } | { ok: false; reason: 'no_store' | 'full' }
@@ -487,13 +490,58 @@ export function isSurveyReceipt(value: unknown): value is string {
   return typeof value === 'string' && /^sr_[A-Za-z0-9_-]{24}$/.test(value)
 }
 
-/** 1件を原子的に上限確認して保存する。保存できたときだけreceiptを返す。 */
+function surveySessionField(kind: SurveyKind, sessionId: string): string {
+  return createHash('sha256')
+    .update(kind)
+    .update('\0')
+    .update(sessionId)
+    .digest('base64url')
+}
+
+function responseRevision(
+  kind: SurveyKind,
+  responseJson: string,
+): { field: string; revision: number } {
+  const parsed = objectOf(JSON.parse(responseJson) as unknown)
+  if (!parsed || parsed.kind !== kind || !isUuid(parsed.sessionId)) {
+    throw new Error('アンケート保存入力が不正です')
+  }
+  if (kind === 'type') {
+    return { field: surveySessionField(kind, parsed.sessionId), revision: 1 }
+  }
+  if (!Array.isArray(parsed.ans) || !bool(parsed.done)) {
+    throw new Error('アンケート進捗が不正です')
+  }
+  return {
+    field: surveySessionField(kind, parsed.sessionId),
+    // 回答数が多いものを優先し、同数なら完了を優先する。sendBeaconが
+    // 最終POSTより遅れて届いても、完了回答を途中回答へ巻き戻さない。
+    revision: parsed.ans.length * 2 + (parsed.done ? 1 : 0),
+  }
+}
+
+function receiptOfStoredRow(row: string): string | undefined {
+  try {
+    const parsed = JSON.parse(row) as { receipt?: unknown }
+    return isSurveyReceipt(parsed.receipt) ? parsed.receipt : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * 同じkind・sessionIdを1件へ原子的にupsertする。
+ *
+ * 既存listは過去回答の互換読取用に残し、新規v3は匿名session hashへ保存する。
+ * 同順位の再送と古い進捗は既存行を返すだけなので、保存件数を増やさない。
+ */
 export async function saveResponse(
   kind: SurveyKind,
   responseJson: string,
 ): Promise<SaveResult> {
   if (!hasKv()) return { ok: false, reason: 'no_store' }
 
+  const { field, revision } = responseRevision(kind, responseJson)
   const receipt = newReceipt()
   const record = JSON.stringify({
     schemaVersion: 1,
@@ -502,33 +550,191 @@ export async function saveResponse(
     response: JSON.parse(responseJson) as unknown,
   })
   const script = [
-    "local n = redis.call('LLEN', KEYS[1])",
-    `if n >= ${MAX_RESPONSES} then return -1 end`,
-    "local added = redis.call('RPUSH', KEYS[1], ARGV[1])",
-    `redis.call('EXPIRE', KEYS[1], ${SURVEY_IDLE_RETENTION_SECONDS})`,
-    'return added',
+    "local current = redis.call('HGET', KEYS[2], ARGV[1])",
+    "local current_revision_raw = redis.call('HGET', KEYS[3], ARGV[1])",
+    'if (current and not current_revision_raw) or (not current and current_revision_raw) then return {-2, ""} end',
+    'local incoming_revision = tonumber(ARGV[2])',
+    'local current_revision = tonumber(current_revision_raw)',
+    'if current and current_revision >= incoming_revision then',
+    `  redis.call('EXPIRE', KEYS[2], ${SURVEY_IDLE_RETENTION_SECONDS})`,
+    `  redis.call('EXPIRE', KEYS[3], ${SURVEY_IDLE_RETENTION_SECONDS})`,
+    `  redis.call('EXPIRE', KEYS[4], ${SURVEY_IDLE_RETENTION_SECONDS})`,
+    '  return {0, current}',
+    'end',
+    'if not current then',
+    "  local n = redis.call('LLEN', KEYS[1]) + redis.call('HLEN', KEYS[2])",
+    `  if n >= ${MAX_RESPONSES} then return {-1, ""} end`,
+    'end',
+    "redis.call('HSET', KEYS[2], ARGV[1], ARGV[3])",
+    "redis.call('HSET', KEYS[3], ARGV[1], ARGV[2])",
+    "redis.call('INCR', KEYS[4])",
+    "if redis.call('EXISTS', KEYS[1]) == 1 then",
+    `  redis.call('EXPIRE', KEYS[1], ${SURVEY_IDLE_RETENTION_SECONDS})`,
+    'end',
+    `redis.call('EXPIRE', KEYS[2], ${SURVEY_IDLE_RETENTION_SECONDS})`,
+    `redis.call('EXPIRE', KEYS[3], ${SURVEY_IDLE_RETENTION_SECONDS})`,
+    `redis.call('EXPIRE', KEYS[4], ${SURVEY_IDLE_RETENTION_SECONDS})`,
+    'return {1, ARGV[3]}',
   ].join(' ')
-  const [count] = await kv([['EVAL', script, '1', listKey(kind), record]])
-  if (count === -1) return { ok: false, reason: 'full' }
-  if (
-    typeof count !== 'number' ||
-    !Number.isSafeInteger(count) ||
-    count < 1 ||
-    count > MAX_RESPONSES
-  ) {
+  const [saved] = await kv([
+    [
+      'EVAL',
+      script,
+      '4',
+      listKey(kind),
+      sessionRecordKey(kind),
+      sessionRevisionKey(kind),
+      sessionMutationKey(kind),
+      field,
+      String(revision),
+      record,
+    ],
+  ])
+  if (!Array.isArray(saved) || saved.length !== 2) {
     throw new Error('アンケート保存結果が不正です')
   }
-  return { ok: true, receipt }
+  const [status, storedRow] = saved
+  if (status === -1) return { ok: false, reason: 'full' }
+  if ((status !== 0 && status !== 1) || typeof storedRow !== 'string') {
+    throw new Error('アンケート保存結果が不正です')
+  }
+  const storedReceipt = receiptOfStoredRow(storedRow)
+  if (!storedReceipt) throw new Error('アンケート保存receiptが不正です')
+  return { ok: true, receipt: storedReceipt }
+}
+
+type StoredRows = {
+  legacy: string[]
+  current: string[]
+  mutation: number
+}
+
+type ProjectedStoredRow = {
+  storedRow: string
+  responseRow: string
+  sessionId?: string
+  revision: number
+  current: boolean
+  order: number
+}
+
+function projectedStoredRow(
+  kind: SurveyKind,
+  storedRow: string,
+  current: boolean,
+  order: number,
+): ProjectedStoredRow {
+  let responseRow = storedRow
+  let response: JsonObject | undefined
+  try {
+    const parsed = objectOf(JSON.parse(storedRow) as unknown)
+    if (parsed?.schemaVersion === 1 && objectOf(parsed.response) != null) {
+      response = objectOf(parsed.response)
+      responseRow = JSON.stringify(response)
+    } else {
+      response = parsed
+    }
+  } catch {
+    // 壊れた旧行は捨てず、匿名sessionを推測せずに1行として残す。
+  }
+
+  const sessionId =
+    response?.kind === kind &&
+    typeof response.sessionId === 'string' &&
+    response.sessionId.length > 0
+      ? response.sessionId
+      : undefined
+  const revision =
+    kind === 'misconception' && Array.isArray(response?.ans)
+      ? response.ans.length * 2 + (response?.done === true ? 1 : 0)
+      : kind === 'type' && response?.kind === kind
+        ? 1
+        : 0
+  return { storedRow, responseRow, sessionId, revision, current, order }
+}
+
+/**
+ * 旧listの途中保存・再送も、管理取得時には同じkind・sessionIdを1回答へ畳む。
+ *
+ * 本文fingerprintではまとめない。同じ回答をした別の匿名sessionは別回答である。
+ * 回答数が多いもの、同数なら完了、同順位ならcurrent hash（legacy内は後着）を採る。
+ */
+function projectUniqueResponses(
+  kind: SurveyKind,
+  rows: StoredRows,
+): ProjectedStoredRow[] {
+  const candidates = [
+    ...rows.legacy.map((row, index) =>
+      projectedStoredRow(kind, row, false, index),
+    ),
+    ...rows.current.map((row, index) =>
+      projectedStoredRow(kind, row, true, rows.legacy.length + index),
+    ),
+  ]
+  const unkeyed: ProjectedStoredRow[] = []
+  const bestBySession = new Map<string, ProjectedStoredRow>()
+  for (const candidate of candidates) {
+    if (!candidate.sessionId) {
+      unkeyed.push(candidate)
+      continue
+    }
+    const previous = bestBySession.get(candidate.sessionId)
+    if (
+      !previous ||
+      candidate.revision > previous.revision ||
+      (candidate.revision === previous.revision &&
+        (candidate.current !== previous.current
+          ? candidate.current
+          : candidate.order > previous.order))
+    ) {
+      bestBySession.set(candidate.sessionId, candidate)
+    }
+  }
+  return [...unkeyed, ...bestBySession.values()].sort(
+    (a, b) => a.order - b.order,
+  )
 }
 
 /** 保存されているraw行。receipt削除だけがwrapperを直接扱う。 */
-async function listStoredRows(kind: SurveyKind): Promise<string[]> {
-  if (!hasKv()) return []
-  const [rows] = await kv([['LRANGE', listKey(kind), '0', '-1']])
-  if (!Array.isArray(rows) || rows.some((row) => typeof row !== 'string')) {
+async function storedRows(kind: SurveyKind): Promise<StoredRows> {
+  if (!hasKv()) return { legacy: [], current: [], mutation: 0 }
+  // 3値を1つのLuaで読み、回答更新と同じRedis lock内のsnapshotにする。
+  const script = [
+    "local legacy = redis.call('LRANGE', KEYS[1], 0, -1)",
+    "local current = redis.call('HVALS', KEYS[2])",
+    "local mutation = tonumber(redis.call('GET', KEYS[3]) or '0')",
+    'return {legacy, current, mutation}',
+  ].join(' ')
+  const [snapshot] = await kv([
+    [
+      'EVAL',
+      script,
+      '3',
+      listKey(kind),
+      sessionRecordKey(kind),
+      sessionMutationKey(kind),
+    ],
+  ])
+  if (!Array.isArray(snapshot) || snapshot.length !== 3) {
+    throw new Error('アンケート保存snapshotの形式が不正です')
+  }
+  const [legacy, current, mutation] = snapshot
+  if (
+    !Array.isArray(legacy) ||
+    legacy.some((row) => typeof row !== 'string') ||
+    !Array.isArray(current) ||
+    current.some((row) => typeof row !== 'string') ||
+    typeof mutation !== 'number' ||
+    !Number.isSafeInteger(mutation) ||
+    mutation < 0
+  ) {
     throw new Error('アンケート保存行の形式が不正です')
   }
-  return rows as string[]
+  return {
+    legacy: legacy as string[],
+    current: current as string[],
+    mutation,
+  }
 }
 
 /**
@@ -536,24 +742,10 @@ async function listStoredRows(kind: SurveyKind): Promise<string[]> {
  * これによりfetch-survey.ps1と既存analyzerは旧回答と新回答を同時に読める。
  */
 export async function listResponses(kind: SurveyKind): Promise<string[]> {
-  return (await listStoredRows(kind)).map((row) => {
-    try {
-      const parsed = JSON.parse(row) as {
-        schemaVersion?: unknown
-        response?: unknown
-      }
-      if (
-        parsed.schemaVersion === 1 &&
-        parsed.response &&
-        typeof parsed.response === 'object'
-      ) {
-        return JSON.stringify(parsed.response)
-      }
-    } catch {
-      // 旧回答や壊れた行は既存どおりrawで返し、集計側がskipできるようにする。
-    }
-    return row
-  })
+  if (!hasKv()) return []
+  return projectUniqueResponses(kind, await storedRows(kind)).map(
+    (row) => row.responseRow,
+  )
 }
 
 /** receiptに一致する新schemaの1件だけを削除する。本番疎通確認の片づけに使う。 */
@@ -562,17 +754,65 @@ export async function deleteResponseByReceipt(
   receipt: string,
 ): Promise<boolean> {
   if (!hasKv()) return false
-  const row = (await listStoredRows(kind)).find((candidate) => {
-    try {
-      return (
-        (JSON.parse(candidate) as { receipt?: unknown }).receipt === receipt
-      )
-    } catch {
-      return false
+  const rows = await storedRows(kind)
+  const legacyRow = rows.legacy.find(
+    (candidate) => receiptOfStoredRow(candidate) === receipt,
+  )
+  if (legacyRow != null) {
+    const script = [
+      "local removed = redis.call('LREM', KEYS[1], 1, ARGV[1])",
+      'if removed == 1 then',
+      "  redis.call('INCR', KEYS[2])",
+      `  redis.call('EXPIRE', KEYS[2], ${SURVEY_IDLE_RETENTION_SECONDS})`,
+      'end',
+      'return removed',
+    ].join(' ')
+    const [removed] = await kv([
+      ['EVAL', script, '2', listKey(kind), sessionMutationKey(kind), legacyRow],
+    ])
+    if (removed !== 0 && removed !== 1) {
+      throw new Error('アンケート削除結果が不正です')
     }
-  })
-  if (row == null) return false
-  const [removed] = await kv([['LREM', listKey(kind), '1', row]])
+    return removed === 1
+  }
+
+  const currentRow = rows.current.find(
+    (candidate) => receiptOfStoredRow(candidate) === receipt,
+  )
+  if (currentRow == null) return false
+  let field: string | undefined
+  try {
+    const parsed = JSON.parse(currentRow) as {
+      response?: { kind?: unknown; sessionId?: unknown }
+    }
+    if (parsed.response?.kind === kind && isUuid(parsed.response.sessionId)) {
+      field = surveySessionField(kind, parsed.response.sessionId)
+    }
+  } catch {
+    // 壊れたcurrent行はfieldを推測して削除しない。
+  }
+  if (!field) throw new Error('アンケート保存sessionが不正です')
+  const script = [
+    "local current = redis.call('HGET', KEYS[1], ARGV[1])",
+    'if current ~= ARGV[2] then return 0 end',
+    "redis.call('HDEL', KEYS[1], ARGV[1])",
+    "redis.call('HDEL', KEYS[2], ARGV[1])",
+    "redis.call('INCR', KEYS[3])",
+    `redis.call('EXPIRE', KEYS[3], ${SURVEY_IDLE_RETENTION_SECONDS})`,
+    'return 1',
+  ].join(' ')
+  const [removed] = await kv([
+    [
+      'EVAL',
+      script,
+      '3',
+      sessionRecordKey(kind),
+      sessionRevisionKey(kind),
+      sessionMutationKey(kind),
+      field,
+      currentRow,
+    ],
+  ])
   if (removed !== 0 && removed !== 1) {
     throw new Error('アンケート削除結果が不正です')
   }
@@ -590,30 +830,46 @@ export async function clearResponsesIfCount(
   if (!hasKv()) {
     return expected === 0 ? { ok: true, removed: 0 } : { ok: false, count: 0 }
   }
+  const snapshot = await storedRows(kind)
+  const projectedCount = projectUniqueResponses(kind, snapshot).length
+  if (projectedCount !== expected) {
+    return { ok: false, count: projectedCount }
+  }
   const script = [
-    "local n = redis.call('LLEN', KEYS[1])",
-    'if n ~= tonumber(ARGV[1]) then return -n - 1 end',
-    "redis.call('DEL', KEYS[1])",
-    'return n',
+    "local legacy_count = redis.call('LLEN', KEYS[1])",
+    "local current_count = redis.call('HLEN', KEYS[2])",
+    "local mutation = tonumber(redis.call('GET', KEYS[4]) or '0')",
+    'if legacy_count ~= tonumber(ARGV[1]) or current_count ~= tonumber(ARGV[2]) or mutation ~= tonumber(ARGV[3]) then return 0 end',
+    "redis.call('DEL', KEYS[1], KEYS[2], KEYS[3])",
+    "redis.call('INCR', KEYS[4])",
+    `redis.call('EXPIRE', KEYS[4], ${SURVEY_IDLE_RETENTION_SECONDS})`,
+    'return 1',
   ].join(' ')
   const [result] = await kv([
-    ['EVAL', script, '1', listKey(kind), String(expected)],
+    [
+      'EVAL',
+      script,
+      '4',
+      listKey(kind),
+      sessionRecordKey(kind),
+      sessionRevisionKey(kind),
+      sessionMutationKey(kind),
+      String(snapshot.legacy.length),
+      String(snapshot.current.length),
+      String(snapshot.mutation),
+    ],
   ])
-  if (typeof result !== 'number' || !Number.isSafeInteger(result)) {
+  if (result !== 0 && result !== 1) {
     throw new Error('アンケート全削除結果が不正です')
   }
-  return result >= 0
-    ? { ok: true, removed: result }
-    : { ok: false, count: -result - 1 }
+  return result === 1
+    ? { ok: true, removed: expected }
+    : { ok: false, count: await countResponses(kind) }
 }
 
 export async function countResponses(kind: SurveyKind): Promise<number> {
   if (!hasKv()) return 0
-  const [len] = await kv([['LLEN', listKey(kind)]])
-  if (typeof len !== 'number' || !Number.isSafeInteger(len) || len < 0) {
-    throw new Error('アンケート件数が不正です')
-  }
-  return len
+  return projectUniqueResponses(kind, await storedRows(kind)).length
 }
 
 /** IPを保存せず、session上限と全体burst上限の両方で連投を抑える。 */
