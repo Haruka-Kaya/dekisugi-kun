@@ -1,0 +1,69 @@
+name: Flutter and Android CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/flutter-app.yml'
+      - 'app/**'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/flutter-app.yml'
+      - 'app/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flutter-android-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Analyze, test, and Android debug
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies from lockfile
+        working-directory: app
+        run: flutter pub get --enforce-lockfile
+
+      - name: Analyze
+        working-directory: app
+        run: flutter analyze --no-pub
+
+      - name: Test
+        working-directory: app
+        run: flutter test --no-pub
+
+      - name: Build Android debug APK
+        working-directory: app
+        run: flutter build apk --debug --no-pub
+
+      - name: Verify checkout stayed clean
+        run: |
+          git diff --exit-code
+          test -z "$(git status --porcelain --untracked-files=all)"
