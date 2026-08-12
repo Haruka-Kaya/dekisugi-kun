@@ -7,11 +7,11 @@
 <style>
 :root{
   --bg:#F2F3F5; --card:#fff; --line:#DCDFE5; --ink:#1A1F27; --muted:#5D6675;
-  --accent:#2F5FA8; --accent-soft:#E8EEF8; --ai:#7A4FA8; --ai-soft:#F0EAF8; --ok:#1E6B52;
+  --accent:#2F5FA8; --on-accent:#fff; --accent-soft:#E8EEF8; --ai:#7A4FA8; --ai-soft:#F0EAF8; --ok:#1E6B52;
 }
 @media (prefers-color-scheme:dark){
   :root{--bg:#12161D;--card:#1A2029;--line:#2C3541;--ink:#E6EAF0;--muted:#98A2B2;
-        --accent:#86A9E4;--accent-soft:#1E293B;--ai:#B79BE0;--ai-soft:#241C33;--ok:#57BE9B;}
+        --accent:#86A9E4;--on-accent:#12161D;--accent-soft:#1E293B;--ai:#B79BE0;--ai-soft:#241C33;--ok:#57BE9B;}
 }
 *{box-sizing:border-box;-webkit-text-size-adjust:100%}
 html,body{margin:0;padding:0}
@@ -38,7 +38,7 @@ textarea.ans:focus{outline:2px solid var(--accent);outline-offset:1px}
 .opt[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft)}
 .opt:focus-visible,.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .btn{display:inline-block;padding:13px 24px;font-family:inherit;font-size:16px;border-radius:8px;
-  border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+  border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);cursor:pointer}
 .btn.ghost{background:transparent;color:var(--accent)}
 .btn:disabled{opacity:.4;cursor:default}
 .bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden;margin:16px 0 20px}
@@ -58,6 +58,8 @@ textarea.ans:focus{outline:2px solid var(--accent);outline-offset:1px}
 .assume li{margin:0 0 4px}
 .assume li:last-child{margin-bottom:0}
 .row{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.handoff .btn{width:100%;text-align:center;text-decoration:none}
+.handoff .btn.ghost{margin-top:10px}
 code,textarea.code{font-family:ui-monospace,monospace}
 textarea.code{width:100%;min-height:120px;font-size:12px;line-height:1.5;padding:10px;
   border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);word-break:break-all}
@@ -83,8 +85,9 @@ legend{font-size:15px;margin-bottom:10px;padding:0}
     <p class="q">わからなくても、<strong>思ったとおりに書いてください</strong>。<br>
       きれいに書く必要はありません。話し言葉で大丈夫です。</p>
     <p class="note"><strong>集めるのは学年・理科の好き嫌い・あなたが書いた答えだけです。</strong>
-      名前やメールアドレスなど、あなたが誰かが分かる情報は一切取りません。<br>
-      答えは1問ごとに自動で送信されます。途中でやめても、そこまでは残ります。最後に、正しい考え方の解説を出します。</p>
+      自由記述は入力した文章のまま保存されます。名前・学校名・メール・電話番号・SNSのIDは書かないでください。端末情報やIPアドレスは回答として保存しません。<br>
+      重複送信を防ぐため、この調査だけの匿名番号と回答済み状態を端末に保存します。回答本文は端末には保存しません。<br>
+      答えは1問ごとに自動で送信され、回答一覧は最後の新着から90日後に自動削除されます。途中でやめても、そこまでは残ります。最後に、正しい考え方の解説を出します。</p>
   </div>
   <button class="btn" id="go-meta">はじめる</button>
 </section>
@@ -153,10 +156,10 @@ legend{font-size:15px;margin-bottom:10px;padding:0}
 
 <section id="s-done" class="hidden">
   <header>
-    <h1>おわりです。ありがとうございました</h1>
+    <h1 id="done-title">おわりです。ありがとうございました</h1>
   </header>
   <div class="card" id="send-status-card">
-    <p class="q" id="send-status">送信しています…</p>
+    <p class="q" id="send-status" role="status" aria-live="polite">送信しています…</p>
   </div>
   <div class="card hidden" id="fallback-card">
     <p class="q">自動送信できませんでした。<strong>下のコードをコピーして渡してください。</strong></p>
@@ -167,13 +170,19 @@ legend{font-size:15px;margin-bottom:10px;padding:0}
     </div>
     <p class="note" id="copied"></p>
   </div>
-  <div class="card">
+  <div class="card handoff hidden" id="handoff-card">
+    <p class="q" id="handoff-message"></p>
+    <a class="btn" id="handoff-link" href="/survey/type/">文字の読みやすさ調査に進む</a>
+    <button class="btn ghost" id="reset-surveys" type="button">別の人が回答する</button>
+  </div>
+  <div class="card" id="reveal-card">
     <h1 style="font-size:17px">正しい考え方</h1>
     <div id="reveal"></div>
   </div>
 </section>
 
 </div>
+<script src="../state.js"></script>
 <script>
 "use strict";
 const ITEMS = [{"id": "M01", "topic": "落下", "grade3": true, "explain": "物が落ちる速さは何で決まると思いますか。友達に教えるつもりで説明してください。", "lure": "えっと、じゃあ重いものの方が速く落ちるってこと？", "q": "地球の上で、空気の抵抗が無いようにした筒の中を考えます。同じ大きさ・同じ形で、重い鉄球と軽い鉄球を、同じ高さから同時に落とすとどうなりますか。", "options": ["重い方が先に地面に着く", "軽い方が先に地面に着く", "同時に地面に着く", "落とす高さによって変わる"], "correct": 2, "trap": 0, "q2": "地球の上で、空気の抵抗を考えないとき、10kg の石と 1kg の石を同じ高さから同時に落とすと、地面に着くのはどちらが先ですか。", "options2": ["10kg の石", "1kg の石", "どちらも同時", "落とす場所による"], "correct2": 2, "trap2": 0, "assume": ["**場所**: 地球の上（地面の近く）", "**見る人**: 地面に立って見ています", "**物**: 大きさと形は同じ。**重さだけが違います**", "**はたらく力**: 下向きの重力だけ", "**無視するもの**: 空気の抵抗（空気を抜いた筒の中を落とすと考えてください）", "同じ高さから、同時に静かに手を離します"]}, {"id": "M02", "topic": "慣性", "grade3": true, "explain": "なめらかな氷の上を一定の速さですべっている物に、**進む向きの力**ははたらいていると思いますか。理由も含めて説明してください。", "lure": "動いてるってことは、ずっと前向きに力がかかってるんだよね？", "q": "地球の上で、まさつのないなめらかな氷の上を、一定の速さですべり続けている物体があります。氷の外から見たとき、この物体に進む向きの力ははたらいていますか。", "options": ["はたらき続けている", "はたらいていない", "だんだん大きくなっている", "速さに応じて変わる"], "correct": 1, "trap": 0, "q2": "まわりに何もない宇宙空間で、エンジンを止めたまま一定の速さで進んでいる探査機があります。近くに星などは無く、**重力もはたらいていない**と考えてください。この探査機はどうなりますか。", "options2": ["だんだん遅くなって止まる", "同じ速さで進み続ける", "だんだん速くなる", "すぐに止まる"], "correct2": 1, "trap2": 0, "assume": ["**場所**: 地球の上。水平で、なめらかな氷の面", "**見る人**: 氷の外に立って見ています（自分は動いていません）", "**はたらく力**: 下向きの重力と、氷が押し返す力。この2つはつり合っています", "**無視するもの**: まさつと空気の抵抗", "物はまっすぐ、一定の速さですべっています"]}, {"id": "M03", "topic": "摩擦と静止", "grade3": true, "explain": "動いている物が、やがて止まるのはなぜだと思いますか。友達に教えるつもりで説明してください。", "lure": "ものって、ほっとけば自然に止まるものなんじゃないの？", "q": "地球の上で、水平な床の上をすべらせた物体が、やがて止まりました。止まった理由として正しいものはどれですか。", "options": ["止まっているのが物体の本来の状態だから", "動くための力を使い切ったから", "まさつや空気の抵抗の力がはたらいたから", "力がはたらかなくなったから"], "correct": 2, "trap": 0, "q2": "地球の上で、同じ力ではじいたコインを、つるつるの机の上と、タオルの上ですべらせました。机の上の方が遠くまで進みました。この違いは何から来ていますか。", "options2": ["コインの重さの違い", "はじいた力の違い", "まさつの大きさの違い", "止まろうとする性質の違い"], "correct2": 2, "trap2": 3, "assume": ["**場所**: 地球の上。水平な、ふつうの床", "**見る人**: 床のそばに立って見ています（自分は動いていません）", "**はたらく力**: 重力、床が押し返す力、まさつ", "**無視しないもの**: まさつと空気の抵抗は**あります**", "一度すべらせたあとは、誰も何も押していません"]}, {"id": "M04", "topic": "作用・反作用", "grade3": true, "explain": "トラックと自転車がぶつかったとき、それぞれが相手におよぼす力について、思うことを説明してください。", "lure": "えっと、トラックと自転車がぶつかったら、トラックの方が大きい力を出してるんでしょ？", "q": "地球の上の水平な道で、走ってきたトラックと自転車が衝突しました。ぶつかっている瞬間に、おたがいが相手におよぼす力の大きさは、どうなっていますか。", "options": ["トラックの方が大きい", "自転車の方が大きい", "同じ大きさ", "速く走っていた方が大きい"], "correct": 2, "trap": 0, "q2": "地球の上で、大人と子どもが氷の上で向かい合って手を押し合いました。おたがいが相手におよぼす力の大きさはどうなりますか。", "options2": ["大人の方が大きい", "子どもの方が大きい", "同じ大きさ", "体重の比で決まる"], "correct2": 2, "trap2": 0, "assume": ["**場所**: 地球の上。水平な道", "**見る人**: 道のそばに立って見ています", "**重さ**: トラックのほうがずっと重いです", "**いつ**: ぶつかっている、その瞬間", "**比べるもの**: おたがいが相手におよぼす力の大きさ。**速さや動き方の話ではありません**"]}, {"id": "M05", "topic": "力のつり合い", "grade3": true, "explain": "「物体にはたらく力がつり合っている」とは、どういう状態のことだと思いますか。友達に教えるつもりで説明してください。", "lure": "力がつり合ってるってことは、止まってるってことだよね？", "q": "地球の上でも宇宙空間でもかまいません。ある物体にはたらく力をすべて足し合わせるとゼロになっています。動いていない場所から見たとき、この物体はどうなっていますか。", "options": ["かならず止まっている", "止まっているか、一定の速さで動き続けている", "だんだん遅くなっていく", "少しずつ動き出す"], "correct": 1, "trap": 0, "q2": "地球の上で、車が高速道路を一定の速さでまっすぐ走っています。道のそばから見たとき、この車にはたらく力はどうなっていますか。", "options2": ["前向きの力の方が大きい", "すべてつり合っている", "後ろ向きの力の方が大きい", "力ははたらいていない"], "correct2": 1, "trap2": 0, "assume": ["**場所**: 地球の上でも宇宙空間でも、同じように考えられます", "**見る人**: 動いていない場所から見ています", "**物**: 形は変わりません。回転は考えません", "**状態**: 物にはたらく力をすべて足し合わせると、ちょうどゼロ", "力がゼロなのではなく、**足すとゼロになる**という意味です"]}, {"id": "M06", "topic": "圧力", "grade3": false, "explain": "固体が面を押すときの「圧力」とは何か、そして何によって決まるかを、友達に教えるつもりで説明してください。", "lure": "押す力が同じなら、面積が違っても圧力は同じだよね？", "q": "地球の上で、平らな面を垂直に押します。押す力の大きさを変えずに押す面積を半分にすると、面が受ける圧力はどうなりますか。", "options": ["変わらない", "半分になる", "2倍になる", "4倍になる"], "correct": 2, "trap": 0, "q2": "地球の上で、同じ人が細いヒールの靴と平らなスニーカーで、やわらかい地面に立ちました。地面が受ける圧力はどうなりますか。", "options2": ["どちらも同じ", "ヒールの方が大きい", "スニーカーの方が大きい", "体重が同じなら変わらない"], "correct2": 1, "trap2": 0, "assume": ["**場所**: 地球の上", "**何の圧力か**: **固体が面を押すとき**の圧力。大気圧や、閉じこめた気体の圧力ではありません", "**面**: 平らな面を、垂直に押します", "**変えるもの**: 力がかかる面積だけ。押す力の大きさは変えません"]}, {"id": "M07", "topic": "浮力", "grade3": false, "explain": "水の中にある物が受ける浮力の大きさは、その物の何によって決まると思いますか。友達に教えるつもりで説明してください。", "lure": "重いものほど浮力も大きくなるんだよね？", "q": "地球の上の静かな水の中に、同じ体積の鉄のかたまりとアルミのかたまりを、どちらも全体がしずむように入れました。受ける浮力はどうなりますか。", "options": ["重い鉄の方が大きい", "軽いアルミの方が大きい", "同じ大きさ", "しずめる深さによって変わる"], "correct": 2, "trap": 0, "q2": "地球の上で、同じ重さの粘土を、丸めた形と舟の形にして水に入れました。舟の形だけが浮きました。なぜですか。", "options2": ["舟の形の方が軽いから", "舟の形の方が押しのけた水が多いから", "舟の形の方が水の抵抗が小さいから", "形は関係なく偶然"], "correct2": 1, "trap2": 0, "assume": ["**場所**: 地球の上。静かな水の中", "**水**: どこも同じ濃さで、流れていません", "**物**: どちらも全体が水の中。体積は同じで、**重さだけが違います**", "**はたらく力**: 下向きの重力と、上向きの浮力"]}, {"id": "M08", "topic": "投げ上げ", "grade3": true, "explain": "真上に投げたボールが上がっているとき、ボールにどんな力がはたらいていると思いますか。友達に教えるつもりで説明してください。", "lure": "上に投げてる間は、上向きの力がはたらいてるってことだよね？", "q": "地球の上で真上に投げ上げたボールが、まだ上がっている とちゅうです。空気の抵抗は考えないとき、このボールにはたらいている力はどれですか。", "options": ["上向きの力", "下向きの重力だけ", "力ははたらいていない", "上向きと下向きがつり合っている"], "correct": 1, "trap": 0, "q2": "地球の上で真上に投げたボールが、いちばん高いところに来た瞬間です。空気の抵抗は考えないとき、このボールにはたらく力はどうなっていますか。", "options2": ["力はゼロになっている", "下向きの重力がはたらいている", "上向きの力がはたらいている", "上下がつり合っている"], "correct2": 1, "trap2": 0, "assume": ["**場所**: 地球の上", "**見る人**: 地面に立って見ています", "**いつ**: 手を離れたあと", "**はたらく力**: 下向きの重力", "**無視するもの**: 空気の抵抗"]}];
@@ -199,9 +208,11 @@ const GRADE = ["中学1年","中学2年","中学3年","高校1年","高校2年",
 const LIKE  = ["好き","ふつう","苦手"];
 const LEARNED = ["習った","まだ","おぼえてない"];
 const ENDPOINT = "/api/survey";
+const SURVEY_KIND = "misconception";
+const OTHER_KIND = SurveyState.otherKind(SURVEY_KIND);
 const meta = {grade:null, like:null};
 const answers = [];
-let k = 0, cur = null, t0 = 0;
+let k = 0, cur = null, t0 = 0, finishing = false;
 const $ = id => document.getElementById(id);
 
 function opts(host, list, key){
@@ -222,8 +233,14 @@ function show(id){
   ["s-intro","s-meta","s-explain","s-lure","s-mc","s-done"].forEach(s=>$(s).classList.add("hidden"));
   $(id).classList.remove("hidden"); window.scrollTo(0,0);
 }
-$("go-meta").onclick=()=>show("s-meta");
-$("go-task").onclick=()=>{startItem();};
+$("go-meta").onclick=()=>{
+  if (SurveyState.isComplete(SURVEY_KIND)) { showCompletedVisit(); return; }
+  show("s-meta");
+};
+$("go-task").onclick=()=>{
+  if (SurveyState.isComplete(SURVEY_KIND)) { showCompletedVisit(); return; }
+  startItem();
+};
 
 function progress(step){
   // 1問につき3ステップ
@@ -322,6 +339,8 @@ function mcQuestion(qId, hostId, text, options, order, pickKey, posKey){
 }
 
 $("mc-next").onclick = ()=>{
+  if ($("mc-next").disabled || finishing) return;
+  $("mc-next").disabled = true;
   const a = answers[k];
   a.mcMs = Math.round(performance.now()-t0);
 
@@ -341,8 +360,14 @@ $("mc-next").onclick = ()=>{
   a.heldMisconception1 = t1;
 
   k++;
-  sendProgress();                                   // ここまでを先に送る
-  if (k < assigned.length) startItem(); else finish();
+  if (k < assigned.length) {
+    sendProgress();                                 // 途中回答だけを先に送る
+    startItem();
+  } else {
+    // 最終問は done:false を重ねず、完成版だけを1回送る。
+    finishing = true;
+    finish();
+  }
 };
 
 function gateMc(){
@@ -351,16 +376,14 @@ function gateMc(){
     !(a.pick !== undefined && a.pick2 !== undefined && a.learned);
 }
 
-// 回答者を通しで表す番号。**同じ人の追記だと分かるようにする。**
-// 個人を特定するものではなく、この1回の回答をまとめるだけ
-const sessionId = (crypto.randomUUID ? crypto.randomUUID()
-  : String(Date.now()) + Math.random().toString(36).slice(2));
+// 同じ端末で再読み込みしても同じ回答として更新できる、調査別の匿名UUID。
+// 回答本文や2調査共通の参加者IDは端末へ保存しない。
+const sessionId = SurveyState.getSessionId(SURVEY_KIND);
 
 function payload(done){
   return {
-    v:2, kind:"misconception", sessionId, done,
-    ts:new Date().toISOString(),
-    meta, env:{w:innerWidth,h:innerHeight,ua:navigator.userAgent.slice(0,190),lang:navigator.language},
+    v:3, kind:"misconception", sessionId, done,
+    meta,
     ans: answers.slice(0, k)
   };
 }
@@ -377,8 +400,7 @@ function sendProgress(){
   // 画面を閉じられても届くように。使えない環境では普通の fetch に落ちる
   if (navigator.sendBeacon) {
     try {
-      navigator.sendBeacon(ENDPOINT, new Blob([body], {type:"application/json"}));
-      return;
+      if (navigator.sendBeacon(ENDPOINT, new Blob([body], {type:"application/json"}))) return;
     } catch (e) { /* 下の fetch へ */ }
   }
   fetch(ENDPOINT, {method:"POST", headers:{"Content-Type":"application/json"},
@@ -393,8 +415,10 @@ async function submit(json){
       headers: {"Content-Type": "application/json"},
       body: json,
     });
-    if (!r.ok) throw new Error("HTTP " + r.status);
+    if (r.status !== 200) throw new Error("HTTP " + r.status);
+    SurveyState.markComplete(SURVEY_KIND);
     st.textContent = "送信しました。ありがとうございました。";
+    renderHandoff();
     return true;
   } catch (e) {
     // 自動送信に失敗しても回答を失わせない
@@ -403,6 +427,29 @@ async function submit(json){
     $("fallback-card").classList.remove("hidden");
     return false;
   }
+}
+
+function renderHandoff(){
+  const otherComplete = SurveyState.isComplete(OTHER_KIND);
+  $("handoff-card").classList.remove("hidden");
+  if (otherComplete) {
+    $("handoff-message").textContent = "2つのアンケートは両方とも回答済みです。ご協力ありがとうございました。";
+    $("handoff-link").classList.add("hidden");
+  } else {
+    $("handoff-message").textContent = "回答を保存しました。続けて、残りのアンケートにもご協力ください。";
+    $("handoff-link").classList.remove("hidden");
+  }
+}
+
+function showCompletedVisit(){
+  finishing = true;
+  $("done-title").textContent = "このアンケートは回答済みです";
+  $("send-status").textContent = "保存済みのため、同じ回答を重複して送信しません。";
+  $("send-status-card").classList.remove("hidden");
+  $("fallback-card").classList.add("hidden");
+  $("reveal-card").classList.add("hidden");
+  renderHandoff();
+  show("s-done");
 }
 
 function finish(){
@@ -439,6 +486,20 @@ function finish(){
     URL.revokeObjectURL(a.href);
   };
 }
+
+$("reset-surveys").onclick = ()=>{
+  const confirmed = window.confirm(
+    "この端末に保存された、このキャンペーンの回答済み状態と匿名セッション番号を消します。別の人が回答しますか？"
+  );
+  if (!confirmed) return;
+  SurveyState.resetCampaign();
+  window.location.reload();
+};
+
+window.addEventListener("pageshow", ()=>{
+  if (SurveyState.isComplete(SURVEY_KIND)) showCompletedVisit();
+});
+if (SurveyState.isComplete(SURVEY_KIND)) showCompletedVisit();
 </script>
 </body>
 </html>

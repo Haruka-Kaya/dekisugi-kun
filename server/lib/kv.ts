@@ -23,6 +23,23 @@ export async function kv(commands: string[][]): Promise<unknown[]> {
     body: JSON.stringify(commands),
   })
   if (!res.ok) throw new Error(`KV エラー: ${res.status}`)
-  const out = (await res.json()) as Array<{ result: unknown }>
-  return out.map((o) => o.result)
+  const out = (await res.json()) as unknown
+  if (!Array.isArray(out) || out.length !== commands.length) {
+    throw new Error('KV 応答の形式が不正です')
+  }
+  return out.map((entry, index) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw new Error(`KV command ${index + 1} の応答形式が不正です`)
+    }
+    const result = entry as { error?: unknown; result?: unknown }
+    if (typeof result.error === 'string' && result.error.length > 0) {
+      // Upstash pipelineはcommand失敗でもHTTP 200を返す。error本文は入力値を
+      // 含み得るためログへ転記せず、command位置だけを通知する。
+      throw new Error(`KV command ${index + 1} が失敗しました`)
+    }
+    if (!Object.prototype.hasOwnProperty.call(result, 'result')) {
+      throw new Error(`KV command ${index + 1} にresultがありません`)
+    }
+    return result.result
+  })
 }
