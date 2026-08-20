@@ -31,16 +31,13 @@ class ParticipantQrCode extends StatelessWidget {
       child: ExcludeSemantics(
         child: LayoutBuilder(
           builder: (context, constraints) {
+            // 幅の狭いsheetやsplit viewでも、最低サイズを優先して親から
+            // はみ出さない。十分な幅がある通常画面ではmaxSizeまで表示する。
+            final availableWidth = constraints.maxWidth.isFinite
+                ? constraints.maxWidth
+                : maxSize;
             final size = math
-                .min(
-                  maxSize,
-                  math.max(
-                    96,
-                    constraints.maxWidth.isFinite
-                        ? constraints.maxWidth
-                        : maxSize,
-                  ),
-                )
+                .min(maxSize, math.max(0.0, availableWidth))
                 .toDouble();
             return Container(
               width: size,

@@ -1,5 +1,6 @@
 import 'package:dekisugi/config/app_theme.dart';
 import 'package:dekisugi/screens/qr_scan_screen.dart';
+import 'package:dekisugi/widgets/participant_qr_code.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -9,9 +10,8 @@ void main() {
       MaterialApp(
         theme: buildAppTheme(Brightness.light),
         home: QrScanScreen(
-          scannerBuilder: (context, onScanned) => const Center(
-            child: Text(QrScanScreen.cameraUnavailableMessage),
-          ),
+          scannerBuilder: (context, onScanned) =>
+              const Center(child: Text(QrScanScreen.cameraUnavailableMessage)),
         ),
       ),
     );
@@ -55,5 +55,28 @@ void main() {
 
     expect(result, 'DKS1.example');
     expect(find.text('開く'), findsOneWidget);
+  });
+
+  testWidgets('狭い領域でもQRを親幅より大きくせずoverflowしない', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: const Center(
+          child: SizedBox(
+            width: 72,
+            child: ParticipantQrCode(
+              data: 'DKSC1:01-01-A',
+              semanticLabel: '教材QR',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSize(find.byKey(const ValueKey('participant-qr-code'))).width,
+      72,
+    );
+    expect(tester.takeException(), isNull);
   });
 }
