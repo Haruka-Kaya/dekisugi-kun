@@ -210,6 +210,14 @@ void main() {
     expect(ClassroomAssignment.normalizeClassroomCode('01-02-D'), isNull);
     expect(ClassroomAssignment.normalizeClassroomCode('学校A-1'), isNull);
     expect(
+      ClassroomAssignment.classroomCodeFromQrPayload('DKSC1:01-02-B'),
+      '01-02-B',
+    );
+    expect(
+      ClassroomAssignment.classroomCodeFromQrPayload('DKS1:not-a-classroom-code'),
+      isNull,
+    );
+    expect(
       ClassroomAssignment.findByClassroomCode(
         missions,
         '１ー２ーＣ',

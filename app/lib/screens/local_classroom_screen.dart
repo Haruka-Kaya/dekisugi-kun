@@ -2,6 +2,7 @@ import 'dart:async';
 
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
+import '../config/game_tokens.dart';
 import '../models/classroom_mission.dart';
 import '../models/unit.dart';
 import '../services/local_classroom_run_store.dart';
@@ -9,8 +10,10 @@ import '../services/units_client.dart';
 import '../ui/_material.dart';
 import '../widgets/readable_width.dart';
 import '../widgets/studio_ui.dart';
+import '../widgets/participant_qr_code.dart';
 import 'material_screen.dart';
 import 'offline_practice_screen.dart';
+import 'qr_scan_screen.dart';
 
 /// 端末内ホームに置く、授業への短い入口。
 ///
@@ -188,6 +191,7 @@ class LocalClassroomScreen extends StatefulWidget {
     required this.runStore,
     this.onAssignmentCompleted,
     this.onRunChanged,
+    this.scanClassroomCode,
   });
 
   final UnitsClient units;
@@ -204,6 +208,9 @@ class LocalClassroomScreen extends StatefulWidget {
   )?
   onAssignmentCompleted;
   final Future<void> Function()? onRunChanged;
+
+  /// QRのカメラ実装を差し替えるテスト用の入口。読取後も教材は開始しない。
+  final Future<String?> Function(BuildContext context)? scanClassroomCode;
 
   @override
   State<LocalClassroomScreen> createState() => _LocalClassroomScreenState();
@@ -379,6 +386,39 @@ class _LocalClassroomScreenState extends State<LocalClassroomScreen> {
       return;
     }
     await _start(assignment);
+  }
+
+  Future<void> _scanClassroomCode() async {
+    if (_busy) return;
+    final raw =
+        await (widget.scanClassroomCode?.call(context) ??
+            Navigator.of(context).push<String>(
+              MaterialPageRoute<String>(builder: (_) => const QrScanScreen()),
+            ));
+    if (!mounted || raw == null) return;
+    final code = ClassroomAssignment.classroomCodeFromQrPayload(raw);
+    if (code == null ||
+        ClassroomAssignment.findByClassroomCode(_missions, code) == null) {
+      setState(() {
+        _submittedInvalid = true;
+        _loadError = 'このQRは現在の同梱教材の授業コードではありません。先生の教材QRを読み取ってください。';
+      });
+      return;
+    }
+    setState(() {
+      _number.text = code;
+      _submittedInvalid = false;
+      _loadError = null;
+    });
+  }
+
+  Future<void> _openTeacherPreparation() async {
+    if (_busy) return;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => TeacherLocalClassroomScreen(units: widget.units),
+      ),
+    );
   }
 
   Future<void> _start(
@@ -640,6 +680,14 @@ class _LocalClassroomScreenState extends State<LocalClassroomScreen> {
                     _loadError = null;
                   }),
                   onSubmit: _startFromNumber,
+                  onScan: _scanClassroomCode,
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  key: const ValueKey('local-classroom-teacher-preparation'),
+                  onPressed: _busy ? null : _openTeacherPreparation,
+                  icon: const Icon(Icons.qr_code_2_outlined),
+                  label: const Text('先生が教材QRを準備する'),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
@@ -969,6 +1017,7 @@ class _MaterialNumberForm extends StatelessWidget {
     required this.busy,
     required this.onChanged,
     required this.onSubmit,
+    required this.onScan,
   });
 
   final TextEditingController controller;
@@ -977,6 +1026,7 @@ class _MaterialNumberForm extends StatelessWidget {
   final bool busy;
   final ValueChanged<String> onChanged;
   final VoidCallback onSubmit;
+  final VoidCallback onScan;
 
   @override
   Widget build(BuildContext context) {
@@ -1064,6 +1114,16 @@ class _MaterialNumberForm extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              key: const ValueKey('local-classroom-scan-code'),
+              onPressed: busy ? null : onScan,
+              icon: const Icon(Icons.qr_code_scanner_outlined),
+              label: const Text('教材QRを読み取る'),
+            ),
+          ),
+          const SizedBox(height: 10),
           FilledButton.icon(
             key: const ValueKey('local-classroom-start'),
             onPressed: busy ? null : onSubmit,
@@ -1071,6 +1131,156 @@ class _MaterialNumberForm extends StatelessWidget {
             label: Text(busy ? '教材を開いています…' : 'この教材を開く'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 先生が板書の代わりに、端末内教材のQRを表示する画面。
+///
+/// これは名簿・成績・学校サーバーを扱わない「授業準備」だけの画面である。
+/// 認証付きの先生用集計は、この端末内モードと混同しない。
+class TeacherLocalClassroomScreen extends StatefulWidget {
+  const TeacherLocalClassroomScreen({super.key, required this.units});
+
+  final UnitsClient units;
+
+  @override
+  State<TeacherLocalClassroomScreen> createState() =>
+      _TeacherLocalClassroomScreenState();
+}
+
+class _TeacherLocalClassroomScreenState
+    extends State<TeacherLocalClassroomScreen> {
+  List<ClassroomAssignment> _assignments = const [];
+  ClassroomAssignment? _selected;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final units = await widget.units.list();
+      if (!mounted) return;
+      final assignments = ClassroomAssignment.fromMissions(
+        ClassroomMission.fromUnits(units),
+      );
+      setState(() {
+        _assignments = assignments;
+        _selected = assignments.isEmpty ? null : assignments.first;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _error = '端末内の教材を読み込めませんでした。');
+    }
+  }
+
+  Future<void> _chooseAssignment() async {
+    final picked = await Navigator.of(context).push<ClassroomAssignment>(
+      MaterialPageRoute<ClassroomAssignment>(
+        builder: (_) =>
+            ClassroomAssignmentListScreen(assignments: _assignments),
+      ),
+    );
+    if (mounted && picked != null) setState(() => _selected = picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gamePalette;
+    final theme = Theme.of(context);
+    final assignment = _selected;
+    return Scaffold(
+      backgroundColor: colors.canvas,
+      appBar: AppBar(title: const Text('先生の授業準備')),
+      body: SafeArea(
+        top: false,
+        child: ReadableWidth(
+          child: ListView(
+            key: const ValueKey('teacher-local-classroom-screen'),
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 48),
+            children: [
+              Semantics(
+                header: true,
+                child: Text(
+                  '教材QRを準備する',
+                  style: theme.textTheme.headlineSmall
+                      ?.copyWith(color: colors.ink)
+                      .jaWeight(FontWeight.w900),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'このQRには同梱教材の番号だけが入ります。生徒名、学級、回答、成績、端末ID、LANの管理キーは扱いません。生徒は読み取った後に教材名を確認してから開始します。',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: colors.inkMuted,
+                ),
+              ),
+              const SizedBox(height: 20),
+              if (_error case final message?)
+                _InlineError(message: message, onRetry: _load)
+              else if (assignment == null)
+                const Center(child: CircularProgressIndicator())
+              else ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    border: Border.all(color: colors.border),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        '${assignment.classroomCode}  ${assignment.mission.conceptLabel}',
+                        style: theme.textTheme.titleLarge
+                            ?.copyWith(color: colors.ink)
+                            .jaWeight(FontWeight.w900),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${assignment.mission.unit.title}・${assignment.round.label}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colors.inkMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Center(
+                        child: ParticipantQrCode(
+                          data: assignment.classroomQrPayload,
+                          semanticLabel:
+                              '教材QR。教材番号${assignment.classroomCode}。個人情報やLANの参加情報は含まれていません。',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          key: const ValueKey('teacher-local-classroom-select'),
+                          onPressed: _chooseAssignment,
+                          icon: const Icon(Icons.edit_note_outlined),
+                          label: const Text('教材とラウンドを選ぶ'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'この端末内モードは、認証付きの先生管理画面や成績集計ではありません。学校サーバーへ接続せず、QRの利用記録も保存しません。',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.inkMuted,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

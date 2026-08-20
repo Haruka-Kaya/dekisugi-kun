@@ -102,6 +102,11 @@ class ClassroomAssignment {
 
   String get id => '${mission.id}/$practiceAttempt';
   String get classroomCode => '${mission.materialNumber}-${round.code}';
+
+  /// 教室内だけで配る教材番号のQR payload。
+  ///
+  /// 学校・学級・生徒・端末を識別せず、LANの参加コードとも混同しない。
+  String get classroomQrPayload => 'DKSC1:$classroomCode';
   int get practiceAttempt => round.practiceAttempt;
   MissionKind get missionKind => round.missionKind;
 
@@ -179,5 +184,15 @@ class ClassroomAssignment {
     }
     return '${unit.toString().padLeft(2, '0')}-'
         '${concept.toString().padLeft(2, '0')}-${match.group(3)!}';
+  }
+
+  /// [classroomQrPayload]から教材番号だけを取り出す。
+  ///
+  /// QRを読んだだけでは教材を開始しない。画面側で概念名を確認してから
+  /// 「この教材を開く」を明示的に押す。
+  static String? classroomCodeFromQrPayload(String input) {
+    const prefix = 'DKSC1:';
+    if (!input.trim().toUpperCase().startsWith(prefix)) return null;
+    return normalizeClassroomCode(input.trim().substring(prefix.length));
   }
 }

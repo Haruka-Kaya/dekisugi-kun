@@ -146,6 +146,7 @@ Future<void> _pumpClassroom(
   bool largeText = false,
   Future<void> Function(ClassroomAssignment assignment, DateTime occurredAt)?
   onAssignmentCompleted,
+  Future<String?> Function(BuildContext context)? scanClassroomCode,
 }) => tester.pumpWidget(
   MaterialApp(
     locale: const Locale('ja'),
@@ -162,6 +163,7 @@ Future<void> _pumpClassroom(
       units: _LocalUnits(),
       runStore: LocalClassroomRunStore(store),
       onAssignmentCompleted: onAssignmentCompleted,
+      scanClassroomCode: scanClassroomCode,
     ),
   ),
 );
@@ -311,6 +313,51 @@ _captureRoundB(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('先生の教材QRは個人情報なしで表示され、読取後も開始を確認する', (tester) async {
+    final store = MemorySessionStore();
+    await _pumpClassroom(
+      tester,
+      store: store,
+      scanClassroomCode: (_) async => 'DKSC1:01-01-B',
+    );
+    await tester.pumpAndSettle();
+
+    final prepare = find.byKey(
+      const ValueKey('local-classroom-teacher-preparation'),
+    );
+    await _reveal(tester, prepare);
+    await tester.tap(prepare);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('teacher-local-classroom-screen')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('participant-qr-code')), findsOneWidget);
+    expect(find.textContaining('LANの管理キーは扱いません'), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    final scan = find.byKey(const ValueKey('local-classroom-scan-code'));
+    await _reveal(tester, scan);
+    await tester.tap(scan);
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<TextField>(
+            find.byKey(const ValueKey('local-classroom-number')),
+          )
+          .controller!
+          .text,
+      '01-01-B',
+    );
+    expect(find.byType(MaterialScreen), findsNothing);
+    expect(
+      find.byKey(const ValueKey('local-classroom-number-match')),
+      findsOneWidget,
+    );
+  });
 
   testWidgets('端末内ホームの授業入口は途中概念を読み上げ、1操作で開ける', (tester) async {
     final store = MemorySessionStore();

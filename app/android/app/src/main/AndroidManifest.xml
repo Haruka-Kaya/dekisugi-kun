@@ -9,10 +9,15 @@
          Android 13+ では実行時に求める。同意画面では聞かず、
          初回の会話を終えた直後に聞く -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- LAN参加コード・教室教材番号のQRを読むためだけに使う。読み取った値は
+         確認欄へ入れるだけで、映像・回答・音声・管理キーを保存しない。 -->
+    <uses-permission android:name="android.permission.CAMERA"/>
 
     <!-- マイクが無い端末は Play ストアの対象から外す。
          required="false" にすると、会話できない端末にインストールされてしまう -->
     <uses-feature android:name="android.hardware.microphone" android:required="true"/>
+    <!-- カメラが無い端末でも文字入力で参加・教材開始できる。 -->
+    <uses-feature android:name="android.hardware.camera.any" android:required="false"/>
 
     <application
         android:label="デキすぎ君"
