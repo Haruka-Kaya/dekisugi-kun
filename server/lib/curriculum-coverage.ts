@@ -303,6 +303,36 @@ export const CURRICULUM_COVERAGE_MANIFEST: Readonly<
     difficulty: 3,
     safety: referenceOnly('プラネタリウム画像・日影の固定写真・紙模型を使い、太陽を直接見ず夜間に一人で屋外観測しない。'),
   },
+  combinationDecomposition: {
+    unitId: 'chemical-change',
+    conceptKey: 'combinationDecomposition',
+    field: 'matter',
+    grade: 2,
+    curriculumRefs: [ref('第1分野 (4)(ア)(イ) 物質の成り立ち・化学変化', 46, 47, 48, 49)],
+    prerequisites: ['stateChangeMass'],
+    difficulty: 3,
+    safety: referenceOnly('家庭で加熱・薬品の混合・気体の発生は行わず、配布された実験記録と図・動画だけを使う。'),
+  },
+  oxidationReduction: {
+    unitId: 'chemical-change',
+    conceptKey: 'oxidationReduction',
+    field: 'matter',
+    grade: 2,
+    curriculumRefs: [ref('第1分野 (4)(イ) 化学変化における酸化と還元', 48, 49, 50)],
+    prerequisites: ['combinationDecomposition'],
+    difficulty: 4,
+    safety: referenceOnly('さびの観察は手を洗いとがった部分に触れない範囲で行い、加熱・薬品・燃焼を伴う確かめは学校の記録と動画だけを使う。'),
+  },
+  massConservation: {
+    unitId: 'chemical-change',
+    conceptKey: 'massConservation',
+    field: 'matter',
+    grade: 2,
+    curriculumRefs: [ref('第1分野 (4)(ウ) 化学変化と物質の質量', 50, 51)],
+    prerequisites: ['combinationDecomposition'],
+    difficulty: 4,
+    safety: referenceOnly('気体発生や加熱を伴う反応は学校配布の測定記録だけを使い、家庭で薬品の混合・加熱・密閉実験をしない。'),
+  },
 }
 
 export function curriculumCoverageFor(

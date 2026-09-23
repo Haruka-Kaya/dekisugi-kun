@@ -903,6 +903,203 @@ const EN_STAGE1_UNITS = mergeStage1UnitTexts(
 
 const EN_UNITS: Record<string, UnitText> = {
   ...EN_STAGE1_UNITS,
+  'chemical-change': {
+    title: 'Chemical Change, Atoms and Molecules',
+    brief:
+      'Treat combination, decomposition, oxidation and reduction as rearrangements of atoms, '
+      + 'and explain the amounts with the law of conservation of mass.',
+    concepts: {
+      combinationDecomposition: {
+        label: 'Combination and decomposition',
+        intent:
+          'That decomposition is one substance splitting into two or more different substances, '
+          + 'and combination is two or more substances joining into a different substance. '
+          + 'Complete only when the learner can judge a change by evidence that the product has '
+          + 'different properties, distinguishing it from separating a mixture or a state change.',
+      },
+      oxidationReduction: {
+        label: 'Oxidation and reduction',
+        intent:
+          'That oxidation is a substance combining with oxygen and reduction is removing oxygen '
+          + 'from an oxide — opposite reactions exchanging oxygen. Complete only when the learner '
+          + 'can explain that burning, rusting and respiration are oxidation, and that the mass gain '
+          + 'of an oxidized substance comes from the oxygen that joined it.',
+      },
+      massConservation: {
+        label: 'Conservation of mass',
+        intent:
+          'That the total mass of all substances involved is equal before and after a chemical '
+          + 'change, explained by atoms being rearranged. Complete only when the learner can also '
+          + 'explain the apparent gain or loss in an open system by whether the substances that '
+          + 'moved in or out were included in the measurement.',
+      },
+    },
+    sections: {
+      combinationDecomposition: {
+        title: 'Just mixed together, or a different substance?',
+        localSpeakingPractice: {
+          targetPhrase: 'Combination joins substances; decomposition splits them',
+          acceptedTranscripts: [
+            'Combination joins substances; decomposition splits them',
+          ],
+        },
+        body: [
+          'Mix iron filings and powdered sulfur well, and each grain is still iron or sulfur — '
+          + 'a magnet still picks out the iron grains. But heat the mixture and a reaction runs: '
+          + 'the result is iron sulfide, a black substance the magnet ignores. '
+          + 'Mixing and combining are not the same thing.',
+          'When two or more substances join into a different substance, the change is called '
+          + '**combination**; when one substance splits into two or more different substances, '
+          + 'it is **decomposition**. Heating sodium hydrogen carbonate into sodium carbonate, '
+          + 'water and carbon dioxide is a decomposition. Both are chemical changes: the kinds '
+          + 'of substance present before and after differ.',
+          'Ice melting or salt dissolving in water does not change the kind of substance, so '
+          + 'those are not chemical changes. To tell one apart, check whether a substance with '
+          + 'different properties was produced. Color, smell, bubbles and temperature shifts are '
+          + 'clues, but in the end the properties of the product decide.',
+          'In the atom and molecule model, a chemical change is a change in how atoms are '
+          + '**combined**. The atoms themselves are neither destroyed nor created. That is why '
+          + 'the products have properties the reactants did not.',
+        ],
+        tryIt:
+          'Using the distributed lab record "iron filings and sulfur mixture, before and after '
+          + 'heating", write down two ways the response to a magnet and the appearance differ '
+          + 'before and after, and explain the evidence that a different substance was produced. '
+          + 'Do not heat anything or mix chemicals at home.',
+        localCheckpoint: {
+          lure: 'Once iron filings and sulfur powder are well mixed, the iron is already combined with the sulfur.',
+          options: [
+            {
+              id: 'mixture-not-compound',
+              text: 'Mixing alone leaves the grains as iron and sulfur; only after a reaction such as heating produces a differently-behaving substance has combination occurred.',
+            },
+            {
+              id: 'mixed-means-combined',
+              text: 'A well-mixed powder has its grains in contact, so combination has already happened.',
+              hint: 'What happens to the iron grains when a magnet is brought near the unheated mixture?',
+            },
+            {
+              id: 'heating-restores',
+              text: 'The changed color from heating returns when it cools, so the kind of substance stays the same.',
+              hint: 'Does the heated substance still respond to a magnet, or is the change more than appearance?',
+            },
+          ],
+          correctOptionId: 'mixture-not-compound',
+          explanation:
+            'In a mixture the iron and sulfur grains keep their own properties. Once heating causes '
+            + 'a chemical change and iron sulfide — a substance the magnet ignores — is produced, '
+            + 'combination has occurred.',
+        },
+      },
+      oxidationReduction: {
+        title: 'The surprising link between burning and rusting',
+        localSpeakingPractice: {
+          targetPhrase: 'Oxidation is combining with oxygen and reduction is removing oxygen',
+          acceptedTranscripts: [
+            'Oxidation is combining with oxygen and reduction is removing oxygen',
+          ],
+        },
+        body: [
+          'Heated copper turns black on its surface; iron left in air develops red rust. '
+          + 'Both are chemical changes in which a substance combines with oxygen — **oxidation**. '
+          + 'Oxidation that runs violently with flame is combustion; oxidation that creeps along '
+          + 'is rusting. Respiration is a form of oxidation too.',
+          'The substance made by oxidation is called an **oxide**: copper oxide, iron oxide, '
+          + 'magnesium oxide. An oxide has properties the original substance did not, and the '
+          + 'mass of the oxidized substance grows by the amount of oxygen that joined it.',
+          'The chemical change that removes oxygen from an oxide is called **reduction**. '
+          + 'Heat powdered copper oxide mixed with carbon and the oxygen moves to the carbon, '
+          + 'leaving shiny red copper and carbon dioxide. Oxidation and reduction are opposite '
+          + 'reactions passing oxygen back and forth.',
+          'Rust looks like dirt stuck on the surface, but the iron itself has combined with '
+          + 'oxygen and become a different substance. And although burned things look lighter, '
+          + 'the picture changes once the joined oxygen and the escaped gases are counted too.',
+        ],
+        tryIt:
+          'Safely observe a place near home where iron is rusty (a gate, a fence, a bicycle '
+          + 'frame) and compare the color and surface of rusted and non-rusted parts in writing. '
+          + 'Give one observation showing that rust is a substance with different properties '
+          + 'from iron. Wash your hands after touching rust, and never touch sharp or '
+          + 'deteriorating parts.',
+        localCheckpoint: {
+          lure: 'Rust is just red dirt stuck on the surface — the iron has not combined with oxygen.',
+          options: [
+            {
+              id: 'surface-dirt',
+              text: 'Rust is dirt attached from outside, so scraping it off leaves the iron completely unchanged.',
+              hint: 'Does the metal keep its original mass and hardness once the rust is removed?',
+            },
+            {
+              id: 'rust-is-oxide',
+              text: 'Rust is an oxide formed when iron combines with oxygen — a different substance from the original iron.',
+            },
+            {
+              id: 'rust-is-reduction',
+              text: 'Rust forms when oxygen leaves iron, so it is a kind of reduction.',
+              hint: 'Which of oxidation and reduction is the reaction that gains oxygen?',
+            },
+          ],
+          correctOptionId: 'rust-is-oxide',
+          explanation:
+            'Rust is an oxide produced when iron slowly reacts with oxygen and moisture — it has '
+            + 'different properties from iron. It is not surface dirt; the iron itself has become '
+            + 'a different substance through oxidation.',
+        },
+      },
+      massConservation: {
+        title: 'Burned or decomposed — mass never goes anywhere',
+        localSpeakingPractice: {
+          targetPhrase: 'In a chemical change the total mass of all substances involved does not change',
+          acceptedTranscripts: [
+            'In a chemical change the total mass of all substances involved does not change',
+          ],
+        },
+        body: [
+          'Add hydrochloric acid to sodium hydrogen carbonate and carbon dioxide is produced. '
+          + 'In an open vessel the gas escapes and the mass seems to drop — but if the gas is '
+          + 'counted too, the total mass before and after the reaction is equal.',
+          'Before and after a chemical change, the total mass of all substances taking part is '
+          + 'equal. This is the **law of conservation of mass**. A chemical change only rearranges '
+          + 'how atoms are combined; the atoms themselves are never destroyed or created.',
+          'There are examples that look the opposite. Copper heated in air gains mass — by the '
+          + 'amount of oxygen that joined it. If the air is left out of "the whole thing being '
+          + 'measured", it looks like a gain; include it and the books balance.',
+          'What matters is how far "everything being measured" extends. Open and closed systems '
+          + 'seem to give different results only because the substances that moved in or out were '
+          + 'or were not included in the measurement — not because the law has exceptions.',
+        ],
+        tryIt:
+          'Using the distributed lab records, read the two mass records from reacting '
+          + '"hydrochloric acid plus sodium hydrogen carbonate" once in an open vessel and once '
+          + 'in a sealed bag that lets no gas escape, and explain the different readings by how '
+          + 'much was included in the measurement. Do not mix chemicals or heat anything at home.',
+        localCheckpoint: {
+          lure: 'For reactions that produce an escaping gas, conservation of mass does not hold.',
+          options: [
+            {
+              id: 'gas-no-mass',
+              text: 'Gases have no mass, so any gas produced can be left out of the mass calculation.',
+              hint: 'Do gases have mass? Check with an inflated balloon or a pump.',
+            },
+            {
+              id: 'conservation-fails',
+              text: 'The mass drops in an open vessel because part of the substance disappeared in the reaction.',
+              hint: 'Did it disappear, or did it move outside the range being measured?',
+            },
+            {
+              id: 'count-escaped-gas',
+              text: 'If the escaped gas is measured too, the total mass before and after the reaction is equal.',
+            },
+          ],
+          correctOptionId: 'count-escaped-gas',
+          explanation:
+            'In an open vessel the reading drops because the produced gas left the measured range. '
+            + 'Gases have mass, so sealing the system and measuring everything makes the totals '
+            + 'before and after equal.',
+        },
+      },
+    },
+  },
   'force-motion': {
     title: 'Force and Motion',
     brief:
@@ -1829,6 +2026,29 @@ const EN_MISCONCEPTIONS: Record<string, MisconceptionText> = {
       'Seasons occur because Earth moves closer to the Sun in summer and farther away in winter.',
     lure:
       'Summer is hot and winter is cold because Earth moves closer to the Sun in summer — right?',
+  },
+  M24: {
+    correct:
+      'Iron filings and sulfur simply mixed stay a mixture whose grains keep their properties. '
+      + 'Only once a chemical change such as heating produces iron sulfide, a differently-behaving '
+      + 'substance, has combination occurred.',
+    misconception: 'Mixing substances thoroughly creates a new substance (a compound).',
+    lure: 'So if you mix iron and sulfur really well, that’s already iron sulfide, right?',
+  },
+  M25: {
+    correct:
+      'Rust is an oxide iron forms by slowly reacting with oxygen and moisture — a different '
+      + 'substance from iron. Oxidation covers not only combustion but slow combinations with '
+      + 'oxygen such as rusting and respiration.',
+    misconception: 'Rust is dirt stuck to the surface; the iron has not combined with oxygen.',
+    lure: 'Rust is just red stuff stuck on the surface — it’s not iron bonded with oxygen, is it?',
+  },
+  M26: {
+    correct:
+      'Gases have mass, and when the gas produced or escaping is included in the measurement, '
+      + 'the total mass before and after a chemical change is equal.',
+    misconception: 'Gases have no mass, so in reactions that emit gas or burn, mass is not conserved.',
+    lure: 'Gases weigh nothing, so when smoke comes out, mass drops by that much — right?',
   },
 }
 

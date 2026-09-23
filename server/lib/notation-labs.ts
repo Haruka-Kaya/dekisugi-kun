@@ -7,6 +7,7 @@
 
 import { STAGE1_EXPANSION_NOTATION_LABS } from './stage1-expansion-notation.js'
 import { STAGE1_PROOF_NOTATION_LABS } from './stage1-proof-notation.js'
+import { STAGE2_NOTATION_LABS } from './stage2-notation.js'
 
 export type NotationToken = { id: string; label: string }
 export type NotationChoice = { id: string; label: string }
@@ -674,6 +675,7 @@ export const NOTATION_LABS: Readonly<Record<string, NotationLab>> = {
   }),
   ...STAGE1_PROOF_NOTATION_LABS,
   ...STAGE1_EXPANSION_NOTATION_LABS,
+  ...STAGE2_NOTATION_LABS,
 }
 
 /** 未知conceptへ似た式を推測せず、必ずundefinedへ倒す。 */
