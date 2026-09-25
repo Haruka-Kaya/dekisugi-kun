@@ -75,6 +75,9 @@ const EXPECTED_STORY_SIGNATURES = {
   combinationDecomposition: ['混ぜただけ粉チームの冤罪事件', '家庭科室の資料棚。鉄粉と硫黄を混ぜた粉末と、加熱後の黒いかたまりの観察記録が並ぶ。', '瞬間化合説、磁石の前で見事に散りました。'],
   oxidationReduction: ['赤い汚れの正体を追え', '昇降口のフェンスの写真と、学校で保存されたさびの観察記録が開かれている。', '犯人は空で合ってた！でも手口は「酸素と結びつく」でした。'],
   massConservation: ['消えた1.1グラムの密室', '理科室の測定記録。開いた容器と密閉袋で同じ反応をさせた二つの表が残る。', '消えた質量、実は窓から出ていった二酸化炭素でした。密室でも何でもない！'],
+  electrolyte: ['消えた豆電球の容疑者たち', '理科室の資料机。食塩水では光り、砂糖水では消えた豆電球の実験記録と写真が並ぶ。', '甘さ仮説は溶解！真犯人は「イオンがいるかどうか」でした。'],
+  acidAlkali: ['三色に分かれた液の身元', '放送室の資料画面。3つの液にBTB溶液を加えた記録で、黄・緑・青に分かれている。', '黄色はレモン味のサインじゃなくて、水素イオンのサインでした。飲まなくてよかった！'],
+  neutralizationBattery: ['果物電池に宿った電気の行方', '図書室の資料端末。レモンに亜鉛板と銅板を差して電流が流れた記録と、乾電池の写真がある。', '電気は果汁に宿ってたんじゃなくて、金属たちの「なりたさ」の差で流れてました。レモンさん、疑ってごめん！'],
 } as const
 
 type PublicConcept = {
@@ -165,8 +168,8 @@ describe('学習ミッションのカタログ不変条件', () => {
       'earth-history': ['strataRelativeAge', 'volcanoEarthquakes', 'dailyMotionSeasons'],
     } as const
 
-    assert.equal(UNITS.length, 9)
-    assert.equal(UNITS.flatMap((unit) => unit.concepts).length, 26)
+    assert.equal(UNITS.length, 10)
+    assert.equal(UNITS.flatMap((unit) => unit.concepts).length, 29)
     for (const [unitId, conceptKeys] of Object.entries(expectedStage1)) {
       const unit = unitById(unitId)
       assert.ok(unit, `${unitId}: Stage 1 unitが無い`)
@@ -181,12 +184,12 @@ describe('学習ミッションのカタログ不変条件', () => {
     }
   })
 
-  it('26概念のSpeaking目標を正本化し、欠落・未知field・短文・重複を拒否する', () => {
+  it('29概念のSpeaking目標を正本化し、欠落・未知field・短文・重複を拒否する', () => {
     const sections = UNITS.flatMap((unit) => unit.sections)
-    assert.equal(sections.length, 26)
+    assert.equal(sections.length, 29)
     assert.equal(
       new Set(sections.map((section) => section.conceptKey)).size,
-      26,
+      29,
       'Speaking目標が概念と1対1でない',
     )
     for (const section of sections) {
@@ -257,11 +260,11 @@ describe('学習ミッションのカタログ不変条件', () => {
     }
   })
 
-  it('全26conceptが3周で異なる問い・正答位置・誤答だけのヒントを持つ', () => {
+  it('全29conceptが3周で異なる問い・正答位置・誤答だけのヒントを持つ', () => {
     assert.deepEqual(validateCatalog(), [])
 
     const sections = UNITS.flatMap((unit) => unit.sections)
-    assert.equal(sections.length, 26)
+    assert.equal(sections.length, 29)
     const correctPositions = new Set<number>()
 
     for (const section of sections) {
@@ -373,14 +376,14 @@ describe('学習ミッションのカタログ不変条件', () => {
       }
     }
 
-    assert.equal(cognitiveCount, 78)
-    assert.equal(wrongOptionCount, 156)
-    assert.equal(notationCount, 89)
-    assert.equal(practiceCodes.size, 78)
-    assert.equal(notationCodes.size, 89)
+    assert.equal(cognitiveCount, 87)
+    assert.equal(wrongOptionCount, 174)
+    assert.equal(notationCount, 98)
+    assert.equal(practiceCodes.size, 87)
+    assert.equal(notationCodes.size, 98)
   })
 
-  it('全26concept×3stageのListening聞き取り/意味needを別codeで公開する', () => {
+  it('全29concept×3stageのListening聞き取り/意味needを別codeで公開する', () => {
     const codes = new Set<string>()
     let variantCount = 0
     for (const unit of UNITS) {
@@ -411,14 +414,14 @@ describe('学習ミッションのカタログ不変条件', () => {
         }
       }
     }
-    assert.equal(variantCount, 78)
-    assert.equal(codes.size, 156)
+    assert.equal(variantCount, 87)
+    assert.equal(codes.size, 174)
     assert.throws(() => scienceListeningNeedCodes('unknown-concept', 'foundation'))
   })
 
-  it('全26conceptのNotationをcanonical tagged unionへ損失なく公開し、6種類を網羅する', () => {
+  it('全29conceptのNotationをcanonical tagged unionへ損失なく公開し、6種類を網羅する', () => {
     const sections = UNITS.flatMap((unit) => unit.sections)
-    assert.equal(sections.length, 26)
+    assert.equal(sections.length, 29)
     assert.deepEqual(
       new Set(Object.keys(NOTATION_LABS)),
       new Set(sections.map((section) => section.conceptKey)),
@@ -461,12 +464,12 @@ describe('学習ミッションのカタログ不変条件', () => {
       })
     }
 
-    assert.equal(taskCount, 89)
+    assert.equal(taskCount, 98)
     assert.deepEqual([...usedKinds].sort(), [...NOTATION_TASK_KINDS].sort())
     assert.equal(notationLabFor('unknown-concept'), undefined)
   })
 
-  it('全26 Storyが固有の事件名・舞台・落ちを持ち、foundation正本へ完全一致する', () => {
+  it('全29 Storyが固有の事件名・舞台・落ちを持ち、foundation正本へ完全一致する', () => {
     const seenLineIds = new Set<string>()
     const publishedStories = []
     for (const unit of UNITS) {
@@ -522,11 +525,11 @@ describe('学習ミッションのカタログ不変条件', () => {
         publishedStories.push(publicStory)
       }
     }
-    assert.equal(publishedStories.length, 26)
-    assert.equal(new Set(publishedStories.map((story) => story.id)).size, 26)
-    assert.equal(new Set(publishedStories.map((story) => story.title)).size, 26)
-    assert.equal(new Set(publishedStories.map((story) => story.setting)).size, 26)
-    assert.equal(new Set(publishedStories.map((story) => story.punchline.text)).size, 26)
+    assert.equal(publishedStories.length, 29)
+    assert.equal(new Set(publishedStories.map((story) => story.id)).size, 29)
+    assert.equal(new Set(publishedStories.map((story) => story.title)).size, 29)
+    assert.equal(new Set(publishedStories.map((story) => story.setting)).size, 29)
+    assert.equal(new Set(publishedStories.map((story) => story.punchline.text)).size, 29)
   })
 
   it('既存22 trace taskを維持し、不正なtrace・taskを拒否する', () => {
@@ -626,7 +629,7 @@ describe('学習ミッションのカタログ不変条件', () => {
     assert.ok(validateNotationLab(badChoice).some((problem) => problem.includes('choices')))
   })
 
-  it('78variantが監査どおり異なる認知操作を持ち、表示順で正答を示さ��い', () => {
+  it('87variantが監査どおり異なる認知操作を持ち、表示順で正答を示さ��い', () => {
     const expected = {
       fall: [
         ['singleSelect', 'prediction'],
@@ -758,6 +761,21 @@ describe('学習ミッションのカタログ不変条件', () => {
         ['singleSelect', 'quantityCompare'],
         ['singleSelect', 'experimentPlan'],
       ],
+      electrolyte: [
+        ['classify', 'conditionClassify'],
+        ['singleSelect', 'experimentPlan'],
+        ['sequence', 'causalOrder'],
+      ],
+      acidAlkali: [
+        ['singleSelect', 'prediction'],
+        ['classify', 'conditionClassify'],
+        ['singleSelect', 'quantityCompare'],
+      ],
+      neutralizationBattery: [
+        ['sequence', 'causalOrder'],
+        ['singleSelect', 'prediction'],
+        ['singleSelect', 'experimentPlan'],
+      ],
     } as const
     const directSignals: Readonly<Record<string, readonly RegExp[]>> = {
       fall: [/平らな紙.*丸めた紙/, /着地時刻.*空気.*抵抗/, /質量.*高さ.*着く時刻/],
@@ -858,6 +876,21 @@ describe('学習ミッションのカタログ不変条件', () => {
         /逃げた気体の分を含めれば.*質量の総和は等しい/,
         /開いた容器で気体を逃がして.*密閉した容器で反応させて全体を測る/,
       ],
+      electrolyte: [
+        /食塩を溶かした水.*砂糖を溶かした水.*うすい塩酸.*電気を通す液.*電気を通さない液/,
+        /液の色を見て.*においをかいで.*電極を入れて電圧をかけ.*物質ができるか/,
+        /電極に新しい物質が生成.*電圧をかける.*イオンが電極へ移動/,
+      ],
+      acidAlkali: [
+        /BTB溶液を加えると黄色.*青色.*緑色/,
+        /ぬるぬる.*BTB溶液が黄色.*炭酸水素ナトリウム.*リトマス紙.*水素イオン.*水酸化物イオン/,
+        /pH5の液のほうが.*酸性の強さは同じ.*pH3の液のほうが/,
+      ],
+      neutralizationBattery: [
+        /塩の結晶ができる.*水素イオンと水酸化物イオンが結びつく.*酸とアルカリの性質が打ち消される/,
+        /何も残らない.*塩の結晶が残る.*酸そのものが結晶/,
+        /イオンへのなりやすさが違う2種類の金属板.*同じ金属の板を2枚.*電気を溜めた容器/,
+      ],
     }
     const usedKinds = new Set<string>()
     const usedOperations = new Set<string>()
@@ -944,7 +977,7 @@ describe('学習ミッションのカタログ不変条件', () => {
 
     assert.deepEqual([...usedKinds].sort(), [...COGNITIVE_TASK_KINDS].sort())
     assert.deepEqual([...usedOperations].sort(), [...COGNITIVE_OPERATIONS].sort())
-    assert.deepEqual(selectPositions, [8, 9, 8])
+    assert.deepEqual(selectPositions, [10, 10, 10])
   })
 
   it('全conceptにsectionと固定misconceptionがちょうど1つずつ対応する', () => {
@@ -982,13 +1015,13 @@ describe('学習ミッションのカタログ不変条件', () => {
     }
   })
 
-  it('26conceptのcoverage metadataをMEXT本文の印刷ページ番号（PageLabels）・前提・安全条件と1対1で公開する', () => {
+  it('29conceptのcoverage metadataをMEXT本文の印刷ページ番号（PageLabels）・前提・安全条件と1対1で公開する', () => {
     const conceptKeys = UNITS.flatMap((unit) =>
       unit.concepts.map((concept) => concept.key),
     )
     const coverageEntries = Object.values(CURRICULUM_COVERAGE_MANIFEST)
     assert.deepEqual(new Set(Object.keys(CURRICULUM_COVERAGE_MANIFEST)), new Set(conceptKeys))
-    assert.equal(coverageEntries.length, 26)
+    assert.equal(coverageEntries.length, 29)
     assert.deepEqual(
       new Set(coverageEntries.map((entry) => entry.field)),
       new Set(CURRICULUM_FIELDS),
@@ -1135,8 +1168,8 @@ describe('学習ミッションのカタログ不変条件', () => {
     )
     assert.equal(
       new Set(listed.flatMap((unit) => unit.concepts.map((concept) => concept.storyTitle))).size,
-      26,
-      'Story一覧で26件の固有事件名を公開していない',
+      29,
+      'Story一覧で29件の固有事件名を公開していない',
     )
 
     for (const summary of listed) {
@@ -1313,7 +1346,7 @@ describe('学習ミッションのカタログ不変条件', () => {
     assert.match(induction.tryIt, /電源はつながず/)
   })
 
-  it('2・3周目も26conceptの成立条件を外さず、別の科学的判断を要求する', () => {
+  it('2・3周目も29conceptの成立条件を外さず、別の科学的判断を要求する', () => {
     function text(unitId: string, conceptKey: string): string {
       const unit = unitById(unitId)!
       const section = unit.sections.find((candidate) => candidate.conceptKey === conceptKey)!
@@ -1413,7 +1446,7 @@ describe('学習ミッションのカタログ不変条件', () => {
     assert.match(sky, /北半球.*南半球.*地軸が傾いたまま公転.*太陽距離/)
   })
 
-  it('78の具体場面それぞれに、checkpointと別の直接な結果と理由が対応する', () => {
+  it('87の具体場面それぞれに、checkpointと別の直接な結果と理由が対応する', () => {
     const signals: Readonly<Record<string, readonly RegExp[]>> = {
       fall: [
         /丸めた紙が先.*平らな紙.*遅く/,
@@ -1544,6 +1577,21 @@ describe('学習ミッションのカタログ不変条件', () => {
         /密閉した袋.*気体が発生しても.*質量は反応前と等しい.*原子.*袋内に残る/,
         /開いた容器.*気体が測定範囲外.*密閉袋.*気体も測定に含まれる.*関わる物質すべて/,
         /酸素が銅へ結びついた分だけ増え.*二酸化炭素が外へ出た分だけ減.*総和は等しい.*すべてを測れば質量は保存/,
+      ],
+      electrolyte: [
+        /食塩水.*電流が流れ.*砂糖水.*流れず.*イオンに分かれ/,
+        /陽極と陰極に決まった物質が生成.*イオン.*電極へ引かれ.*電極の変化がイオンの存在/,
+        /食塩は溶けるとイオンに分かれて電気を通し.*砂糖やエタノールはイオンにならず.*固い食塩はイオンが動けない/,
+      ],
+      acidAlkali: [
+        /BTB溶液.*うすい塩酸は黄色.*水酸化ナトリウム水溶液は青色.*水素イオン.*水酸化物イオン/,
+        /pHが小さいほど酸性が強い.*pH3のほうが強い酸.*pHが大きいほど強いアルカリ性/,
+        /どちらにも気体が発生した.*水素イオンが反応.*勢いの違いは酸の強さ.*水素イオンの仕事/,
+      ],
+      neutralizationBattery: [
+        /中性になるまで混ぜて乾燥させた.*塩化ナトリウム.*水素イオンと水酸化物イオンが結びついて水/,
+        /pH7ではなくても.*水素イオンと水酸化物イオンは水になり.*生成した塩と余った酸/,
+        /亜鉛が電子を放出して亜鉛イオン.*回路を通って銅板へ流れ.*イオンへのなりやすさの差/,
       ],
     }
 

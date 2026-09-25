@@ -333,6 +333,39 @@ export const CURRICULUM_COVERAGE_MANIFEST: Readonly<
     difficulty: 4,
     safety: referenceOnly('気体発生や加熱を伴う反応は学校配布の測定記録だけを使い、家庭で薬品の混合・加熱・密閉実験をしない。'),
   },
+  electrolyte: {
+    unitId: 'chemical-change-ions',
+    conceptKey: 'electrolyte',
+    field: 'matter',
+    grade: 2,
+    curriculumRefs: [ref('第1分野 (6)(ア)(ｱ) 水溶液とイオン', 58, 59, 60)],
+    prerequisites: ['combinationDecomposition'],
+    difficulty: 4,
+    safety: referenceOnly('水溶液への通電は学校配布の実験記録と図だけを使い、家庭で電圧をかけたり薬品や家庭用コンセントを使ったりしない。'),
+  },
+  acidAlkali: {
+    unitId: 'chemical-change-ions',
+    conceptKey: 'acidAlkali',
+    field: 'matter',
+    grade: 2,
+    curriculumRefs: [ref('第1分野 (6)(ア)(イ) 酸・アルカリ', 59, 60)],
+    prerequisites: ['electrolyte'],
+    difficulty: 4,
+    safety: referenceOnly('指示薬や試薬を使う確認は学校配布の色変化記録だけを使い、家庭で液を混ぜたり容器の中身を開けたりしない。'),
+  },
+  neutralizationBattery: {
+    unitId: 'chemical-change-ions',
+    conceptKey: 'neutralizationBattery',
+    field: 'matter',
+    grade: 2,
+    curriculumRefs: [
+      ref('第1分野 (6)(ア)(ウ) 中和と塩', 60, 61),
+      ref('第1分野 (6)(イ) 化学変化と電池', 61, 62),
+    ],
+    prerequisites: ['acidAlkali'],
+    difficulty: 5,
+    safety: referenceOnly('中和・電池の製作は学校配布の記録と図だけを使い、家庭で薬品の混合・乾電池の分解・液への電極投入をしない。'),
+  },
 }
 
 export function curriculumCoverageFor(

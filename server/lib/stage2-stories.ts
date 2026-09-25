@@ -111,4 +111,64 @@ export const STAGE2_STORY_SOURCES: Readonly<Record<string, StorySource>> = {
     ],
     line('massConservation.punchline', 'dekisugi', '消えた質量、実は窓から出ていった二酸化炭素でした。密室でも何でもない！'),
   ),
+  electrolyte: story(
+    'electrolyte.silent-bulb',
+    '消えた豆電球の容疑者たち',
+    '理科室の資料机。食塩水では光り、砂糖水では消えた豆電球の実験記録と写真が並ぶ。',
+    [
+      line('electrolyte.open.1', 'mio', '食塩水だと豆電球がついて、砂糖水だと消えたまま。どっちも透明なのにね。'),
+      line('electrolyte.open.2', 'ren', '塩化銅水溶液だと電極に赤いものができた記録もあるよ。液によって結果が違うね。'),
+      line('electrolyte.open.3', 'dekisugi', '分かった！砂糖の甘さが電気を甘くして、流れを止めるんだ！'),
+    ],
+    [
+      response('electrolyte', 'conduct-any-solution', 'ren', '溶けただけじゃ駄目なんだ。砂糖水は記録でも電気を通してないよ。'),
+      response('electrolyte', 'solid-conducts', 'mio', '固い食塩には電気が流れない記録もあるよ。溶けて動けるかどうかが大事だね。'),
+      response('electrolyte', 'ions-carry', 'ren', '溶けてイオンに分かれた液だけが電気を通す。砂糖は溶けてもイオンにならないんだ。'),
+    ],
+    [
+      line('electrolyte.resolve.1', 'ren', '電解質は溶けるとイオンに分かれて、そのイオンが動いて電流を運ぶんだ。'),
+      line('electrolyte.resolve.2', 'mio', '電極に物質ができるのは、液の中のイオンが集まった証拠なんだね。'),
+    ],
+    line('electrolyte.punchline', 'dekisugi', '甘さ仮説は溶解！真犯人は「イオンがいるかどうか」でした。'),
+  ),
+  acidAlkali: story(
+    'acidAlkali.three-cups',
+    '三色に分かれた液の身元',
+    '放送室の資料画面。3つの液にBTB溶液を加えた記録で、黄・緑・青に分かれている。',
+    [
+      line('acidAlkali.open.1', 'mio', 'うすい塩酸は黄色、食塩水は緑のまま、うすい水酸化ナトリウム水溶液は青色になってる。'),
+      line('acidAlkali.open.2', 'ren', '同じ指示薬で色が違うってことは、液の中の粒が違うってことだね。'),
+      line('acidAlkali.open.3', 'dekisugi', '黄色い液はレモン味に決まってる！酸っぱいはずだから飲もう！'),
+    ],
+    [
+      response('acidAlkali', 'acid-everywhere', 'mio', '食酢やレモン汁も酸だよ。酸の強さには幅があって、危険かは種類と強さで決まるんだ。'),
+      response('acidAlkali', 'all-acid-danger', 'ren', '家にあるものにも酸はあるよ。酸＝全部危険、は違うね。'),
+      response('acidAlkali', 'alkali-safe', 'mio', 'アルカリだって強いと危ないよ。石けん液を目に入れたらだめだよ。'),
+    ],
+    [
+      line('acidAlkali.resolve.1', 'ren', '黄色にするのは水素イオン、青にするのは水酸化物イオン。色は液の中の粒の証言だね。'),
+      line('acidAlkali.resolve.2', 'mio', 'pH7が中性で、離れるほど強い酸・強いアルカリ。数字が強さを教えてくれるね。'),
+    ],
+    line('acidAlkali.punchline', 'dekisugi', '黄色はレモン味のサインじゃなくて、水素イオンのサインでした。飲まなくてよかった！'),
+  ),
+  neutralizationBattery: story(
+    'neutralizationBattery.lemon-cell',
+    '果物電池に宿った電気の行方',
+    '図書室の資料端末。レモンに亜鉛板と銅板を差して電流が流れた記録と、乾電池の写真がある。',
+    [
+      line('neutralizationBattery.open.1', 'mio', 'レモン汁に亜鉛板と銅板を差すと、ほんとに電流が流れた記録だよ。'),
+      line('neutralizationBattery.open.2', 'ren', '亜鉛は銅よりイオンになりやすいんだって。差があると電子が一方へ流れるね。'),
+      line('neutralizationBattery.open.3', 'dekisugi', 'レモンは電気の実！果汁に電気が宿ってるんだ！'),
+    ],
+    [
+      response('neutralizationBattery', 'neutral-guaranteed', 'ren', '混ぜれば必ず中性、じゃないよ。量が合わなければ余った側の性質が残るんだ。'),
+      response('neutralizationBattery', 'partial-neutralization', 'mio', '中性にならなくても混ざった分は中和してるよ。水と塩はできてるね。'),
+      response('neutralizationBattery', 'no-reaction-unless-neutral', 'dekisugi', '中性じゃないなら反応ゼロ……あれ、じゃあ結晶はどこから来たの！'),
+    ],
+    [
+      line('neutralizationBattery.resolve.1', 'ren', '中和は水素イオンと水酸化物イオンが結びついて水になる反応。残ったイオンから塩ができるんだ。'),
+      line('neutralizationBattery.resolve.2', 'mio', '電池はイオンへのなりやすさの差で電子が流れる仕組み。化学変化の力を電気に変えてるんだね。'),
+    ],
+    line('neutralizationBattery.punchline', 'dekisugi', '電気は果汁に宿ってたんじゃなくて、金属たちの「なりたさ」の差で流れてました。レモンさん、疑ってごめん！'),
+  ),
 }
