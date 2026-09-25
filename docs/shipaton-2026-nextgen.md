@@ -18,10 +18,10 @@
 | 公開済みでない新規アプリ | ✅ | ストア未公開 |
 | リポジトリ public + OSS ライセンス（About 検出） | 🟡 | `LICENSE`（MIT）追加済み。**GitHub で private → public への変更はユーザー操作** |
 | ソース・素材・実行手順がリポジトリに全てある | ✅ | README に英語 quick start 追加済み（同梱 catalog でオフライン動作） |
-| <2 分のデモ動画（実機動作、YouTube/Vimeo 公開） | ⬜ | 既存 `docs/dekisugi-demo.mp4` は旧UI。現行ビルドで撮り直し。アプリUIは日本語のため英語字幕を焼く |
-| テキスト説明（英語） | 🟡 | `docs/shipaton-submission-copy.md` を現行ビルド用に更新済み |
+| <2 分のデモ動画（実機動作、YouTube/Vimeo 公開） | 🟡 | `docs/shipaton-demo-2026/shipaton-demo-v1.mp4`（114秒・英語字幕焼き込み・音声なし・ブラウザ枠除去済み）。**注意: web ビルドの撮影のため、ルール文言「built した端末上の動作」とは厳密には異なる。Android 実機/エミュレータで撮り直すのが最も安全** — ユーザー操作: YouTube/Vimeo へ公開 |
+| テキスト説明（英語） | ✅ | `docs/shipaton-submission-copy.md` 更新済み |
 | 1024×1024 アイコン | ✅ | `docs/store/icon-1024.png` |
-| ≥1枚のスクリーンショット 1179×2556・端末フレームなし | ⬜ | 既存素材は 1080×1920。**1179×2556 の新規キャプチャが必要** |
+| ≥1枚のスクリーンショット 1179×2556・端末フレームなし | ✅ | `docs/store-shots-2026/devpost/shot-1179x2556.png` |
 | Devpost 登録は学生/学術メール（JetBrains/swot で検証） | ⬜ | ユーザー操作 |
 | 未成年の場合: 保護者同意フォーム | ⬜ | https://forms.gle/Gx2Cr4X8WPk9V1q77 を締切までに提出（該当する場合） |
 | 提出物は英語 or 英訳付き | 🟡 | 動画に英語字幕。リポジトリ本文は日本語だが英語 quick start + 英語提出文で対応 |
