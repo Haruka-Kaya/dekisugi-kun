@@ -1,5 +1,5 @@
 <!--
-  このリポジトリは private。それでも次の2つは書かない:
+  このリポジトリは public（Shipaton 2026 Next Gen Award 提出用）。次の2つは書かない:
   - 導入を検討している相手の名前
   - 鍵・トークンの実体（secrets/ は gitignore 済み）
 
@@ -22,6 +22,42 @@
 
 ---
 
+## English quick start (for judges)
+
+**dekisugi-kun** is a Japanese middle/high-school science app where students
+*teach* an AI companion instead of being taught. The AI never gives the answer
+first: the student reads a fixed lesson, the lesson is hidden, the student
+explains by voice or text, and the AI asks a fixed follow-up question.
+Learning progress lives entirely on-device (SQLite); no account, no free-text
+upload, no LLM grading.
+
+- **Stack:** Flutter app (`app/`) + TypeScript server (`server/`, Vercel).
+  The app's core learning loop runs fully offline against the bundled
+  curriculum catalog — no server or credentials needed to run it.
+- **Monetization:** optional Plus purchase powered by the RevenueCat SDK
+  (`purchases_flutter`), with a server-side entitlement recheck
+  (`server/lib/revenuecat.ts`, `/api/revenuecat-webhook`).
+
+### Run the app
+
+```bash
+cd app
+flutter pub get
+flutter run            # bundled-catalog mode works with no network
+```
+
+### Run the tests
+
+```bash
+cd app && flutter test     # 1214 tests, no network
+cd server && npm install && npm test   # 386 tests, no network
+```
+
+Optional Live-AI research endpoints are disabled in production by design
+(minor-safety policy); they are not part of the shipped experience.
+
+---
+
 ## なぜこの形か
 
 **理解度の判定に LLM の採点を使っていない。**
@@ -37,7 +73,7 @@
 保存するのは、固定教材ID、canonical need、heart、進行・報酬の冪等台帳だけである。
 
 教材は文部科学省「中学校学習指導要領（平成29年告示）解説 理科編」を正本に、
-力学・圧力／浮力・電流／磁界・物質・生命・天気・大地から8単元23概念を収録している。
+力学・圧力／浮力・電流／磁界・物質・生命・天気・大地・化学変化とイオンまで10単元29概念を収録している。
 第1分野と第2分野を横断するが、学年全範囲を網羅した教材ではない。
 
 ---
@@ -61,7 +97,7 @@
 | ゲーム型学習UI | 学ぶ／物語／練習／記号／競う／自分の6タブと蛇行Learning Pathを実装済み。連続学習・結晶・ハート・quest入口は6タブ共通headerに固定し、学習画面へ入っても戻る／連続／結晶／ハートHUDを保持する。デキすぎ君は開始・思考・訂正・完了で反応を変え、保存成功後だけ実XP・実結晶・今回時間を祝福面へ出す。**最新画面のAndroid / iOS物理端末目視と初見学習者pilotは未実施** |
 | クラスの合計（チーム戦） | **実機で確認済み**（参加・表示） |
 | 先生用の管理画面 | **無い** |
-| 教材の量 | **8単元23概念。** 力学・物質・生命・天気・大地まで扱うが、化学変化・イオン・生命の連続性などは未到達 |
+| 教材の量 | **10単元29概念。** 化学変化と原子・分子、化学変化とイオンまで扱うが、生命の連続性などは未到達 |
 
 ---
 
@@ -69,7 +105,7 @@
 
 ```text
 Flutter app
-  ├─ 同梱catalog schema v10（8単元23概念）
+  ├─ 同梱catalog schema v10（10単元29概念）
   ├─ SQLite / Memory SessionStore（進行・need・heart・報酬）
   ├─ 端末内Teach-back（RAM録音／文字、固定問い返し）
   └─ 任意のLAN social client（成人online同意時だけ）
@@ -295,8 +331,8 @@ DEKISUGI_LIVE=1 npx tsx --test test/jailbreak.live.test.ts  # 役を降ろせる
 ## 検証
 
 ```
-app    1209 件   flutter test
-server  373 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
+app    1214 件   flutter test
+server  386 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
 ```
 
 **実機でしか出ない不具合を、実機なしで捕まえる**ようにしてある。
@@ -389,7 +425,7 @@ python tools\misconception-survey\analyze.py tools\misconception-survey\response
 ## 未解決
 
 - **Android / iOS物理端末でTeach-backの録音・実再生・権限拒否・background停止は未確認**
-- 教材は8単元23概念へ拡張したが、中学理科の全学年・全分野には未到達
+- 教材は10単元29概念へ拡張したが、中学理科の全学年・全分野には未到達
 - 固定Teach-backが初見学習者に有効かはpilot未実施（旧誘発調査n=18は学習効果の証拠にしない）
 - 外部AI会話を将来再接続する場合の未成年向け契約・安全運用は未完了（現行必修学習には不要）
 - 先生用の管理画面が無い
@@ -399,4 +435,4 @@ python tools\misconception-survey\analyze.py tools\misconception-survey\response
 
 ## ライセンス
 
-未定。
+MIT（`LICENSE`）。
