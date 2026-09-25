@@ -1100,6 +1100,203 @@ const EN_UNITS: Record<string, UnitText> = {
       },
     },
   },
+  'chemical-change-ions': {
+    title: 'Chemical Change and Ions',
+    brief:
+      'Explain why some aqueous solutions conduct electricity using ions — '
+      + 'tiny charged particles — and connect that model to acids, alkalis, '
+      + 'neutralization and batteries.',
+    concepts: {
+      electrolyte: {
+        label: 'Electrolytes and ions',
+        intent:
+          'That some aqueous solutions conduct electricity and some do not, because a dissolved '
+          + 'electrolyte has split into charged particles called ions that carry the current. '
+          + 'Complete only when the learner can link the substances forming at the electrodes '
+          + 'to the existence of ions and to how atoms are built.',
+      },
+      acidAlkali: {
+        label: 'Acids and alkalis',
+        intent:
+          'That the properties of acids come from hydrogen ions and those of alkalis from '
+          + 'hydroxide ions, discovered through the color change of an indicator. Complete only '
+          + 'when the learner can compare acidity and alkalinity using pH and describe the '
+          + 'properties of everyday liquids.',
+      },
+      neutralizationBattery: {
+        label: 'Neutralization and batteries',
+        intent:
+          'That in neutralization hydrogen ions and hydroxide ions join into water while a salt '
+          + 'remains, explained with the ion model. Complete only when the learner can also '
+          + 'explain a battery: the difference in how easily metals become ions drives electrons '
+          + 'through the circuit, converting chemical energy into electrical energy.',
+      },
+    },
+    sections: {
+      electrolyte: {
+        title: 'Sugar that dissolves but carries no current',
+        localSpeakingPractice: {
+          targetPhrase: 'An electrolyte splits into ions when dissolved and conducts',
+          acceptedTranscripts: [
+            'An electrolyte splits into ions when dissolved and conducts',
+          ],
+        },
+        body: [
+          'Water with dissolved salt carries an electric current; water with dissolved sugar '
+          + 'does not. Both are clear and both dissolved well. Dissolving in water and conducting '
+          + 'electricity are different things.',
+          'A substance whose solution conducts is an **electrolyte**; one whose solution does '
+          + 'not is a **non-electrolyte**. When an electrolyte dissolves it splits into tiny '
+          + 'charged particles called **ions**. The moving ions are what carries the current.',
+          'Apply a voltage to an electrolyte solution and definite substances appear at the '
+          + 'anode and cathode — gas on both electrodes with dilute hydrochloric acid, red copper '
+          + 'on the cathode with copper chloride solution. The substances forming at the '
+          + 'electrodes reveal the invisible ions.',
+          'Ions are particles made when atoms exchange electrons. An atom is built from '
+          + 'electrons and a nucleus (protons and neutrons); lose electrons and it becomes a '
+          + 'positive cation, gain them and it becomes a negative anion, written as formulas '
+          + 'like Na⁺ and Cl⁻.',
+        ],
+        tryIt:
+          'Using the distributed record "voltage applied to various aqueous solutions", sort '
+          + 'the liquids into those that carried a current and those that did not, and write '
+          + 'down two things that happened at the electrodes in the conducting liquids. Do not '
+          + 'apply voltage to solutions or use chemicals or wall outlets at home.',
+        localCheckpoint: {
+          lure: 'Any substance that dissolves in water produces a solution that conducts electricity.',
+          options: [
+            {
+              id: 'conduct-any-solution',
+              text: 'Once dissolved the particles spread out, so even sugar water conducts a little.',
+              hint: 'Did the bulb light in sugar water? Check the record.',
+            },
+            {
+              id: 'solid-conducts',
+              text: 'Even solid salt conducts electricity, so its solution does too.',
+              hint: 'Can ions move while the salt is still solid?',
+            },
+            {
+              id: 'ions-carry',
+              text: 'Only a liquid split into ions conducts; a liquid like sugar water with no charged particles does not.',
+            },
+          ],
+          correctOptionId: 'ions-carry',
+          explanation:
+            'Only a solution of an electrolyte — a substance that split into ions when it '
+            + 'dissolved — conducts. Sugar dissolves without forming ions, and solid salt\'s '
+            + 'ions cannot move, so neither carries a current.',
+        },
+      },
+      acidAlkali: {
+        title: 'A color-changing liquid reveals invisible particles',
+        localSpeakingPractice: {
+          targetPhrase: 'Acids act through hydrogen ions and alkalis through hydroxide ions',
+          acceptedTranscripts: [
+            'Acids act through hydrogen ions and alkalis through hydroxide ions',
+          ],
+        },
+        body: [
+          'Add BTB solution to dilute hydrochloric acid and it turns yellow; add it to dilute '
+          + 'sodium hydroxide solution and it turns blue. A neutral liquid stays green. The '
+          + 'indicator\'s color change is the clue that tells acids and alkalis apart.',
+          'The properties every acid shares — dissolving metals, releasing gas from sodium '
+          + 'hydrogen carbonate — are the work of the **hydrogen ions** every acid contains. '
+          + 'The properties alkalis share are the work of **hydroxide ions**.',
+          'The strength of an acid or alkali is written as **pH**: 7 is neutral, smaller means '
+          + 'a stronger acid, larger a stronger alkali. Vinegar and lemon juice are acids too; '
+          + 'danger depends on the kind and the strength.',
+          'The indicator changes color because hydrogen ions or hydroxide ions are present in '
+          + 'the liquid. It is not "acid means dangerous": everyday liquids include acids and '
+          + 'alkalis alike. The kinds and amounts of ions decide a liquid\'s properties.',
+        ],
+        tryIt:
+          'Read labels at home: on items like vinegar, citric acid, baking soda or soap, note '
+          + 'any words related to "acid", "alkali" or "pH" (without opening or mixing any '
+          + 'containers). Then, using the distributed record of indicator color changes, '
+          + 'classify each liquid as acidic, alkaline or neutral.',
+        localCheckpoint: {
+          lure: 'Every acidic liquid is dangerous, and nothing at home contains an acid.',
+          options: [
+            {
+              id: 'acid-everywhere',
+              text: 'Acids vary in strength and vinegar and lemon juice are acids; danger depends on the kind and strength.',
+            },
+            {
+              id: 'all-acid-danger',
+              text: 'An acid is a dangerous liquid that dissolves anything, so household foods contain no acids.',
+              hint: 'Check the vinegar label for the word "acetic acid".',
+            },
+            {
+              id: 'alkali-safe',
+              text: 'Alkaline liquids are safe, so it is fine to get soap solution in your eyes.',
+              hint: 'Alkalis also vary in strength — think whether safety changes with strength.',
+            },
+          ],
+          correctOptionId: 'acid-everywhere',
+          explanation:
+            'Both acids and alkalis come in a range of strengths. Vinegar and lemon juice are '
+            + 'everyday acids, and soap solution is alkaline but still dangerous in the eyes. '
+            + 'Judge danger by the kind and the strength (pH).',
+        },
+      },
+      neutralizationBattery: {
+        title: 'Powers that cancel, and a trick that draws out electricity',
+        localSpeakingPractice: {
+          targetPhrase: 'In neutralization hydrogen and hydroxide ions join to form water and a salt',
+          acceptedTranscripts: [
+            'In neutralization hydrogen and hydroxide ions join to form water and a salt',
+          ],
+        },
+        body: [
+          'Mix dilute hydrochloric acid and dilute sodium hydroxide solution until just '
+          + 'neutral, then remove the water, and white crystals remain — table salt, sodium '
+          + 'chloride.',
+          'When an acid and an alkali mix, the acid\'s hydrogen ions and the alkali\'s '
+          + 'hydroxide ions join into water, canceling each other\'s properties — this is '
+          + '**neutralization**. The leftover sodium ions and chloride ions form a **salt**. '
+          + 'Even if the amounts do not match and the liquid is not neutral, the mixed part '
+          + 'has still neutralized.',
+          'Put a metal into an electrolyte solution and different metals turn into ions with '
+          + 'different ease — zinc, for example, becomes an ion more easily than copper. A '
+          + 'metal that ionizes easily releases electrons; the less-eager metal is where the '
+          + 'electrons are accepted.',
+          'The Daniell cell uses this difference: electrons released from the zinc plate flow '
+          + 'through the circuit to the copper plate, and a current is drawn outside. A battery '
+          + 'turns the power of chemical change into electrical energy — dry cells, lead-acid '
+          + 'batteries and fuel cells all work on the same idea.',
+        ],
+        tryIt:
+          'Look at a dry-cell battery at home (a used one is fine; never open it or put it in '
+          + 'fire) and record the + and − markings. Then read the distributed record of the '
+          + '"Daniell cell" and explain, by how easily each metal becomes an ion, which metal '
+          + 'the electrons flowed from and to.',
+        localCheckpoint: {
+          lure: 'Mixing an acid and an alkali always produces a neutral liquid, whatever the proportions.',
+          options: [
+            {
+              id: 'neutral-guaranteed',
+              text: 'Mixing always gives a neutral liquid, so any proportion produces a safe liquid.',
+              hint: 'If extra acid remains, is the liquid really neutral?',
+            },
+            {
+              id: 'partial-neutralization',
+              text: 'The mixed part has neutralized, but with unmatched amounts the liquid is not neutral and the leftover side\'s properties remain.',
+            },
+            {
+              id: 'no-reaction-unless-neutral',
+              text: 'If the liquid is not neutral, no neutralization happened and no salt formed.',
+              hint: 'Do water and salt form for the portion that did react?',
+            },
+          ],
+          correctOptionId: 'partial-neutralization',
+          explanation:
+            'Neutralization always happens for the portion that mixed, producing water and a '
+            + 'salt. With unmatched amounts one side is left over, so the liquid is not '
+            + 'neutral — but the salt is still there.',
+        },
+      },
+    },
+  },
   'force-motion': {
     title: 'Force and Motion',
     brief:
@@ -2049,6 +2246,29 @@ const EN_MISCONCEPTIONS: Record<string, MisconceptionText> = {
       + 'the total mass before and after a chemical change is equal.',
     misconception: 'Gases have no mass, so in reactions that emit gas or burn, mass is not conserved.',
     lure: 'Gases weigh nothing, so when smoke comes out, mass drops by that much — right?',
+  },
+  M27: {
+    correct:
+      'Even when a substance dissolves, liquids like sugar water or ethanol solution carry no '
+      + 'current because they never split into ions. Only a solution whose solute split into ions '
+      + '— an electrolyte — conducts; solid salt does not conduct because its ions cannot move.',
+    misconception: 'Every solution of a substance that dissolves in water conducts electricity.',
+    lure: 'As long as it dissolves in water, the liquid conducts electricity — right?',
+  },
+  M28: {
+    correct:
+      'Acids come in a range of strengths, and everyday liquids like vinegar and lemon juice '
+      + 'are acids too. Whether something is dangerous depends on its kind and strength (pH), '
+      + 'and alkalis vary in strength as well.',
+    misconception: 'Every acid is a dangerous liquid that dissolves anything, and no household food contains an acid.',
+    lure: 'Acids are scary liquids that dissolve anything, so drinks can’t contain acid, right?',
+  },
+  M29: {
+    correct:
+      'Neutralization always happens for the portion that mixes. If the amounts do not match '
+      + 'the liquid does not turn neutral, but water and a salt are still produced.',
+    misconception: 'Mixing an acid and an alkali always yields a neutral liquid, and if it does not turn neutral no reaction happened.',
+    lure: 'Mixing an acid and an alkali always makes a neutral liquid, doesn’t it?',
   },
 }
 

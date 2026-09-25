@@ -266,6 +266,276 @@ export const STAGE2_PRACTICE_PLANS: Readonly<
       },
     },
   },
+  electrolyte: {
+    foundation: {
+      recallPrompt:
+        '水溶液に電気が流れるものと流れないものがあることを、電解質と非電解質の言葉で説明してください。',
+      reasoningPrompt:
+        '電解質の液で電流が流れる理由を、イオンという粒子が動くことで足してください。',
+      expectedOutcome:
+        '食塩水には電流が流れて電極に物質ができましたが、砂糖水には流れず電極も変化しません。',
+      expectedReason:
+        '食塩は溶けるとイオンに分かれてイオンが動くので電流が流れます。'
+        + '砂糖は溶けてもイオンにならないので、液は電気を通しません。',
+    },
+    conditions: {
+      recallPrompt:
+        '溶けることと電気を通すことが別であることを、食塩水と砂糖水の例で説明してください。',
+      reasoningPrompt:
+        '液の中にイオンがあるかどうかを確かめる手がかりとして、電極の変化を使える点を足してください。',
+      transferPrompt:
+        'うすい塩酸に炭素電極を入れて電圧をかけた記録では、両方の電極に気体がつきました。'
+        + '液の中に目に見えない粒子が動いていると考える根拠を説明してください。',
+      expectedOutcome:
+        '電圧をかけた電解質水溶液では、陽極と陰極に決まった物質が生成します。',
+      expectedReason:
+        '液の中の電気を帯びた粒子（イオン）が電極へ引かれて集まり、'
+        + 'そこで別の物質になるため、電極の変化がイオンの存在を示します。',
+      checkpoint: {
+        lure: '電極に物質ができるのは、液の水分が電気で変化しただけである。',
+        options: [
+          {
+            id: 'water-split-only',
+            text: 'どんな液でも水が変化するので、生成物はどの液でも同じはずである。',
+            hint: '砂糖水では電極に何もできなかった記録を見返します。',
+          },
+          {
+            id: 'ions-deposited',
+            text: '液の中のイオンが電極へ集まって物質になるので、生成物は液の種類ごとに決まる。',
+          },
+          {
+            id: 'heat-changed',
+            text: '電圧で液が熱くなり、蒸発した残りが電極についただけである。',
+            hint: '生成した物質が電極ごとに決まっているか、記録を確認します。',
+          },
+        ],
+        correctOptionId: 'ions-deposited',
+        explanation:
+          '電極にできる物質は液の種類ごとに決まっています。'
+          + '液の中のイオンが電極へ集まって変化するためで、水が変化しただけでは説明できません。',
+      },
+    },
+    transfer: {
+      recallPrompt:
+        '電解質と非電解質の違いを、液に電圧をかけた結果で説明してください。',
+      reasoningPrompt:
+        'イオンが原子とどう違うか（電子をやりとりして電気を帯びた粒子）を足してください。',
+      transferPrompt:
+        '食塩・砂糖・エタノールをそれぞれ水に溶かした記録で、電気を通したのは食塩水だけでした。'
+        + 'また固い食塩には電気が流れませんでした。二つの結果をイオンで説明してください。',
+      expectedOutcome:
+        '食塩は溶けるとイオンに分かれて電気を通し、砂糖やエタノールはイオンにならず通しません。'
+        + '固い食塩はイオンが動けないので電気を通しません。',
+      expectedReason:
+        '電解質は水に溶けて初めてイオンが自由に動けるようになります。'
+        + '非電解質は溶けても電気を帯びた粒子ができず、固体ではイオンが動けません。',
+      checkpoint: {
+        lure: '食塩は固体でも電気を通すので、電解質と呼ばれる。',
+        options: [
+          {
+            id: 'ions-must-move',
+            text: '電解質は溶けてイオンが動けるときだけ電気を通す。固体ではイオンが動けない。',
+          },
+          {
+            id: 'solid-salt-conducts',
+            text: '食塩は固いままでも電気を通すので、溶かさなくても電解質である。',
+            hint: '固い食塩に電気が流れたか、記録で確認します。',
+          },
+          {
+            id: 'all-dissolved-conduct',
+            text: '溶けた物質はすべてイオンに分かれるので、エタノール水溶液も電気を通す。',
+            hint: '溶けてもイオンにならない物質があるかを考えます。',
+          },
+        ],
+        correctOptionId: 'ions-must-move',
+        explanation:
+          '電気を運ぶのは動けるイオンです。'
+          + '電解質は水に溶けてイオンに分かれたときだけ電気を通し、固いままではイオンが動けません。',
+      },
+    },
+  },
+  acidAlkali: {
+    foundation: {
+      recallPrompt:
+        '酸の性質が水素イオン、アルカリの性質が水酸化物イオンによることを説明してください。',
+      reasoningPrompt:
+        '指示薬の色変化が酸とアルカリの手がかりになる理由を足してください。',
+      expectedOutcome:
+        'BTB溶液を加えた記録では、うすい塩酸は黄色、うすい水酸化ナトリウム水溶液は青色、'
+        + '食塩水は緑色のままです。',
+      expectedReason:
+        '酸に共通する水素イオンとアルカリに共通する水酸化物イオンが指示薬を変色させるため、'
+        + '色の違いで酸性・アルカリ性・中性を見分けられます。',
+    },
+    conditions: {
+      recallPrompt:
+        'pHが酸性・アルカリ性の強さを表す指標であることを説明してください。',
+      reasoningPrompt:
+        '「酸はすべて危険」ではなく、身の回りの液にも酸がある例を一つ足してください。',
+      transferPrompt:
+        '二つの酸性の液でpHが3と5でした。どちらが強い酸ですか。'
+        + 'またアルカリ性の液では、pHが大きいほど何を意味しますか。',
+      expectedOutcome:
+        'pHが小さいほど酸性が強いのでpH3のほうが強い酸で、'
+        + 'アルカリ性ではpHが大きいほど強いアルカリ性です。',
+      expectedReason:
+        'pHは水素イオン・水酸化物イオンの量の目安で、'
+        + '7が中性で、そこから離れるほど酸性・アルカリ性が強くなります。',
+      checkpoint: {
+        lure: 'pHが7より大きい液は酸性である。',
+        options: [
+          {
+            id: 'high-ph-acid',
+            text: 'pHが大きいほど強い酸なので、7より大きい液は酸性である。',
+            hint: 'pH7が中性で、どちら側が酸性かを確認します。',
+          },
+          {
+            id: 'ph-direction',
+            text: 'pHは7が中性で、小さいほど酸性、大きいほどアルカリ性が強い。',
+          },
+          {
+            id: 'ph-no-meaning',
+            text: 'pHの数字と酸性・アルカリ性の強さには関係がない。',
+            hint: 'pHが何を表す指標かを確認します。',
+          },
+        ],
+        correctOptionId: 'ph-direction',
+        explanation:
+          'pHは7が中性で、小さいほど強い酸、大きいほど強いアルカリです。'
+          + '数字の向きを逆に覚えると、性質を取り違えます。',
+      },
+    },
+    transfer: {
+      recallPrompt:
+        '指示薬を使わなくても、酸とアルカリの違いをそれぞれを作るイオンで説明してください。',
+      reasoningPrompt:
+        '食酢やレモン汁も酸であることと、硫酸など強い酸との違いを「強さ」で足してください。',
+      transferPrompt:
+        '炭酸水素ナトリウムの粉にうすい塩酸と食酢を加えた記録では、'
+        + 'どちらにも気体が発生しましたが勢いが違いました。'
+        + 'この共通点と違いを酸のイオンで説明してください。',
+      expectedOutcome:
+        'どちらにも気体が発生したのは、両方とも酸の水素イオンが反応したからで、'
+        + '勢いの違いは酸の強さの違いです。',
+      expectedReason:
+        '酸に共通する性質は水素イオンの仕事です。'
+        + '同じ酸でも水素イオンの量が違えば、反応の進み方が変わります。',
+      checkpoint: {
+        lure: '食酢では気体が弱いので、食酢は酸ではない。',
+        options: [
+          {
+            id: 'vinegar-not-acid',
+            text: '気体の勢いが弱い食酢は酸ではなく、別の性質をもつ液である。',
+            hint: '気体が出たこと自体が何のイオンによるかを考えます。',
+          },
+          {
+            id: 'gas-only-strong-acid',
+            text: '気体が出るのは強い酸だけなので、食酢から気体が出た記録は誤りである。',
+            hint: '弱い酸でも水素イオンがあるかを考えます。',
+          },
+          {
+            id: 'acid-strength-varies',
+            text: '酸には強さの幅がある。食酢も水素イオンをもつ酸で、反応の勢いは強さの違い。',
+          },
+        ],
+        correctOptionId: 'acid-strength-varies',
+        explanation:
+          '酸の共通の性質は水素イオンによるものです。'
+          + '食酢のような弱い酸でも気体は発生し、勢いの違いは酸の強さ（水素イオンの量）の違いです。',
+      },
+    },
+  },
+  neutralizationBattery: {
+    foundation: {
+      recallPrompt:
+        '中和で水と塩ができることを、水素イオンと水酸化物イオンの結びつきで説明してください。',
+      reasoningPrompt:
+        '中性にならなくても中和が起きている理由（混ざった分だけ反応する）を足してください。',
+      expectedOutcome:
+        'うすい塩酸とうすい水酸化ナトリウム水溶液を中性になるまで混ぜて乾燥させた記録では、'
+        + '白い結晶＝塩化ナトリウムが残っています。',
+      expectedReason:
+        '水素イオンと水酸化物イオンが結びついて水になり、'
+        + '残ったナトリウムイオンと塩化物イオンが結晶になるためです。',
+    },
+    conditions: {
+      recallPrompt:
+        '塩は中和でできる物質の名前で、食塩以外にもあることを説明してください。',
+      reasoningPrompt:
+        '水に溶ける塩と溶けない塩がある例を一つ足してください。',
+      transferPrompt:
+        '酸とアルカリを混ぜた液がpH6でした。中和は起きていますか。'
+        + 'また液には何が含まれていますか。',
+      expectedOutcome:
+        'pH7ではなくても混ざった分の水素イオンと水酸化物イオンは水になり、'
+        + '液には生成した塩と余った酸のイオンが含まれます。',
+      expectedReason:
+        '中和反応は混ざった分だけ必ず進みます。'
+        + '量が合わなければ一方が余り、中性にならなくても塩はできています。',
+      checkpoint: {
+        lure: '中性にならなかった液では、中和は全く起きていない。',
+        options: [
+          {
+            id: 'partial-occurs',
+            text: '中性にならなくても混ざった分は中和し、水と塩ができている。',
+          },
+          {
+            id: 'no-neutralization',
+            text: '中性にならなかったのだから、酸とアルカリは反応していない。',
+            hint: '混ざった分の水素イオンと水酸化物イオンがどうなったかを考えます。',
+          },
+          {
+            id: 'only-water-formed',
+            text: '中和では水だけができ、液に残るものは何もない。',
+            hint: 'ナトリウムイオンと塩化物イオンがどこへ行くかを考えます。',
+          },
+        ],
+        correctOptionId: 'partial-occurs',
+        explanation:
+          '中和は混ざった分だけ必ず起きます。'
+          + '余った側が残って中性にならなくても、できた水と塩は液に残っています。',
+      },
+    },
+    transfer: {
+      recallPrompt:
+        '金属によってイオンへのなりやすさが違うことを説明してください。',
+      reasoningPrompt:
+        '電池ではこのなりやすさの差で電子が流れることを足してください。',
+      transferPrompt:
+        '亜鉛板と銅板を電解質水溶液に入れて回路をつないだ記録では、電流が流れました。'
+        + 'どちらの金属が電子を放出し、どこで受け取られるかを'
+        + 'イオンへのなりやすさで説明してください。',
+      expectedOutcome:
+        'イオンになりやすい亜鉛が電子を放出して亜鉛イオンになり、'
+        + 'その電子が回路を通って銅板へ流れます。',
+      expectedReason:
+        'イオンへのなりやすさの差が電子の一方向の流れを生むため、'
+        + '外部回路に電流として取り出せます。化学エネルギーが電気エネルギーに変わっています。',
+      checkpoint: {
+        lure: '電池は電気を蓄えた容器で、化学変化とは関係ない。',
+        options: [
+          {
+            id: 'stored-electricity',
+            text: '電池はあらかじめ溜めた電気を取り出す容器で、中では何も変化していない。',
+            hint: '電池の中で金属や液が変化しているかを考えます。',
+          },
+          {
+            id: 'copper-gives-electrons',
+            text: '電子は銅板から亜鉛板へ流れるので、銅がイオンになりやすい。',
+            hint: 'イオンになりやすいのは亜鉛と銅のどちらかを確認します。',
+          },
+          {
+            id: 'ion-tendency-drives',
+            text: 'イオンへのなりやすさが違う2種類の金属で電子の流れが生まれ、それが電流になる。',
+          },
+        ],
+        correctOptionId: 'ion-tendency-drives',
+        explanation:
+          '電池では化学変化が起きています。'
+          + 'イオンになりやすい亜鉛が電子を放出し、銅側で電子が受け取られることで電流が流れます。',
+      },
+    },
+  },
 }
 
 /** Stage 2 3概念×3周の構造化課題。項目は全員が同じ画面を共有する著者順。 */
@@ -406,6 +676,130 @@ export const STAGE2_COGNITIVE_TASKS: Readonly<
         { id: 'sealed-setup', text: '発生する気体も含めて測れるよう、密閉した容器で反応させて全体を測る。' },
       ],
       solution: { selectedItemId: 'sealed-setup' },
+    },
+  },
+  electrolyte: {
+    foundation: {
+      kind: 'classify',
+      operation: 'conditionClassify',
+      items: [
+        { id: 'salt-water', text: '食塩を溶かした水' },
+        { id: 'sugar-water', text: '砂糖を溶かした水' },
+        { id: 'ethanol-water', text: 'エタノールの水溶液' },
+        { id: 'dilute-hcl', text: 'うすい塩酸' },
+      ],
+      targets: [
+        { id: 'conducting-liquid', label: '電気を通す液' },
+        { id: 'non-conducting-liquid', label: '電気を通さない液' },
+      ],
+      solution: {
+        targetByItemId: {
+          'salt-water': 'conducting-liquid',
+          'sugar-water': 'non-conducting-liquid',
+          'ethanol-water': 'non-conducting-liquid',
+          'dilute-hcl': 'conducting-liquid',
+        },
+      },
+    },
+    conditions: {
+      kind: 'singleSelect',
+      operation: 'experimentPlan',
+      items: [
+        { id: 'color-check', text: '液の色を見て、透明なら電気を通すと判断する。' },
+        { id: 'smell-check', text: '液のにおいをかいで、刺激臭があれば電気を通すと判断する。' },
+        { id: 'electrode-check', text: '液に電極を入れて電圧をかけ、電極に物質ができるかを調べる。' },
+      ],
+      solution: { selectedItemId: 'electrode-check' },
+    },
+    transfer: {
+      kind: 'sequence',
+      operation: 'causalOrder',
+      items: [
+        { id: 'substance-forms', text: '電極に新しい物質が生成する。' },
+        { id: 'apply-voltage', text: '電解質水溶液に電極を入れて電圧をかける。' },
+        { id: 'ions-move', text: '液の中のイオンが電極へ移動する。' },
+      ],
+      solution: {
+        orderedItemIds: ['apply-voltage', 'ions-move', 'substance-forms'],
+      },
+    },
+  },
+  acidAlkali: {
+    foundation: {
+      kind: 'singleSelect',
+      operation: 'prediction',
+      items: [
+        { id: 'btb-yellow', text: 'BTB溶液を加えると黄色になる。' },
+        { id: 'btb-blue', text: 'BTB溶液を加えると青色になる。' },
+        { id: 'btb-green', text: 'BTB溶液を加えても緑色のまま変わらない。' },
+      ],
+      solution: { selectedItemId: 'btb-yellow' },
+    },
+    conditions: {
+      kind: 'classify',
+      operation: 'conditionClassify',
+      items: [
+        { id: 'slippery-liquid', text: '液がぬるぬるした感触を示す' },
+        { id: 'btb-turns-yellow', text: 'BTB溶液が黄色に変わる' },
+        { id: 'gas-on-carbonate', text: '炭酸水素ナトリウムに加えると気体が出る' },
+        { id: 'litmus-turns-blue', text: '赤色リトマス紙が青色に変わる' },
+      ],
+      targets: [
+        { id: 'hydrogen-ion', label: '水素イオンの仕事' },
+        { id: 'hydroxide-ion', label: '水酸化物イオンの仕事' },
+      ],
+      solution: {
+        targetByItemId: {
+          'slippery-liquid': 'hydroxide-ion',
+          'btb-turns-yellow': 'hydrogen-ion',
+          'gas-on-carbonate': 'hydrogen-ion',
+          'litmus-turns-blue': 'hydroxide-ion',
+        },
+      },
+    },
+    transfer: {
+      kind: 'singleSelect',
+      operation: 'quantityCompare',
+      items: [
+        { id: 'ph5-stronger', text: 'pH5の液のほうが、pH3の液より強い酸である。' },
+        { id: 'same-acidity', text: 'pH3とpH5では酸性の強さは同じである。' },
+        { id: 'ph3-stronger', text: 'pH3の液のほうが、pH5の液より強い酸である。' },
+      ],
+      solution: { selectedItemId: 'ph3-stronger' },
+    },
+  },
+  neutralizationBattery: {
+    foundation: {
+      kind: 'sequence',
+      operation: 'causalOrder',
+      items: [
+        { id: 'salt-remains', text: '残ったナトリウムイオンと塩化物イオンから塩の結晶ができる。' },
+        { id: 'ions-join', text: '水素イオンと水酸化物イオンが結びつく。' },
+        { id: 'water-forms', text: '結びついた粒が水になり、酸とアルカリの性質が打ち消される。' },
+      ],
+      solution: {
+        orderedItemIds: ['ions-join', 'water-forms', 'salt-remains'],
+      },
+    },
+    conditions: {
+      kind: 'singleSelect',
+      operation: 'prediction',
+      items: [
+        { id: 'nothing-remains', text: '中性になった液を乾燥させても、何も残らない。' },
+        { id: 'salt-crystals', text: '中性になった液を乾燥させると、塩の結晶が残る。' },
+        { id: 'acid-crystals', text: '乾燥させると酸そのものが結晶になって残る。' },
+      ],
+      solution: { selectedItemId: 'salt-crystals' },
+    },
+    transfer: {
+      kind: 'singleSelect',
+      operation: 'experimentPlan',
+      items: [
+        { id: 'two-metals', text: 'イオンへのなりやすさが違う2種類の金属板を、電解質水溶液に入れて回路をつなぐ。' },
+        { id: 'same-metal-pair', text: '同じ金属の板を2枚、水に入れて回路をつなぐ。' },
+        { id: 'charged-battery', text: 'あらかじめ電気を溜めた容器に、回路をつなぐ。' },
+      ],
+      solution: { selectedItemId: 'two-metals' },
     },
   },
 }
