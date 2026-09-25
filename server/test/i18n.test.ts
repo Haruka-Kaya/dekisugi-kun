@@ -22,10 +22,10 @@ describe('英語への差し替え', () => {
     // 落ちないので気づけないまま出荷される
     assert.deepEqual(missingTranslations(UNITS, MISCONCEPTIONS), [])
     assert.deepEqual(validateTranslations(UNITS, MISCONCEPTIONS), [])
-    assert.equal(UNITS.flatMap((unit) => unit.concepts).length, 23)
+    assert.equal(UNITS.flatMap((unit) => unit.concepts).length, 26)
     assert.deepEqual(
       MISCONCEPTIONS.map((misconception) => misconception.id),
-      Array.from({ length: 23 }, (_, index) => `M${String(index + 1).padStart(2, '0')}`),
+      Array.from({ length: 26 }, (_, index) => `M${String(index + 1).padStart(2, '0')}`),
     )
   })
 

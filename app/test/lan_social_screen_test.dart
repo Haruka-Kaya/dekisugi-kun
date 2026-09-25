@@ -294,6 +294,47 @@ void main() {
     semantics.dispose();
   });
 
+  testWidgets('QR読取は参加コードを入れるだけで、明示同意まで通信しない', (tester) async {
+    final store = MemorySessionStore();
+    final requests = <RequestOptions>[];
+    await tester.pumpWidget(
+      app(
+        LanSocialScreen(
+          store: store,
+          schoolMode: false,
+          lanSocialAllowed: true,
+          scanConnectionCode: (_) async =>
+              _code(LanSocialRoomKind.league).encode(),
+          clientFactory: (endpoint) => LanSocialClient(
+            endpoint: endpoint,
+            store: store,
+            dio: socialDio(
+              kind: LanSocialRoomKind.league,
+              snapshot: _leaguePrivate,
+              onRequest: requests.add,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await reveal(tester, find.byKey(const ValueKey('lan-social-scan-code')));
+    await tester.tap(find.byKey(const ValueKey('lan-social-scan-code')));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<TextField>(
+            find.byKey(const ValueKey('lan-social-connection-code')),
+          )
+          .controller!
+          .text,
+      _code(LanSocialRoomKind.league).encode(),
+    );
+    expect(requests, isEmpty);
+  });
+
   testWidgets('退出503はjoined資格を保持し、画面再起動後に再試行できる', (tester) async {
     final store = MemorySessionStore();
     var leaveAttempts = 0;
@@ -593,7 +634,7 @@ void main() {
       'consentVersion',
     });
     expect(adminController.text, isEmpty);
-    expect(find.bySemanticsLabel('参加者用コード。管理キーは含まれていません。'), findsOneWidget);
+    expect(find.byKey(const ValueKey('participant-qr-code')), findsOneWidget);
     await scrollThrough(tester);
     semantics.dispose();
   });

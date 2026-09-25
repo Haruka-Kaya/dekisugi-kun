@@ -72,6 +72,9 @@ const EXPECTED_STORY_SIGNATURES = {
   pressurePatternsWind: ['等圧線ぎゅうぎゅう区画の強風予告', '気象資料室。過去の天気図で等圧線間隔と同時刻の観測風速を照合している。', '等圧線は通行止めロープではなく、風の坂道の等高線でした。'],
   volcanoEarthquakes: ['火山マークと震央マークの別行動', '防災学習室。公的な火山・震央・プレート境界の過去分布図を重ねている。', '地図ではご近所、事件簿では別々の担当でした。'],
   dailyMotionSeasons: ['星空カレンダー一日と一年の混線', 'プラネタリウム教室。同じ場所の一晩と、同時刻で月を変えた星空シミュレーションを比べる。', '星空カレンダー、24時間欄と12か月欄を同じマスに書いていました。'],
+  combinationDecomposition: ['混ぜただけ粉チームの冤罪事件', '家庭科室の資料棚。鉄粉と硫黄を混ぜた粉末と、加熱後の黒いかたまりの観察記録が並ぶ。', '瞬間化合説、磁石の前で見事に散りました。'],
+  oxidationReduction: ['赤い汚れの正体を追え', '昇降口のフェンスの写真と、学校で保存されたさびの観察記録が開かれている。', '犯人は空で合ってた！でも手口は「酸素と結びつく」でした。'],
+  massConservation: ['消えた1.1グラムの密室', '理科室の測定記録。開いた容器と密閉袋で同じ反応をさせた二つの表が残る。', '消えた質量、実は窓から出ていった二酸化炭素でした。密室でも何でもない！'],
 } as const
 
 type PublicConcept = {
@@ -162,8 +165,8 @@ describe('学習ミッションのカタログ不変条件', () => {
       'earth-history': ['strataRelativeAge', 'volcanoEarthquakes', 'dailyMotionSeasons'],
     } as const
 
-    assert.equal(UNITS.length, 8)
-    assert.equal(UNITS.flatMap((unit) => unit.concepts).length, 23)
+    assert.equal(UNITS.length, 9)
+    assert.equal(UNITS.flatMap((unit) => unit.concepts).length, 26)
     for (const [unitId, conceptKeys] of Object.entries(expectedStage1)) {
       const unit = unitById(unitId)
       assert.ok(unit, `${unitId}: Stage 1 unitが無い`)
@@ -178,12 +181,12 @@ describe('学習ミッションのカタログ不変条件', () => {
     }
   })
 
-  it('23概念のSpeaking目標を正本化し、欠落・未知field・短文・重複を拒否する', () => {
+  it('26概念のSpeaking目標を正本化し、欠落・未知field・短文・重複を拒否する', () => {
     const sections = UNITS.flatMap((unit) => unit.sections)
-    assert.equal(sections.length, 23)
+    assert.equal(sections.length, 26)
     assert.equal(
       new Set(sections.map((section) => section.conceptKey)).size,
-      23,
+      26,
       'Speaking目標が概念と1対1でない',
     )
     for (const section of sections) {
@@ -254,11 +257,11 @@ describe('学習ミッションのカタログ不変条件', () => {
     }
   })
 
-  it('全23conceptが3周で異なる問い・正答位置・誤答だけのヒントを持つ', () => {
+  it('全26conceptが3周で異なる問い・正答位置・誤答だけのヒントを持つ', () => {
     assert.deepEqual(validateCatalog(), [])
 
     const sections = UNITS.flatMap((unit) => unit.sections)
-    assert.equal(sections.length, 23)
+    assert.equal(sections.length, 26)
     const correctPositions = new Set<number>()
 
     for (const section of sections) {
@@ -370,14 +373,14 @@ describe('学習ミッションのカタログ不変条件', () => {
       }
     }
 
-    assert.equal(cognitiveCount, 69)
-    assert.equal(wrongOptionCount, 138)
-    assert.equal(notationCount, 80)
-    assert.equal(practiceCodes.size, 69)
-    assert.equal(notationCodes.size, 80)
+    assert.equal(cognitiveCount, 78)
+    assert.equal(wrongOptionCount, 156)
+    assert.equal(notationCount, 89)
+    assert.equal(practiceCodes.size, 78)
+    assert.equal(notationCodes.size, 89)
   })
 
-  it('全23concept×3stageのListening聞き取り/意味needを別codeで公開する', () => {
+  it('全26concept×3stageのListening聞き取り/意味needを別codeで公開する', () => {
     const codes = new Set<string>()
     let variantCount = 0
     for (const unit of UNITS) {
@@ -408,14 +411,14 @@ describe('学習ミッションのカタログ不変条件', () => {
         }
       }
     }
-    assert.equal(variantCount, 69)
-    assert.equal(codes.size, 138)
+    assert.equal(variantCount, 78)
+    assert.equal(codes.size, 156)
     assert.throws(() => scienceListeningNeedCodes('unknown-concept', 'foundation'))
   })
 
-  it('全23conceptのNotationをcanonical tagged unionへ損失なく公開し、6種類を網羅する', () => {
+  it('全26conceptのNotationをcanonical tagged unionへ損失なく公開し、6種類を網羅する', () => {
     const sections = UNITS.flatMap((unit) => unit.sections)
-    assert.equal(sections.length, 23)
+    assert.equal(sections.length, 26)
     assert.deepEqual(
       new Set(Object.keys(NOTATION_LABS)),
       new Set(sections.map((section) => section.conceptKey)),
@@ -458,12 +461,12 @@ describe('学習ミッションのカタログ不変条件', () => {
       })
     }
 
-    assert.equal(taskCount, 80)
+    assert.equal(taskCount, 89)
     assert.deepEqual([...usedKinds].sort(), [...NOTATION_TASK_KINDS].sort())
     assert.equal(notationLabFor('unknown-concept'), undefined)
   })
 
-  it('全23 Storyが固有の事件名・舞台・落ちを持ち、foundation正本へ完全一致する', () => {
+  it('全26 Storyが固有の事件名・舞台・落ちを持ち、foundation正本へ完全一致する', () => {
     const seenLineIds = new Set<string>()
     const publishedStories = []
     for (const unit of UNITS) {
@@ -519,11 +522,11 @@ describe('学習ミッションのカタログ不変条件', () => {
         publishedStories.push(publicStory)
       }
     }
-    assert.equal(publishedStories.length, 23)
-    assert.equal(new Set(publishedStories.map((story) => story.id)).size, 23)
-    assert.equal(new Set(publishedStories.map((story) => story.title)).size, 23)
-    assert.equal(new Set(publishedStories.map((story) => story.setting)).size, 23)
-    assert.equal(new Set(publishedStories.map((story) => story.punchline.text)).size, 23)
+    assert.equal(publishedStories.length, 26)
+    assert.equal(new Set(publishedStories.map((story) => story.id)).size, 26)
+    assert.equal(new Set(publishedStories.map((story) => story.title)).size, 26)
+    assert.equal(new Set(publishedStories.map((story) => story.setting)).size, 26)
+    assert.equal(new Set(publishedStories.map((story) => story.punchline.text)).size, 26)
   })
 
   it('既存22 trace taskを維持し、不正なtrace・taskを拒否する', () => {
@@ -623,7 +626,7 @@ describe('学習ミッションのカタログ不変条件', () => {
     assert.ok(validateNotationLab(badChoice).some((problem) => problem.includes('choices')))
   })
 
-  it('69variantが監査どおり異なる認知操作を持ち、表示順で正答を示さない', () => {
+  it('78variantが監査どおり異なる認知操作を持ち、表示順で正答を示さ��い', () => {
     const expected = {
       fall: [
         ['singleSelect', 'prediction'],
@@ -740,6 +743,21 @@ describe('学習ミッションのカタログ不変条件', () => {
         ['sequence', 'causalOrder'],
         ['singleSelect', 'prediction'],
       ],
+      combinationDecomposition: [
+        ['classify', 'conditionClassify'],
+        ['singleSelect', 'experimentPlan'],
+        ['sequence', 'causalOrder'],
+      ],
+      oxidationReduction: [
+        ['singleSelect', 'prediction'],
+        ['classify', 'conditionClassify'],
+        ['sequence', 'causalOrder'],
+      ],
+      massConservation: [
+        ['classify', 'conditionClassify'],
+        ['singleSelect', 'quantityCompare'],
+        ['singleSelect', 'experimentPlan'],
+      ],
     } as const
     const directSignals: Readonly<Record<string, readonly RegExp[]>> = {
       fall: [/平らな紙.*丸めた紙/, /着地時刻.*空気.*抵抗/, /質量.*高さ.*着く時刻/],
@@ -824,6 +842,21 @@ describe('学習ミッションのカタログ不変条件', () => {
         /一晩.*同時刻.*月.*公転.*自転/,
         /円弧.*地球が西から東.*天球が東から西/,
         /地軸の傾き.*日射角度.*昼の長さ/,
+      ],
+      combinationDecomposition: [
+        /鉄粉と硫黄を混ぜて加熱.*磁石に引かれない.*化学変化.*物理的な変化/,
+        /色だけを見て.*磁石へ近づけ.*鉄の性質/,
+        /化学変化と判断.*反応前後の物質の性質を比較.*違う性質がないか/,
+      ],
+      oxidationReduction: [
+        /燃えたので銅板は軽く.*酸素と結びついた分だけ重く/,
+        /木や炭が燃える.*鉄がさびる.*呼吸.*氷がとける.*酸化/,
+        /赤い光沢の銅.*酸化銅に炭素を混ぜて加熱.*酸素が炭素へ移り.*二酸化炭素/,
+      ],
+      massConservation: [
+        /原子の種類.*結びつき方.*原子の数.*質量の和/,
+        /逃げた気体の分を含めれば.*質量の総和は等しい/,
+        /開いた容器で気体を逃がして.*密閉した容器で反応させて全体を測る/,
       ],
     }
     const usedKinds = new Set<string>()
@@ -911,7 +944,7 @@ describe('学習ミッションのカタログ不変条件', () => {
 
     assert.deepEqual([...usedKinds].sort(), [...COGNITIVE_TASK_KINDS].sort())
     assert.deepEqual([...usedOperations].sort(), [...COGNITIVE_OPERATIONS].sort())
-    assert.deepEqual(selectPositions, [7, 7, 7])
+    assert.deepEqual(selectPositions, [8, 9, 8])
   })
 
   it('全conceptにsectionと固定misconceptionがちょうど1つずつ対応する', () => {
@@ -949,13 +982,13 @@ describe('学習ミッションのカタログ不変条件', () => {
     }
   })
 
-  it('23conceptのcoverage metadataをMEXT本文の印刷ページ番号（PageLabels）・前提・安全条件と1対1で公開する', () => {
+  it('26conceptのcoverage metadataをMEXT本文の印刷ページ番号（PageLabels）・前提・安全条件と1対1で公開する', () => {
     const conceptKeys = UNITS.flatMap((unit) =>
       unit.concepts.map((concept) => concept.key),
     )
     const coverageEntries = Object.values(CURRICULUM_COVERAGE_MANIFEST)
     assert.deepEqual(new Set(Object.keys(CURRICULUM_COVERAGE_MANIFEST)), new Set(conceptKeys))
-    assert.equal(coverageEntries.length, 23)
+    assert.equal(coverageEntries.length, 26)
     assert.deepEqual(
       new Set(coverageEntries.map((entry) => entry.field)),
       new Set(CURRICULUM_FIELDS),
@@ -1102,8 +1135,8 @@ describe('学習ミッションのカタログ不変条件', () => {
     )
     assert.equal(
       new Set(listed.flatMap((unit) => unit.concepts.map((concept) => concept.storyTitle))).size,
-      23,
-      'Story一覧で23件の固有事件名を公開していない',
+      26,
+      'Story一覧で26件の固有事件名を公開していない',
     )
 
     for (const summary of listed) {
@@ -1280,7 +1313,7 @@ describe('学習ミッションのカタログ不変条件', () => {
     assert.match(induction.tryIt, /電源はつながず/)
   })
 
-  it('2・3周目も23conceptの成立条件を外さず、別の科学的判断を要求する', () => {
+  it('2・3周目も26conceptの成立条件を外さず、別の科学的判断を要求する', () => {
     function text(unitId: string, conceptKey: string): string {
       const unit = unitById(unitId)!
       const section = unit.sections.find((candidate) => candidate.conceptKey === conceptKey)!
@@ -1380,7 +1413,7 @@ describe('学習ミッションのカタログ不変条件', () => {
     assert.match(sky, /北半球.*南半球.*地軸が傾いたまま公転.*太陽距離/)
   })
 
-  it('69の具体場面それぞれに、checkpointと別の直接な結果と理由が対応する', () => {
+  it('78の具体場面それぞれに、checkpointと別の直接な結果と理由が対応する', () => {
     const signals: Readonly<Record<string, readonly RegExp[]>> = {
       fall: [
         /丸めた紙が先.*平らな紙.*遅く/,
@@ -1496,6 +1529,21 @@ describe('学習ミッションのカタログ不変条件', () => {
         /一晩に星が東から西.*月を進める.*自転.*公転/,
         /北の空.*天の北極.*円弧.*南の空.*東から昇って西/,
         /Nは夏.*Sは冬.*地軸が傾いたまま公転.*太陽距離.*ほぼ同じ/,
+      ],
+      combinationDecomposition: [
+        /鉄粉と硫黄.*加熱.*磁石に引かれず.*硫化鉄/,
+        /1種類の物質.*複数の物質に分かれ.*分解.*1種類から2種類以上/,
+        /石灰石.*分解.*砂と鉄粉.*物理的な操作.*磁石での分離.*性質がそのまま残る/,
+      ],
+      oxidationReduction: [
+        /酸化銅.*炭素.*赤い光沢の銅.*二酸化炭素.*酸素が炭素へ移り.*還元/,
+        /銅板.*酸素と結びついた分だけ重く.*木炭.*二酸化炭素.*酸素をやりとりする酸化/,
+        /鉄鉱石から酸素を取り除いて鉄.*還元.*さびるのが酸化.*酸素の移動する向きが逆/,
+      ],
+      massConservation: [
+        /密閉した袋.*気体が発生しても.*質量は反応前と等しい.*原子.*袋内に残る/,
+        /開いた容器.*気体が測定範囲外.*密閉袋.*気体も測定に含まれる.*関わる物質すべて/,
+        /酸素が銅へ結びついた分だけ増え.*二酸化炭素が外へ出た分だけ減.*総和は等しい.*すべてを測れば質量は保存/,
       ],
     }
 

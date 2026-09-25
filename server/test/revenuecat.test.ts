@@ -294,7 +294,7 @@ describe('/api/subscription-sync', () => {
     await handleSubscriptionSync(
       {
         method: 'POST',
-        headers: { authorization: `Bearer ${issueToken(DEVICE, NOW)}` },
+        headers: { authorization: `Bearer ${issueToken(DEVICE)}` },
       },
       response.res,
       {
@@ -323,7 +323,7 @@ describe('/api/subscription-sync', () => {
     await handleSubscriptionSync(
       {
         method: 'POST',
-        headers: { authorization: `Bearer ${issueToken(DEVICE, NOW)}` },
+        headers: { authorization: `Bearer ${issueToken(DEVICE)}` },
       },
       response.res,
       {
@@ -345,7 +345,7 @@ describe('/api/subscription-sync', () => {
     await handleSubscriptionSync(
       {
         method: 'POST',
-        headers: { authorization: `Bearer ${issueToken(DEVICE, NOW)}` },
+        headers: { authorization: `Bearer ${issueToken(DEVICE)}` },
       },
       response.res,
       {

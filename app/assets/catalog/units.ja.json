@@ -12331,6 +12331,1359 @@
           }
         }
       ]
+    },
+    {
+      "id": "chemical-change",
+      "title": "化学変化と原子・分子",
+      "brief": "化合・分解・酸化・還元を原子の組み替えとして捉え、質量保存の法則で量的にも説明します。",
+      "concepts": [
+        {
+          "key": "combinationDecomposition",
+          "label": "化合と分解",
+          "storyTitle": "混ぜただけ粉チームの冤罪事件",
+          "field": "matter",
+          "grade": 2,
+          "curriculumRefs": [
+            {
+              "document": "mext-jhs-science-2017",
+              "section": "第1分野 (4)(ア)(イ) 物質の成り立ち・化学変化",
+              "pages": [
+                46,
+                47,
+                48,
+                49
+              ],
+              "url": "https://www.mext.go.jp/component/a_menu/education/micro_detail/__icsFiles/afieldfile/2019/03/18/1387018_005.pdf"
+            }
+          ],
+          "prerequisites": [
+            "stateChangeMass"
+          ],
+          "difficulty": 3,
+          "safety": {
+            "level": "referenceOnly",
+            "guidance": "家庭で加熱・薬品の混合・気体の発生は行わず、配布された実験記録と図・動画だけを使う。"
+          }
+        },
+        {
+          "key": "oxidationReduction",
+          "label": "酸化と還元",
+          "storyTitle": "赤い汚れの正体を追え",
+          "field": "matter",
+          "grade": 2,
+          "curriculumRefs": [
+            {
+              "document": "mext-jhs-science-2017",
+              "section": "第1分野 (4)(イ) 化学変化における酸化と還元",
+              "pages": [
+                48,
+                49,
+                50
+              ],
+              "url": "https://www.mext.go.jp/component/a_menu/education/micro_detail/__icsFiles/afieldfile/2019/03/18/1387018_005.pdf"
+            }
+          ],
+          "prerequisites": [
+            "combinationDecomposition"
+          ],
+          "difficulty": 4,
+          "safety": {
+            "level": "referenceOnly",
+            "guidance": "さびの観察は手を洗いとがった部分に触れない範囲で行い、加熱・薬品・燃焼を伴う確かめは学校の記録と動画だけを使う。"
+          }
+        },
+        {
+          "key": "massConservation",
+          "label": "質量保存",
+          "storyTitle": "消えた1.1グラムの密室",
+          "field": "matter",
+          "grade": 2,
+          "curriculumRefs": [
+            {
+              "document": "mext-jhs-science-2017",
+              "section": "第1分野 (4)(ウ) 化学変化と物質の質量",
+              "pages": [
+                50,
+                51
+              ],
+              "url": "https://www.mext.go.jp/component/a_menu/education/micro_detail/__icsFiles/afieldfile/2019/03/18/1387018_005.pdf"
+            }
+          ],
+          "prerequisites": [
+            "combinationDecomposition"
+          ],
+          "difficulty": 4,
+          "safety": {
+            "level": "referenceOnly",
+            "guidance": "気体発生や加熱を伴う反応は学校配布の測定記録だけを使い、家庭で薬品の混合・加熱・密閉実験をしない。"
+          }
+        }
+      ],
+      "sectionCount": 3,
+      "sections": [
+        {
+          "conceptKey": "combinationDecomposition",
+          "title": "混ぜただけなのか、別の物質になったのか",
+          "body": [
+            "鉄粉と硫黄の粉末をよく混ぜても、粒の一つ一つは鉄と硫黄のままです。磁石に近づければ鉄の粒だけが引かれます。ところが加熱すると反応が進み、磁石に引かれない黒い物質「硫化鉄」になります。混ぜることと化合することは別です。",
+            "2種類以上の物質が結びついて別の物質になる変化を**化合**、反対に1種類の物質が2種類以上の別の物質に分かれる変化を**分解**といいます。炭酸水素ナトリウムを加熱すると炭酸ナトリウム・水・二酸化炭素に分かれるのが分解の例です。どちらも反応の前後で物質の種類が変わる**化学変化**です。",
+            "氷が水になったり、水に食塩がとけたりする変化では物質の種類は変わらないので化学変化ではありません。見分けるには「性質の違う物質が生まれたか」を調べます。色やにおい、気泡、温度の変化は手がかりになりますが、最後は生成物の性質で判断します。",
+            "原子や分子のモデルでは、化学変化は原子の**組合せ**が変わる変化です。原子そのものは消えたり新しく生まれたりしません。組合せが変わるから、生成物は反応前とは別の性質をもつのです。"
+          ],
+          "tryIt": "学校配布の「鉄粉と硫黄の混合物を加熱する前後」の実験記録を読み、反応前と反応後で磁石へのくっつき方や見た目がどう変わったかを2つ書き出し、別物質ができたと判断できる根拠を説明してください。家庭で加熱や薬品の混合は行いません。",
+          "localSpeakingPractice": {
+            "targetPhrase": "1種類が分かれるのが分解、結びつくのが化合です",
+            "acceptedTranscripts": [
+              "1種類が分かれるのが分解、結びつくのが化合です",
+              "分かれて別物質になるのが分解、結びついて別物質になるのが化合です"
+            ]
+          },
+          "localPracticeVariants": [
+            {
+              "stage": "foundation",
+              "recallPrompt": "物質が結びつく化合と分かれる分解を、「反応前後で物質の種類が変わるか」という点から説明してください。",
+              "reasoningPrompt": "混ぜ合わせることや溶かすことは化合ではありません。化合と混合物を見分ける根拠を一つ足してください。",
+              "expectedOutcome": "鉄粉と硫黄の混合粉末を加熱した記録では、反応後の黒い物質は磁石に引かれず、反応前とは性質の違う物質になっています。",
+              "expectedReason": "加熱で鉄と硫黄が化学変化により結びつき、硫化鉄という別の性質の物質が生成したためです。混ぜただけでは粒ごとの性質が残ります。",
+              "transferPrompt": "学校配布の「鉄粉と硫黄の混合物を加熱する前後」の実験記録を読み、反応前と反応後で磁石へのくっつき方や見た目がどう変わったかを2つ書き出し、別物質ができたと判断できる根拠を説明してください。家庭で加熱や薬品の混合は行いません。",
+              "cognitiveTask": {
+                "kind": "classify",
+                "operation": "conditionClassify",
+                "items": [
+                  {
+                    "id": "iron-sulfur-heat",
+                    "text": "鉄粉と硫黄を混ぜて加熱し、磁石に引かれない黒い物質ができた"
+                  },
+                  {
+                    "id": "sand-iron-mix",
+                    "text": "砂と鉄粉を混ぜた"
+                  },
+                  {
+                    "id": "salt-dissolve",
+                    "text": "食塩を水に溶かした"
+                  },
+                  {
+                    "id": "baking-soda-heat",
+                    "text": "炭酸水素ナトリウムを加熱して複数の物質が生じた"
+                  }
+                ],
+                "targets": [
+                  {
+                    "id": "chemical-change",
+                    "label": "化学変化"
+                  },
+                  {
+                    "id": "physical-change",
+                    "label": "物理的な変化"
+                  }
+                ],
+                "solution": {
+                  "targetByItemId": {
+                    "iron-sulfur-heat": "chemical-change",
+                    "salt-dissolve": "physical-change",
+                    "baking-soda-heat": "chemical-change",
+                    "sand-iron-mix": "physical-change"
+                  }
+                },
+                "needCode": "science.combinationDecomposition.foundation"
+              },
+              "checkpoint": {
+                "lure": "鉄粉と硫黄の粉末をよく混ぜた時点で、もう鉄は硫黄と化合している。",
+                "options": [
+                  {
+                    "id": "mixture-not-compound",
+                    "text": "混ぜただけでは粒は鉄と硫黄のまま。加熱で反応し、性質の違う物質ができて初めて化合したと言える。"
+                  },
+                  {
+                    "id": "mixed-means-combined",
+                    "text": "よく混ぜた粉末は粒が触れ合っているので、その時点で化合している。",
+                    "hint": "混ぜた混合物に磁石を近づけたとき、鉄の粒がどうなるかを考えます。",
+                    "needCode": "science.combinationDecomposition.foundation"
+                  },
+                  {
+                    "id": "heating-restores",
+                    "text": "加熱して変わった色は冷めると元に戻るので、物質の種類は変わらない。",
+                    "hint": "加熱後の物質が磁石に引かれなくなるか、見た目だけの変化かを見ます。",
+                    "needCode": "science.combinationDecomposition.foundation"
+                  }
+                ],
+                "correctOptionId": "mixture-not-compound",
+                "explanation": "混合物の中では鉄の粒と硫黄の粒はそれぞれの性質を保っています。加熱で化学変化が起き、磁石に引かれない硫化鉄という別物質ができると化合したと言えます。"
+              },
+              "listeningNeedCodes": {
+                "transcript": "science.combinationDecomposition.listening.foundation.transcript",
+                "meaning": "science.combinationDecomposition.listening.foundation.meaning"
+              }
+            },
+            {
+              "stage": "conditions",
+              "recallPrompt": "「2つを混ぜた」と「化合した」の違いを、粒の性質が残るかどうかで説明してください。",
+              "reasoningPrompt": "生成物が本当に別物質か確かめるには、どの性質を比べればよいか足してください。",
+              "transferPrompt": "炭酸水素ナトリウムを加熱した記録で、性質の違う固体と水・気体が生じたとします。これは分解と言えるか、根拠を添えて判断してください。",
+              "expectedOutcome": "炭酸水素ナトリウムという1種類の物質が、性質の違う複数の物質に分かれたので、分解と判断できます。",
+              "expectedReason": "生成物が反応前と異なる性質を示し、1種類から2種類以上へ分かれたためです。物質が変わらない状態変化や分離とは違います。",
+              "checkpoint": {
+                "lure": "加熱していくつかの物質に分かれたなら、それはいつでも分解である。",
+                "options": [
+                  {
+                    "id": "melting-decomposition",
+                    "text": "氷が水になるのも1種類から別のものへ分かれるので、分解に含める。",
+                    "hint": "氷と水で物質の種類が変わるか、姿が変わるだけかを区別します。",
+                    "needCode": "science.combinationDecomposition.conditions"
+                  },
+                  {
+                    "id": "new-substances-decomposition",
+                    "text": "性質の違う複数の物質が1種類から生成したと確認できれば、分解である。"
+                  },
+                  {
+                    "id": "heating-only",
+                    "text": "加熱さえすれば起きる変化はすべて化学変化なので、分類は不要である。",
+                    "hint": "加熱で起きる変化にも、物質が変わらないものがあるかを考えます。",
+                    "needCode": "science.combinationDecomposition.conditions"
+                  }
+                ],
+                "correctOptionId": "new-substances-decomposition",
+                "explanation": "分解とは1種類の物質が2種類以上の別物質に分かれる化学変化です。氷が水になるような、物質が変わらない変化は分解ではありません。"
+              },
+              "cognitiveTask": {
+                "kind": "singleSelect",
+                "operation": "experimentPlan",
+                "items": [
+                  {
+                    "id": "check-color-only",
+                    "text": "色だけを見て、混ぜたときから化合していたと判断する。"
+                  },
+                  {
+                    "id": "check-magnet",
+                    "text": "反応後の物質を磁石へ近づけ、鉄の性質が残るかを調べる。"
+                  },
+                  {
+                    "id": "do-nothing",
+                    "text": "何も調べず、見た目の変化だけで判断する。"
+                  }
+                ],
+                "solution": {
+                  "selectedItemId": "check-magnet"
+                },
+                "needCode": "science.combinationDecomposition.conditions"
+              },
+              "listeningNeedCodes": {
+                "transcript": "science.combinationDecomposition.listening.conditions.transcript",
+                "meaning": "science.combinationDecomposition.listening.conditions.meaning"
+              }
+            },
+            {
+              "stage": "transfer",
+              "recallPrompt": "化学変化と、状態変化や溶解などの物理的な変化の違いを説明してください。",
+              "reasoningPrompt": "「気体が出た」「色が変わった」だけでは化学変化と断定できない理由を足してください。",
+              "transferPrompt": "石灰石に熱を加えた記録では、性質の違う固体と気体が生じました。また別の記録では、砂と鉄粉の混合物を磁石で分けました。どちらが化学変化で、なぜかを整理してください。",
+              "expectedOutcome": "石灰石の加熱は新しい物質が生じた分解で、砂と鉄粉の分離は物質が変わらない物理的な操作です。",
+              "expectedReason": "化学変化では生成物が反応前と異なる性質を示しますが、磁石での分離では粒ごとの性質がそのまま残るためです。",
+              "checkpoint": {
+                "lure": "磁石で鉄粉を取り分ける操作も、物質を分ける点では分解と同じである。",
+                "options": [
+                  {
+                    "id": "separation-is-decomposition",
+                    "text": "混合物を成分へ分ける操作は、加熱と同じく分解である。",
+                    "hint": "分解で分かれた物質と、磁石で取り出した鉄粉が別物質に変わったかを見ます。",
+                    "needCode": "science.combinationDecomposition.transfer"
+                  },
+                  {
+                    "id": "all-division-chemical",
+                    "text": "ものを分ける変化はすべて化学変化なので、どちらも分解である。",
+                    "hint": "化学変化の条件は「分ける」ことか「別物質が生成する」ことかを考えます。",
+                    "needCode": "science.combinationDecomposition.transfer"
+                  },
+                  {
+                    "id": "physical-vs-chemical",
+                    "text": "磁石による分離は粒の性質が変わらない物理的操作で、生成物が別物質になる分解とは違う。"
+                  }
+                ],
+                "correctOptionId": "physical-vs-chemical",
+                "explanation": "分解は化学変化で、生成物はもとの物質とは性質が違います。磁石での分離は鉄粉も砂も性質が変わらない物理的操作です。"
+              },
+              "cognitiveTask": {
+                "kind": "sequence",
+                "operation": "causalOrder",
+                "items": [
+                  {
+                    "id": "judge-change",
+                    "text": "別物質が生成したので化学変化と判断する。"
+                  },
+                  {
+                    "id": "compare-before-after",
+                    "text": "反応前後の物質の性質を比較する。"
+                  },
+                  {
+                    "id": "detect-difference",
+                    "text": "生成物に反応前と違う性質がないか調べる。"
+                  }
+                ],
+                "solution": {
+                  "orderedItemIds": [
+                    "compare-before-after",
+                    "detect-difference",
+                    "judge-change"
+                  ]
+                },
+                "needCode": "science.combinationDecomposition.transfer"
+              },
+              "listeningNeedCodes": {
+                "transcript": "science.combinationDecomposition.listening.transfer.transcript",
+                "meaning": "science.combinationDecomposition.listening.transfer.meaning"
+              }
+            }
+          ],
+          "notationLab": {
+            "tasks": [
+              {
+                "kind": "tableRead",
+                "id": "combinationDecomposition.tableRead",
+                "needCode": "science.combinationDecomposition.notation.tableRead",
+                "title": "反応前後の性質表を読む",
+                "prompt": "加熱前後の記録から、化合が起きたと判断できる行の読み取りを選ぶ。",
+                "representation": [
+                  "物質 | 見た目 | 磁石への反応",
+                  "鉄粉と硫黄（加熱前） | 灰と黄の粒 | 鉄の粒だけが引かれる",
+                  "加熱後の黒いかたまり | 黒い固体 | 引かれない"
+                ],
+                "representationSemanticsLabel": "加熱前は粒ごとの性質が残り、加熱後は性質の違う物質になっている。",
+                "choices": [
+                  {
+                    "id": "still-mixture",
+                    "label": "加熱前の粉末はすでに硫化鉄である"
+                  },
+                  {
+                    "id": "reaction-occurred",
+                    "label": "加熱後の物質は反応前と性質が異なり、化合が起きた"
+                  },
+                  {
+                    "id": "no-change",
+                    "label": "見た目が変わっただけで、物質は変わっていない"
+                  }
+                ],
+                "correctChoiceId": "reaction-occurred",
+                "solutionSummary": "磁石への反応が消えたことから、別の性質の物質が生成したと判断します。"
+              },
+              {
+                "kind": "sequence",
+                "id": "combinationDecomposition.sequence",
+                "needCode": "science.combinationDecomposition.notation.sequence",
+                "title": "化学変化を判断する手順を並べる",
+                "prompt": "反応が化学変化かどうかを判断する手順を、記録の読み方の順に並べる。",
+                "guide": "反応前の性質、生成物の性質、別物質かの判断、変化の分類をつなぎます。",
+                "tokens": [
+                  {
+                    "id": "inspect-products",
+                    "label": "生成物の性質を調べる"
+                  },
+                  {
+                    "id": "compare-properties",
+                    "label": "反応前後で性質が異なるかを比べる"
+                  },
+                  {
+                    "id": "classify-change",
+                    "label": "別物質の生成なら化合・分解などの化学変化と分類する"
+                  },
+                  {
+                    "id": "record-before",
+                    "label": "反応前の物質の性質を確認する"
+                  }
+                ],
+                "correctOrderIds": [
+                  "record-before",
+                  "inspect-products",
+                  "compare-properties",
+                  "classify-change"
+                ],
+                "solutionSummary": "反応前後の性質を比べ、別物質が生じたかで化学変化かを判断します。"
+              },
+              {
+                "kind": "symbolMatch",
+                "id": "combinationDecomposition.symbolMatch",
+                "needCode": "science.combinationDecomposition.notation.symbolMatch",
+                "title": "変化の名前を反応へ結ぶ",
+                "prompt": "「炭酸水素ナトリウムを加熱すると炭酸ナトリウム・水・二酸化炭素が生じた」変化の名前を選ぶ。",
+                "representation": [
+                  "反応前 | 反応後",
+                  "炭酸水素ナトリウム | 炭酸ナトリウム・水・二酸化炭素"
+                ],
+                "representationSemanticsLabel": "1種類の物質が、性質の違う複数の物質に分かれた。",
+                "choices": [
+                  {
+                    "id": "decomposition",
+                    "label": "分解"
+                  },
+                  {
+                    "id": "combination",
+                    "label": "化合"
+                  },
+                  {
+                    "id": "state-change",
+                    "label": "状態変化"
+                  }
+                ],
+                "correctChoiceId": "decomposition",
+                "solutionSummary": "1種類の物質が2種類以上の別物質へ分かれる変化は分解です。"
+              }
+            ]
+          },
+          "scienceStory": {
+            "id": "combinationDecomposition.mixed-powder",
+            "title": "混ぜただけ粉チームの冤罪事件",
+            "setting": "家庭科室の資料棚。鉄粉と硫黄を混ぜた粉末と、加熱後の黒いかたまりの観察記録が並ぶ。",
+            "foundationNeedCode": "science.combinationDecomposition.foundation",
+            "characters": [
+              {
+                "id": "mio",
+                "name": "ミオ",
+                "role": "観察と安全確認"
+              },
+              {
+                "id": "dekisugi",
+                "name": "デキすぎ君",
+                "role": "自信満々の仮説"
+              },
+              {
+                "id": "ren",
+                "name": "レン",
+                "role": "条件と記録の確認"
+              }
+            ],
+            "openingLines": [
+              {
+                "id": "combinationDecomposition.open.1",
+                "speakerId": "mio",
+                "text": "加熱前の粉末、磁石に近づけると黒っぽい粒だけがくっついてる。"
+              },
+              {
+                "id": "combinationDecomposition.open.2",
+                "speakerId": "ren",
+                "text": "鉄の粒が残ってるってことだね。加熱後のかたまりは磁石にも引かれない。"
+              },
+              {
+                "id": "combinationDecomposition.open.3",
+                "speakerId": "dekisugi",
+                "text": "ぼくは知ってる！混ぜればもう化合！名づけて「瞬間化合説」！"
+              }
+            ],
+            "choiceLine": {
+              "id": "combinationDecomposition.mixed-powder.choice",
+              "speakerId": "dekisugi",
+              "text": "鉄粉と硫黄の粉末をよく混ぜた時点で、もう鉄は硫黄と化合している。"
+            },
+            "choiceResponses": [
+              {
+                "optionId": "mixture-not-compound",
+                "line": {
+                  "id": "combinationDecomposition.response.mixture-not-compound",
+                  "speakerId": "ren",
+                  "text": "混ぜただけなら鉄の粒は鉄のまま。磁石に引かれる記録がその証拠だね。"
+                }
+              },
+              {
+                "optionId": "mixed-means-combined",
+                "line": {
+                  "id": "combinationDecomposition.response.mixed-means-combined",
+                  "speakerId": "mio",
+                  "text": "粒が触れ合っていても性質が残っていれば、まだ混合物だよ。"
+                }
+              },
+              {
+                "optionId": "heating-restores",
+                "line": {
+                  "id": "combinationDecomposition.response.heating-restores",
+                  "speakerId": "dekisugi",
+                  "text": "加熱で色が変わったなら、冷めれば元に戻る……はずがなかった！"
+                }
+              }
+            ],
+            "resolutionLines": [
+              {
+                "id": "combinationDecomposition.resolve.1",
+                "speakerId": "ren",
+                "text": "加熱で化学変化が起きて、性質の違う硫化鉄ができた。それが化合だね。"
+              },
+              {
+                "id": "combinationDecomposition.resolve.2",
+                "speakerId": "mio",
+                "text": "1種類が分かれるのが分解、結びつくのが化合。混ぜるだけはどちらでもないね。"
+              }
+            ],
+            "scientificResolution": {
+              "outcome": "鉄粉と硫黄の混合粉末を加熱した記録では、反応後の黒い物質は磁石に引かれず、反応前とは性質の違う物質になっています。",
+              "reason": "加熱で鉄と硫黄が化学変化により結びつき、硫化鉄という別の性質の物質が生成したためです。混ぜただけでは粒ごとの性質が残ります。"
+            },
+            "punchline": {
+              "id": "combinationDecomposition.punchline",
+              "speakerId": "dekisugi",
+              "text": "瞬間化合説、磁石の前で見事に散りました。"
+            }
+          },
+          "localCheckpoint": {
+            "lure": "鉄粉と硫黄の粉末をよく混ぜた時点で、もう鉄は硫黄と化合している。",
+            "options": [
+              {
+                "id": "mixture-not-compound",
+                "text": "混ぜただけでは粒は鉄と硫黄のまま。加熱で反応し、性質の違う物質ができて初めて化合したと言える。"
+              },
+              {
+                "id": "mixed-means-combined",
+                "text": "よく混ぜた粉末は粒が触れ合っているので、その時点で化合している。",
+                "hint": "混ぜた混合物に磁石を近づけたとき、鉄の粒がどうなるかを考えます。",
+                "needCode": "science.combinationDecomposition.foundation"
+              },
+              {
+                "id": "heating-restores",
+                "text": "加熱して変わった色は冷めると元に戻るので、物質の種類は変わらない。",
+                "hint": "加熱後の物質が磁石に引かれなくなるか、見た目だけの変化かを見ます。",
+                "needCode": "science.combinationDecomposition.foundation"
+              }
+            ],
+            "correctOptionId": "mixture-not-compound",
+            "explanation": "混合物の中では鉄の粒と硫黄の粒はそれぞれの性質を保っています。加熱で化学変化が起き、磁石に引かれない硫化鉄という別物質ができると化合したと言えます。"
+          }
+        },
+        {
+          "conceptKey": "oxidationReduction",
+          "title": "燃えることとさびることの、意外な共通点",
+          "body": [
+            "銅を加熱すると表面が黒くなり、鉄は空気中で赤さびができます。どちらも物質が酸素と結びつく化学変化で、**酸化**といいます。炎を上げて激しく進む酸化が燃焼で、ゆっくり進む酸化がさびです。呼吸も酸化の一種です。",
+            "酸化してできる物質を**酸化物**といいます。酸化銅・酸化鉄・酸化マグネシウムなどです。酸化の前にあった物質と酸化物は別の性質をもち、酸化した物質の質量は、結びついた酸素の分だけ増えます。",
+            "酸化物から酸素を取り去る化学変化を**還元**といいます。酸化銅の粉末に炭素の粉を混ぜて加熱すると、酸素が炭素へ移り、赤い光沢のある銅と二酸化炭素ができます。酸化と還元は酸素をやりとりする逆向きの反応です。",
+            "さびは表面に付いた汚れのように見えますが、鉄そのものが酸素と結びついて別の物質になった変化です。また燃えたものが軽く見えても、結びついた酸素と逃げた気体まで含めると話は変わります。"
+          ],
+          "tryIt": "家のまわりで鉄のさびが見られる場所（門・フェンス・自転車の金属部分など）を安全に観察し、さびた部分とさびていない部分の色や表面のようすを書き比べてください。さびが鉄とは別の性質をもつ物質であることを、観察から一つ挙げてください。さびた物に触れたあとは手を洗い、とがった部分や壊れかけの物には触れないでください。",
+          "localSpeakingPractice": {
+            "targetPhrase": "酸化は酸素と結びつく変化、還元は酸素を取り去る変化です",
+            "acceptedTranscripts": [
+              "酸化は酸素と結びつく変化、還元は酸素を取り去る変化です",
+              "酸素と結びつくのが酸化、酸素を失うのが還元です"
+            ]
+          },
+          "localPracticeVariants": [
+            {
+              "stage": "foundation",
+              "recallPrompt": "物質が酸素と結びつく酸化と、酸化物から酸素を取り去る還元の関係を説明してください。",
+              "reasoningPrompt": "燃焼・さび・呼吸など速さの違う変化が、なぜ同じ「酸化」と呼ばれるのかを足してください。",
+              "expectedOutcome": "酸化銅の粉末に炭素の粉を混ぜて加熱した記録では、黒い粉末から赤い光沢の銅が生じ、二酸化炭素が発生しています。",
+              "expectedReason": "酸化銅の酸素が炭素へ移り、酸化銅が還元されて銅に、炭素が酸化されて二酸化炭素になったためです。",
+              "transferPrompt": "家のまわりで鉄のさびが見られる場所（門・フェンス・自転車の金属部分など）を安全に観察し、さびた部分とさびていない部分の色や表面のようすを書き比べてください。さびが鉄とは別の性質をもつ物質であることを、観察から一つ挙げてください。さびた物に触れたあとは手を洗い、とがった部分や壊れかけの物には触れないでください。",
+              "cognitiveTask": {
+                "kind": "singleSelect",
+                "operation": "prediction",
+                "items": [
+                  {
+                    "id": "copper-lighter",
+                    "text": "燃えたので銅板は軽くなる。"
+                  },
+                  {
+                    "id": "copper-heavier",
+                    "text": "銅板は酸素と結びついた分だけ重くなる。"
+                  },
+                  {
+                    "id": "copper-same",
+                    "text": "質量は変わらない。"
+                  }
+                ],
+                "solution": {
+                  "selectedItemId": "copper-heavier"
+                },
+                "needCode": "science.oxidationReduction.foundation"
+              },
+              "checkpoint": {
+                "lure": "鉄のさびは、表面に赤い汚れが付いただけで、鉄と酸素が結びついたわけではない。",
+                "options": [
+                  {
+                    "id": "surface-dirt",
+                    "text": "さびは外から付着した汚れなので、削って取れば鉄は何も変わっていない。",
+                    "hint": "さびを落としたあとの金属が、もとの重さやかたさを保つかを考えます。",
+                    "needCode": "science.oxidationReduction.foundation"
+                  },
+                  {
+                    "id": "rust-is-oxide",
+                    "text": "さびは鉄が酸素と結びついてできた酸化物で、もとの鉄とは別の物質である。"
+                  },
+                  {
+                    "id": "rust-is-reduction",
+                    "text": "さびは鉄から酸素が抜けてできる物質なので、還元の一種である。",
+                    "hint": "酸化と還元のどちらが酸素を受け取る側かを確認します。",
+                    "needCode": "science.oxidationReduction.foundation"
+                  }
+                ],
+                "correctOptionId": "rust-is-oxide",
+                "explanation": "さびは鉄が酸素などとゆっくり反応してできる酸化物で、鉄とは性質が違います。表面の汚れではなく、鉄そのものが別の物質へ変わった酸化の結果です。"
+              },
+              "listeningNeedCodes": {
+                "transcript": "science.oxidationReduction.listening.foundation.transcript",
+                "meaning": "science.oxidationReduction.listening.foundation.meaning"
+              }
+            },
+            {
+              "stage": "conditions",
+              "recallPrompt": "酸化で質量が増える理由を、酸素との結びつきで説明してください。",
+              "reasoningPrompt": "金属を燃やすと質量が増える記録を、「燃えて軽くなるはず」と矛盾しない形で説明できる点を足してください。",
+              "transferPrompt": "銅板を加熱したら質量が増えた、木炭を燃やしたら残った固体の質量は減ったという記録があります。増えた分と減って見える分はそれぞれどこから来たかを説明してください。",
+              "expectedOutcome": "銅板は空気中の酸素と結びついた分だけ重くなり、木炭は結びついた酸素といっしょに二酸化炭素として空気中へ出た分だけ軽く見えます。",
+              "expectedReason": "どちらも酸素をやりとりする酸化です。周囲の酸素や逃げた気体を測定に含めるかどうかで、見かけの増減が決まります。",
+              "checkpoint": {
+                "lure": "燃焼では物質が消費されるので、酸化の前後で物質は必ず減る。",
+                "options": [
+                  {
+                    "id": "oxygen-added",
+                    "text": "燃焼は激しい酸化で、結びついた酸素の分だけ生成物は重くなる。逃げる気体も含めて考える必要がある。"
+                  },
+                  {
+                    "id": "burning-shrinks",
+                    "text": "燃えた分だけ物質は消えるので、生成物の質量は常に小さくなる。",
+                    "hint": "燃えるとき酸素が結びつくことを、酸化物の質量の記録と照らします。",
+                    "needCode": "science.oxidationReduction.conditions"
+                  },
+                  {
+                    "id": "fire-is-not-oxidation",
+                    "text": "燃焼は酸化とは別の仕組みなので、酸素の出入りは関係ない。",
+                    "hint": "燃えるために酸素が必要かどうかを確認します。",
+                    "needCode": "science.oxidationReduction.conditions"
+                  }
+                ],
+                "correctOptionId": "oxygen-added",
+                "explanation": "燃焼は激しい酸化です。残った固体だけを見ると増減はさまざまですが、結びついた酸素や逃げた気体まで含めれば、酸素のやりとりで説明できます。"
+              },
+              "cognitiveTask": {
+                "kind": "classify",
+                "operation": "conditionClassify",
+                "items": [
+                  {
+                    "id": "burning-fast",
+                    "text": "木や炭が燃える"
+                  },
+                  {
+                    "id": "rust-slow",
+                    "text": "鉄がさびる"
+                  },
+                  {
+                    "id": "breathing",
+                    "text": "私たちの呼吸"
+                  },
+                  {
+                    "id": "melting-ice",
+                    "text": "氷がとける"
+                  }
+                ],
+                "targets": [
+                  {
+                    "id": "oxidation",
+                    "label": "酸化"
+                  },
+                  {
+                    "id": "not-oxidation",
+                    "label": "酸化ではない"
+                  }
+                ],
+                "solution": {
+                  "targetByItemId": {
+                    "burning-fast": "oxidation",
+                    "rust-slow": "oxidation",
+                    "breathing": "oxidation",
+                    "melting-ice": "not-oxidation"
+                  }
+                },
+                "needCode": "science.oxidationReduction.conditions"
+              },
+              "listeningNeedCodes": {
+                "transcript": "science.oxidationReduction.listening.conditions.transcript",
+                "meaning": "science.oxidationReduction.listening.conditions.meaning"
+              }
+            },
+            {
+              "stage": "transfer",
+              "recallPrompt": "酸化と還元が「逆向きの反応」であることを、酸素のやりとりで説明してください。",
+              "reasoningPrompt": "日常生活で酸化・還元を使っている例を一つ挙げ、どちらの反応かを理由とともに足してください。",
+              "transferPrompt": "鉄鉱石（酸化鉄）から鉄を取り出す製鉄と、鉄がさびる変化を、酸素のやりとりで対比してください。どちらが酸化でどちらが還元ですか。",
+              "expectedOutcome": "鉄鉱石から酸素を取り除いて鉄にするのが還元、鉄が酸素と結びついてさびるのが酸化です。",
+              "expectedReason": "還元は酸化物から酸素を取り去る反応、酸化は物質が酸素と結びつく反応で、酸素の移動する向きが逆だからです。",
+              "checkpoint": {
+                "lure": "さびてできた酸化物を元の鉄に戻す操作も、同じく酸化の一種である。",
+                "options": [
+                  {
+                    "id": "return-is-oxidation",
+                    "text": "さびを鉄に戻す操作は鉄を「元へ返す」ので、名前の通り酸化である。",
+                    "hint": "酸化・還元の分類は「元に戻すか」ではなく、酸素をどちらへ動かすかで決まります。",
+                    "needCode": "science.oxidationReduction.transfer"
+                  },
+                  {
+                    "id": "rust-permanent",
+                    "text": "さびた鉄は二度と変化しないので、どちらの反応でもない。",
+                    "hint": "製鉄では酸化鉄から鉄を取り出しています。その反応名を確認します。",
+                    "needCode": "science.oxidationReduction.transfer"
+                  },
+                  {
+                    "id": "rust-removal-reduction",
+                    "text": "さびを鉄に戻すのは、酸化物から酸素を取り去る還元である。"
+                  }
+                ],
+                "correctOptionId": "rust-removal-reduction",
+                "explanation": "酸化物から酸素を取り去る反応は還元です。「元へ返す」という意味ではなく、酸素のやりとりの向きで分類します。"
+              },
+              "cognitiveTask": {
+                "kind": "sequence",
+                "operation": "causalOrder",
+                "items": [
+                  {
+                    "id": "copper-remains",
+                    "text": "赤い光沢の銅が残る。"
+                  },
+                  {
+                    "id": "heat-with-carbon",
+                    "text": "酸化銅に炭素を混ぜて加熱する。"
+                  },
+                  {
+                    "id": "oxygen-moves",
+                    "text": "酸素が炭素へ移り、二酸化炭素ができる。"
+                  }
+                ],
+                "solution": {
+                  "orderedItemIds": [
+                    "heat-with-carbon",
+                    "oxygen-moves",
+                    "copper-remains"
+                  ]
+                },
+                "needCode": "science.oxidationReduction.transfer"
+              },
+              "listeningNeedCodes": {
+                "transcript": "science.oxidationReduction.listening.transfer.transcript",
+                "meaning": "science.oxidationReduction.listening.transfer.meaning"
+              }
+            }
+          ],
+          "notationLab": {
+            "tasks": [
+              {
+                "kind": "tableRead",
+                "id": "oxidationReduction.tableRead",
+                "needCode": "science.oxidationReduction.notation.tableRead",
+                "title": "酸素のやりとり表を読む",
+                "prompt": "酸化銅と炭素を加熱した記録から、酸素を失った物質に起きた変化の名前を選ぶ。",
+                "representation": [
+                  "物質 | 変化 | 酸素の行き先",
+                  "酸化銅 | 黒い粉末から赤い光沢の銅へ | 酸素を失った",
+                  "炭素 | 炭素から二酸化炭素へ | 酸素を得た"
+                ],
+                "representationSemanticsLabel": "酸素を失った物質は還元され、酸素を得た物質は酸化された。",
+                "choices": [
+                  {
+                    "id": "oxidized",
+                    "label": "酸化"
+                  },
+                  {
+                    "id": "reduced",
+                    "label": "還元"
+                  },
+                  {
+                    "id": "decomposed",
+                    "label": "分解"
+                  }
+                ],
+                "correctChoiceId": "reduced",
+                "solutionSummary": "酸化銅は酸素を失って銅になったので、還元されました。"
+              },
+              {
+                "kind": "sequence",
+                "id": "oxidationReduction.sequence",
+                "needCode": "science.oxidationReduction.notation.sequence",
+                "title": "酸化で質量が増える筋道を並べる",
+                "prompt": "金属を空気中で加熱したとき質量が増える理由を、出来事の順に並べる。",
+                "guide": "酸素との結びつき、酸化物の生成、質量の増加をつなぎます。",
+                "tokens": [
+                  {
+                    "id": "oxide-forms",
+                    "label": "酸化物という別の物質が生成する"
+                  },
+                  {
+                    "id": "mass-increases",
+                    "label": "結びついた酸素の分だけ質量が増える"
+                  },
+                  {
+                    "id": "oxygen-joins",
+                    "label": "空気中の酸素が金属と結びつく"
+                  }
+                ],
+                "correctOrderIds": [
+                  "oxygen-joins",
+                  "oxide-forms",
+                  "mass-increases"
+                ],
+                "solutionSummary": "酸素が結びついて酸化物ができるので、酸化後の物質は重くなります。"
+              },
+              {
+                "kind": "graphRead",
+                "id": "oxidationReduction.graphRead",
+                "needCode": "science.oxidationReduction.notation.graphRead",
+                "title": "銅と酸素の質量グラフを読む",
+                "prompt": "加熱した銅の質量と結びついた酸素の質量の記録から、正しい読み取りを選ぶ。",
+                "representation": [
+                  "銅の質量(g) | 結びついた酸素の質量(g)",
+                  "0.4 | 0.1",
+                  "0.8 | 0.2",
+                  "1.2 | 0.3"
+                ],
+                "representationSemanticsLabel": "銅の質量が2倍・3倍になると、結びつく酸素の質量も2倍・3倍になる。",
+                "choices": [
+                  {
+                    "id": "proportional",
+                    "label": "結びつく酸素の質量は、銅の質量に比例する"
+                  },
+                  {
+                    "id": "unrelated",
+                    "label": "酸素の質量は、銅の質量と関係なくばらばらである"
+                  },
+                  {
+                    "id": "fixed-oxygen",
+                    "label": "銅の質量が違っても、結びつく酸素は常に同じ量である"
+                  }
+                ],
+                "correctChoiceId": "proportional",
+                "solutionSummary": "反応する物質の質量の間には一定の関係があり、酸素は銅の質量に比例して結びつきます。"
+              }
+            ]
+          },
+          "scienceStory": {
+            "id": "oxidationReduction.rust-detective",
+            "title": "赤い汚れの正体を追え",
+            "setting": "昇降口のフェンスの写真と、学校で保存されたさびの観察記録が開かれている。",
+            "foundationNeedCode": "science.oxidationReduction.foundation",
+            "characters": [
+              {
+                "id": "mio",
+                "name": "ミオ",
+                "role": "観察と安全確認"
+              },
+              {
+                "id": "dekisugi",
+                "name": "デキすぎ君",
+                "role": "自信満々の仮説"
+              },
+              {
+                "id": "ren",
+                "name": "レン",
+                "role": "条件と記録の確認"
+              }
+            ],
+            "openingLines": [
+              {
+                "id": "oxidationReduction.open.1",
+                "speakerId": "mio",
+                "text": "さびた部分、削るとぼろぼろ崩れて、中の鉄とは全然違う質感だよ。"
+              },
+              {
+                "id": "oxidationReduction.open.2",
+                "speakerId": "ren",
+                "text": "さびた鉄はもとより重くなっているという測定記録もあるね。"
+              },
+              {
+                "id": "oxidationReduction.open.3",
+                "speakerId": "dekisugi",
+                "text": "つまり外から何かが降ってきた！犯人は……空です！"
+              }
+            ],
+            "choiceLine": {
+              "id": "oxidationReduction.rust-detective.choice",
+              "speakerId": "dekisugi",
+              "text": "鉄のさびは、表面に赤い汚れが付いただけで、鉄と酸素が結びついたわけではない。"
+            },
+            "choiceResponses": [
+              {
+                "optionId": "surface-dirt",
+                "line": {
+                  "id": "oxidationReduction.response.surface-dirt",
+                  "speakerId": "mio",
+                  "text": "汚れなら削れば元通りになるはず。さびは崩れて、鉄自身が減ってるよ。"
+                }
+              },
+              {
+                "optionId": "rust-is-oxide",
+                "line": {
+                  "id": "oxidationReduction.response.rust-is-oxide",
+                  "speakerId": "ren",
+                  "text": "さびは鉄が酸素と結びついた酸化物。鉄とは別の物質ってことだね。"
+                }
+              },
+              {
+                "optionId": "rust-is-reduction",
+                "line": {
+                  "id": "oxidationReduction.response.rust-is-reduction",
+                  "speakerId": "dekisugi",
+                  "text": "酸素が抜けてできるのがさび……あれ、それだと重くならない！"
+                }
+              }
+            ],
+            "resolutionLines": [
+              {
+                "id": "oxidationReduction.resolve.1",
+                "speakerId": "ren",
+                "text": "酸素と結びつくのが酸化、酸化物から酸素を取るのが還元。さびはゆっくりした酸化だ。"
+              },
+              {
+                "id": "oxidationReduction.resolve.2",
+                "speakerId": "mio",
+                "text": "燃えるのもさびるのも、酸素との結びつき。速さが違うだけなんだね。"
+              }
+            ],
+            "scientificResolution": {
+              "outcome": "酸化銅の粉末に炭素の粉を混ぜて加熱した記録では、黒い粉末から赤い光沢の銅が生じ、二酸化炭素が発生しています。",
+              "reason": "酸化銅の酸素が炭素へ移り、酸化銅が還元されて銅に、炭素が酸化されて二酸化炭素になったためです。"
+            },
+            "punchline": {
+              "id": "oxidationReduction.punchline",
+              "speakerId": "dekisugi",
+              "text": "犯人は空で合ってた！でも手口は「酸素と結びつく」でした。"
+            }
+          },
+          "localCheckpoint": {
+            "lure": "鉄のさびは、表面に赤い汚れが付いただけで、鉄と酸素が結びついたわけではない。",
+            "options": [
+              {
+                "id": "surface-dirt",
+                "text": "さびは外から付着した汚れなので、削って取れば鉄は何も変わっていない。",
+                "hint": "さびを落としたあとの金属が、もとの重さやかたさを保つかを考えます。",
+                "needCode": "science.oxidationReduction.foundation"
+              },
+              {
+                "id": "rust-is-oxide",
+                "text": "さびは鉄が酸素と結びついてできた酸化物で、もとの鉄とは別の物質である。"
+              },
+              {
+                "id": "rust-is-reduction",
+                "text": "さびは鉄から酸素が抜けてできる物質なので、還元の一種である。",
+                "hint": "酸化と還元のどちらが酸素を受け取る側かを確認します。",
+                "needCode": "science.oxidationReduction.foundation"
+              }
+            ],
+            "correctOptionId": "rust-is-oxide",
+            "explanation": "さびは鉄が酸素などとゆっくり反応してできる酸化物で、鉄とは性質が違います。表面の汚れではなく、鉄そのものが別の物質へ変わった酸化の結果です。"
+          }
+        },
+        {
+          "conceptKey": "massConservation",
+          "title": "燃えても分解しても、質量はどこへも消えない",
+          "body": [
+            "炭酸水素ナトリウムに塩酸を加えると二酸化炭素が発生します。開いた容器では気体が逃げて質量が減って見えますが、気体も含めて測れば反応前後の質量の合計は等しくなります。",
+            "化学変化の前後で、反応に関わったすべての物質の質量の総和は等しくなります。これを**質量保存の法則**といいます。化学変化は原子の組合せが変わるだけで、原子自体は消えたり新しく生まれたりしないからです。",
+            "逆向きに見える例もあります。銅を空気中で加熱すると質量は増えますが、それは空気中の酸素が結びついた分です。測る「全体」に空気を入れなければ増えて見え、入れればつり合います。",
+            "大切なのは「どこまでを全体として測るか」です。開いた系と閉じた系で結果が違って見えるのは、出入りした物質を測定に含めたかどうかの違いで、法則の例外ではありません。"
+          ],
+          "tryIt": "学校配布の実験記録を使います。「塩酸を加えた炭酸水素ナトリウム」を開いた容器と気体を逃がさない密閉袋で反応させた2つの質量記録を読み取り、測定値が違う理由を「どこまでを測ったか」で説明してください。家庭で薬品を混ぜたり加熱したりする実験は行いません。",
+          "localSpeakingPractice": {
+            "targetPhrase": "化学変化の前後では関わる物質すべての質量の合計は変わりません",
+            "acceptedTranscripts": [
+              "化学変化の前後では関わる物質すべての質量の合計は変わりません",
+              "化学変化の前後で反応物と生成物の質量の総和は等しい"
+            ]
+          },
+          "localPracticeVariants": [
+            {
+              "stage": "foundation",
+              "recallPrompt": "化学変化の前後で、反応に関わる物質すべての質量の総和が等しいことを、原子の組み替えで説明してください。",
+              "reasoningPrompt": "「燃えて消えた」「発生して現れた」ように見える物質を、質量保存と矛盾なく説明する点を足してください。",
+              "expectedOutcome": "密閉した袋の中で塩酸と炭酸水素ナトリウムを反応させた記録では、気体が発生しても袋全体の質量は反応前と等しいままです。",
+              "expectedReason": "反応で原子の組合せが変わり気体が生じても、原子自体は袋内に残るため、測る全体の質量は変わりません。",
+              "transferPrompt": "学校配布の実験記録を使います。「塩酸を加えた炭酸水素ナトリウム」を開いた容器と気体を逃がさない密閉袋で反応させた2つの質量記録を読み取り、測定値が違う理由を「どこまでを測ったか」で説明してください。家庭で薬品を混ぜたり加熱したりする実験は行いません。",
+              "cognitiveTask": {
+                "kind": "classify",
+                "operation": "conditionClassify",
+                "items": [
+                  {
+                    "id": "atom-types",
+                    "text": "原子の種類"
+                  },
+                  {
+                    "id": "bonding",
+                    "text": "原子の結びつき方"
+                  },
+                  {
+                    "id": "atom-counts",
+                    "text": "原子の数"
+                  },
+                  {
+                    "id": "total-mass",
+                    "text": "関わる物質すべての質量の和"
+                  }
+                ],
+                "targets": [
+                  {
+                    "id": "conserved",
+                    "label": "変わらない"
+                  },
+                  {
+                    "id": "rearranged",
+                    "label": "変わる"
+                  }
+                ],
+                "solution": {
+                  "targetByItemId": {
+                    "atom-types": "conserved",
+                    "bonding": "rearranged",
+                    "atom-counts": "conserved",
+                    "total-mass": "conserved"
+                  }
+                },
+                "needCode": "science.massConservation.foundation"
+              },
+              "checkpoint": {
+                "lure": "気体が発生して逃げる反応では、質量保存の法則は成り立たない。",
+                "options": [
+                  {
+                    "id": "gas-no-mass",
+                    "text": "気体は質量をもたないので、発生した気体は質量の計算に入れなくてよい。",
+                    "hint": "気体にも質量があることを、膨らんだ風船や空気入れの例で確認します。",
+                    "needCode": "science.massConservation.foundation"
+                  },
+                  {
+                    "id": "conservation-fails",
+                    "text": "開いた容器で質量が減るのは、反応で物質の一部が消えたからである。",
+                    "hint": "消えたのか、測る範囲の外へ移ったのかを区別します。",
+                    "needCode": "science.massConservation.foundation"
+                  },
+                  {
+                    "id": "count-escaped-gas",
+                    "text": "逃げた気体の質量も合わせて測れば、反応前後の質量の総和は等しい。"
+                  }
+                ],
+                "correctOptionId": "count-escaped-gas",
+                "explanation": "開いた容器で減って見えるのは、発生した気体が測定の範囲外へ出るためです。気体にも質量があるので、密閉して全体を測れば反応前後の総和は等しくなります。"
+              },
+              "listeningNeedCodes": {
+                "transcript": "science.massConservation.listening.foundation.transcript",
+                "meaning": "science.massConservation.listening.foundation.meaning"
+              }
+            },
+            {
+              "stage": "conditions",
+              "recallPrompt": "開いた系で質量が変わって見える理由を、測定する範囲の設定で説明してください。",
+              "reasoningPrompt": "気体にも質量があることを確認できる観察を一つ挙げて、説明に足してください。",
+              "transferPrompt": "同じ反応を開いた容器と密閉袋で行った記録があります。開いた容器では質量が減り、密閉袋では変わりません。この違いを法則の例外とせずに説明してください。",
+              "expectedOutcome": "開いた容器では発生した気体が測定範囲外へ出るため減って見え、密閉袋では気体も測定に含まれるため変わりません。",
+              "expectedReason": "質量保存は「関わる物質すべて」を測る法則です。出入りした物質を測定に含めるかの違いが見かけの差を生み、法則そのものの例外ではありません。",
+              "checkpoint": {
+                "lure": "開いた容器で質量が減ったなら、その反応では質量保存が成り立たない。",
+                "options": [
+                  {
+                    "id": "escaped-gas-counted",
+                    "text": "逃げた気体の質量も合わせれば総和は等しい。測る範囲の外へ出ただけで、法則は成り立つ。"
+                  },
+                  {
+                    "id": "mass-destroyed",
+                    "text": "質量が減った分だけ原子が消えたので、この反応では保存されない。",
+                    "hint": "気体として出た原子は、消えたのか場所が変わったのかを考えます。",
+                    "needCode": "science.massConservation.conditions"
+                  },
+                  {
+                    "id": "open-systems-exempt",
+                    "text": "開いた系では法則を適用できないので、検証もできない。",
+                    "hint": "逃げた気体の質量を別に測る方法があるかを考えます。",
+                    "needCode": "science.massConservation.conditions"
+                  }
+                ],
+                "correctOptionId": "escaped-gas-counted",
+                "explanation": "開いた系で減って見えるのは、気体が測定範囲の外へ出たためです。気体にも質量があり、出た分まで合わせれば反応前後の総和は等しくなります。"
+              },
+              "cognitiveTask": {
+                "kind": "singleSelect",
+                "operation": "quantityCompare",
+                "items": [
+                  {
+                    "id": "escaped-gas-equal",
+                    "text": "逃げた気体の分を含めれば、反応前後の質量の総和は等しい。"
+                  },
+                  {
+                    "id": "mass-vanished",
+                    "text": "発生した気体の分だけ、質量は消えてしまう。"
+                  },
+                  {
+                    "id": "scale-error",
+                    "text": "差が出たのは、はかりの誤差だけが原因である。"
+                  }
+                ],
+                "solution": {
+                  "selectedItemId": "escaped-gas-equal"
+                },
+                "needCode": "science.massConservation.conditions"
+              },
+              "listeningNeedCodes": {
+                "transcript": "science.massConservation.listening.conditions.transcript",
+                "meaning": "science.massConservation.listening.conditions.meaning"
+              }
+            },
+            {
+              "stage": "transfer",
+              "recallPrompt": "化学変化で質量が増えて見える場合の説明を、外から取り込まれる物質で書いてください。",
+              "reasoningPrompt": "金属を加熱して質量が増える記録を、「測る系に何を含めたか」で説明する点を足してください。",
+              "transferPrompt": "銅を空気中で加熱する記録Aでは質量が増え、石灰石を加熱する記録Bでは質量が減りました。それぞれ出入りした物質を挙げ、増減が法則と矛盾しないことを示してください。",
+              "expectedOutcome": "Aでは空気中の酸素が銅へ結びついた分だけ増え、Bでは二酸化炭素が外へ出た分だけ減って見えます。どちらも出入り分を含めれば総和は等しいです。",
+              "expectedReason": "測る系に含まれない物質が入ると増え、含まれる物質が出ると減って見えます。反応に関わるすべてを測れば質量は保存されます。",
+              "checkpoint": {
+                "lure": "金属を加熱して質量が増えるのは、加熱で新しい原子が作られたからである。",
+                "options": [
+                  {
+                    "id": "atoms-created",
+                    "text": "加熱は原子を新しく作るので、質量が増えるのは当然である。",
+                    "hint": "化学変化で原子が新たに作られるか、組合せだけが変わるかを確認します。",
+                    "needCode": "science.massConservation.transfer"
+                  },
+                  {
+                    "id": "oxygen-joined",
+                    "text": "空気中の酸素が金属と結びついた分だけ重くなった。測る系に空気を含めれば総和は等しい。"
+                  },
+                  {
+                    "id": "heat-has-mass",
+                    "text": "熱そのものに質量があるため、加熱するほど重くなる。",
+                    "hint": "増えた質量が酸素の量と対応するか、熱量と対応するかを考えます。",
+                    "needCode": "science.massConservation.transfer"
+                  }
+                ],
+                "correctOptionId": "oxygen-joined",
+                "explanation": "増えた分は結びついた酸素の質量です。化学変化で原子は作られず組合せが変わるだけなので、出入りする物質まで測れば総和は等しくなります。"
+              },
+              "cognitiveTask": {
+                "kind": "singleSelect",
+                "operation": "experimentPlan",
+                "items": [
+                  {
+                    "id": "open-setup",
+                    "text": "開いた容器で気体を逃がしてから残りを測る。"
+                  },
+                  {
+                    "id": "skip-measurement",
+                    "text": "質量は測らず、見た目の変化だけで判断する。"
+                  },
+                  {
+                    "id": "sealed-setup",
+                    "text": "発生する気体も含めて測れるよう、密閉した容器で反応させて全体を測る。"
+                  }
+                ],
+                "solution": {
+                  "selectedItemId": "sealed-setup"
+                },
+                "needCode": "science.massConservation.transfer"
+              },
+              "listeningNeedCodes": {
+                "transcript": "science.massConservation.listening.transfer.transcript",
+                "meaning": "science.massConservation.listening.transfer.meaning"
+              }
+            }
+          ],
+          "notationLab": {
+            "tasks": [
+              {
+                "kind": "tableRead",
+                "id": "massConservation.tableRead",
+                "needCode": "science.massConservation.notation.tableRead",
+                "title": "開いた系と閉じた系の記録を読む",
+                "prompt": "同じ反応を2つの装置で行った質量記録の違いを説明する解釈を選ぶ。",
+                "representation": [
+                  "装置 | 反応前(g) | 反応後(g)",
+                  "開いた容器 | 100.0 | 98.9",
+                  "密閉袋 | 100.0 | 100.0"
+                ],
+                "representationSemanticsLabel": "開いた容器では気体が外へ出た分だけ減り、密閉袋では全体の質量が変わらない。",
+                "choices": [
+                  {
+                    "id": "law-broken",
+                    "label": "開いた系では質量保存の法則が成り立たない"
+                  },
+                  {
+                    "id": "escaped-gas",
+                    "label": "開いた容器では発生した気体が外へ出た"
+                  },
+                  {
+                    "id": "scale-error",
+                    "label": "測定差ははかりの故障による"
+                  }
+                ],
+                "correctChoiceId": "escaped-gas",
+                "solutionSummary": "開いた容器で減った分は外へ出た気体の質量で、密閉すれば総和は等しくなります。"
+              },
+              {
+                "kind": "modelBuild",
+                "id": "massConservation.modelBuild",
+                "needCode": "science.massConservation.notation.modelBuild",
+                "title": "原子モデルで化学変化を組み立てる",
+                "prompt": "化学変化の前後で原子がどうなるかを、モデルの並びとして組み立てる。",
+                "guide": "反応前の原子、結びつきの組み替え、生成物の原子、保存されるものをつなぎます。",
+                "tokens": [
+                  {
+                    "id": "atoms-rearranged",
+                    "label": "原子の結びつき方が組み替わる"
+                  },
+                  {
+                    "id": "product-atoms",
+                    "label": "同じ原子が別の結びつきで生成物になる"
+                  },
+                  {
+                    "id": "same-total",
+                    "label": "原子の種類と数、質量の総和は同じ"
+                  },
+                  {
+                    "id": "reactant-atoms",
+                    "label": "反応前の原子の集まり"
+                  }
+                ],
+                "correctOrderIds": [
+                  "reactant-atoms",
+                  "atoms-rearranged",
+                  "product-atoms",
+                  "same-total"
+                ],
+                "solutionSummary": "原子は消えず増えもせず、結びつきだけが変わるので質量の総和は変わりません。"
+              },
+              {
+                "kind": "symbolMatch",
+                "id": "massConservation.symbolMatch",
+                "needCode": "science.massConservation.notation.symbolMatch",
+                "title": "質量保存の式を選ぶ",
+                "prompt": "化学変化の質量保存を正しく表した表現を選ぶ。",
+                "representation": [
+                  "反応物 | → | 生成物",
+                  "塩酸＋炭酸水素ナトリウム | → | 塩化ナトリウム＋水＋二酸化炭素"
+                ],
+                "representationSemanticsLabel": "逃げた気体を含めた生成物すべての質量の和は、反応物の質量の和と等しい。",
+                "choices": [
+                  {
+                    "id": "sum-equal",
+                    "label": "反応物の質量の和＝生成物の質量の和"
+                  },
+                  {
+                    "id": "products-less",
+                    "label": "生成物の質量の和は必ず小さい"
+                  },
+                  {
+                    "id": "gas-excluded",
+                    "label": "気体が出た分だけ差し引いて等しい"
+                  }
+                ],
+                "correctChoiceId": "sum-equal",
+                "solutionSummary": "気体を含めた生成物すべての質量の和は、反応物の質量の和と等しくなります。"
+              }
+            ]
+          },
+          "scienceStory": {
+            "id": "massConservation.vanished-gram",
+            "title": "消えた1.1グラムの密室",
+            "setting": "理科室の測定記録。開いた容器と密閉袋で同じ反応をさせた二つの表が残る。",
+            "foundationNeedCode": "science.massConservation.foundation",
+            "characters": [
+              {
+                "id": "mio",
+                "name": "ミオ",
+                "role": "観察と安全確認"
+              },
+              {
+                "id": "dekisugi",
+                "name": "デキすぎ君",
+                "role": "自信満々の仮説"
+              },
+              {
+                "id": "ren",
+                "name": "レン",
+                "role": "条件と記録の確認"
+              }
+            ],
+            "openingLines": [
+              {
+                "id": "massConservation.open.1",
+                "speakerId": "mio",
+                "text": "開いた容器だと反応後に1.1グラム減ってる。でも密閉袋だとピッタリ同じ。"
+              },
+              {
+                "id": "massConservation.open.2",
+                "speakerId": "ren",
+                "text": "同じ量の塩酸と炭酸水素ナトリウムだよ。違いは気体が逃げられるかどうかだね。"
+              },
+              {
+                "id": "massConservation.open.3",
+                "speakerId": "dekisugi",
+                "text": "密室トリックは見抜いた！質量が自ら蒸発したんだ！"
+              }
+            ],
+            "choiceLine": {
+              "id": "massConservation.vanished-gram.choice",
+              "speakerId": "dekisugi",
+              "text": "気体が発生して逃げる反応では、質量保存の法則は成り立たない。"
+            },
+            "choiceResponses": [
+              {
+                "optionId": "gas-no-mass",
+                "line": {
+                  "id": "massConservation.response.gas-no-mass",
+                  "speakerId": "ren",
+                  "text": "気体にも質量があるよ。発生した二酸化炭素も数えれば帳尻が合う。"
+                }
+              },
+              {
+                "optionId": "conservation-fails",
+                "line": {
+                  "id": "massConservation.response.conservation-fails",
+                  "speakerId": "mio",
+                  "text": "測る範囲の外へ出ただけで、消えたわけじゃないと思うよ。"
+                }
+              },
+              {
+                "optionId": "count-escaped-gas",
+                "line": {
+                  "id": "massConservation.response.count-escaped-gas",
+                  "speakerId": "ren",
+                  "text": "逃げた気体の分まで合わせれば、前後の総和は等しいはずだね。"
+                }
+              }
+            ],
+            "resolutionLines": [
+              {
+                "id": "massConservation.resolve.1",
+                "speakerId": "mio",
+                "text": "開いた容器で減った分は、外へ出た気体の質量と一致するね。"
+              },
+              {
+                "id": "massConservation.resolve.2",
+                "speakerId": "ren",
+                "text": "原子は消えず組合せが変わるだけ。測る全体に含めれば質量は保存される。"
+              }
+            ],
+            "scientificResolution": {
+              "outcome": "密閉した袋の中で塩酸と炭酸水素ナトリウムを反応させた記録では、気体が発生しても袋全体の質量は反応前と等しいままです。",
+              "reason": "反応で原子の組合せが変わり気体が生じても、原子自体は袋内に残るため、測る全体の質量は変わりません。"
+            },
+            "punchline": {
+              "id": "massConservation.punchline",
+              "speakerId": "dekisugi",
+              "text": "消えた質量、実は窓から出ていった二酸化炭素でした。密室でも何でもない！"
+            }
+          },
+          "localCheckpoint": {
+            "lure": "気体が発生して逃げる反応では、質量保存の法則は成り立たない。",
+            "options": [
+              {
+                "id": "gas-no-mass",
+                "text": "気体は質量をもたないので、発生した気体は質量の計算に入れなくてよい。",
+                "hint": "気体にも質量があることを、膨らんだ風船や空気入れの例で確認します。",
+                "needCode": "science.massConservation.foundation"
+              },
+              {
+                "id": "conservation-fails",
+                "text": "開いた容器で質量が減るのは、反応で物質の一部が消えたからである。",
+                "hint": "消えたのか、測る範囲の外へ移ったのかを区別します。",
+                "needCode": "science.massConservation.foundation"
+              },
+              {
+                "id": "count-escaped-gas",
+                "text": "逃げた気体の質量も合わせて測れば、反応前後の質量の総和は等しい。"
+              }
+            ],
+            "correctOptionId": "count-escaped-gas",
+            "explanation": "開いた容器で減って見えるのは、発生した気体が測定の範囲外へ出るためです。気体にも質量があるので、密閉して全体を測れば反応前後の総和は等しくなります。"
+          }
+        }
+      ]
     }
   ]
 }

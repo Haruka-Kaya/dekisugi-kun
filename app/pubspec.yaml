@@ -34,6 +34,10 @@ dependencies:
   flutter_local_notifications: ^19.4.2
   # 予約の時刻を扱うのに要る（flutter_local_notifications の前提）
   timezone: ^0.10.1
+  # LAN参加コードだけを表示する。管理キーはQRのpayloadに含めない。
+  qr_flutter: ^4.1.0
+  # カメラで読み取った値は参加コード欄へ入れるだけで、参加の同意は別途求める。
+  mobile_scanner: ^7.4.0
 
 dev_dependencies:
   flutter_test:

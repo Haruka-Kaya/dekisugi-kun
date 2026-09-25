@@ -43,7 +43,7 @@ function fakeRes() {
 }
 
 function authorization(): Record<string, string> {
-  return { authorization: `Bearer ${issueToken(DEVICE_ID, NOW)}` }
+  return { authorization: `Bearer ${issueToken(DEVICE_ID)}` }
 }
 
 const rateOk = async () => ({

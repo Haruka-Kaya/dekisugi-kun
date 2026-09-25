@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('Matchはcanonical対応を保ったまま全23concept・3variantの正答位置を分散する', () async {
+  test('Matchはcanonical対応を保ったまま全26concept・3variantの正答位置を分散する', () async {
     final client = UnitsClient(baseUrl: '', store: MemorySessionStore());
     final summaries = await client.list();
     var conceptCount = 0;
@@ -87,7 +87,7 @@ void main() {
       }
     }
 
-    expect(conceptCount, 23);
+    expect(conceptCount, 26);
     expect(
       presentationSignatures.length,
       3,
@@ -137,7 +137,7 @@ void main() {
     );
   });
 
-  test('同梱catalogの全23concept・80 task・22 traceをUIへ損失なく変換する', () async {
+  test('同梱catalogの全26concept・89 task・22 traceをUIへ損失なく変換する', () async {
     final client = UnitsClient(baseUrl: '', store: MemorySessionStore());
     final summaries = await client.list();
     var count = 0;
@@ -223,8 +223,8 @@ void main() {
       }
     }
 
-    expect(count, 23);
-    expect(taskCount, 80);
+    expect(count, 26);
+    expect(taskCount, 89);
     expect(traceCount, 22);
     expect(taskKinds, LocalNotationTaskKind.values.toSet());
   });

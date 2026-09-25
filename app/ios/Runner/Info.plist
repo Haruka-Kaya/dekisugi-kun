@@ -73,7 +73,10 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>デキすぎ君に声で説明するために、マイクを使います。文字で説明することもできます。</string>
 
-	<!-- 外部クラウドを使わないペアクエスト/週次リーグで、同じWi-Fi上の
+	<key>NSCameraUsageDescription</key>
+	<string>LANの参加コードや先生の教材QRを読み取るために、カメラを使います。映像や読み取った値は保存・送信しません。</string>
+
+	<!-- 外部クラウドを使わない共同観察/共同観測で、同じWi-Fi上の
 	     学校・家庭管理PCへ接続する。Bonjour discoveryは使わず、参加QRに入った
 	     private IPと自己署名証明書fingerprintへだけ接続する。 -->
 	<key>NSLocalNetworkUsageDescription</key>

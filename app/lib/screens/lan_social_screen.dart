@@ -6,6 +6,8 @@ import '../models/lan_social.dart';
 import '../services/lan_social_client.dart';
 import '../services/session_store.dart';
 import '../ui/_material.dart';
+import '../widgets/participant_qr_code.dart';
+import 'qr_scan_screen.dart';
 
 typedef LanSocialClientFactory =
     LanSocialClient Function(LanSocialEndpoint endpoint);
@@ -21,6 +23,7 @@ class LanSocialScreen extends StatefulWidget {
     required this.schoolMode,
     this.lanSocialAllowed = false,
     this.clientFactory,
+    this.scanConnectionCode,
   });
 
   final SessionStore store;
@@ -29,6 +32,9 @@ class LanSocialScreen extends StatefulWidget {
   /// 成人online同意ツリーからだけtrueを渡す。local-only personal/schoolはfalse。
   final bool lanSocialAllowed;
   final LanSocialClientFactory? clientFactory;
+
+  /// QRのカメラ実装を差し替えるテスト用の入口。読み取り後も参加は行わない。
+  final Future<String?> Function(BuildContext context)? scanConnectionCode;
 
   @override
   State<LanSocialScreen> createState() => _LanSocialScreenState();
@@ -169,6 +175,31 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
       _messageIsError = false;
     });
     await _refresh(code.kind, announceFailure: false);
+  }
+
+  Future<void> _scanConnectionCode() async {
+    if (_busy) return;
+    final raw =
+        await (widget.scanConnectionCode?.call(context) ??
+            Navigator.of(context).push<String>(
+              MaterialPageRoute<String>(builder: (_) => const QrScanScreen()),
+            ));
+    if (!mounted || raw == null) return;
+    try {
+      final code = LanSocialConnectionCode.parse(raw);
+      setState(() {
+        _connectionCode.text = code.encode();
+        _selected = code.kind;
+        _explicitOptIn = false;
+        _message = '参加コードを読み取りました。送信範囲を確認してから参加に同意してください。';
+        _messageIsError = false;
+      });
+    } on FormatException {
+      _setMessage(
+        'これはLAN参加コードのQRではありません。DKS1.から始まるコードを読み取ってください。',
+        isError: true,
+      );
+    }
   }
 
   Future<void> _refresh(
@@ -426,6 +457,7 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
                 onOptInChanged: (value) =>
                     setState(() => _explicitOptIn = value),
                 onJoin: _join,
+                onScan: _scanConnectionCode,
               ),
             const SizedBox(height: GameTokens.spaceXl),
             _Surface(
@@ -619,6 +651,7 @@ class _JoinRoom extends StatelessWidget {
     required this.busy,
     required this.onOptInChanged,
     required this.onJoin,
+    required this.onScan,
   });
 
   final LanSocialRoomKind kind;
@@ -627,6 +660,7 @@ class _JoinRoom extends StatelessWidget {
   final bool busy;
   final ValueChanged<bool> onOptInChanged;
   final VoidCallback onJoin;
+  final VoidCallback onScan;
 
   @override
   Widget build(BuildContext context) {
@@ -666,6 +700,16 @@ class _JoinRoom extends StatelessWidget {
             decoration: const InputDecoration(
               labelText: '参加コード',
               hintText: 'DKS1. から始まるコード',
+            ),
+          ),
+          const SizedBox(height: GameTokens.spaceMd),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              key: const ValueKey('lan-social-scan-code'),
+              onPressed: busy ? null : onScan,
+              icon: const Icon(Icons.qr_code_scanner_outlined),
+              label: const Text('QRを読み取る'),
             ),
           ),
           const SizedBox(height: GameTokens.spaceMd),
@@ -1630,6 +1674,13 @@ class _LanSocialRoomCreateScreenState extends State<LanSocialRoomCreateScreen> {
                           .jaWeight(FontWeight.w900),
                     ),
                     const SizedBox(height: GameTokens.spaceSm),
+                    Center(
+                      child: ParticipantQrCode(
+                        data: _createdCode!,
+                        semanticLabel: '参加者用QR。管理キー、生徒名、回答、音声、端末IDは含まれていません。',
+                      ),
+                    ),
+                    const SizedBox(height: GameTokens.spaceMd),
                     SelectableText(
                       _createdCode!,
                       key: const ValueKey('lan-social-created-code'),
@@ -1649,7 +1700,7 @@ class _LanSocialRoomCreateScreenState extends State<LanSocialRoomCreateScreen> {
                     ),
                     const SizedBox(height: GameTokens.spaceSm),
                     Text(
-                      '管理キーは構造上このコードへ入りません。コードをQR化する場合も、この文字列だけを使います。',
+                      '管理キーは構造上このコードとQRへ入りません。参加する人は、読み取り後にも送信範囲への同意が必要です。',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colors.inkMuted,
                       ),
