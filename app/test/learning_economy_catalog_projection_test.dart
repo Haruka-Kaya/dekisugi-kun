@@ -23,6 +23,11 @@ void main() {
       byId[SafeLearningEconomyCatalogV1.novaMascotId]!.canPurchase,
       isFalse,
     );
+
+    final aurora = byId[SafeLearningEconomyCatalogV1.auroraMascotId]!;
+    expect(aurora.requiresPlusAccess, isTrue);
+    expect(aurora.owned, isFalse);
+    expect(aurora.canPurchase, isFalse, reason: 'Plus特典は結晶では買えない');
   });
 
   test('schoolLocalはcatalogを渡しても交換商品を一件も返さない', () {

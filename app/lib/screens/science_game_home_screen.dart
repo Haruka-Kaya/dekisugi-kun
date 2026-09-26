@@ -1715,7 +1715,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       await _contributeSelectedCoopParticipant(result);
       unawaited(_dispatchLanSocialAfterCommit(result));
       if (!mounted) return null;
-      return _showCompletionCelebration(
+      return await _showCompletionCelebration(
         result: result,
         elapsed: elapsed,
         eyebrow: _completionEyebrow(target.kind),
@@ -1773,7 +1773,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       await _contributeSelectedCoopParticipant(result);
       unawaited(_dispatchLanSocialAfterCommit(result));
       if (!mounted) return null;
-      return _showCompletionCelebration(
+      return await _showCompletionCelebration(
         result: result,
         elapsed: elapsed,
         eyebrow: 'UNIT LEGENDARY COMPLETE',
@@ -2334,7 +2334,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       await _contributeSelectedCoopParticipant(result);
       unawaited(_dispatchLanSocialAfterCommit(result));
       if (!mounted) return null;
-      return _showCompletionCelebration(
+      return await _showCompletionCelebration(
         result: result,
         elapsed: elapsed,
         eyebrow: 'NOTATION LAB COMPLETE',

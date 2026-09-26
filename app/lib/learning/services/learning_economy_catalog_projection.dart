@@ -28,7 +28,11 @@ final class LearningEconomyCatalogProjection {
           mascotStyle: product.mascotStyle,
           owned: owned,
           equipped: state.equippedPathMascotId == product.productId,
-          canPurchase: !owned && gems >= product.gemCost,
+          canPurchase:
+              !product.requiresPlusAccess &&
+              !owned &&
+              gems >= product.gemCost,
+          requiresPlusAccess: product.requiresPlusAccess,
         ),
       );
     }

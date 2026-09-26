@@ -40,6 +40,11 @@ Shipaton公式ルール §4 Submission Requirements は、端末枠なしの`117
 9:16推奨とは別契約です。iPhone 15 Pro Simulatorの生framebufferがこの寸法なので、
 `shipaton/iphone-1179x2556/`はリサイズ・切り抜き・端末枠合成をせずに直接撮影します。
 
+Devpost提出用の実際のスクリーンショットは `devpost/shot-1179x2556.png` に置き、
+上記のストア用パイプラインとは別に管理します。現物はAndroidエミュレータで
+`wm size 1179x2556` に設定した実画面の `adb screencap`（リサイズ・端末枠なし）で、
+学習パスの進行中の状態を写しています。
+
 ### Google Play
 
 - 受理条件はJPEGまたは24-bit PNG（alphaなし）。

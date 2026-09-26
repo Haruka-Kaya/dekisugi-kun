@@ -109,6 +109,7 @@ void main() {
     await tester.pumpWidget(
       _wrap(disableAnimations: true, onCompleted: () => completed++),
     );
+    expect(find.textContaining('Instance of'), findsNothing);
     await _start(tester);
 
     expect(find.textContaining('落下加速度は？'), findsOneWidget);

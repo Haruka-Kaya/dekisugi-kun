@@ -14,6 +14,7 @@ final class GameCosmeticItemView {
     required this.owned,
     required this.equipped,
     required this.canPurchase,
+    this.requiresPlusAccess = false,
   });
 
   final String productId;
@@ -24,4 +25,7 @@ final class GameCosmeticItemView {
   final bool owned;
   final bool equipped;
   final bool canPurchase;
+
+  /// Plus entitlement でのみ受け取れる特典。結晶では買えない。
+  final bool requiresPlusAccess;
 }

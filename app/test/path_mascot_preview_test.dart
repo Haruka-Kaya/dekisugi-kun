@@ -79,7 +79,7 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('3つのeconomy styleは同じ本体へ装飾だけを足す', (tester) async {
+  testWidgets('economy styleは同じ本体へ装飾だけを足す', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildAppTheme(Brightness.dark),
@@ -101,7 +101,7 @@ void main() {
     final art = tester
         .widgetList<DekisugiCharacterArt>(find.byType(DekisugiCharacterArt))
         .toList(growable: false);
-    expect(art, hasLength(3));
+    expect(art, hasLength(LearningPathMascotStyle.values.length));
     expect(
       art.map((item) => item.decoration),
       DekisugiCharacterDecoration.values,
@@ -113,7 +113,7 @@ void main() {
       expect(item.accent, art.first.accent);
       expect(item.signal, art.first.signal);
     }
-    expect(art.map((item) => item.ornament).toSet(), hasLength(3));
+    expect(art.map((item) => item.ornament).toSet(), hasLength(3)); // auroraはorbitの色を使い回す
     expect(tester.takeException(), isNull);
   });
 }

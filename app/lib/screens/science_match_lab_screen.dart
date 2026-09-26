@@ -365,9 +365,7 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
         ScienceChallengeSurface(
           label: '学習する場面',
           icon: Icons.science_outlined,
-          child: Text(
-            '${_variant.transferPrompt}\n\n${_variant.cognitiveTask.prompt}',
-          ),
+          child: Text(_variant.transferPrompt),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(

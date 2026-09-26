@@ -38,9 +38,11 @@ review and an exam-date countdown bring completed ideas back as new cases.
 The core loop is entirely on-device: no account, no free-text upload, no LLM
 grading of student writing. Voice audio and free text stay in RAM; the device
 stores only lesson IDs, canonical misconception flags, hearts, and progress.
-Optional Plus, powered by the RevenueCat SDK, lifts the daily limit on guided
-live-conversation sessions — a feature kept disabled for minors pending a
-provider contract, so nothing a student needs is behind payment.
+Optional Plus, powered by the RevenueCat SDK, is a supporter plan: it grants an
+exclusive Aurora Mantle look for the study companion immediately, and lifts the
+daily limit on guided live-conversation sessions once that feature resumes —
+live conversation is kept disabled for minors pending a provider contract, so
+nothing a student needs to learn is behind payment.
 
 ## What was built during Shipaton
 
@@ -52,8 +54,9 @@ provider contract, so nothing a student needs is behind payment.
   curriculum guidelines, including the stage-2 chemistry units added this period.
 - Misconception story missions, notation labs, spaced retrieval, hearts with
   timed recovery, daily XP caps that prevent grinding.
-- A RevenueCat-powered optional Plus entitlement: purchase, restore, and a
-  server-side entitlement recheck via `/api/revenuecat-webhook`.
+- A RevenueCat-powered optional Plus supporter plan: purchase and restore
+  grant an exclusive Aurora Mantle companion skin on-device, with a server-side
+  entitlement recheck via `/api/revenuecat-webhook`.
 - A deliberately safe posture for minors: external generative-AI endpoints return
   503 in production, and the app's required path works with no network.
 
@@ -72,17 +75,27 @@ information. RevenueCat receives a random app-scoped UUID and store transaction
 data — never a learner's name, email, advertising ID, voice, transcript, or
 answers.
 
-Plus lifts the daily live-conversation limit. Live conversation is disabled in
-the shipped build pending a minor-safe AI provider agreement, so the purchase is
-fully optional and the entire learning loop is free.
+Plus is a supporter plan, not a paywall for learning: it grants the exclusive
+Aurora Mantle companion skin and will lift the daily live-conversation limit
+when that feature resumes. Live conversation is disabled in the shipped build
+pending a minor-safe AI provider agreement, so the purchase is fully optional
+and the entire learning loop is free.
 
 ## Demo video notes
 
-The video shows the current build on a real device/emulator: opening the
-learning path, reading a lesson, hiding it, explaining by text, re-reading, the
-fixed checkpoint with a wrong answer's hint and heart loss, the correct retry,
-a story misconception mission, and the optional Plus paywall shown via the
-RevenueCat Test Store. English captions overlay the Japanese UI.
+The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v2.mp4`, 54s) shows
+the current build running on an Android emulator in portrait: the learning path,
+a TEACH BACK node (mass conservation), a text explanation, the required
+re-read, the companion's fixed follow-up question, the 3-choice correction,
+the own-words-vs-textbook comparison, and completion unlocking the next node.
+English captions overlay the Japanese UI; there is no audio track.
+
+The video does not include a purchase: the RevenueCat Test Store key is not in
+the repository (it is a personal credential). Judges can exercise the full
+paywall themselves with the `--dart-define` command in "Testing instructions".
+
+The earlier web-build capture is kept as `docs/shipaton-demo-2026/shipaton-demo-v1.mp4`
+for reference; the submitted video is the emulator capture.
 
 ## Testing instructions (for judges)
 
@@ -94,7 +107,8 @@ RevenueCat Test Store. English captions overlay the Japanese UI.
 4. Deliberately answer one checkpoint wrong to see the hint + re-explain flow.
 5. Optional: with a RevenueCat Test Store key, run with
    `--dart-define=REVENUECAT_USE_TEST_STORE=true --dart-define=REVENUECAT_TEST_PUBLIC_SDK_KEY=<test key>`
-   to see the Plus paywall and a simulated purchase.
+   to see the Plus paywall and a simulated purchase that grants the Aurora
+   Mantle companion skin in the cosmetic picker.
 
 ## Evidence checklist for the submission form
 
