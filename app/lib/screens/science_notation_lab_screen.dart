@@ -557,9 +557,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
         ScienceChallengeSurface(
           label: 'この単元の場面',
           icon: Icons.science_outlined,
-          child: Text(
-            '${_variant.transferPrompt}\n\n${_variant.cognitiveTask.prompt}',
-          ),
+          child: Text(_variant.transferPrompt),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         if (_isArrangeStep && _tracePending)

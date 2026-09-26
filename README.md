@@ -31,12 +31,20 @@ explains by voice or text, and the AI asks a fixed follow-up question.
 Learning progress lives entirely on-device (SQLite); no account, no free-text
 upload, no LLM grading.
 
+![Dekisugi learning path](docs/store-shots-2026/devpost/shot-1179x2556.png)
+
+*The name:* in Japanese slang, *dekisugi* (デキすぎ) is the kid who is
+suspiciously good at everything — here it's the companion's persona: it knows
+the answers but is not allowed to reveal them, so the student has to teach it.
+
 - **Stack:** Flutter app (`app/`) + TypeScript server (`server/`, Vercel).
   The app's core learning loop runs fully offline against the bundled
   curriculum catalog — no server or credentials needed to run it.
-- **Monetization:** optional Plus purchase powered by the RevenueCat SDK
-  (`purchases_flutter`), with a server-side entitlement recheck
-  (`server/lib/revenuecat.ts`, `/api/revenuecat-webhook`).
+- **Monetization:** optional Plus *supporter plan* powered by the RevenueCat
+  SDK (`purchases_flutter`): purchase/restore grants an exclusive Aurora Mantle
+  companion skin on-device, with a server-side entitlement recheck
+  (`server/lib/revenuecat.ts`, `/api/revenuecat-webhook`). No learning content
+  is behind payment.
 
 ### Run the app
 
@@ -44,12 +52,13 @@ upload, no LLM grading.
 cd app
 flutter pub get
 flutter run            # bundled-catalog mode works with no network
+# flutter run -d chrome also works for a quick look (no SQLite, no purchases)
 ```
 
 ### Run the tests
 
 ```bash
-cd app && flutter test     # 1214 tests, no network
+cd app && flutter test     # 1215 tests, no network
 cd server && npm install && npm test   # 386 tests, no network
 ```
 
@@ -92,7 +101,7 @@ Optional Live-AI research endpoints are disabled in production by design
 | 中断と再開 | 動く |
 | 文字での説明 | 動く。**音声と対等**。本人の明示再読を経て同じ固定問い返しへ進む |
 | iOS / iPadOS | **iPhone / iPad Simulatorで動作確認済み**。物理端末の音声は未確認 |
-| 任意の Plus 購入 | RevenueCat SDK とサーバー再照会を実装済み。**ストア商品・鍵・webhook は未設定** |
+| 任意の Plus 購入 | RevenueCat SDK とサーバー再照会を実装済み。有効化で限定マスコット「オーロラマント」が端末内に付く（`learning_cosmetic_grants`台帳）。**ストア商品・鍵・webhook は未設定** |
 | 通信しない端末内モード | 同梱教材→想起→条件／理由→具体場面→Teach-back→固定checkpointまで動く。**自由記述・音声・選択内容の送信／永続保存、自動採点、習得認定なし**。固定教材ID、進行・再開状態、完了日時、端末内報酬など必要最小限の状態だけを端末内に保存 |
 | ゲーム型学習UI | 学ぶ／物語／練習／記号／競う／自分の6タブと蛇行Learning Pathを実装済み。連続学習・結晶・ハート・quest入口は6タブ共通headerに固定し、学習画面へ入っても戻る／連続／結晶／ハートHUDを保持する。デキすぎ君は開始・思考・訂正・完了で反応を変え、保存成功後だけ実XP・実結晶・今回時間を祝福面へ出す。**最新画面のAndroid / iOS物理端末目視と初見学習者pilotは未実施** |
 | クラスの合計（チーム戦） | **実機で確認済み**（参加・表示） |
@@ -331,7 +340,7 @@ DEKISUGI_LIVE=1 npx tsx --test test/jailbreak.live.test.ts  # 役を降ろせる
 ## 検証
 
 ```
-app    1214 件   flutter test
+app    1215 件   flutter test
 server  386 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
 ```
 

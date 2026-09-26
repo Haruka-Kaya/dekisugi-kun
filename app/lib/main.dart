@@ -1189,6 +1189,12 @@ class _Home extends StatelessWidget {
             final access = await subscriptionSync.sync();
             return access.entitled;
           },
+          onPlusActivated: () => context
+              .read<SessionStore>()
+              .grantLearningPlusCosmetics(
+                scope: LearningScope.personal,
+                occurredAt: DateTime.now().toUtc(),
+              ),
         ),
       ),
     );

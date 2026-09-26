@@ -8,7 +8,7 @@ void main() {
     expect(catalog.validate, returnsNormally);
     expect(
       SafeLearningEconomyCatalogV1.cosmetics.map((item) => item.productId),
-      hasLength(3),
+      hasLength(4),
     );
     expect(
       SafeLearningEconomyCatalogV1.cosmetics.map((item) => item.productId),
@@ -16,6 +16,7 @@ void main() {
         SafeLearningEconomyCatalogV1.standardMascotId,
         SafeLearningEconomyCatalogV1.orbitMascotId,
         SafeLearningEconomyCatalogV1.novaMascotId,
+        SafeLearningEconomyCatalogV1.auroraMascotId,
       }),
     );
     expect(

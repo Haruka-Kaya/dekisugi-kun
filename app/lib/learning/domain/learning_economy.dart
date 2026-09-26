@@ -18,7 +18,8 @@ enum LearningCosmeticSlot {
 enum LearningPathMascotStyle {
   standard,
   orbit,
-  nova;
+  nova,
+  aurora;
 
   String get wire => name;
 
@@ -26,6 +27,7 @@ enum LearningPathMascotStyle {
     'standard' => LearningPathMascotStyle.standard,
     'orbit' => LearningPathMascotStyle.orbit,
     'nova' => LearningPathMascotStyle.nova,
+    'aurora' => LearningPathMascotStyle.aurora,
     _ => null,
   };
 
@@ -33,6 +35,7 @@ enum LearningPathMascotStyle {
     LearningPathMascotStyle.standard => 'いつものデキすぎ君',
     LearningPathMascotStyle.orbit => '軌道リングのデキすぎ君',
     LearningPathMascotStyle.nova => '星雲スーツのデキすぎ君',
+    LearningPathMascotStyle.aurora => 'オーロラマントのデキすぎ君',
   };
 }
 
@@ -44,6 +47,7 @@ final class LearningCosmeticProduct {
     required this.slot,
     required this.mascotStyle,
     required this.gemCost,
+    this.requiresPlusAccess = false,
   }) : assert(gemCost >= 0);
 
   final String productId;
@@ -53,7 +57,10 @@ final class LearningCosmeticProduct {
   final LearningPathMascotStyle mascotStyle;
   final int gemCost;
 
-  bool get isDefault => gemCost == 0;
+  /// Plus entitlement でのみ受け取れる特典。結晶では売らない。
+  final bool requiresPlusAccess;
+
+  bool get isDefault => gemCost == 0 && !requiresPlusAccess;
 }
 
 final class LearningChallengePassProduct {
@@ -138,6 +145,7 @@ final class SafeLearningEconomyCatalogV1 {
   static const String standardMascotId = 'cosmetic.path-mascot.standard.v1';
   static const String orbitMascotId = 'cosmetic.path-mascot.orbit.v1';
   static const String novaMascotId = 'cosmetic.path-mascot.nova.v1';
+  static const String auroraMascotId = 'cosmetic.path-mascot.aurora.v1';
   static const String timedDayPassId = 'challenge.timed.day-pass.v1';
 
   static const LearningCosmeticProduct standardMascot = LearningCosmeticProduct(
@@ -175,11 +183,29 @@ final class SafeLearningEconomyCatalogV1 {
         gemCost: 1,
       );
 
+  static const LearningCosmeticProduct auroraMascot =
+      LearningCosmeticProduct(
+        productId: auroraMascotId,
+        title: 'オーロラマント',
+        description:
+            'Plusサポーターへの印。オーロラの光をまとった、夜空色のマントの見た目です。',
+        slot: LearningCosmeticSlot.pathMascot,
+        mascotStyle: LearningPathMascotStyle.aurora,
+        gemCost: 0,
+        requiresPlusAccess: true,
+      );
+
   static const List<LearningCosmeticProduct> cosmetics = [
     standardMascot,
     orbitMascot,
     novaMascot,
+    auroraMascot,
   ];
+
+  /// Plus entitlement が確認できたときに所有へ付ける特典一覧。
+  static List<LearningCosmeticProduct> get plusCosmetics => List.unmodifiable(
+    cosmetics.where((item) => item.requiresPlusAccess),
+  );
 
   LearningCosmeticProduct cosmetic(String productId) {
     for (final product in cosmetics) {

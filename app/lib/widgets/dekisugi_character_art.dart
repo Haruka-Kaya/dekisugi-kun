@@ -19,8 +19,8 @@ enum DekisugiCharacterPose {
   retry,
 }
 
-/// 結晶で選べる見た目は、本体を置き換えず装飾だけを足す。
-enum DekisugiCharacterDecoration { standard, orbit, nova }
+/// 結晶やPlusで選べる見た目は、本体を置き換えず装飾だけを足す。
+enum DekisugiCharacterDecoration { standard, orbit, nova, aurora }
 
 /// デキすぎ君の描画正本。
 ///
@@ -199,6 +199,10 @@ class _DekisugiCharacterPainter extends CustomPainter {
   }
 
   void _paintDecorationBehind(Canvas canvas, double w, double headY) {
+    if (decoration == DekisugiCharacterDecoration.aurora) {
+      _paintAurora(canvas, w, headY);
+      return;
+    }
     if (decoration != DekisugiCharacterDecoration.orbit) return;
     canvas.save();
     canvas.translate(w * 0.5, headY + w * 0.05);
@@ -213,6 +217,35 @@ class _DekisugiCharacterPainter extends CustomPainter {
     canvas.drawCircle(
       Offset(w * 0.40, 0),
       w * 0.062,
+      Paint()..color = ornamentSignal,
+    );
+    canvas.restore();
+  }
+
+  /// Plusサポーターの装飾。頭上を横切る二重のオーロラ帯だけを足す。
+  void _paintAurora(Canvas canvas, double w, double headY) {
+    canvas.save();
+    canvas.translate(w * 0.5, headY - w * 0.30);
+    canvas.rotate(-0.10);
+    for (final (dy, alpha, width) in [
+      (0.0, 0.85, 0.055),
+      (w * 0.055, 0.40, 0.038),
+    ]) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(0, dy),
+          width: w * 0.96,
+          height: w * 0.22,
+        ),
+        Paint()
+          ..color = ornament.withValues(alpha: alpha)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = w * width,
+      );
+    }
+    canvas.drawCircle(
+      Offset(-w * 0.34, w * 0.02),
+      w * 0.028,
       Paint()..color = ornamentSignal,
     );
     canvas.restore();

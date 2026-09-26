@@ -429,6 +429,11 @@ class PathMascotPreview extends StatelessWidget {
         gameColors.legendary,
         gameColors.onLegendary,
       ),
+      LearningPathMascotStyle.aurora => (
+        DekisugiCharacterDecoration.aurora,
+        gameColors.pathReview,
+        gameColors.story,
+      ),
     };
     return Semantics(
       container: true,

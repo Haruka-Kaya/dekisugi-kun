@@ -832,7 +832,7 @@ void main() {
     expect(result.economy.challengeHeartRecoveryGemCost, 2);
     expect(result.economy.canRefillStreakFreeze, isFalse);
     expect(result.economy.canRecoverChallengeHearts, isFalse);
-    expect(result.economy.cosmeticItems, hasLength(3));
+    expect(result.economy.cosmeticItems, hasLength(4));
     expect(result.economy.timedChallengePassGemCost, 1);
     expect(result.economy.timedChallengePassActive, isFalse);
     expect(result.economy.canPurchaseTimedChallengePass, isTrue);

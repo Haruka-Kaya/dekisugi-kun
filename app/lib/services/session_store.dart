@@ -308,6 +308,16 @@ abstract class SessionStore {
     SafeLearningEconomyCatalogV1 catalog = const SafeLearningEconomyCatalogV1(),
   });
 
+  /// Plus entitlement が確認できた端末へ、requiresPlusAccess の見た目を所有に付ける。
+  ///
+  /// 結晶台帳へ0額の行を入れるだけで、学習event・XP・進行は変更しない。
+  /// spendId を `plus-grant:<productId>` に固定し、呼び直しても二重付与しない。
+  Future<LearningCosmeticState> grantLearningPlusCosmetics({
+    required LearningScope scope,
+    required DateTime occurredAt,
+    SafeLearningEconomyCatalogV1 catalog = const SafeLearningEconomyCatalogV1(),
+  });
+
   Future<LearningChallengePassPurchaseResult>
   purchaseLearningChallengePassWithGems({
     required LearningScope scope,
@@ -969,6 +979,49 @@ class SqfliteSessionStore implements SessionStore {
           CHECK(rank IS NOT NULL OR (meaningful_event_count = 0 AND tied = 0))
         )
       ''');
+    },
+    // v14 — Plus特典の見た目付与台帳と、auroraマスコットの装備許可。
+    //
+    // 特典付与は0額spendでなく専用表へ記録し、結晶の価格・残高CHECKを
+    // そのまま守る。loadoutはproduct_id制約を拡張して作り直す。
+    (db) async {
+      await db.execute('''
+        CREATE TABLE learning_cosmetic_grants(
+          grant_id TEXT PRIMARY KEY,
+          scope TEXT NOT NULL CHECK(scope = 'personal'),
+          product_id TEXT NOT NULL CHECK(product_id IN (
+            'cosmetic.path-mascot.aurora.v1'
+          )),
+          granted_at INTEGER NOT NULL
+        )
+      ''');
+      await db.execute('''
+        CREATE UNIQUE INDEX learning_cosmetic_grants_product_idx
+        ON learning_cosmetic_grants(scope, product_id)
+      ''');
+      await db.execute(
+        'ALTER TABLE learning_cosmetic_loadout RENAME TO learning_cosmetic_loadout_v13',
+      );
+      await db.execute('''
+        CREATE TABLE learning_cosmetic_loadout(
+          scope TEXT NOT NULL CHECK(scope = 'personal'),
+          slot TEXT NOT NULL CHECK(slot = 'pathMascot'),
+          product_id TEXT NOT NULL CHECK(product_id IN (
+            'cosmetic.path-mascot.standard.v1',
+            'cosmetic.path-mascot.orbit.v1',
+            'cosmetic.path-mascot.nova.v1',
+            'cosmetic.path-mascot.aurora.v1'
+          )),
+          updated_at INTEGER NOT NULL,
+          PRIMARY KEY(scope, slot)
+        )
+      ''');
+      await db.execute('''
+        INSERT INTO learning_cosmetic_loadout(scope, slot, product_id, updated_at)
+        SELECT scope, slot, product_id, updated_at
+        FROM learning_cosmetic_loadout_v13
+      ''');
+      await db.execute('DROP TABLE learning_cosmetic_loadout_v13');
     },
   ];
 
@@ -2739,6 +2792,9 @@ class SqfliteSessionStore implements SessionStore {
     if (product.isDefault) {
       throw StateError('the default cosmetic is already owned');
     }
+    if (product.requiresPlusAccess) {
+      throw StateError('plus-exclusive cosmetic is not sold for gems');
+    }
     _validateLearningGemSpend(
       spendId: spendId,
       learningDay: learningDay,
@@ -2856,6 +2912,30 @@ class SqfliteSessionStore implements SessionStore {
         changed: true,
         cosmetics: await _learningCosmeticStateSql(tx),
       );
+    });
+  }
+
+  @override
+  Future<LearningCosmeticState> grantLearningPlusCosmetics({
+    required LearningScope scope,
+    required DateTime occurredAt,
+    SafeLearningEconomyCatalogV1 catalog = const SafeLearningEconomyCatalogV1(),
+  }) async {
+    _requirePersonalLearningEconomy(scope);
+    catalog.validate();
+    if (occurredAt.millisecondsSinceEpoch < 0) {
+      throw ArgumentError.value(occurredAt, 'occurredAt');
+    }
+    return _db.transaction((tx) async {
+      for (final product in SafeLearningEconomyCatalogV1.plusCosmetics) {
+        await tx.insert('learning_cosmetic_grants', {
+          'grant_id': 'plus:${product.productId}',
+          'scope': LearningScope.personal.wire,
+          'product_id': product.productId,
+          'granted_at': occurredAt.millisecondsSinceEpoch,
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      }
+      return _learningCosmeticStateSql(tx);
     });
   }
 
@@ -3038,6 +3118,7 @@ class SqfliteSessionStore implements SessionStore {
           'learning_runs',
           'learning_gem_spends',
           'learning_cosmetic_loadout',
+          'learning_cosmetic_grants',
           'learning_local_coop_runs',
           'learning_league_history',
           'learning_local_league_history',
@@ -3434,6 +3515,12 @@ Future<LearningProgressSnapshot> _learningSnapshot(
       whereArgs: [scope.wire],
       orderBy: 'week_key DESC',
     ),
+    db.query(
+      'learning_cosmetic_grants',
+      columns: ['product_id'],
+      where: 'scope = ?',
+      whereArgs: [scope.wire],
+    ),
   ]);
   final localCoopRuns = _learningLocalCoopRunsFromRows(
     runRows: results[10],
@@ -3470,6 +3557,9 @@ Future<LearningProgressSnapshot> _learningSnapshot(
             gemSpends,
             equippedProductId:
                 results[15].firstOrNull?['product_id'] as String?,
+            grantedProductIds: results[17]
+                .map((row) => row['product_id'] as String)
+                .toSet(),
           )
         : null,
     localCoopRuns: List.unmodifiable(localCoopRuns),
@@ -3612,6 +3702,12 @@ Future<LearningCosmeticState> _learningCosmeticStateSql(
       LearningGemSpendKind.cosmeticPurchase.wire,
     ],
   );
+  final grantRows = await db.query(
+    'learning_cosmetic_grants',
+    columns: ['product_id'],
+    where: 'scope = ?',
+    whereArgs: [LearningScope.personal.wire],
+  );
   final loadoutRows = await db.query(
     'learning_cosmetic_loadout',
     where: 'scope = ? AND slot = ?',
@@ -3624,6 +3720,9 @@ Future<LearningCosmeticState> _learningCosmeticStateSql(
   return _learningCosmeticStateFromLedger(
     spendRows.map(_learningGemSpendFromRow),
     equippedProductId: loadoutRows.firstOrNull?['product_id'] as String?,
+    grantedProductIds: grantRows
+        .map((row) => row['product_id'] as String)
+        .toSet(),
   );
 }
 
@@ -4226,11 +4325,18 @@ LearningGemSpend _learningGemSpendFromRow(Map<String, Object?> row) {
 LearningCosmeticState _learningCosmeticStateFromLedger(
   Iterable<LearningGemSpend> spends, {
   String? equippedProductId,
+  Set<String> grantedProductIds = const {},
 }) {
   const catalog = SafeLearningEconomyCatalogV1();
   catalog.validate();
   final owned = <String>{SafeLearningEconomyCatalogV1.standardMascotId};
   try {
+    for (final productId in grantedProductIds) {
+      if (!catalog.cosmetic(productId).requiresPlusAccess) {
+        throw StateError('cosmetic grant does not match fixed catalog');
+      }
+      owned.add(productId);
+    }
     for (final spend in spends) {
       switch (spend.kind) {
         case LearningGemSpendKind.cosmeticPurchase:
@@ -5260,6 +5366,7 @@ LearningProgressSnapshot _memoryLearningSnapshot({
   required Map<String, LearningGemSpend> gemSpends,
   required Map<String, ({String productId, DateTime updatedAt})>
   cosmeticLoadout,
+  required Set<String> cosmeticGrants,
   required Map<String, LearningLocalCoopRun> localCoopRuns,
   required Map<String, LearningLeagueWeek> leagueHistory,
   required Map<String, LearningLocalLeagueWeek> localLeagueHistory,
@@ -5349,6 +5456,7 @@ LearningProgressSnapshot _memoryLearningSnapshot({
             equippedProductId:
                 cosmeticLoadout[LearningCosmeticSlot.pathMascot.wire]
                     ?.productId,
+            grantedProductIds: cosmeticGrants,
           )
         : null,
     localCoopRuns: List.unmodifiable(coopList),
@@ -5541,6 +5649,7 @@ class MemorySessionStore implements SessionStore {
   final _learningGemSpends = <String, LearningGemSpend>{};
   final _learningCosmeticLoadout =
       <String, ({String productId, DateTime updatedAt})>{};
+  final _learningCosmeticGrants = <String>{};
   final _learningLocalCoopRuns = <String, LearningLocalCoopRun>{};
   final _learningLocalCoopContributions =
       <String, _LearningLocalCoopContribution>{};
@@ -6218,6 +6327,7 @@ class MemorySessionStore implements SessionStore {
     runs: _learningRuns,
     gemSpends: _learningGemSpends,
     cosmeticLoadout: _learningCosmeticLoadout,
+    cosmeticGrants: _learningCosmeticGrants,
     localCoopRuns: _learningLocalCoopRuns,
     leagueHistory: _learningLeagueHistory,
     localLeagueHistory: _learningLocalLeagueHistory,
@@ -7025,6 +7135,9 @@ class MemorySessionStore implements SessionStore {
     if (product.isDefault) {
       throw StateError('the default cosmetic is already owned');
     }
+    if (product.requiresPlusAccess) {
+      throw StateError('plus-exclusive cosmetic is not sold for gems');
+    }
     _validateLearningGemSpend(
       spendId: spendId,
       learningDay: learningDay,
@@ -7120,6 +7233,23 @@ class MemorySessionStore implements SessionStore {
   }
 
   @override
+  Future<LearningCosmeticState> grantLearningPlusCosmetics({
+    required LearningScope scope,
+    required DateTime occurredAt,
+    SafeLearningEconomyCatalogV1 catalog = const SafeLearningEconomyCatalogV1(),
+  }) async {
+    _requirePersonalLearningEconomy(scope);
+    catalog.validate();
+    if (occurredAt.millisecondsSinceEpoch < 0) {
+      throw ArgumentError.value(occurredAt, 'occurredAt');
+    }
+    for (final product in SafeLearningEconomyCatalogV1.plusCosmetics) {
+      _learningCosmeticGrants.add(product.productId);
+    }
+    return _memoryLearningCosmeticState();
+  }
+
+  @override
   Future<LearningChallengePassPurchaseResult>
   purchaseLearningChallengePassWithGems({
     required LearningScope scope,
@@ -7206,6 +7336,7 @@ class MemorySessionStore implements SessionStore {
     return _learningCosmeticStateFromLedger(
       _learningGemSpends.values,
       equippedProductId: equipped,
+      grantedProductIds: _learningCosmeticGrants,
     );
   }
 
@@ -7298,7 +7429,10 @@ class MemorySessionStore implements SessionStore {
     }
     _learningRuns.removeWhere((_, item) => item.scope == scope);
     _learningGemSpends.removeWhere((_, item) => item.scope == scope);
-    if (scope == LearningScope.personal) _learningCosmeticLoadout.clear();
+    if (scope == LearningScope.personal) {
+      _learningCosmeticLoadout.clear();
+      _learningCosmeticGrants.clear();
+    }
     final coopRunIds = _learningLocalCoopRuns.values
         .where((item) => item.scope == scope)
         .map((item) => item.runId)

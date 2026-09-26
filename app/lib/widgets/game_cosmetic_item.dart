@@ -42,6 +42,8 @@ class GameCosmeticItemCard extends StatelessWidget {
         ? '装備中'
         : item.owned
         ? 'この見た目にする'
+        : item.requiresPlusAccess
+        ? 'Plus画面で受け取る'
         : item.canPurchase
         ? '◆ ${item.gemCost} で購入して装備'
         : '結晶が足りません';
@@ -49,6 +51,8 @@ class GameCosmeticItemCard extends StatelessWidget {
         ? '装備中'
         : item.owned
         ? '購入済み'
+        : item.requiresPlusAccess
+        ? 'Plus特典・未受け取り'
         : '未購入、結晶${item.gemCost}個';
 
     return Semantics(

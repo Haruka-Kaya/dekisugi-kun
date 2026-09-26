@@ -312,6 +312,7 @@ void main() {
     expect(find.textContaining('固定の復習コードだけ'), findsOneWidget);
     expect(find.textContaining('成績や理解度の認定には使いません'), findsOneWidget);
     _expectSolutionsHidden();
+    expect(find.textContaining('Instance of'), findsNothing);
 
     await _completeAll(tester);
 

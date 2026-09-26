@@ -9,7 +9,7 @@ import '../ui/_material.dart';
 import '../widgets/readable_width.dart';
 import '../widgets/studio_ui.dart';
 
-/// 会話回数だけを広げる、自前の Plus 購入画面。
+/// 限定マスコットと会話回数枠を届ける、自前の Plus 購入画面。
 ///
 /// 価格・商品名・説明・請求期間は RevenueCat が返した Current Offering だけを表示する。
 /// 画面側で無料体験や割引を推測せず、全条件を表示できない商品は購入を止める。
@@ -19,11 +19,18 @@ class PlusScreen extends StatefulWidget {
     required this.purchaseService,
     this.onClose,
     this.onEntitlementSync,
+    this.onPlusActivated,
     this.openExternalUri,
   });
 
   final PurchaseService purchaseService;
   final VoidCallback? onClose;
+
+  /// SDK が Plus active を返したとき、端末内の Plus 特典を付与する。
+  ///
+  /// 成否を同期メッセージに混ぜない。失敗しても購入自体は有効なので、
+  /// 呼び出し側で握り潰してよい。
+  final Future<void> Function()? onPlusActivated;
 
   /// 購入・復元後、サーバー側の会話枠へ反映できたかを確認する。
   ///
@@ -74,6 +81,7 @@ class _PlusScreenState extends State<PlusScreen> {
     final shouldSync =
         overview.plus.isActive && widget.onEntitlementSync != null;
     final synced = shouldSync ? await _syncEntitlement() : true;
+    if (overview.plus.isActive) await _grantPlusPerks();
     if (!mounted) return;
     setState(() {
       _overview = overview;
@@ -203,6 +211,7 @@ class _PlusScreenState extends State<PlusScreen> {
     }
 
     final synced = await _syncEntitlement();
+    await _grantPlusPerks();
     if (!mounted) return;
     setState(() {
       _busy = false;
@@ -211,8 +220,8 @@ class _PlusScreenState extends State<PlusScreen> {
       _notice = synced
           ? _Notice(
               restored
-                  ? 'Plusを復元し、会話枠への反映を確認しました。'
-                  : 'Plusが有効になり、会話枠への反映を確認しました。',
+                  ? 'Plusを復元し、限定マスコットと会話枠への反映を確認しました。'
+                  : 'Plusが有効になり、限定マスコットを受け取りました。',
               _NoticeTone.confirmation,
             )
           : const _Notice(
@@ -231,6 +240,14 @@ class _PlusScreenState extends State<PlusScreen> {
     } catch (_) {
       return false;
     }
+  }
+
+  Future<void> _grantPlusPerks() async {
+    final grant = widget.onPlusActivated;
+    if (grant == null) return;
+    try {
+      await grant();
+    } catch (_) {}
   }
 
   Future<void> _retrySync() async {
@@ -321,9 +338,9 @@ class _PlusScreenState extends State<PlusScreen> {
             ),
             children: [
               const StudioPageIntro(
-                eyebrow: 'PLUS  ·  会話の上限だけを広げる',
-                title: '学び方はそのまま。\n話せる回数を増やす。',
-                body: '考えて説明する時間を、必要なだけ確保するためのプランです。',
+                eyebrow: 'PLUS  ·  サポータープラン',
+                title: '応援プラン。\n特典はすぐ届く。',
+                body: '開発を応援しながら、限定の見た目と会話枠を受け取るプランです。',
               ),
               const SizedBox(height: 22),
               const _PlanDifference(),
@@ -397,7 +414,8 @@ class _PlanDifference extends StatelessWidget {
     final c = context.appColors;
     return Semantics(
       container: true,
-      label: '無料は1日2会話、1回およそ10分。Plusは会話回数の上限なし。',
+      label:
+          '無料は1日2会話、1回およそ10分。Plusは限定マスコットと会話回数の上限なし。',
       child: ExcludeSemantics(
         child: Container(
           width: double.infinity,
@@ -422,14 +440,15 @@ class _PlanDifference extends StatelessWidget {
               ),
               _PlanLine(
                 label: 'Plus',
-                value: '会話回数の上限なし',
-                detail: '説明・反論・CASEまで、回数を気にせず話せます',
+                value: '限定マスコットと、会話回数の上限なし',
+                detail:
+                    'オーロラマントのデキすぎ君を受け取れます。AI会話の回数上限は、Live会話の提供再開時に有効になります。',
                 foreground: c.onHeroSurface,
                 muted: c.heroMuted,
               ),
               const SizedBox(height: 12),
               Text(
-                '1回の会話時間は、Plusでもおよそ10分です。',
+                '1回の会話時間は、Plusでもおよそ10分です。Live会話は現在提供を止めています。',
                 style: t.textTheme.bodySmall?.copyWith(color: c.heroMuted),
               ),
             ],
@@ -516,7 +535,7 @@ class _AlwaysFree extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '本人のノート、文字入力、アクセシビリティ機能、REPAIRは無料のままです。'
-            'Plusで変わるのは、AIと話せる回数だけです。',
+            'Plusは応援プランで、変わるのは限定の見た目とAI会話の回数枠だけです。',
             style: t.textTheme.bodySmall?.copyWith(color: c.onCoolSurface),
           ),
         ],

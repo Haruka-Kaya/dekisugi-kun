@@ -256,14 +256,14 @@ void main() {
       expect((await store.reviewItems()).first.timesSeen, 1);
     });
 
-    test('最新スキーマはv13でも概念複合PKと完了冪等列を保つ', () async {
-      final path = p.join(tmp.path, 'schema-v13.db');
+    test('最新スキーマはv14でも概念複合PKと完了冪等列を保つ', () async {
+      final path = p.join(tmp.path, 'schema-v14.db');
       final store = await SqfliteSessionStore.open(path: path);
       await store.close();
 
       final db = await databaseFactory.openDatabase(path);
       addTearDown(db.close);
-      expect(await db.getVersion(), 13);
+      expect(await db.getVersion(), 14);
 
       final progressColumns = await db.rawQuery(
         'PRAGMA table_info(concept_progress)',
