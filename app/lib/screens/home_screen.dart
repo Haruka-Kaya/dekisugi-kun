@@ -383,8 +383,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 const SizedBox(height: 10),
                 StudioActionTile(
                   icon: Icons.forum_outlined,
-                  title: '会話の回数を広げる',
-                  description: '学び方はそのまま。Plusで1日の会話回数だけ上限なしにする',
+                  title: 'デキすぎ君 Plus',
+                  description: '学び方はそのまま。Plusは限定マスコットの応援プラン',
                   onTap: () => unawaited(_openPlusOnce()),
                 ),
               ],
