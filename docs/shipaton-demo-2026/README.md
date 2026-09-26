@@ -7,10 +7,13 @@ map, a TEACH BACK node (mass conservation), a text explanation, the required
 re-read, Dekisugi-kun's fixed follow-up question, the 3-choice correction,
 the own-words-vs-textbook comparison, and completion unlocking the next node.
 
-The matching caption source is `shipaton-demo-v2-captions.en.srt`.
+The matching caption source is `shipaton-demo-v2-captions.en.srt`. The final
+caption points judges to the paywall implementation
+(`app/lib/screens/plus_screen.dart`) because no purchase appears on camera.
 
-`shipaton-demo-v1.mp4` (114s) is kept only as a reference: it was captured
-from the web build and does not show device footage or the teach-back loop.
+`shipaton-demo-v1.mp4` (114s) is archived at `docs/attic/shipaton-demo-v1.mp4`:
+it was captured from the web build and does not show device footage or the
+teach-back loop. Do not submit it.
 
 Neither video claims Store publication, revenue, live-AI approval, purchase
 success, or school deployment. Raw screen recordings stay outside the

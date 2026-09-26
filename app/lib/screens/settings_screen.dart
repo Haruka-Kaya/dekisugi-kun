@@ -113,14 +113,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   if (widget.onOpenPlus case final openPlus?) ...[
                     const SizedBox(height: 24),
                     const StudioSectionHeader(
-                      title: '会話の回数',
-                      description: '無料の学び方は変えず、必要な人だけ回数を広げられます。',
+                      title: 'Plus（応援プラン）',
+                      description: '無料の学び方は変えません。Plusは限定の見た目を受け取る応援プランです。',
                     ),
                     const SizedBox(height: 12),
                     StudioActionTile(
                       icon: Icons.forum_outlined,
                       title: 'デキすぎ君 Plus',
-                      description: '無料は1日2会話。Plusは会話回数の上限なし',
+                      description: '無料で全部学べます。Plusは限定マスコットの応援プラン',
                       onTap: () => unawaited(openPlus()),
                       warm: true,
                     ),

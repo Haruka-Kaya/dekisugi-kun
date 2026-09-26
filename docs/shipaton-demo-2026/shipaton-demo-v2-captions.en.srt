@@ -31,5 +31,9 @@ Then compare your explanation with the textbook's observation
 Your own words are replayed next to the model answer — you spot the gap
 
 9
-00:00:47,500 --> 00:00:54,400
+00:00:47,500 --> 00:00:50,500
 Complete: +10 XP, next node unlocks — fully on-device, no external AI calls
+
+10
+00:00:50,500 --> 00:00:54,400
+Optional Plus supporter plan via RevenueCat — paywall: app/lib/screens/plus_screen.dart
