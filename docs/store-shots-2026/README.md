@@ -40,10 +40,16 @@ Shipaton公式ルール §4 Submission Requirements は、端末枠なしの`117
 9:16推奨とは別契約です。iPhone 15 Pro Simulatorの生framebufferがこの寸法なので、
 `shipaton/iphone-1179x2556/`はリサイズ・切り抜き・端末枠合成をせずに直接撮影します。
 
-Devpost提出用の実際のスクリーンショットは `devpost/shot-1179x2556.png` に置き、
-上記のストア用パイプラインとは別に管理します。現物はAndroidエミュレータで
-`wm size 1179x2556` に設定した実画面の `adb screencap`（リサイズ・端末枠なし）で、
-学習パスの進行中の状態を写しています。
+Devpost提出用の実際のスクリーンショットは `devpost/` に置き、上記のストア用
+パイプラインとは別に管理します。現物はAndroidエミュレータで `wm size 1179x2556`
+に設定した実画面の `adb screencap`（リサイズ・端末枠なし、必須提出画像はRGB化済み）です。
+
+| ファイル | 内容 |
+|---|---|
+| `devpost/shot-1179x2556.png` | 学習パス進行中（必須提出・1179x2556・RGB） |
+| `devpost/shot-1179x2556-teachback.png` | TEACH BACK導入画面（教材非表示・声/文字選択） |
+| `devpost/shot-1179x2556-teachback-input.png` | 教材を隠した説明入力画面 |
+| `devpost/shot-1179x2556-aurora.png` | オーロラマント装備中（Plus特典の可視状態）。撮影方法の正直な注記: Test Store キー未設定のため、購入後と同一の状態を `learning_cosmetic_grants` 台帳へ手動で grant 行を挿入して再現した実画面。UI・描画コードは実際の購入後経路と同一 |
 
 ### Google Play
 

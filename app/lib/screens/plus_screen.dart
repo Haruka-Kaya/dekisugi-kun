@@ -415,7 +415,7 @@ class _PlanDifference extends StatelessWidget {
     return Semantics(
       container: true,
       label:
-          '無料は1日2会話、1回およそ10分。Plusは限定マスコットと会話回数の上限なし。',
+          '無料は教材とミッションが全部使えます。Plusは限定マスコットと、Live会話再開時の会話回数上限なし。',
       child: ExcludeSemantics(
         child: Container(
           width: double.infinity,
@@ -429,8 +429,8 @@ class _PlanDifference extends StatelessWidget {
             children: [
               _PlanLine(
                 label: '無料',
-                value: '1日2会話',
-                detail: '1回はおよそ10分',
+                value: '教材とミッションは全部無料',
+                detail: 'AI会話は現在すべてのプランで休止中です',
                 foreground: c.onHeroSurface,
                 muted: c.heroMuted,
               ),
@@ -979,7 +979,7 @@ class _DisabledPlus extends StatelessWidget {
         const _StoreExplanation(
           icon: Icons.info_outline,
           title: 'このアプリではPlusを購入できません',
-          body: 'このビルドではストア購入が設定されていません。無料の1日2会話はそのまま使えます。',
+          body: 'このビルドではストア購入が設定されていません。教材とミッションは無料でそのまま使えます。',
         ),
         const SizedBox(height: 14),
         FilledButton(onPressed: onClose, child: const Text('閉じる')),

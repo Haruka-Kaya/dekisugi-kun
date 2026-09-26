@@ -18,7 +18,7 @@
 | 公開済みでない新規アプリ | ✅ | ストア未公開 |
 | リポジトリ public + OSS ライセンス（About 検出） | 🟡 | `LICENSE`（MIT）追加済み。**GitHub で private → public への変更はユーザー操作** |
 | ソース・素材・実行手順がリポジトリに全てある | ✅ | README に英語 quick start 追加済み（同梱 catalog でオフライン動作） |
-| <2 分のデモ動画（実機動作、YouTube/Vimeo 公開） | 🟡 | `docs/shipaton-demo-2026/shipaton-demo-v1.mp4`（114秒・英語字幕焼き込み・音声なし・ブラウザ枠除去済み）。**注意: web ビルドの撮影のため、ルール文言「built した端末上の動作」とは厳密には異なる。Android 実機/エミュレータで撮り直すのが最も安全** — ユーザー操作: YouTube/Vimeo へ公開 |
+| <2 分のデモ動画（実機動作、YouTube/Vimeo 公開） | 🟡 | `docs/shipaton-demo-2026/shipaton-demo-v2.mp4`（54秒・Androidエミュレータ実画面・teach-backループ収録・英語字幕焼き込み・音声なし）。購入パートは Test Store キー取得後に追加撮影して継ぎ足せる — ユーザー操作: YouTube/Vimeo へ公開 |
 | テキスト説明（英語） | ✅ | `docs/shipaton-submission-copy.md` 更新済み |
 | 1024×1024 アイコン | ✅ | `docs/store/icon-1024.png` |
 | ≥1枚のスクリーンショット 1179×2556・端末フレームなし | ✅ | `docs/store-shots-2026/devpost/shot-1179x2556.png` |
@@ -29,8 +29,7 @@
 ## 2. Plus（RevenueCat 購入）の正直な現状
 
 - 実装: paywall → `purchasePackage` → entitlement `plus` → `/api/revenuecat-webhook` → サーバ再照会、まで実配線済み。
-- 特典の意味: 「1日の Live 会話枠の上限解除」。しかし外部生成 AI は production で常時停止（`server/lib/generative-ai.ts`）のため、**現行配布ビルドでは特典が発動しない**。
-- Next Gen 審査は動画+リポジトリのため、不正確なストア説明のリスクは無いが、**提出文・動画では「Optional Plus purchase powered by RevenueCat」までを正直に書き**、Live 特典の実効を主張しない。
+- 特典（応援プラン）: 購入・復元で aurora マスコット（`cosmetic.path-mascot.aurora.v1`）を `learning_cosmetic_grants` 台帳へ即付与 — **現行配布ビルドで実際に発動し、entitlement 失効後も保持される**。Live 会話枠の上限解除は同機能の提供再開時に有効になる扱いで、paywall・提出文ともその旨を明記済み。
 - 動画で購入を見せる場合は Test Store ビルドで実演する（`REVENUECAT_USE_TEST_STORE=true --dart-define` + `test_` キー）。ストアアカウント不要。
 
 ## 3. ユーザー側の残作業（Devin にはできない）

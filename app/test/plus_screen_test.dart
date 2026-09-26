@@ -178,8 +178,8 @@ void main() {
     await tester.pumpWidget(wrap(FakePurchaseService()));
     await tester.pumpAndSettle();
 
-    expect(find.text('1日2会話'), findsOneWidget);
-    expect(find.textContaining('1回はおよそ10分'), findsWidgets);
+    expect(find.text('教材とミッションは全部無料'), findsOneWidget);
+    expect(find.textContaining('およそ10分'), findsWidgets);
     expect(find.text('限定マスコットと、会話回数の上限なし'), findsOneWidget);
     expect(find.textContaining('本人のノート'), findsOneWidget);
     expect(find.textContaining('文字入力'), findsOneWidget);
@@ -433,7 +433,7 @@ void main() {
 
     await reveal(tester, find.text('このアプリではPlusを購入できません'));
     expect(find.text('このアプリではPlusを購入できません'), findsOneWidget);
-    expect(find.textContaining('1日2会話はそのまま'), findsOneWidget);
+    expect(find.textContaining('そのまま使えます'), findsOneWidget);
     expect(find.text('¥980'), findsNothing);
     expect(find.text('以前の購入を復元'), findsNothing);
   });

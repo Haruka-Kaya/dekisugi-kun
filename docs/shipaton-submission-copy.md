@@ -115,6 +115,8 @@ for reference; the submitted video is the emulator capture.
 - `[PUBLIC REPO URL]` — https://github.com/Haruka-Kaya/dekisugi-kun
 - `[YOUTUBE OR VIMEO VIDEO UNDER 2:00, ENGLISH CAPTIONS]`
 - `docs/store/icon-1024.png` — 1024×1024 icon
-- One 1179×2556 screenshot, no device frame (see `docs/store-shots-2026/`)
+- One 1179×2556 screenshot, no device frame, plus optional gallery shots of the
+  teach-back screens and the Aurora Mantle equipped state (see
+  `docs/store-shots-2026/devpost/`)
 - Student/academic email on the Devpost account
 - If a minor: parent/guardian consent form submitted before the deadline
