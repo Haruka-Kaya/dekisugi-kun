@@ -142,7 +142,7 @@ export function localizeCheckpoint(
     options: checkpoint.options.map((option) => {
       const replacement = text.options[option.id]
       if (!replacement) return option
-      return {
+      const localized = {
         ...option,
         text: replacement.text.trim() !== '' ? replacement.text : option.text,
         hint:
@@ -150,6 +150,9 @@ export function localizeCheckpoint(
             ? replacement.hint
             : option.hint,
       }
+      // JSON化で消える undefined のkeyを残すと、同梱カタログとの比較が割れる
+      if (localized.hint == null) delete localized.hint
+      return localized
     }),
   }
 }
@@ -265,7 +268,8 @@ export function localizeNotationTask(
         ...token,
         label: textOr(text.tokens, token.id, token.label),
       })),
-      tracePattern,
+      // undefined のkeyを残すと同梱JSONとの比較が割れる
+      ...(tracePattern == null ? {} : { tracePattern }),
     }
   }
   const choice = task

@@ -545,7 +545,7 @@ export const chemicalChangeIonsContent: UnitContentText = {
               'From the record of ions before and after neutralization, choose the correct reading.',
             representation: [
               'Ions before the reaction | What remains after the reaction',
-              'H⁺・Cl⁻・Na⁺・OH⁻ | H₂O・Na⁺・Cl⁻',
+              'H⁺ · Cl⁻ · Na⁺ · OH⁻ | H₂O · Na⁺ · Cl⁻',
               'After drying | Sodium chloride crystals',
             ],
             representationSemanticsLabel:
