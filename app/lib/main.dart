@@ -207,7 +207,11 @@ final class _NeverNotify implements Listenable {
 /// **同意の判定は毎回読み直す。** 「同意済み」を1つのフラグで持つと、
 /// 文面の版を上げたときや条件を足したときに、古い記録が通り続ける。
 class _Gate extends StatefulWidget {
-  const _Gate({required this.serverUrl, required this.localCatalogAssets});
+  const _Gate({
+    super.key,
+    required this.serverUrl,
+    required this.localCatalogAssets,
+  });
 
   final String serverUrl;
   final AssetBundle? localCatalogAssets;

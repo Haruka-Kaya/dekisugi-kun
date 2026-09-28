@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:provider/provider.dart';
+
 import '../config/app_language.dart' as lang;
 import '../learning/domain/learning_event.dart';
 import '../learning/domain/learning_economy.dart';
@@ -186,6 +188,8 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
   LanSocialMeaningfulProgressDispatcher? _lanSocialDispatcher;
   Timer? _learningDayBoundaryTimer;
   GameActivityStatusController? _activityStatus;
+  lang.AppLanguageController? _languageController;
+  lang.AppLanguage _loadedLanguage = lang.appLanguage;
 
   DateTime _now() => widget.now?.call() ?? DateTime.now();
 
@@ -194,7 +198,19 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     widget.controller?._attach(this);
+    // 表示言語が変わったら教材をその言語で読み直す。ツリーを残したまま
+    // だと、設定で切り替えても一覧や本文が旧言語のまま残る。
+    _languageController = context.read<lang.AppLanguageController?>();
+    _loadedLanguage = _languageController?.language ?? lang.appLanguage;
+    _languageController?.addListener(_onLanguageChanged);
     _scheduleLearningDayBoundaryRefresh();
+    _load();
+  }
+
+  void _onLanguageChanged() {
+    final language = _languageController?.language ?? lang.appLanguage;
+    if (language == _loadedLanguage) return;
+    _loadedLanguage = language;
     _load();
   }
 
@@ -215,6 +231,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
 
   @override
   void dispose() {
+    _languageController?.removeListener(_onLanguageChanged);
     widget.controller?._detach(this);
     _learningDayBoundaryTimer?.cancel();
     _activityStatus?.dispose();
