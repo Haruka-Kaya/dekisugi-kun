@@ -208,7 +208,6 @@ final class _NeverNotify implements Listenable {
 /// 文面の版を上げたときや条件を足したときに、古い記録が通り続ける。
 class _Gate extends StatefulWidget {
   const _Gate({
-    super.key,
     required this.serverUrl,
     required this.localCatalogAssets,
   });

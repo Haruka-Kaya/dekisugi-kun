@@ -12,40 +12,21 @@ Dekisugi-kun Plus screen, closing on a feature-summary card.
 
 The matching caption source is `shipaton-demo-v6-captions.en.srt`.
 
-`shipaton-demo-v4.mp4` (118s) is the earlier Japanese-UI capture with the
-airplane-mode beat; kept for reference — the airplane-mode claim it proves
-(no network, fully on-device loop) still applies to the shipped build.
+Earlier cuts are archived under `docs/attic/`:
 
-`shipaton-demo-v3.mp4` (68s, Japanese UI) is superseded by v6.
-`shipaton-demo-v2.mp4` (54s) is the same footage minus the karte segment; its
-final caption points judges to the paywall implementation
-(`app/lib/screens/plus_screen.dart`) because no purchase appears on camera.
+- `shipaton-demo-v4.mp4` (118s) — earlier Japanese-UI capture with the
+  airplane-mode beat; the on-device claim it proves still applies.
+- `shipaton-demo-v3.mp4` (68s, Japanese UI) — superseded by v6.
+- `shipaton-demo-v2.mp4` (54s) — same footage minus the karte segment.
+- `shipaton-demo-v1.mp4` (114s) — web-build capture, no device footage or
+  teach-back loop. Do not submit it.
 
-`shipaton-demo-v1.mp4` (114s) is archived at `docs/attic/shipaton-demo-v1.mp4`:
-it was captured from the web build and does not show device footage or the
-teach-back loop. Do not submit it.
+The video does not claim Store publication, revenue, live-AI approval,
+purchase success, or school deployment. Raw screen recordings stay outside
+the repository.
 
-Neither video claims Store publication, revenue, live-AI approval, purchase
-success, or school deployment. Raw screen recordings stay outside the
-repository and are printed by the capture script at the end of each run.
+Historical capture tooling (used for the earlier cuts) lives in:
 
-Reproduce and verify the v1 pipeline from the repository root:
-
-```zsh
-tools/capture-shipaton-demo-rehearsal.sh
-tools/verify-shipaton-demo-rehearsal.sh
-```
-
-The verifier below applies to the v1 pipeline only:
-
-- duration between 1:45 and 1:55;
-- 1080x1920 H.264, `yuv420p`, constant 30fps;
-- no audio stream and no selectable subtitle stream;
-- English captions burned into pixels and recognized from sampled frames;
-- metadata that explicitly marks the file `NOT PUBLIC SUBMISSION`;
-- current device-only UI evidence and no unverified RevenueCat claim.
-
-The timing and claim source of truth remains:
-
+- `tools/capture-shipaton-demo-rehearsal.sh`
+- `tools/verify-shipaton-demo-rehearsal.sh`
 - `docs/shipaton-demo-capture.md`
-- `docs/shipaton-demo-captions.en.srt`
