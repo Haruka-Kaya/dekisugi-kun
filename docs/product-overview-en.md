@@ -33,7 +33,7 @@ teacher.
 ## The misconception map (理解カルテ)
 
 The distinctive asset under the hood is a **canonical misconception catalog**:
-29 entries (M01–M29), one per concept, each pairing the classic textbook
+32 entries (M01–M32), one per concept, each pairing the classic textbook
 misconception ("a stationary object has no forces on it") with the correct
 understanding, plus a probe phrasing the companion uses to *elicit* the
 misconception rather than guess it.
@@ -90,7 +90,7 @@ These rules, not growth-hack metrics, are the design contract.
 
 ## Content & platform
 
-- 10 units / 29 concepts aligned to Japan's MEXT national science curriculum,
+- 11 units / 32 concepts aligned to Japan's MEXT national science curriculum,
   each with curriculum page references.
 - Flutter app (Android/iOS/desktop/web) + a small TypeScript server on Vercel
   for catalog sync and entitlement re-verification.
@@ -99,6 +99,6 @@ These rules, not growth-hack metrics, are the design contract.
 - The misconception items come from an elicitation survey administered to
   real middle/high-school students (delivery UI in `server/public/survey`,
   analysis in `tools/misconception-survey/analyze.py`, n=18 responses so
-  far) — the karte's "29 beliefs" are what actual students actually
+  far) — the karte's "32 beliefs" are what actual students actually
   misbelieve, not invented distractors. The karte screen states this
   provenance to its users.

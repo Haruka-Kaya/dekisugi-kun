@@ -536,6 +536,280 @@ export const STAGE2_PRACTICE_PLANS: Readonly<
       },
     },
   },
+  reproduction: {
+    foundation: {
+      recallPrompt:
+        '細胞が分裂して増えることと、多細胞生物の成長の関係を、細胞の数と大きさの両面から説明してください。',
+      reasoningPrompt:
+        '「細胞自体がどんどん大きくなる」という説明では説明できない観察を一つ足してください。',
+      expectedOutcome:
+        'タマネギの根端の記録では、細胞分裂が起きる領域で染色体が写し取られ2つの細胞へ分けられ、'
+        + '細胞の数が増えたうえで各細胞が成長し、根が伸びています。',
+      expectedReason:
+        '細胞は一定の大きさを保ったまま分裂で数を増やし、増えた細胞がそれぞれ大きくなるため、'
+        + '体の成長は細胞の増加と細胞の成長の両方で起きます。',
+    },
+    conditions: {
+      recallPrompt:
+        '有性生殖と無性生殖の違いを、親の染色体が子にどう伝わるかで説明してください。',
+      reasoningPrompt:
+        '受精を経るかどうかだけでなく、減数分裂との関係を足してください。',
+      transferPrompt:
+        'カエルの受精卵が育つ記録と、ジャガイモの芽が育つ記録があります。'
+        + 'それぞれの子がもつ染色体が親とどういう関係かを比べて説明してください。',
+      expectedOutcome:
+        'カエルの子は両親の染色体を組み合わせてもち、ジャガイモの芽は親と同じ染色体をもちます。',
+      expectedReason:
+        '有性生殖では減数分裂で半分になった生殖細胞が受精して両親の染色体を受け継ぎ、'
+        + '無性生殖では親の体の一部がそのまま個体になるため同じ染色体をもちます。',
+      checkpoint: {
+        lure: '親と形質が違う子ができたのは、親が子に合わせて染色体を変えたからである。',
+        options: [
+          {
+            id: 'chromosome-mix',
+            text: '有性生殖では両親から受け継ぐ染色体の組合せが決まるので、親と少しずつ違う子になる。',
+          },
+          {
+            id: 'parent-adjusts',
+            text: '親が環境に合う子を作れるよう、出す染色体を調整している。',
+            hint: '染色体がどの過程で決まるか、減数分裂と受精の役割を考えます。',
+          },
+          {
+            id: 'mutation-required',
+            text: '親と違う形質はすべて突然変異でしか説明できない。',
+            hint: '同じ親からでも組合せが違う子ができる仕組みを考えます。',
+          },
+        ],
+        correctOptionId: 'chromosome-mix',
+        explanation:
+          '有性生殖の子は両親から別々に染色体を受け継ぐため、'
+          + '親とも違う組合せになります。親が意図的に変えたり突然変異が必要だったりしません。',
+      },
+    },
+    transfer: {
+      recallPrompt:
+        '有性生殖と無性生殖の子の違いが、集団の多様さにどう影響するか説明してください。',
+      reasoningPrompt:
+        '無性生殖だけで増える集団が環境の変化に弱い理由を、形質のばらつきで説明する点を足してください。',
+      transferPrompt:
+        '同じ畑で栄養生殖で増えたイチゴが病害でまとめて枯れた記録と、'
+        + '種子から育てた畑で一部が生き残った記録があります。この差を説明してください。',
+      expectedOutcome:
+        '栄養生殖のイチゴはほぼ同じ形質なので同じ病害に全株が弱く、'
+        + '種子由来の畑は形質にばらつきがあって耐性のある個体が残りました。',
+      expectedReason:
+        '無性生殖の子は親と同じ染色体なので集団の形質がそろい、'
+        + '有性生殖では組合せが違う子ができるためばらつきが残ります。',
+      checkpoint: {
+        lure: '無性生殖で増える植物は、環境の変化にも強い集団になる。',
+        options: [
+          {
+            id: 'numbers-strength',
+            text: '数が増えるほど集団は強くなるので、無性生殖で速く増える方が変化に強い。',
+            hint: '強さの違いが数ではなく形質のばらつきによると考えます。',
+          },
+          {
+            id: 'clone-adapts',
+            text: '同じ染色体でも、それぞれの個体が環境に合わせて形質を変えられる。',
+            hint: '個体が形質を変えて対応するのか、集団のばらつきの問題かを区別します。',
+          },
+          {
+            id: 'uniform-population-fragile',
+            text: '無性生殖では形質がそろうので、環境が変わると集団全体が同じ弱点をもつ。',
+          },
+        ],
+        correctOptionId: 'uniform-population-fragile',
+        explanation:
+          '無性生殖の子は親と同じ染色体をもつため集団の形質がそろい、'
+          + '病害や気候の変化に対して集団全体が同じ弱点をもちます。',
+      },
+    },
+  },
+  heredity: {
+    foundation: {
+      recallPrompt:
+        '対立形質と優性・劣性の意味を、エンドウの種子の形の例で説明してください。',
+      reasoningPrompt:
+        '純系の丸としわを交配したとき子がすべて丸になる観察を、説明に足してください。',
+      expectedOutcome:
+        '丸の純系としわの純系を交配すると子はすべて丸の種子になり、'
+        + 'その子同士の交配では丸としわがおよそ3：1で現れます。',
+      expectedReason:
+        '子に現れる丸が優性形質、現れなかったしわが劣性形質です。'
+        + 'しわの遺伝子は消えたのではなく、子の中に残って次の代で現れます。',
+    },
+    conditions: {
+      recallPrompt:
+        '遺伝子の組合せ（AA・Aa・aa）と形質の対応を、優性形質が現れる条件として説明してください。',
+      reasoningPrompt:
+        '「優性形質を示す個体はAAに決まっている」と言えない理由を足してください。',
+      transferPrompt:
+        '丸の種子の親2株から、丸の子としわの子が生まれました。'
+        + '両親の遺伝子の組合せを推定し、子の組合せを説明してください。',
+      expectedOutcome:
+        'しわの子（aa）が生まれたので、両親はともにaをもつAaで、'
+        + '子の組合せはAA・Aa・Aa・aaの可能性があります。',
+      expectedReason:
+        'aaは両親それぞれからaを受け継ぐ必要があり、'
+        + '優性形質を示す親はAAとは限らずAaでもよいためです。',
+      checkpoint: {
+        lure: '優性の形質を示す親同士の子が劣性形質になったのは、交配で遺伝子が劣化したからである。',
+        options: [
+          {
+            id: 'aa-from-aa-parents',
+            text: '両親がAa同士なら、各親からaを受け継いだaaの子ができて劣性形質が現れる。',
+          },
+          {
+            id: 'gene-degraded',
+            text: '遺伝子が交配のたびに弱くなるので、いずれ劣性の形質が現れる。',
+            hint: '遺伝子が劣化するのか、組合せの結果としてaaができるのかを考えます。',
+          },
+          {
+            id: 'random-appearance',
+            text: '劣性形質は決まった法則なしに出るので、確率は説明できない。',
+            hint: 'Aa同士の交配で子の組合せにどんな割合があるかを考えます。',
+          },
+        ],
+        correctOptionId: 'aa-from-aa-parents',
+        explanation:
+          'Aa同士の交配では子の組合せがAA・Aa・Aa・aaになり、'
+          + 'およそ4分の1でaaの子ができて劣性形質が現れます。遺伝子が劣化したのではありません。',
+      },
+    },
+    transfer: {
+      recallPrompt:
+        '遺伝子・染色体・DNAの関係を、形質が親から子へ伝わる道筋として説明してください。',
+      reasoningPrompt:
+        '遺伝子が染色体にのって伝わることと、減数分裂・受精との関係を足してください。',
+      transferPrompt:
+        '両親の耳たぶの形が子と違う観察記録があります。'
+        + 'この違いを遺伝子が伝わる道筋（減数分裂→受精）で説明してください。',
+      expectedOutcome:
+        '親の細胞は減数分裂で染色体が半分になり、受精で子は両親の染色体を受け継ぎます。'
+        + '耳たぶの形質を決める遺伝子の組合せが親と子で違いえます。',
+      expectedReason:
+        '遺伝子は染色体にのって生殖細胞へ入り、受精で両親のものが組み合わさるため、'
+        + '子は親とも違う組合せになりうります。',
+      checkpoint: {
+        lure: '形質を伝える遺伝子は、血液を通して親から子へ移る。',
+        options: [
+          {
+            id: 'blood-carries',
+            text: '親と子で血液型が関係するように、形質は血液を介して伝わる。',
+            hint: '遺伝子がどの細胞を通って親から子へ行くかを考えます。',
+          },
+          {
+            id: 'dna-direct-body',
+            text: '遺伝子は体のどの細胞からも直接子の体へ移るので、すべての形質が平均して伝わる。',
+            hint: '生殖細胞を通る道筋と、伝わる遺伝子の数を考えます。',
+          },
+          {
+            id: 'chromosome-gametes',
+            text: '遺伝子は染色体にのって生殖細胞へ入り、受精で両親のものが子へ伝わる。',
+          },
+        ],
+        correctOptionId: 'chromosome-gametes',
+        explanation:
+          '遺伝子は染色体にのっており、減数分裂で半分になった生殖細胞を経て、'
+          + '受精によって両親から子へ伝わります。血液や体の細胞から直接は移りません。',
+      },
+    },
+  },
+  evolution: {
+    foundation: {
+      recallPrompt:
+        '化石が生物の変遷の証拠になる理由を、地層の新旧と生物の姿の対応で説明してください。',
+      reasoningPrompt:
+        '「地層ごとに違う生物が出る」のと「同じ生物が少しずつ変わる」の違いを足してください。',
+      expectedOutcome:
+        '古い層から新しい層へ順にたどると、三葉虫やアンモナイトなど'
+        + '姿の異なる生物が層の時代に対応して現れ、'
+        + '近縁な姿どうしが段階的に並ぶ記録が確認できます。',
+      expectedReason:
+        '地層は下ほど古いので、化石はその時代に生きた生物の姿を記録します。'
+        + '層の順に姿が変わることは、生物の種類が時間とともに変わってきた証拠です。',
+    },
+    conditions: {
+      recallPrompt:
+        '自然選択による進化を、「ばらつき→環境に合うものが残る→形質の割合が変わる」という道筋で説明してください。',
+      reasoningPrompt:
+        '個体が変わったのではないことを、集団の中の形質の割合で説明する点を足してください。',
+      transferPrompt:
+        '暗い樹皮の森林で、明るい色の蛾と暗い色の蛾の数が記録されています。'
+        + '暗い色の蛾が増えたことを自然選択で説明してください。',
+      expectedOutcome:
+        'もともと色にばらつきのあった蛾の集団で、暗い樹皮に似た暗色の蛾が鳥に見つかりにくく'
+        + '多く子を残し、世代を経て暗色の個体の割合が増えました。',
+      expectedReason:
+        '個体の色が変わったのではなく、もともとのばらつきの中で'
+        + '環境に合った色の個体が多く残されたため、集団の形質の割合が変わりました。',
+      checkpoint: {
+        lure: '環境が変わると生物は必要な形質を後から身につけ、それが子に伝わる。',
+        options: [
+          {
+            id: 'variation-selected',
+            text: 'もともとのばらつきの中で環境に合った形質が残され、集団の形質の割合が変わる。',
+          },
+          {
+            id: 'acquire-needed-trait',
+            text: '環境に必要な形質を個体が獲得し、獲得した形質が子に伝わって進化する。',
+            hint: '個体が変わるのか、集団の中で残される形質が変わるのかを考えます。',
+          },
+          {
+            id: 'all-mutate',
+            text: '環境が変わると集団の全員が同じ方向に変異するので、すぐに適応できる。',
+            hint: '変異が環境に合わせて起きるのか、無関係に起きたばらつきが選ばれるのかを考えます。',
+          },
+        ],
+        correctOptionId: 'variation-selected',
+        explanation:
+          '進化では、もともとあった形質のばらつきから環境に合ったものが多く子を残します。'
+          + '個体が必要な形質を獲得して伝えるのではありません。',
+      },
+    },
+    transfer: {
+      recallPrompt:
+        '進化と「用不用進説（使った器官が発達して子に伝わる）」の違いを、変化が起きる単位で説明してください。',
+      reasoningPrompt:
+        'キリンの首の例で、両者が同じ観察をどう違う説明にするかを足してください。',
+      transferPrompt:
+        '高い葉を食べられる首の長いキリンが現れた記録を、'
+        + '「努力して伸ばした」と「ばらつきから選ばれた」の2説で説明し、'
+        + '化石の記録と合うのはどちらかを判断してください。',
+      expectedOutcome:
+        '努力説では個体が伸ばした首が子に伝わるとしますが、'
+        + '自然選択説では祖先の首の長さにばらつきがあり、'
+        + '高い葉を食べられた長い個体が多く子を残したと説明します。'
+        + '化石が段階的な姿の変化を示すことと、自然選択説が一致します。',
+      expectedReason:
+        '獲得した形質は子に伝わらないという証拠と、'
+        + '集団の中で残される形質が変わるという観察から、'
+        + '進化は個体の変化ではなく集団の形質の割合の変化と説明されます。',
+      checkpoint: {
+        lure: '化石の生物が現在と違うのは、昔の生物が途中で別の種に突然変身したからである。',
+        options: [
+          {
+            id: 'sudden-transform',
+            text: 'ある世代で丸ごと別の生物に変身したので、中間的な姿は存在しない。',
+            hint: '古い層から新しい層への記録が断続的か、段階的かを考えます。',
+          },
+          {
+            id: 'extinct-only',
+            text: '化石の生物はみな絶滅しただけで、現在の生物とは無関係である。',
+            hint: '近縁な姿どうしが層の順に並ぶ記録をどう説明するか考えます。',
+          },
+          {
+            id: 'gradual-change',
+            text: '長い時間をかけて残される形質が少しずつ変わり、種の姿が段階的に変化した。',
+          },
+        ],
+        correctOptionId: 'gradual-change',
+        explanation:
+          '化石は古い層から新しい層へ順に、近縁な姿が段階的に変わる記録を示します。'
+          + '進化は長い時間をかけた形質の割合の変化で、突然の変身ではありません。',
+      },
+    },
+  },
 }
 
 /** Stage 2 3概念×3周の構造化課題。項目は全員が同じ画面を共有する著者順。 */
@@ -800,6 +1074,171 @@ export const STAGE2_COGNITIVE_TASKS: Readonly<
         { id: 'charged-battery', text: 'あらかじめ電気を溜めた容器に、回路をつなぐ。' },
       ],
       solution: { selectedItemId: 'two-metals' },
+    },
+  },
+  reproduction: {
+    foundation: {
+      kind: 'sequence',
+      operation: 'causalOrder',
+      items: [
+        { id: 'cell-split', text: '細胞が2つに分かれ、同じ性質の細胞が増える' },
+        { id: 'chromosome-copy', text: '核の中の染色体が写し取られる' },
+        { id: 'cell-growth', text: '増えた細胞がそれぞれ成長し、体の部分が大きくなる' },
+        { id: 'chromosome-split', text: '写し取られた染色体が2つの核へ分けられる' },
+      ],
+      solution: {
+        orderedItemIds: [
+          'chromosome-copy',
+          'chromosome-split',
+          'cell-split',
+          'cell-growth',
+        ],
+      },
+    },
+    conditions: {
+      kind: 'classify',
+      operation: 'conditionClassify',
+      items: [
+        { id: 'frog-fertilized-egg', text: 'カエルの受精卵が育つ' },
+        { id: 'potato-sprout', text: 'ジャガイモの芽から新しい株が育つ' },
+        { id: 'strawberry-runner', text: 'イチゴのランナーの先に新しい株ができる' },
+        { id: 'chicken-egg', text: 'ニワトリの受精卵が育つ' },
+      ],
+      targets: [
+        { id: 'sexual', label: '有性生殖' },
+        { id: 'asexual', label: '無性生殖' },
+      ],
+      solution: {
+        targetByItemId: {
+          'frog-fertilized-egg': 'sexual',
+          'potato-sprout': 'asexual',
+          'strawberry-runner': 'asexual',
+          'chicken-egg': 'sexual',
+        },
+      },
+    },
+    transfer: {
+      kind: 'singleSelect',
+      operation: 'prediction',
+      items: [
+        {
+          id: 'sexual-diverse',
+          text: '有性生殖で育った畑は形質にばらつきがあり、病害で一部が生き残る。',
+        },
+        {
+          id: 'asexual-stronger',
+          text: '無性生殖で育った畑は親と同じ強さをもつので、病害でも全株が生き残る。',
+        },
+        {
+          id: 'both-same',
+          text: 'どちらの殖え方でも同じ病害への強さなので、生き残る株の差は出ない。',
+        },
+      ],
+      solution: { selectedItemId: 'sexual-diverse' },
+    },
+  },
+  heredity: {
+    foundation: {
+      kind: 'singleSelect',
+      operation: 'prediction',
+      items: [
+        { id: 'all-dominant', text: '子はすべて優性形質になる' },
+        { id: 'three-to-one', text: '子は優性形質と劣性形質がおよそ3：1で現れる' },
+        { id: 'half-half', text: '子は優性形質と劣性形質が半々で現れる' },
+      ],
+      solution: { selectedItemId: 'three-to-one' },
+    },
+    conditions: {
+      kind: 'classify',
+      operation: 'conditionClassify',
+      items: [
+        { id: 'genotype-aa', text: '遺伝子の組合せがaa' },
+        { id: 'genotype-aa-big', text: '遺伝子の組合せがAA' },
+        { id: 'genotype-aa-hybrid', text: '遺伝子の組合せがAa' },
+        { id: 'genotype-aa-again', text: 'もう一組の組合せがaa' },
+      ],
+      targets: [
+        { id: 'dominant-trait', label: '優性形質が現れる' },
+        { id: 'recessive-trait', label: '劣性形質が現れる' },
+      ],
+      solution: {
+        targetByItemId: {
+          'genotype-aa': 'recessive-trait',
+          'genotype-aa-big': 'dominant-trait',
+          'genotype-aa-hybrid': 'dominant-trait',
+          'genotype-aa-again': 'recessive-trait',
+        },
+      },
+    },
+    transfer: {
+      kind: 'sequence',
+      operation: 'causalOrder',
+      items: [
+        { id: 'fertilization', text: '両親の生殖細胞が受精し、受精卵ができる' },
+        { id: 'trait-appears', text: '子の遺伝子の組合せに応じて形質が現れる' },
+        { id: 'meiosis', text: '生殖細胞が減数分裂で染色体を半分にする' },
+        { id: 'body-division', text: '受精卵が体細胞分裂を繰り返して育つ' },
+      ],
+      solution: {
+        orderedItemIds: [
+          'meiosis',
+          'fertilization',
+          'body-division',
+          'trait-appears',
+        ],
+      },
+    },
+  },
+  evolution: {
+    foundation: {
+      kind: 'sequence',
+      operation: 'causalOrder',
+      items: [
+        { id: 'ratio-shift', text: '世代を経て集団の形質の割合が変わる' },
+        { id: 'variation', text: '集団の中に形質のばらつきがある' },
+        { id: 'evolved', text: '種としての姿が変わり、進化が起きる' },
+        { id: 'selection', text: '環境に合った形質をもつ個体が多く子を残す' },
+      ],
+      solution: {
+        orderedItemIds: [
+          'variation',
+          'selection',
+          'ratio-shift',
+          'evolved',
+        ],
+      },
+    },
+    conditions: {
+      kind: 'singleSelect',
+      operation: 'prediction',
+      items: [
+        { id: 'bright-moth-wins', text: '暗い樹皮の森では明るい色の蛾が目立たず増える' },
+        { id: 'ratio-stays', text: '色のばらつきは変化に関係ないので、数の割合は変わらない' },
+        { id: 'dark-moth-wins', text: '暗い樹皮に似た暗色の蛾が見つかりにくく、数の割合が増える' },
+      ],
+      solution: { selectedItemId: 'dark-moth-wins' },
+    },
+    transfer: {
+      kind: 'classify',
+      operation: 'conditionClassify',
+      items: [
+        { id: 'giraffe-effort', text: '高い葉を食べようと首を伸ばした姿が子に伝わった' },
+        { id: 'giraffe-variation', text: '祖先に首の長さのばらつきがあり、長い個体が多く子を残した' },
+        { id: 'moth-selection', text: '暗い色の蛾が見つかりにくく、多く残された' },
+        { id: 'whale-effort', text: '水中で足を使わなくなった個体の変化が子に伝わった' },
+      ],
+      targets: [
+        { id: 'natural-selection', label: '自然選択での説明' },
+        { id: 'use-disuse', label: '用不用進説での説明' },
+      ],
+      solution: {
+        targetByItemId: {
+          'giraffe-effort': 'use-disuse',
+          'giraffe-variation': 'natural-selection',
+          'moth-selection': 'natural-selection',
+          'whale-effort': 'use-disuse',
+        },
+      },
     },
   },
 }
