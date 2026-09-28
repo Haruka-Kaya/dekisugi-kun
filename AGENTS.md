@@ -107,6 +107,7 @@ cd app && flutter build ios --release --no-codesign   # 署名なし確認
 
 - 外部AI会話（Vertex / OpenAI Realtime）を学校・未成年に繋ぐデプロイ
 - Live API の `/api/live-token` や `/api/director` を production で有効化
+- `/api/companion-line`（返事の前置きを生成する設計済みの外部AI口）に lure・正解・選択肢・氏名・ID・声を送る変更
 - C1〜C9 に反する機能変更
 - `DEKISUGI_LIVE=1` なしで live テストを実行（本番課金）
 - 設問カタログを変えた後に `check_items.py` をスキップ
@@ -115,7 +116,7 @@ cd app && flutter build ios --release --no-codesign   # 署名なし確認
 
 ## 未解決のブロッカー
 
-1. **年齢規約** — Google Cloud TOS §20(d) で中高生向け生成AI禁止。学校展開前に別プロバイダー移行 or Google 個別契約が必要
+1. **年齢規約** — Google Cloud TOS §20(d) で中高生向け生成AI禁止（Vertex系の旧経路は閉じたまま）。返事の前置きだけの別経路 `/api/companion-line` は OpenAI 互換プロバイダ想定（`COMPANION_AI_API_KEY`/`BASE_URL`/`MODEL`、鍵はサーバのみ）で設計済み。クライアントは `DEKISUGI_COMPANION_REMOTE=1` のビルドでだけ有効化し、同意文面 v5 に送信内容を開示済み。送るのは説明文・聞き取り語・単元名の3点のみ
 2. **外部AI配布停止差分が本番未反映**（2026-08-10 時点）— 学校配布前に `/api/live-token` を本番で 503 にする
 3. **iOS 実機未確認** — 録音・実再生・権限拒否・background 停止は未確認
 4. **アンケート n=18** — 誘発効果の根拠がまだデータで支えられていない

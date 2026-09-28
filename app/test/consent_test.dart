@@ -98,7 +98,7 @@ void main() {
 
   group('越境移転の説明', () {
     test('文面変更で同意版を更新した', () {
-      expect(kConsentVersion, 4);
+      expect(kConsentVersion, 5);
     });
 
     test('3点すべてを持つ', () {
