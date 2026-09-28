@@ -1,3 +1,4 @@
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_economy.dart';
@@ -57,9 +58,12 @@ class NotationLabHubScreen extends StatelessWidget {
           eyebrow: hero.eyebrow,
           title: hero.title,
           body: hero.body,
-          semanticSummary:
-              '記号ラボ。利用できる課題$available件。復習$reviewDue件。'
-              '${hero.semanticState}',
+          semanticSummary: t(
+            '記号ラボ。利用できる課題$available件。復習$reviewDue件。'
+                '${hero.semanticState}',
+            'Notation Lab. $available tasks available. $reviewDue to review. '
+                '${hero.semanticState}',
+          ),
           mascotReaction: hero.reaction,
           mascotStyle: mascotStyle,
           content: GameSolidSurface(
@@ -70,8 +74,12 @@ class NotationLabHubScreen extends StatelessWidget {
                 const SizedBox(width: GameTokens.spaceSm),
                 Expanded(
                   child: Text(
-                    '利用できる課題 $available件'
-                    '${reviewDue == 0 ? '' : ' ・ 復習 $reviewDue件'}',
+                    t(
+                      '利用できる課題 $available件'
+                          '${reviewDue == 0 ? '' : ' ・ 復習 $reviewDue件'}',
+                      '$available tasks available'
+                          '${reviewDue == 0 ? '' : ' · $reviewDue to review'}',
+                    ),
                     style: Theme.of(context).textTheme.labelLarge
                         ?.copyWith(color: colors.ink)
                         .jaWeight(FontWeight.w800),
@@ -97,16 +105,24 @@ class NotationLabHubScreen extends StatelessWidget {
                 ),
         ),
         const SizedBox(height: GameTokens.spaceXl),
-        const GameSectionHeader(
-          title: '記号の課題',
-          description: '未解放・利用可・練習済み・復習を、アイコンと文字で表示します。',
+        GameSectionHeader(
+          title: t('記号の課題', 'Notation tasks'),
+          description: t(
+            '未解放・利用可・練習済み・復習を、アイコンと文字で表示します。',
+            'Locked, available, practiced, and review states are shown with icons and text.',
+          ),
         ),
         const SizedBox(height: GameTokens.spaceMd),
         if (entries.isEmpty)
-          const GameSolidSurface(
+          GameSolidSurface(
             surfaceKey: ValueKey('notation-lab-empty'),
             raised: true,
-            child: Text('学習パスを進めると、ここに記号の課題が加わります。'),
+            child: Text(
+              t(
+                '学習パスを進めると、ここに記号の課題が加わります。',
+                'Notation tasks appear here as you progress along the learning path.',
+              ),
+            ),
           )
         else
           GameResponsiveGrid(
@@ -129,7 +145,10 @@ class NotationLabHubScreen extends StatelessWidget {
               const SizedBox(width: GameTokens.spaceSm),
               Expanded(
                 child: Text(
-                  '答えを暗記するのではなく、記号が表す量と条件を順にたしかめます。',
+                  t(
+                    '答えを暗記するのではなく、記号が表す量と条件を順にたしかめます。',
+                    'Instead of memorizing answers, check step by step what quantities and conditions each symbol stands for.',
+                  ),
                   style: Theme.of(
                     context,
                   ).textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
@@ -168,23 +187,38 @@ _NotationHeroState _notationHeroState(List<NotationLabEntry> entries) {
   if (primary != null) {
     return switch (primary.state) {
       NotationLabState.reviewDue => (
-        eyebrow: '記号ラボ ・ 復習',
-        title: '「${primary.conceptLabel}」をもう一度',
-        body: '${primary.description}「なぞる→組む→読む」の順で思い出します。',
-        semanticState: '次は${primary.conceptLabel}を復習します',
+        eyebrow: t('記号ラボ ・ 復習', 'Notation Lab · Review'),
+        title: t(
+          '「${primary.conceptLabel}」をもう一度',
+          'Review "${primary.conceptLabel}"',
+        ),
+        body: t(
+          '${primary.description}「なぞる→組む→読む」の順で思い出します。',
+          '${primary.description} Recall it in order: trace → build → read.',
+        ),
+        semanticState: t(
+          '次は${primary.conceptLabel}を復習します',
+          'Next: review ${primary.conceptLabel}',
+        ),
         reaction: GameCharacterReaction.encourage,
         primaryEntry: primary,
-        actionLabel: '復習をはじめる',
+        actionLabel: t('復習をはじめる', 'Start review'),
         actionIcon: Icons.replay_rounded,
       ),
       NotationLabState.available => (
-        eyebrow: '記号ラボ ・ 次の課題',
+        eyebrow: t('記号ラボ ・ 次の課題', 'Notation Lab · Next task'),
         title: primary.conceptLabel,
-        body: '${primary.description}記号が表す量と条件を順にたしかめます。',
-        semanticState: '次は${primary.conceptLabel}の課題を開きます',
+        body: t(
+          '${primary.description}記号が表す量と条件を順にたしかめます。',
+          '${primary.description} Check step by step what quantities and conditions the symbols stand for.',
+        ),
+        semanticState: t(
+          '次は${primary.conceptLabel}の課題を開きます',
+          'Next: open the ${primary.conceptLabel} task',
+        ),
         reaction: GameCharacterReaction.invite,
         primaryEntry: primary,
-        actionLabel: '次の課題を開く',
+        actionLabel: t('次の課題を開く', 'Open next task'),
         actionIcon: Icons.play_arrow_rounded,
       ),
       _ => throw StateError(
@@ -198,10 +232,13 @@ _NotationHeroState _notationHeroState(List<NotationLabEntry> entries) {
       entries.every((entry) => entry.state == NotationLabState.completed);
   if (allCompleted) {
     return (
-      eyebrow: '記号ラボ ・ 練習済み',
-      title: 'すべての記号課題を練習しました',
-      body: '式・単位・矢印・グラフを、次の理科の問いで使えます。',
-      semanticState: 'すべての記号課題を練習済みです',
+      eyebrow: t('記号ラボ ・ 練習済み', 'Notation Lab · Practiced'),
+      title: t('すべての記号課題を練習しました', 'You\'ve practiced every notation task'),
+      body: t(
+        '式・単位・矢印・グラフを、次の理科の問いで使えます。',
+        'You can use equations, units, arrows, and graphs in your next science questions.',
+      ),
+      semanticState: t('すべての記号課題を練習済みです', 'All notation tasks practiced'),
       reaction: GameCharacterReaction.celebrate,
       primaryEntry: null,
       actionLabel: null,
@@ -211,10 +248,13 @@ _NotationHeroState _notationHeroState(List<NotationLabEntry> entries) {
 
   if (entries.isEmpty) {
     return (
-      eyebrow: '記号ラボ',
-      title: '最初の記号課題を準備中',
-      body: '学習パスを進めると、式・単位・矢印・グラフの課題が加わります。',
-      semanticState: '記号課題を準備中です',
+      eyebrow: t('記号ラボ', 'Notation Lab'),
+      title: t('最初の記号課題を準備中', 'Preparing your first notation task'),
+      body: t(
+        '学習パスを進めると、式・単位・矢印・グラフの課題が加わります。',
+        'Equation, unit, arrow, and graph tasks are added as you progress along the learning path.',
+      ),
+      semanticState: t('記号課題を準備中です', 'Notation tasks are being prepared'),
       reaction: GameCharacterReaction.invite,
       primaryEntry: null,
       actionLabel: null,
@@ -223,10 +263,16 @@ _NotationHeroState _notationHeroState(List<NotationLabEntry> entries) {
   }
 
   return (
-    eyebrow: '記号ラボ ・ 未解放',
-    title: '次の記号課題は学習パスで解放',
-    body: '現在の必修ノードを終えると、次の記号課題を利用できます。',
-    semanticState: '利用できる記号課題はまだありません',
+    eyebrow: t('記号ラボ ・ 未解放', 'Notation Lab · Locked'),
+    title: t(
+      '次の記号課題は学習パスで解放',
+      'Unlock the next notation task on the learning path',
+    ),
+    body: t(
+      '現在の必修ノードを終えると、次の記号課題を利用できます。',
+      'Finish the current required node to unlock the next notation task.',
+    ),
+    semanticState: t('利用できる記号課題はまだありません', 'No notation tasks available yet'),
     reaction: GameCharacterReaction.invite,
     primaryEntry: null,
     actionLabel: null,
@@ -253,28 +299,28 @@ class _EntryCard extends StatelessWidget {
     ) = switch (entry.state) {
       NotationLabState.locked => (
         Icons.lock_outline_rounded,
-        '未解放',
+        t('未解放', 'Locked'),
         colors.pathLocked,
         colors.onPathLocked,
         colors.inkMuted,
       ),
       NotationLabState.available => (
         Icons.play_arrow_rounded,
-        '利用できます',
+        t('利用できます', 'Available'),
         colors.pathActive,
         colors.onPathActive,
         colors.pathActive,
       ),
       NotationLabState.completed => (
         Icons.check_rounded,
-        '練習済み',
+        t('練習済み', 'Practiced'),
         colors.pathComplete,
         colors.onPathComplete,
         colors.pathComplete,
       ),
       NotationLabState.reviewDue => (
         Icons.replay_rounded,
-        '復習できます',
+        t('復習できます', 'Ready to review'),
         colors.pathReview,
         colors.onPathReview,
         colors.pathReview,
@@ -283,7 +329,10 @@ class _EntryCard extends StatelessWidget {
     return Semantics(
       button: onTap != null,
       enabled: onTap != null,
-      label: '${entry.conceptLabel}の記号ラボ。$label。${entry.description}',
+      label: t(
+        '${entry.conceptLabel}の記号ラボ。$label。${entry.description}',
+        'Notation Lab: ${entry.conceptLabel}. $label. ${entry.description}',
+      ),
       child: ExcludeSemantics(
         child: Material(
           color: onTap == null ? colors.surfaceRaised : colors.surface,
