@@ -3446,6 +3446,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
         quests: game.quests,
         monthlyBadges: game.monthlyBadges,
         mascotStyle: game.economy.equippedPathMascotStyle,
+        plusSupporter: game.economy.plusSupporter,
         schoolMode: widget.schoolMode,
         explanationCount: _explanationReviewCount,
         onOpenEconomy: widget.schoolMode

@@ -30,6 +30,7 @@ class GameProfileScreen extends StatelessWidget {
     this.onExitLocalMode,
     this.monthlyBadges = const [],
     this.mascotStyle = LearningPathMascotStyle.standard,
+    this.plusSupporter = false,
   });
 
   final PlayerSummaryView player;
@@ -49,6 +50,9 @@ class GameProfileScreen extends StatelessWidget {
   final VoidCallback? onExitLocalMode;
   final List<LearningMonthlyBadgeAward> monthlyBadges;
   final LearningPathMascotStyle mascotStyle;
+
+  /// Plus特典を所有している。学習報酬ではなく応援の印として表示する。
+  final bool plusSupporter;
 
   @override
   Widget build(BuildContext context) {
@@ -183,6 +187,13 @@ class GameProfileScreen extends StatelessWidget {
                     value: '$explanationCount回',
                     foregroundColor: colors.onPathActive,
                   ),
+                  if (plusSupporter && !schoolMode)
+                    _Metric(
+                      icon: Icons.workspace_premium_outlined,
+                      label: 'Plus サポーター',
+                      value: '応援中',
+                      foregroundColor: colors.onPathActive,
+                    ),
                 ],
               ),
             ],

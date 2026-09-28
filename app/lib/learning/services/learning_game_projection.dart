@@ -70,6 +70,7 @@ class LearningEconomyView {
     required this.timedChallengePassGemCost,
     required this.timedChallengePassActive,
     required this.canPurchaseTimedChallengePass,
+    this.plusSupporter = false,
   });
 
   final bool available;
@@ -83,6 +84,9 @@ class LearningEconomyView {
   final int? timedChallengePassGemCost;
   final bool timedChallengePassActive;
   final bool canPurchaseTimedChallengePass;
+
+  /// Plus特典の見た目を所有している = サポーター。entitlement失効後も残る。
+  final bool plusSupporter;
 }
 
 /// append-only台帳から、6タブで共有する表示値を一度だけ導く。
@@ -430,6 +434,9 @@ class LearningGameProjection {
       timedChallengePassActive: timedPassActive,
       canPurchaseTimedChallengePass:
           !schoolMode && !timedPassActive && wallet.gems >= timedPass.gemCost,
+      plusSupporter:
+          !schoolMode &&
+          cosmeticState.owns(SafeLearningEconomyCatalogV1.auroraMascotId),
     );
     final player = PlayerSummaryView(
       xp: schoolMode ? 0 : wallet.xp,
