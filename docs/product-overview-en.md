@@ -107,7 +107,7 @@ untranslated key — a partial-English build cannot ship.
   each with curriculum page references.
 - Flutter app (Android/iOS/desktop/web) + a small TypeScript server on Vercel
   for catalog sync and entitlement re-verification.
-- ~1,200 client tests and ~390 server tests; the misconception catalog is
+- ~1,260 client tests and ~400 server tests; the misconception catalog is
   linted by `tools/misconception-survey/check_items.py`.
 - The misconception items come from an elicitation survey administered to
   real middle/high-school students (delivery UI in `server/public/survey`,

@@ -114,17 +114,16 @@ and the entire learning loop is free.
 
 ## Demo video notes
 
-The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v4.mp4`, ~118s) opens
-with a short hook card, then a beat filmed in airplane mode: the teach-back
-loop still types, checks key terms, and responds — the whole loop is
-on-device, no LLM, no cloud, nothing a student writes leaves the phone. Then
-the current build running on an Android emulator in portrait: the learning path,
-a TEACH BACK node, an explanation, the on-device key-term coverage check, the
-required re-read, the companion's fixed follow-up question, the 3-choice
-correction, the own-words-vs-textbook comparison, completion unlocking the
-next node, then the カルテ (misconception record) screen where the miss just
-recorded appears, the shareable parent report, and the Plus paywall.
-English captions overlay the Japanese UI; there is no audio track.
+The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v6.mp4`, ~97s) is
+filmed on the English build of the app on an Android emulator in portrait:
+a short hook card, then the learning path, a lesson node (the material hides
+when it is time to explain — C2), a typed English teach-back explanation, the
+on-device key-term coverage panel, the companion's fixed follow-up question,
+a wrong pick costing a heart and earning a hint instead of the answer, the
+misconception record screen ("Corrected / Still unsure"), the shareable
+parent report, and the Plus screen. English captions overlay the English UI;
+there is no audio track. The whole loop shown is on-device — no LLM, no
+cloud, nothing a student writes leaves the phone.
 
 The on-device coverage check is a vocabulary floor, not a grader: it verifies
 that the key terms from the expected explanation appear in the student's own
@@ -135,12 +134,14 @@ missed term asks for more detail instead of wrongly blocking a right answer.
 The video does not include a purchase: the RevenueCat Test Store key is not in
 the repository (it is a personal credential). The final segment shows the
 paywall's fail-closed branch instead — with no reachable store, the app refuses
-to guess a price and blocks the purchase operation (「ストアの情報を確認できません」),
+to guess a price and blocks the purchase operation ("Can't check store information"),
 while free features keep working. Judges can exercise the full
 paywall themselves with the `--dart-define` command in "Testing instructions".
 
-The earlier web-build capture is archived at `docs/attic/shipaton-demo-v1.mp4`
-for reference; the submitted video is the emulator capture.
+The earlier Japanese-UI capture (`shipaton-demo-v4.mp4`, ~118s, airplane-mode
+beat included) remains in this directory for reference; the submitted video
+is the English-build capture. An even earlier web-build capture is archived
+at `docs/attic/shipaton-demo-v1.mp4`.
 
 ## Testing instructions (for judges)
 
