@@ -74,10 +74,19 @@ These rules, not growth-hack metrics, are the design contract.
 - External generative-AI endpoints are disabled in production (503) pending a
   provider contract that permits minors — the companion's lines are cataloged,
   not generated live.
+- One carefully scoped generative path exists: `/api/companion-line` produces
+  only the short opening line of the companion's reply (the question and its
+  choices stay verbatim catalog). It sends only the student's explanation
+  text, heard keywords, and the unit label — never the answer, choices, lure,
+  name, or voice — through our own server (the API key never ships to the
+  device), is disclosed in the in-app consent text, and falls back
+  deterministically to the cataloged line. It ships dark until a provider key
+  is configured, and is a **Plus supporter perk** on the client.
 - Voice audio and free text stay in RAM; the device stores only lesson IDs,
   misconception codes, hearts, and progress.
-- Optional **Plus** (RevenueCat) is a cosmetic supporter plan — it grants the
-  Aurora Mantle companion skin; no learning content is ever gated.
+- Optional **Plus** (RevenueCat) is a supporter plan — it grants the
+  Aurora Mantle companion skin, the generated-AI reply preface above, and a
+  parent-facing karte report; no learning content is ever gated.
 
 ## Content & platform
 

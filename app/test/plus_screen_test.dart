@@ -180,7 +180,10 @@ void main() {
 
     expect(find.text('教材とミッションは全部無料'), findsOneWidget);
     expect(find.textContaining('およそ10分'), findsWidgets);
-    expect(find.text('限定マスコットと、会話回数の上限なし'), findsOneWidget);
+    expect(
+      find.text('限定マスコット・生成AIの返事・保護者レポート'),
+      findsOneWidget,
+    );
     expect(find.textContaining('本人のノート'), findsOneWidget);
     expect(find.textContaining('文字入力'), findsOneWidget);
     expect(find.textContaining('アクセシビリティ機能'), findsOneWidget);
