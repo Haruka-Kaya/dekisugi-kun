@@ -69,15 +69,18 @@ nothing a student needs to learn is behind payment.
   surfaced as the companion's record, with observed vs. resolved needs drawn
   from durable on-device need state — the protégé effect made visible.
 - A RevenueCat-powered optional Plus supporter plan: purchase and restore
-  grant an exclusive Aurora Mantle companion skin on-device, plus a shareable
-  「保護者の方へのレポート」 card on the カルテ screen that summarizes the
-  misconceptions the student's explanations have corrected. Server-side
-  entitlement re-verification (`/api/revenuecat-webhook`,
+  grant an exclusive Aurora Mantle companion skin on-device, a generated-AI
+  reply preface that reads the student's explanation (`/api/companion-line`,
+  consent-disclosed, catalog-verbatim pedagogy, deterministic fallback), plus
+  a shareable 「保護者の方へのレポート」 card on the カルテ screen that
+  summarizes the misconceptions the student's explanations have corrected.
+  Server-side entitlement re-verification (`/api/revenuecat-webhook`,
   `/api/subscription-sync`) is implemented and unit-tested; it gates the
   live-conversation quota, which is held disabled pending a minor-safe AI
   provider agreement.
-- A deliberately safe posture for minors: external generative-AI endpoints return
-  503 in production, and the app's required path works with no network.
+- A deliberately safe posture for minors: the live-session generative-AI
+  endpoints (`/api/live-token`, `/api/director`) return 503 in production, and
+  the app's required path works with no network.
 
 ## RevenueCat integration
 
@@ -89,8 +92,8 @@ re-verification is implemented and unit-tested (`server/lib/revenuecat.ts`,
 `app/lib/services/subscription_sync_client.dart`, and a webhook at
 `/api/revenuecat-webhook`); it currently gates only the live-conversation
 quota, which is disabled in the shipped build, so the supporter perks (the
-Aurora Mantle skin and the parent report) are granted on-device from the
-RevenueCat entitlement listener.
+Aurora Mantle skin, the generated-AI reply preface, and the parent report)
+are granted on-device from the RevenueCat entitlement listener.
 
 The paywall shows only the price and period returned by the store, explains
 renewal and cancellation, exposes restore and subscription-management actions,
@@ -102,9 +105,10 @@ answers. The privacy policy is served from the app's own Vercel deployment
 server, the same host the API uses).
 
 Plus is a supporter plan, not a paywall for learning: it grants the exclusive
-Aurora Mantle companion skin and a shareable parent report card on the
-misconception map, and will lift the daily live-conversation limit
-when that feature resumes. Live conversation is disabled in the shipped build
+Aurora Mantle companion skin, the generated-AI reply preface (gated to
+supporter devices via `/api/companion-line`), and a shareable parent report
+card on the misconception map, and will lift the daily live-conversation
+limit when that feature resumes. Live conversation is disabled in the shipped build
 pending a minor-safe AI provider agreement, so the purchase is fully optional
 and the entire learning loop is free.
 
