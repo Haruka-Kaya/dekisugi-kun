@@ -1,17 +1,22 @@
 # Shipaton demo 2026
 
-`shipaton-demo-v3.mp4` is the current submission candidate: **68s**, Android
-emulator footage at 1178x2416 portrait, English captions burned in, no audio.
-It opens with a 3.5s hook card ("Every study app asks you to pick the right
-answer — this one asks you to teach it"), then shows the teach-back loop end
-to end on a real Android runtime: the quest
-map, a TEACH BACK node (mass conservation), a text explanation, the required
-re-read, Dekisugi-kun's fixed follow-up question, the 3-choice correction,
-the own-words-vs-textbook comparison, completion unlocking the next node,
-and the profile → デキすぎ君のカルテ screen (32 misconceptions, corrected /
-wavering / untouched states).
+`shipaton-demo-v6.mp4` is the current submission candidate: **97s**, Android
+emulator footage of the English build at 1080x1920 portrait, English captions
+burned in, no audio. It opens with a hook card ("Every study app tests you. —
+This one learns FROM you."), then walks the loop end to end in English: the
+learning path, a lesson node whose material hides for the explanation, a typed
+English teach-back, the key-term coverage panel, the fixed follow-up question,
+a wrong pick costing a heart and earning a hint, the misconception record
+screen ("Corrected / Still unsure"), the shareable parent report, and the
+Dekisugi-kun Plus screen, closing on a feature-summary card.
 
-The matching caption source is `shipaton-demo-v3-captions.en.srt`.
+The matching caption source is `shipaton-demo-v6-captions.en.srt`.
+
+`shipaton-demo-v4.mp4` (118s) is the earlier Japanese-UI capture with the
+airplane-mode beat; kept for reference — the airplane-mode claim it proves
+(no network, fully on-device loop) still applies to the shipped build.
+
+`shipaton-demo-v3.mp4` (68s, Japanese UI) is superseded by v6.
 `shipaton-demo-v2.mp4` (54s) is the same footage minus the karte segment; its
 final caption points judges to the paywall implementation
 (`app/lib/screens/plus_screen.dart`) because no purchase appears on camera.

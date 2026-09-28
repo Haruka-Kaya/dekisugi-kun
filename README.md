@@ -363,8 +363,8 @@ DEKISUGI_LIVE=1 npx tsx --test test/jailbreak.live.test.ts  # 役を降ろせる
 ## 検証
 
 ```
-app    1215 件   flutter test
-server  394 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
+app    1263 件   flutter test
+server  399 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
 ```
 
 **実機でしか出ない不具合を、実機なしで捕まえる**ようにしてある。
