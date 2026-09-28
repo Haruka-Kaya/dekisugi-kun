@@ -81,7 +81,7 @@ flutter run            # bundled-catalog mode works with no network
 ### Run the tests
 
 ```bash
-cd app && flutter test     # 1263 tests, no network
+cd app && flutter test     # 1264 tests, no network
 cd server && npm install && npm test   # 399 tests, no network
 ```
 
@@ -363,7 +363,7 @@ DEKISUGI_LIVE=1 npx tsx --test test/jailbreak.live.test.ts  # 役を降ろせる
 ## 検証
 
 ```
-app    1263 件   flutter test
+app    1264 件   flutter test
 server  399 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
 ```
 
