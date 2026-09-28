@@ -31,6 +31,12 @@ explains by voice or text, and the AI asks a fixed follow-up question.
 Learning progress lives entirely on-device (SQLite); no account, no free-text
 upload, no LLM grading.
 
+The signature artifact is the **カルテ (misconception map)**: a canonical
+catalog of 29 misconceptions, one per concept, rendered as the companion's
+beliefs — students watch each recorded misconception flip to "corrected by
+your explanation". See [docs/product-overview-en.md](docs/product-overview-en.md)
+for the full design contract (C1–C9).
+
 ![Dekisugi learning path](docs/store-shots-2026/devpost/shot-1179x2556.png)
 
 *The name:* in Japanese slang, *dekisugi* (デキすぎ) is the kid who is
@@ -58,7 +64,7 @@ flutter run            # bundled-catalog mode works with no network
 ### Run the tests
 
 ```bash
-cd app && flutter test     # 1215 tests, no network
+cd app && flutter test     # 1223 tests, no network
 cd server && npm install && npm test   # 386 tests, no network
 ```
 

@@ -19,6 +19,7 @@ class GameProfileScreen extends StatelessWidget {
     required this.onOpenSettings,
     this.explanationCount = 0,
     this.onOpenEconomy,
+    this.onOpenKarte,
     this.onOpenLanSocial,
     this.localCoopRun,
     this.selectedCoopParticipantId,
@@ -36,6 +37,7 @@ class GameProfileScreen extends StatelessWidget {
   final bool schoolMode;
   final int explanationCount;
   final VoidCallback? onOpenEconomy;
+  final VoidCallback? onOpenKarte;
   final VoidCallback? onOpenLanSocial;
   final LearningLocalCoopRun? localCoopRun;
   final String? selectedCoopParticipantId;
@@ -190,6 +192,39 @@ class GameProfileScreen extends StatelessWidget {
         if (!schoolMode) ...[
           const SizedBox(height: GameTokens.spaceXl),
           _MonthlyBadgeCollection(badges: monthlyBadges),
+        ],
+        if (onOpenKarte != null) ...[
+          const SizedBox(height: GameTokens.spaceXl),
+          GameSolidSurface(
+            surfaceKey: const ValueKey('game-profile-karte'),
+            raised: true,
+            accent: colors.story,
+            padding: const EdgeInsets.all(GameTokens.spaceLg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const GameSectionHeader(
+                  title: 'デキすぎ君のカルテ',
+                  description:
+                      'デキすぎ君が持っている思い込みと、あなたの説明で訂正できたところの記録。',
+                ),
+                const SizedBox(height: GameTokens.spaceMd),
+                FilledButton.icon(
+                  key: const ValueKey('game-profile-open-karte'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.story,
+                    foregroundColor: colors.onStory,
+                    minimumSize: const Size.fromHeight(
+                      GameTokens.minTouchTarget,
+                    ),
+                  ),
+                  onPressed: onOpenKarte,
+                  icon: const Icon(Icons.psychology_alt_outlined),
+                  label: const Text('思い込みの記録を見る'),
+                ),
+              ],
+            ),
+          ),
         ],
         if (!schoolMode &&
             onStartLocalCoop != null &&

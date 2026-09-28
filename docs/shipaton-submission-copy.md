@@ -35,6 +35,14 @@ Story missions let the learner catch cataloged misconceptions the companion
 voices in context; notation labs train formula and diagram reasoning; spaced
 review and an exam-date countdown bring completed ideas back as new cases.
 
+The signature screen is the **カルテ (misconception map)** on the profile tab:
+a canonical catalog of 29 misconceptions, one per concept, shown as beliefs
+the companion holds. Each misconception a student's explanation corrects
+flips to "corrected by your explanation" and reveals the canonical correct
+idea — progress rendered as what the learner changed in the AI, not a score.
+Only cataloged need codes persist there; answer text and voice are never
+stored.
+
 The core loop is entirely on-device: no account, no free-text upload, no LLM
 grading of student writing. Voice audio and free text stay in RAM; the device
 stores only lesson IDs, canonical misconception flags, hearts, and progress.
@@ -54,6 +62,9 @@ nothing a student needs to learn is behind payment.
   curriculum guidelines, including the stage-2 chemistry units added this period.
 - Misconception story missions, notation labs, spaced retrieval, hearts with
   timed recovery, daily XP caps that prevent grinding.
+- The カルテ (misconception map): the 29-entry canonical misconception catalog
+  surfaced as the companion's record, with observed vs. resolved needs drawn
+  from durable on-device need state — the protégé effect made visible.
 - A RevenueCat-powered optional Plus supporter plan: purchase and restore
   grant an exclusive Aurora Mantle companion skin on-device, with a server-side
   entitlement recheck via `/api/revenuecat-webhook`.
@@ -105,7 +116,9 @@ for reference; the submitted video is the emulator capture.
 3. On the learning path, open any lesson node, read the material, hide it, type
    an explanation, re-read it, and answer the checkpoint.
 4. Deliberately answer one checkpoint wrong to see the hint + re-explain flow.
-5. Optional: with a RevenueCat Test Store key, run with
+5. Open the profile tab → 「思い込みの記録を見る」 to see the カルテ: the
+   companion's misconception map with observed/corrected need states.
+6. Optional: with a RevenueCat Test Store key, run with
    `--dart-define=REVENUECAT_USE_TEST_STORE=true --dart-define=REVENUECAT_TEST_PUBLIC_SDK_KEY=<test key>`
    to see the Plus paywall and a simulated purchase that grants the Aurora
    Mantle companion skin in the cosmetic picker.

@@ -30,6 +30,7 @@ import '../widgets/game_activity_scaffold.dart';
 import '../widgets/game_completion_celebration.dart';
 import '../widgets/game_shell.dart';
 import 'game_profile_screen.dart';
+import 'science_karte_screen.dart';
 import 'game_economy_sheet.dart';
 import 'league_screen.dart';
 import 'lan_social_screen.dart';
@@ -2352,6 +2353,19 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     if (node != null) await _openNode(node);
   }
 
+  Future<void> _openKarte() async {
+    if (!mounted || _catalog.isEmpty) return;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => ScienceKarteScreen(
+          catalog: _catalog,
+          store: widget.sessionStore,
+          scope: widget.scope,
+        ),
+      ),
+    );
+  }
+
   Future<void> _showEconomy() async {
     final game = _game;
     if (game == null || widget.schoolMode || !game.economy.available) return;
@@ -3437,6 +3451,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
         onOpenEconomy: widget.schoolMode
             ? null
             : () => unawaited(_showEconomy()),
+        onOpenKarte: () => unawaited(_openKarte()),
         onOpenLanSocial: widget.lanSocialAllowed && !widget.schoolMode
             ? () => unawaited(_openLanSocial())
             : null,
