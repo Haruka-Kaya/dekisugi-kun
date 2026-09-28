@@ -122,6 +122,17 @@ describe('レート制限', () => {
     assert.equal((await checkRate(b, NOW)).ok, true)
   })
 
+  it('端末上限後の429連打で全体上限を消費できない', async () => {
+    const noisy = `dev-${NOW}-noisy`
+    for (let i = 0; i <= GLOBAL_DAILY; i++) {
+      await checkRate(noisy, NOW)
+    }
+
+    // 端末上限を超えた呼び出しはGeminiへ進まないので、globalへ足さない。
+    const other = await checkRate(`dev-${NOW}-still-available`, NOW)
+    assert.equal(other.ok, true)
+  })
+
   it('窓が変われば戻る', async () => {
     const id = `dev-${NOW}-w`
     for (let i = 0; i <= PER_DEVICE_HOURLY; i++) await checkRate(id, NOW)

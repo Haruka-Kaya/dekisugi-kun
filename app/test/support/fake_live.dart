@@ -26,9 +26,11 @@ class FakeLive {
       .toList();
 
   bool get sawActivityStart => _received.any(
-      (m) => (m['realtimeInput'] as Map?)?.containsKey('activityStart') == true);
+    (m) => (m['realtimeInput'] as Map?)?.containsKey('activityStart') == true,
+  );
   bool get sawActivityEnd => _received.any(
-      (m) => (m['realtimeInput'] as Map?)?.containsKey('activityEnd') == true);
+    (m) => (m['realtimeInput'] as Map?)?.containsKey('activityEnd') == true,
+  );
 
   static Future<FakeLive> start() async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
@@ -41,13 +43,17 @@ class FakeLive {
     await for (final req in _server) {
       final ws = await WebSocketTransformer.upgrade(req);
       _sockets.add(ws);
-      ws.listen((raw) {
-        final m = jsonDecode(raw as String) as Map<String, dynamic>;
-        _received.add(m);
-        if (m.containsKey('setup')) ws.add(jsonEncode({'setupComplete': {}}));
-        // **閉じたソケットを溜めない。** 繋ぎ直しを何度も試すテストで、
-        // 古いソケットに書こうとして StreamSink is closed で落ちる
-      }, onError: (_) {}, onDone: () => _sockets.remove(ws));
+      ws.listen(
+        (raw) {
+          final m = jsonDecode(raw as String) as Map<String, dynamic>;
+          _received.add(m);
+          if (m.containsKey('setup')) ws.add(jsonEncode({'setupComplete': {}}));
+          // **閉じたソケットを溜めない。** 繋ぎ直しを何度も試すテストで、
+          // 古いソケットに書こうとして StreamSink is closed で落ちる
+        },
+        onError: (_) {},
+        onDone: () => _sockets.remove(ws),
+      );
     }
   }
 
@@ -79,14 +85,14 @@ class FakeLive {
 }
 
 LiveGrant grantFor(int port, {String directorPrefix = '[D:test]'}) => LiveGrant(
-      directorPrefix: directorPrefix,
-      token: 'test',
-      wsUrl: 'ws://127.0.0.1:$port',
-      model: 'projects/p/locations/l/publishers/google/models/m',
-      setupConfig: const {'generationConfig': {}},
-      expiresAt: DateTime.now().add(const Duration(minutes: 30)),
-      sessionMinutes: 10,
-      remainingSessions: 1,
-      entitled: false,
-      resetsAt: null,
-    );
+  directorPrefix: directorPrefix,
+  token: 'test',
+  wsUrl: 'ws://127.0.0.1:$port',
+  model: 'projects/p/locations/l/publishers/google/models/m',
+  setupConfig: const {'generationConfig': {}},
+  expiresAt: DateTime.now().add(const Duration(minutes: 30)),
+  sessionMinutes: 10,
+  remainingSessions: 1,
+  entitled: false,
+  resetsAt: null,
+);

@@ -293,11 +293,8 @@ export async function peekRemaining(
 /**
  * 課金済みか。
  *
- * > [!warning] 課金の付与はまだ実装していない
- * > レシートの検証には Play Console のサービスアカウントが要り、
- * > アプリが未公開なので用意できない。**いまは誰も entitled にならない。**
- * > 付与の入口は `grantEntitlement` に用意してあるが、
- * > **検証を通さずに呼んではいけない**（端末の申告を信じることになる）。
+ * RevenueCatのSDK結果を端末から自己申告させず、webhookまたは認証済みsync APIが
+ * RevenueCat REST APIで現在のentitlementを再確認してから更新する。
  */
 export async function isEntitled(deviceId: string, now = Date.now()): Promise<boolean> {
   const key = `ent:${deviceId}`
@@ -326,5 +323,15 @@ export async function grantEntitlement(
     ])
   } else {
     local.set(key, expiresAtMs)
+  }
+}
+
+/** RevenueCatで失効を確認した端末の課金枠を外す。 */
+export async function revokeEntitlement(deviceId: string): Promise<void> {
+  const key = `ent:${deviceId}`
+  if (backend() === 'kv') {
+    await kv([['DEL', key]])
+  } else {
+    local.delete(key)
   }
 }

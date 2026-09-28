@@ -29,17 +29,36 @@ class DirectorQueue {
   /// 進行の指示は鮮度がすべてで、古い指示を後から実行させると会話が巻き戻る。
   final int maxPending;
 
-  final Queue<String> _pending = Queue<String>();
+  final Queue<_DirectorInstruction> _pending = Queue<_DirectorInstruction>();
+
+  /// 直前に[takeIfQuiet]で取り出した指示が誤概念の誘発なら、そのID。
+  ///
+  /// 指示を積んだ時点ではなく、Liveへ実際に送った時点から次のAI発話を
+  /// 追跡するために使う。queue待ち中の別発話を誤って紐づけない。
+  String? get lastTakenChallengeLureId => _lastTakenChallengeLureId;
+  String? _lastTakenChallengeLureId;
+  String? get lastTakenChallengeLureText => _lastTakenChallengeLureText;
+  String? _lastTakenChallengeLureText;
 
   int get pendingCount => _pending.length;
   bool get hasPending => _pending.isNotEmpty;
 
   /// 指示を積む。捨てられた古い指示があれば返す（ログ用）。
-  String? add(String instruction) {
+  String? add(
+    String instruction, {
+    String? challengeLureId,
+    String? challengeLureText,
+  }) {
     final text = instruction.trim();
     if (text.isEmpty) return null;
-    _pending.add(text);
-    if (_pending.length > maxPending) return _pending.removeFirst();
+    _pending.add(
+      _DirectorInstruction(
+        text: text,
+        challengeLureId: challengeLureId,
+        challengeLureText: challengeLureText,
+      ),
+    );
+    if (_pending.length > maxPending) return _pending.removeFirst().text;
     return null;
   }
 
@@ -49,8 +68,27 @@ class DirectorQueue {
   /// 誤概念の誘発と質問が同じターンに乗って観測が濁る。
   String? takeIfQuiet(bool quiet) {
     if (!quiet || _pending.isEmpty) return null;
-    return '$prefix ${_pending.removeFirst()}';
+    final next = _pending.removeFirst();
+    _lastTakenChallengeLureId = next.challengeLureId;
+    _lastTakenChallengeLureText = next.challengeLureText;
+    return '$prefix ${next.text}';
   }
 
-  void clear() => _pending.clear();
+  void clear() {
+    _pending.clear();
+    _lastTakenChallengeLureId = null;
+    _lastTakenChallengeLureText = null;
+  }
+}
+
+class _DirectorInstruction {
+  const _DirectorInstruction({
+    required this.text,
+    this.challengeLureId,
+    this.challengeLureText,
+  });
+
+  final String text;
+  final String? challengeLureId;
+  final String? challengeLureText;
 }

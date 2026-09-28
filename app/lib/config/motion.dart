@@ -1,5 +1,3 @@
-import 'dart:ui' show PlatformDispatcher;
-
 import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../ui/_material.dart';
@@ -61,8 +59,8 @@ class ReduceMotionScope extends StatefulWidget {
 
   /// いま「動きを減らす」べきか。
   static bool of(BuildContext context) {
-    final scope =
-        context.dependOnInheritedWidgetOfExactType<_ReduceMotionMarker>();
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<_ReduceMotionMarker>();
     // Android 側（MediaQuery）は毎回読む。こちらは変化で自動的に再構築される
     return (scope?.platformReduceMotion ?? false) ||
         MediaQuery.disableAnimationsOf(context);
@@ -73,24 +71,30 @@ class ReduceMotionScope extends StatefulWidget {
 }
 
 class _ReduceMotionScopeState extends State<ReduceMotionScope> {
-  late bool _reduce = PlatformDispatcher.instance.accessibilityFeatures.reduceMotion;
+  late bool _reduce = WidgetsBinding
+      .instance
+      .platformDispatcher
+      .accessibilityFeatures
+      .reduceMotion;
   VoidCallback? _previous;
 
   @override
   void initState() {
     super.initState();
     // 既存のハンドラを潰さない。設定変更は稀なので、繋いで両方呼ぶ
-    _previous = PlatformDispatcher.instance.onAccessibilityFeaturesChanged;
-    PlatformDispatcher.instance.onAccessibilityFeaturesChanged = () {
+    final dispatcher = WidgetsBinding.instance.platformDispatcher;
+    _previous = dispatcher.onAccessibilityFeaturesChanged;
+    dispatcher.onAccessibilityFeaturesChanged = () {
       _previous?.call();
-      final now = PlatformDispatcher.instance.accessibilityFeatures.reduceMotion;
+      final now = dispatcher.accessibilityFeatures.reduceMotion;
       if (mounted && now != _reduce) setState(() => _reduce = now);
     };
   }
 
   @override
   void dispose() {
-    PlatformDispatcher.instance.onAccessibilityFeaturesChanged = _previous;
+    WidgetsBinding.instance.platformDispatcher.onAccessibilityFeaturesChanged =
+        _previous;
     super.dispose();
   }
 

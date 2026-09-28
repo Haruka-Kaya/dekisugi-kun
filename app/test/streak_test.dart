@@ -26,8 +26,10 @@ void main() {
     });
 
     test('日をまたいでも同じ勉強は1日ぶん', () {
-      expect(dayKeyOf(DateTime(2026, 8, 5, 23, 50)),
-          dayKeyOf(DateTime(2026, 8, 6, 0, 10)));
+      expect(
+        dayKeyOf(DateTime(2026, 8, 5, 23, 50)),
+        dayKeyOf(DateTime(2026, 8, 6, 0, 10)),
+      );
     });
 
     test('週は月曜はじまり', () {
@@ -66,7 +68,10 @@ void main() {
     test('会話しただけでは連続しない（C5）', () {
       // 「会話を開いた」を条件にすると、行動の中身と無関係な達成が積み上がる。
       // それは従事随伴報酬そのもので、内発動機を d = −0.40 で毀損する
-      final v = computeStreak(records: [done(4), opened(5), done(6)], now: at(6));
+      final v = computeStreak(
+        records: [done(4), opened(5), done(6)],
+        now: at(6),
+      );
       expect(v.days, 2, reason: '開いただけの日を数えている');
     });
 
@@ -111,7 +116,15 @@ void main() {
     test('繰り越さない', () {
       // 先週まったく使わなくても、今週使えるのは2枚まで
       final v = computeStreak(
-        records: [done(3), done(4), done(5), done(6), done(7), done(8), done(9)],
+        records: [
+          done(3),
+          done(4),
+          done(5),
+          done(6),
+          done(7),
+          done(8),
+          done(9),
+        ],
         now: at(10),
       );
       expect(v.graceLeft, kGracePerWeek);
@@ -157,32 +170,36 @@ void main() {
     test('停止日にやっても連続は増えない', () {
       final exam = at(6);
       final a = computeStreak(
-          records: [done(3), done(4)], now: at(6), examDate: exam);
+        records: [done(3), done(4)],
+        now: at(6),
+        examDate: exam,
+      );
       final b = computeStreak(
-          records: [done(3), done(4), done(5), done(6)],
-          now: at(6),
-          examDate: exam);
+        records: [done(3), done(4), done(5), done(6)],
+        now: at(6),
+        examDate: exam,
+      );
       expect(b.days, a.days, reason: '停止日は無かったことにする');
     });
   });
 
   group('newlyExplained', () {
     Dossier d(Map<String, bool> explained) => Dossier(
-          unitId: 'force-motion',
-          coverage: 0,
-          slots: [
-            for (final e in explained.entries)
-              Slot(
-                key: e.key,
-                label: e.key,
-                status: e.value ? SlotStatus.explained : SlotStatus.thin,
-                content: '',
-                evidence: const ['u1'],
-                followUpHint: '',
-                probes: const [],
-              ),
-          ],
-        );
+      unitId: 'force-motion',
+      coverage: 0,
+      slots: [
+        for (final e in explained.entries)
+          Slot(
+            key: e.key,
+            label: e.key,
+            status: e.value ? SlotStatus.explained : SlotStatus.thin,
+            content: '',
+            evidence: const ['u1'],
+            followUpHint: '',
+            probes: const [],
+          ),
+      ],
+    );
 
     test('上がった概念だけを返す', () {
       final before = d({'fall': false, 'inertia': true});

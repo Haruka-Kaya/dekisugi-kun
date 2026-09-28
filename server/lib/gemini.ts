@@ -6,10 +6,12 @@ import { vertex } from './vertex.js'
  * ディレクター（会話の裏方）用のテキストモデル。
  * 会話そのものは端末が Live と直接やりとりするので、ここは通らない。
  *
- * > [!important] Developer API ではなく Vertex を使う
+ * > [!important] Developer API と Vertex のどちらも中高生向けには使わない
  * > `ai.google.dev` のキーで叩く Gemini API は、
  * > **18歳未満向けのアプリで使ってはいけない**と規約に明記されている。
- * > 会話だけ移しても、ディレクターが同じ API を叩いていたら意味がない。
+ * > 現行の Google Cloud Service Specific Terms §20(d) も同じ用途を禁止し、
+ * > Services Summary は Vertex AI API を対象に含めている。
+ * > このモジュールは18歳以上の開発確認だけに使用し、未成年・学校経路は fail-closed にする。
  * > 詳細は `docs/age-restriction.md`。
  *
  * モデル名は Vertex の名前空間。Developer API とは別物なので、

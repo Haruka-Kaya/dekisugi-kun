@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:dekisugi/config/app_theme.dart';
+import 'package:dekisugi/config/game_tokens.dart';
 import 'package:dekisugi/ui/_material.dart';
 import 'package:dekisugi/widgets/status_chip.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,14 +34,18 @@ void main() {
 
         for (final s in ExplainStatus.values) {
           test('$s の前景はチップ上で 4.5:1 以上', () {
-            expect(_contrast(c.fgFor(s), c.chipFor(s)),
-                greaterThanOrEqualTo(4.5));
+            expect(
+              _contrast(c.fgFor(s), c.chipFor(s)),
+              greaterThanOrEqualTo(4.5),
+            );
           });
 
           test('$s の前景はページ背景の上でも 4.5:1 以上', () {
             // チップを外して地の上に置く使い方をしても読めること
-            expect(_contrast(c.fgFor(s), scheme.surface),
-                greaterThanOrEqualTo(4.5));
+            expect(
+              _contrast(c.fgFor(s), scheme.surface),
+              greaterThanOrEqualTo(4.5),
+            );
           });
         }
 
@@ -52,11 +57,17 @@ void main() {
         test('キャラの装飾は体の上で 3:1 以上', () {
           // 耳・声のバー・考え中の点は**状態を伝える唯一の形**なので、
           // 見えないと4状態が区別できなくなる
-          expect(_contrast(c.charAccent, c.charBody), greaterThanOrEqualTo(3.0));
+          expect(
+            _contrast(c.charAccent, c.charBody),
+            greaterThanOrEqualTo(3.0),
+          );
         });
 
         test('キャラの体は背景から浮く（1.5:1 以上）', () {
-          expect(_contrast(c.charBody, scheme.surface), greaterThanOrEqualTo(1.5));
+          expect(
+            _contrast(c.charBody, scheme.surface),
+            greaterThanOrEqualTo(1.5),
+          );
         });
 
         test('キャラの色が状態色と重ならない', () {
@@ -76,10 +87,28 @@ void main() {
         });
 
         test('本文色は背景に対し 4.5:1 以上', () {
-          expect(_contrast(scheme.onSurface, scheme.surface),
-              greaterThanOrEqualTo(4.5));
-          expect(_contrast(scheme.onSurfaceVariant, scheme.surface),
-              greaterThanOrEqualTo(4.5));
+          expect(
+            _contrast(scheme.onSurface, scheme.surface),
+            greaterThanOrEqualTo(4.5),
+          );
+          expect(
+            _contrast(scheme.onSurfaceVariant, scheme.surface),
+            greaterThanOrEqualTo(4.5),
+          );
+        });
+
+        test('Material標準部品もOrbit Labの面とinkへ統一する', () {
+          final game = theme.extension<GamePalette>()!;
+          expect(scheme.surface, game.canvas);
+          expect(scheme.onSurface, game.ink);
+          expect(scheme.onSurfaceVariant, game.inkMuted);
+          expect(scheme.surfaceContainerLow, game.surface);
+          expect(scheme.surfaceContainer, game.surfaceRaised);
+          expect(scheme.outlineVariant, game.border);
+          expect(theme.scaffoldBackgroundColor, game.canvas);
+          expect(theme.inputDecorationTheme.fillColor, game.surfaceRaised);
+          expect(c.warmSurface, game.surfaceRaised);
+          expect(c.coolSurface, game.surfaceRaised);
         });
       });
     }
@@ -110,17 +139,19 @@ void main() {
 
   group('StatusChip', () {
     testWidgets('色だけでなくアイコンとラベルを必ず出す (SC 1.4.1)', (tester) async {
-      await tester.pumpWidget(MaterialApp(
-        theme: buildAppTheme(Brightness.light),
-        home: const Scaffold(
-          body: Row(
-            children: [
-              StatusChip(status: ExplainStatus.gotIt),
-              StatusChip(status: ExplainStatus.weak),
-            ],
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: const Scaffold(
+            body: Row(
+              children: [
+                StatusChip(status: ExplainStatus.gotIt),
+                StatusChip(status: ExplainStatus.weak),
+              ],
+            ),
           ),
         ),
-      ));
+      );
 
       expect(find.text(statusLabel(ExplainStatus.gotIt)), findsOneWidget);
       expect(find.text(statusLabel(ExplainStatus.weak)), findsOneWidget);

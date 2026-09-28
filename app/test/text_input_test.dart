@@ -31,8 +31,11 @@ void main() {
       // 「定数が true に固定されているから出ている」場合を見逃す。
       // **ゲートそのものが消えていること**をソースで確かめる
       final src = File('lib/screens/talk_screen.dart').readAsStringSync();
-      expect(src.contains('DEKISUGI_TEXT_INPUT'), isFalse,
-          reason: '文字入力が dart-define で隠されている。C8 違反');
+      expect(
+        src.contains('DEKISUGI_TEXT_INPUT'),
+        isFalse,
+        reason: '文字入力が dart-define で隠されている。C8 違反',
+      );
       expect(src.contains('kTextInputEnabled'), isFalse);
     });
 
@@ -40,8 +43,11 @@ void main() {
       await tester.pumpWidget(_wrap(_controller()));
       await tester.pump();
 
-      expect(find.byType(TextField), findsOneWidget,
-          reason: '「先にマイクを押してから文字を打つ」を要求すると音声が既定＝一級のままになる');
+      expect(
+        find.byType(TextField),
+        findsOneWidget,
+        reason: '「先にマイクを押してから文字を打つ」を要求すると音声が既定＝一級のままになる',
+      );
       expect(find.text('文字で説明する'), findsOneWidget);
     });
 
@@ -52,15 +58,19 @@ void main() {
       await tester.pump();
 
       // Icon そのものは 24dp。**測るのは押せる範囲**なのでボタンまで遡る
-      final send = tester.getSize(find.ancestor(
-        of: find.byIcon(Icons.send),
-        matching: find.byType(IconButton),
-      ));
+      final send = tester.getSize(
+        find.ancestor(
+          of: find.byIcon(Icons.send),
+          matching: find.byType(IconButton),
+        ),
+      );
       expect(send.height, greaterThanOrEqualTo(48));
       expect(send.width, greaterThanOrEqualTo(48));
 
-      expect(tester.getSize(find.byType(TextField)).height,
-          greaterThanOrEqualTo(48));
+      expect(
+        tester.getSize(find.byType(TextField)).height,
+        greaterThanOrEqualTo(48),
+      );
     });
   });
 
@@ -88,8 +98,10 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 250));
 
       expect(live.isRunning, isTrue, reason: 'マイクを押さずに送れないと C8 を満たさない');
-      expect(live.transcript.where((u) => u.isStudent).map((u) => u.text),
-          contains('重いほうが速く落ちると思ってた'));
+      expect(
+        live.transcript.where((u) => u.isStudent).map((u) => u.text),
+        contains('重いほうが速く落ちると思ってた'),
+      );
     });
 
     test('文字だけならマイクの許可を求めない', () async {
@@ -144,12 +156,12 @@ void main() {
 }
 
 LiveSessionController _controller({int? port}) => LiveSessionController(
-      unitId: 'force-motion',
-      tokens: FakeTokens(grantFor(port ?? 1)),
-      store: MemorySessionStore(),
-      mic: FakeMic(),
-      player: PcmPlayer(sink: FakeSink()),
-    );
+  unitId: 'force-motion',
+  tokens: FakeTokens(grantFor(port ?? 1)),
+  store: MemorySessionStore(),
+  mic: FakeMic(),
+  player: PcmPlayer(sink: FakeSink()),
+);
 
 Widget _wrap(LiveSessionController live) {
   final store = MemorySessionStore();
@@ -158,7 +170,8 @@ Widget _wrap(LiveSessionController live) {
       ChangeNotifierProvider<LiveSessionController>.value(value: live),
       Provider<SessionStore>.value(value: store),
       Provider<UnitsClient>.value(
-          value: UnitsClient(baseUrl: '', store: store)),
+        value: UnitsClient(baseUrl: '', store: store),
+      ),
     ],
     child: MaterialApp(
       theme: buildAppTheme(Brightness.light),

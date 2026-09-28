@@ -1,12 +1,15 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import '../config/app_theme.dart';
 import '../config/motion.dart';
 import '../services/live_session.dart';
 import '../ui/_material.dart';
+import 'dekisugi_character_art.dart';
 
-/// デキすぎ君。**丸と目だけ**で作る。
+/// デキすぎ君。「教わるAI」だと輪郭だけでも分かるように作る。
+///
+/// アンテナはAI、胸の開いた本は学ぶ側、左右非対称のポーズは状態を表す。
+/// 描画本体はPathと共有し、画面を移っても別のキャラクターへ変わらない。
 ///
 /// ## 口が無い理由
 ///
@@ -14,8 +17,8 @@ import '../ui/_material.dart';
 /// 口を置いて適当に開閉させると、音と合っていないことが必ずばれる。
 /// **最初から持たせない**のが正しい。
 ///
-/// 表情は目と体の動きだけで作る。Duolingo の設計（幾何学的・大きな目・
-/// 単純なシルエット）に合わせれば、絵を描かなくても成立する。
+/// 表情は目・腕・体の動きだけで作る。聞く、考える、話す、完了は
+/// アニメーションを止めても違う形として残る。
 ///
 /// ## 待機中に動かさない理由
 ///
@@ -31,6 +34,7 @@ class Character extends StatefulWidget {
     required this.state,
     this.voiceLevel = 0,
     this.size = 160,
+    this.excludeFromSemantics = false,
   });
 
   final LiveState state;
@@ -39,6 +43,9 @@ class Character extends StatefulWidget {
   final double voiceLevel;
 
   final double size;
+
+  /// 親が同じ内容を操作ラベルとして返す場合だけ、重複読み上げを避ける。
+  final bool excludeFromSemantics;
 
   @override
   State<Character> createState() => _CharacterState();
@@ -51,7 +58,7 @@ class _CharacterState extends State<Character> with TickerProviderStateMixin {
   );
   late final AnimationController _think = AnimationController(
     vsync: this,
-    duration: Durations.extralong2, // 800ms で点3つが1巡
+    duration: Durations.extralong2,
   );
   Timer? _blinkTimer;
 
@@ -62,27 +69,23 @@ class _CharacterState extends State<Character> with TickerProviderStateMixin {
   }
 
   @override
-  void didUpdateWidget(Character old) {
-    super.didUpdateWidget(old);
-    if (old.state != widget.state) _sync();
+  void didUpdateWidget(Character oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.state != widget.state) _sync();
   }
 
-  /// 状態に合わせて、必要なものだけ動かす。
   void _sync() {
     _blinkTimer?.cancel();
     _blinkTimer = null;
 
     switch (widget.state) {
       case LiveState.listening:
-        // 動くのはまばたきだけ。**連続アニメーションは持たない**
         _think.stop();
         _think.value = 0;
         _scheduleBlink();
       case LiveState.thinking:
-        // この状態は短い（実測 voice-to-voice 約1.3秒）ので連続で許容する
         _think.repeat();
       case LiveState.speaking:
-        // 体の動きは voiceLevel が駆動する。コントローラは要らない
         _think.stop();
         _think.value = 0;
       case LiveState.idle:
@@ -98,9 +101,9 @@ class _CharacterState extends State<Character> with TickerProviderStateMixin {
   }
 
   void _scheduleBlink() {
-    // 間隔を少し散らす。きっちり4秒だと機械が瞬いているように見える
     final jitter = Duration(
-        milliseconds: (Motion.blinkInterval.inMilliseconds * 0.3).round());
+      milliseconds: (Motion.blinkInterval.inMilliseconds * 0.3).round(),
+    );
     final wait = Motion.blinkInterval - (jitter ~/ 2) + (jitter * _rand());
     _blinkTimer = Timer(wait, () async {
       if (!mounted || widget.state != LiveState.listening) return;
@@ -122,204 +125,63 @@ class _CharacterState extends State<Character> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
-    final reduce = ReduceMotionScope.of(context);
-
-    // 動きが要らない状態ではサブツリーのティッカーごと止める。
-    // 実測 91.4% → 0.8%。Reduce Motion のときも止める
-    final wantsTicker = !reduce &&
+    final colors = context.appColors;
+    final reduceMotion = ReduceMotionScope.of(context);
+    final wantsTicker =
+        !reduceMotion &&
         (widget.state == LiveState.listening ||
             widget.state == LiveState.thinking);
 
-    return TickerMode(
+    final art = TickerMode(
       enabled: wantsTicker,
-      child: SizedBox(
-        width: widget.size,
-        height: widget.size,
-        child: AnimatedBuilder(
-          animation: Listenable.merge([_blink, _think]),
-          builder: (context, _) => CustomPaint(
-            painter: _CharacterPainter(
-              state: widget.state,
-              // Reduce Motion では目を閉じたまま止めない。開いた状態で固定する
-              eyeOpen: reduce ? 1.0 : 1.0 - _blink.value,
-              thinkPhase: reduce ? 0 : _think.value,
-              // 声に合わせた体の動き。**口ではない**ので音素の精度を主張しない
-              bounce: reduce ? 0 : widget.voiceLevel.clamp(0.0, 1.0),
-              body: c.charBody,
-              face: c.charFace,
-              accent: c.charAccent,
-            ),
-          ),
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_blink, _think]),
+        builder: (context, _) => DekisugiCharacterArt(
+          pose: _pose(widget.state),
+          size: widget.size,
+          body: colors.charBody,
+          face: colors.charFace,
+          accent: colors.charAccent,
+          signal: colors.onCoolSurface,
+          ornament: colors.charAccent,
+          ornamentSignal: colors.onCoolSurface,
+          eyeOpen: reduceMotion ? 1.0 : 1.0 - _blink.value,
+          thinkPhase: reduceMotion ? 0 : _think.value,
+          voiceBounce: reduceMotion ? 0 : widget.voiceLevel.clamp(0.0, 1.0),
+          paintKey: ValueKey<String>('character-pose-${widget.state.name}'),
         ),
       ),
     );
-  }
-}
-
-class _CharacterPainter extends CustomPainter {
-  _CharacterPainter({
-    required this.state,
-    required this.eyeOpen,
-    required this.thinkPhase,
-    required this.bounce,
-    required this.body,
-    required this.face,
-    required this.accent,
-  });
-
-  final LiveState state;
-
-  /// 1.0 = 開いている、0.0 = 閉じている
-  final double eyeOpen;
-
-  /// 考え中の点の位相 0.0〜1.0
-  final double thinkPhase;
-
-  /// 声の大きさ 0.0〜1.0
-  final double bounce;
-
-  final Color body, face, accent;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final r = w * 0.29; // 頭の半径
-    // 声が大きいほど少し上がる。振れ幅は控えめに（跳ねすぎると落ち着かない）
-    final headY = size.height * 0.44 - bounce * w * 0.025;
-    final head = Offset(w / 2, headY);
-
-    // 影は使わない。階層はソリッドな面と境界線だけで作る（DESIGN.md §6）
-    final bodyPaint = Paint()..color = body;
-
-    // ① 房。**シルエットで誰か分かるようにする**ための飾り。
-    //    Duolingo の設計原則でいう「単純だが識別できる輪郭」
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(
-            center: Offset(w / 2 + r * 0.35, headY - r * 1.12),
-            width: r * 0.18,
-            height: r * 0.42),
-        Radius.circular(r * 0.09),
-      ),
-      bodyPaint,
+    if (widget.excludeFromSemantics) {
+      return ExcludeSemantics(child: art);
+    }
+    return Semantics(
+      container: true,
+      image: true,
+      label: _semanticsLabel(widget.state),
+      child: ExcludeSemantics(child: art),
     );
-    canvas.drawCircle(
-        Offset(w / 2 + r * 0.35, headY - r * 1.35), r * 0.15, Paint()..color = accent);
-
-    // ② 体。**頭より横に広くする。**
-    //    頭より狭いと、同じ色なので体ではなく「あご」に見える
-    final bodyW = r * 2.3 * (1 + bounce * 0.03);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(
-            center: Offset(w / 2, headY + r * 1.28),
-            width: bodyW,
-            height: r * 0.9),
-        Radius.circular(r * 0.34),
-      ),
-      bodyPaint,
-    );
-
-    // ③ 頭。話しているときだけ、声に合わせてわずかに横へ広がる
-    final rx = r * (1 + bounce * 0.05);
-    final ry = r * (1 - bounce * 0.04);
-    canvas.drawOval(
-        Rect.fromCenter(center: head, width: rx * 2, height: ry * 2), bodyPaint);
-
-    if (state == LiveState.listening) _paintEar(canvas, head, r);
-    if (state == LiveState.speaking) _paintVoice(canvas, head, r);
-    _paintEyes(canvas, head, r);
-
-    // 房は右上に立っているので、点は左上に出す（重ねると何の記号か読めない）
-    if (state == LiveState.thinking) _paintThinking(canvas, w, headY - r, r);
   }
 
-  /// 話しているしるし。**動きが止まっていても状態が分かるように、
-  /// 声が無くても最低限の高さで描く。**
-  void _paintVoice(Canvas canvas, Offset center, double r) {
-    final paint = Paint()
-      ..color = accent
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = r * 0.11
-      ..strokeCap = StrokeCap.round;
+  static DekisugiCharacterPose _pose(LiveState state) => switch (state) {
+    LiveState.idle => DekisugiCharacterPose.idle,
+    LiveState.connecting => DekisugiCharacterPose.connecting,
+    LiveState.listening => DekisugiCharacterPose.listening,
+    LiveState.thinking => DekisugiCharacterPose.thinking,
+    LiveState.speaking => DekisugiCharacterPose.speaking,
+    LiveState.done => DekisugiCharacterPose.celebrate,
+    LiveState.outOfTime => DekisugiCharacterPose.outOfTime,
+    LiveState.failed => DekisugiCharacterPose.retry,
+  };
 
-    // 頭の右に3本。声が大きいほど伸びる
-    for (var i = 0; i < 3; i++) {
-      final base = 0.18 + i * 0.06;
-      final h = r * (base + bounce * (0.22 - i * 0.05));
-      // 描画範囲に収める。r*1.5 を超えると SizedBox の外にはみ出て切れる
-      final x = center.dx + r * (1.12 + i * 0.17);
-      canvas.drawLine(Offset(x, center.dy - h), Offset(x, center.dy + h), paint);
-    }
-  }
-
-  void _paintEyes(Canvas canvas, Offset center, double r) {
-    final paint = Paint()..color = face;
-    final dx = r * 0.40;
-    final eyeR = r * 0.20;
-    // まばたきは縦だけ潰す。横まで縮めると目が消えたように見える
-    final h = eyeR * 2 * eyeOpen.clamp(0.08, 1.0);
-
-    for (final side in [-1.0, 1.0]) {
-      final c = Offset(center.dx + dx * side, center.dy - r * 0.05);
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromCenter(center: c, width: eyeR * 2, height: h),
-          Radius.circular(eyeR),
-        ),
-        paint,
-      );
-      // 瞳のハイライト。目が閉じているときは出さない
-      if (eyeOpen > 0.5) {
-        canvas.drawCircle(
-          Offset(c.dx + eyeR * 0.32, c.dy - eyeR * 0.34),
-          eyeR * 0.26,
-          Paint()..color = body,
-        );
-      }
-    }
-  }
-
-  /// 考え中の点3つ。順に立ち上がる。
-  void _paintThinking(Canvas canvas, double w, double top, double r) {
-    final paint = Paint()..color = accent;
-    final dotR = w * 0.028;
-    for (var i = 0; i < 3; i++) {
-      // 各点が 1/3 ずつ位相をずらして持ち上がる
-      final t = (thinkPhase * 3 - i).clamp(0.0, 1.0);
-      final lift = math.sin(t * math.pi) * w * 0.03;
-      canvas.drawCircle(
-        // 房（右上）を避けて左上に出す
-        Offset(w / 2 - r * 0.75 + (i - 1) * dotR * 3.0, top - w * 0.05 - lift),
-        dotR,
-        paint,
-      );
-    }
-  }
-
-  /// 聞いているしるし。**動かさない静的なポーズ**で状態を示す。
-  void _paintEar(Canvas canvas, Offset center, double r) {
-    final paint = Paint()
-      ..color = accent
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = r * 0.09
-      ..strokeCap = StrokeCap.round;
-    // 体の左右に開いた弧。「耳を傾けている」を形で出す
-    for (final side in [-1.0, 1.0]) {
-      final rect = Rect.fromCircle(
-        center: Offset(center.dx + r * 1.02 * side, center.dy),
-        radius: r * 0.3,
-      );
-      canvas.drawArc(rect, side > 0 ? -math.pi / 2 : math.pi / 2, math.pi, false, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_CharacterPainter old) =>
-      old.state != state ||
-      old.eyeOpen != eyeOpen ||
-      old.thinkPhase != thinkPhase ||
-      old.bounce != bounce ||
-      old.body != body;
+  static String _semanticsLabel(LiveState state) => switch (state) {
+    LiveState.idle => 'デキすぎ君が本を開いて、教わる準備をしています',
+    LiveState.connecting => 'デキすぎ君がアンテナを上げて、接続を待っています',
+    LiveState.listening => 'デキすぎ君が手を耳に添えて、聞いています',
+    LiveState.thinking => 'デキすぎ君があごに手を添えて、考えています',
+    LiveState.speaking => 'デキすぎ君が手を広げて、話しています',
+    LiveState.done => 'デキすぎ君がノートを持って、完了を祝っています',
+    LiveState.outOfTime => 'デキすぎ君が時計を持って、きょうの時間切れを知らせています',
+    LiveState.failed => 'デキすぎ君が手を差し出して、再挑戦を案内しています',
+  };
 }

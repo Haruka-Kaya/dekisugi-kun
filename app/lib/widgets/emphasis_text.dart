@@ -16,11 +16,18 @@ import '../ui/_material.dart';
 /// 斜体は和文で可読性を落とすので使わない。
 /// 可変フォントの軸を動かすため [JaTextStyle.jaWeight] を通す。
 class EmphasisText extends StatelessWidget {
-  const EmphasisText(this.text, {super.key, this.style, this.textAlign});
+  const EmphasisText(
+    this.text, {
+    super.key,
+    this.style,
+    this.textAlign,
+    this.selectable = false,
+  });
 
   final String text;
   final TextStyle? style;
   final TextAlign? textAlign;
+  final bool selectable;
 
   @override
   Widget build(BuildContext context) {
@@ -29,22 +36,23 @@ class EmphasisText extends StatelessWidget {
 
     // 強調が無ければ素の Text。余計な RichText を作らない
     if (parts.length == 1 && !parts.first.strong) {
-      return Text(text, style: base, textAlign: textAlign);
+      return selectable
+          ? SelectableText(text, style: base, textAlign: textAlign)
+          : Text(text, style: base, textAlign: textAlign);
     }
 
-    return Text.rich(
-      TextSpan(
-        children: [
-          for (final p in parts)
-            TextSpan(
-              text: p.text,
-              style: p.strong ? base.jaWeight(FontWeight.w700) : null,
-            ),
-        ],
-      ),
-      style: base,
-      textAlign: textAlign,
+    final span = TextSpan(
+      children: [
+        for (final p in parts)
+          TextSpan(
+            text: p.text,
+            style: p.strong ? base.jaWeight(FontWeight.w700) : null,
+          ),
+      ],
     );
+    return selectable
+        ? SelectableText.rich(span, style: base, textAlign: textAlign)
+        : Text.rich(span, style: base, textAlign: textAlign);
   }
 }
 
