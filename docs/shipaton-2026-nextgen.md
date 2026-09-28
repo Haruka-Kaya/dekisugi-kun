@@ -18,7 +18,7 @@
 | 公開済みでない新規アプリ | ✅ | ストア未公開 |
 | リポジトリ public + OSS ライセンス（About 検出） | 🟡 | `LICENSE`（MIT）追加済み。**GitHub で private → public への変更はユーザー操作** |
 | ソース・素材・実行手順がリポジトリに全てある | ✅ | README に英語 quick start 追加済み（同梱 catalog でオフライン動作） |
-| <2 分のデモ動画（実機動作、YouTube/Vimeo 公開） | 🟡 | `docs/shipaton-demo-2026/shipaton-demo-v2.mp4`（54秒・Androidエミュレータ実画面・teach-backループ収録・英語字幕焼き込み・音声なし）。購入パートは Test Store キー取得後に追加撮影して継ぎ足せる — ユーザー操作: YouTube/Vimeo へ公開 |
+| <2 分のデモ動画（実機動作、YouTube/Vimeo 公開） | 🟡 | `docs/shipaton-demo-2026/shipaton-demo-v4.mp4`（〜110秒・Androidエミュレータ実画面・teach-backループ＋coverageゲート＋カルテ＋保護者レポート＋paywall失敗閉止まで収録・英語字幕焼き込み・音声なし）。v3 は `shipaton-demo-v3.mp4` に退避 — ユーザー操作: YouTube/Vimeo へ公開 |
 | テキスト説明（英語） | ✅ | `docs/shipaton-submission-copy.md` 更新済み |
 | 1024×1024 アイコン | ✅ | `docs/store/icon-1024.png` |
 | ≥1枚のスクリーンショット 1179×2556・端末フレームなし | ✅ | `docs/store-shots-2026/devpost/shot-1179x2556.png` |
@@ -28,8 +28,8 @@
 
 ## 2. Plus（RevenueCat 購入）の正直な現状
 
-- 実装: paywall → `purchasePackage` → entitlement `plus` → `/api/revenuecat-webhook` → サーバ再照会、まで実配線済み。
-- 特典（応援プラン）: 購入・復元で aurora マスコット（`cosmetic.path-mascot.aurora.v1`）を `learning_cosmetic_grants` 台帳へ即付与 — **現行配布ビルドで実際に発動し、entitlement 失効後も保持される**。Live 会話枠の上限解除は同機能の提供再開時に有効になる扱いで、paywall・提出文ともその旨を明記済み。
+- 実装: paywall → `purchasePackage` → entitlement `plus` → 端末内特典付与、まで実配線済み。サーバ側再照会（`/api/subscription-sync`・`/api/revenuecat-webhook`）も実装・テスト済みだが、現状は Live 会話枠（提供停止中）のゲートにのみ使う。
+- 特典（応援プラン）: 購入・復元で aurora マスコット（`cosmetic.path-mascot.aurora.v1`）を `learning_cosmetic_grants` 台帳へ即付与 — **現行配布ビルドで実際に発動し、entitlement 失効後も保持される**。加えてカルテ画面に「保護者の方へのレポート」カードが開き、訂正できた思い込みを共有できる文面をコピーできる。Live 会話枠の上限解除は同機能の提供再開時に有効になる扱いで、paywall・提出文ともその旨を明記済み。
 - 動画で購入を見せる場合は Test Store ビルドで実演する（`REVENUECAT_USE_TEST_STORE=true --dart-define` + `test_` キー）。ストアアカウント不要。
 
 ## 3. ユーザー側の残作業（Devin にはできない）

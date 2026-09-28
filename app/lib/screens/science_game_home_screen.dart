@@ -107,6 +107,7 @@ class ScienceGameHomeScreen extends StatefulWidget {
     this.legacyProgress,
     this.onOpenClassroom,
     this.onExitLocalMode,
+    this.onOpenPlus,
     this.lanSocialAllowed = false,
     this.lanSocialMeaningfulEventContributor,
     this.lanSocialFriendsQuestLoader,
@@ -121,6 +122,10 @@ class ScienceGameHomeScreen extends StatefulWidget {
   final ScienceGameHomeController? controller;
   final VoidCallback? onOpenClassroom;
   final VoidCallback? onExitLocalMode;
+
+  /// Plus特典の案内カード（カルテの保護者レポート）からpaywallを開く。
+  /// 成人online同意ツリーからだけ渡す。school/local modeではnullのまま。
+  final VoidCallback? onOpenPlus;
 
   /// 成人online同意ツリーからだけtrueを渡す。local-only/schoolは既定false。
   final bool lanSocialAllowed;
@@ -2361,6 +2366,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
           catalog: _catalog,
           store: widget.sessionStore,
           scope: widget.scope,
+          onOpenPlus: widget.schoolMode ? null : widget.onOpenPlus,
         ),
       ),
     );

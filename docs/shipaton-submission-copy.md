@@ -25,8 +25,10 @@ produce an explanation instead.
 
 Each short mission focuses on one science concept. The learner reads a compact
 lesson, predicts what will happen, and then — with the lesson hidden — explains
-the idea by voice or text to an AI study companion. Voice explanations must be
-replayed; text explanations must be explicitly re-read. Only then does the
+the idea by voice or text to an AI study companion. Before the explanation is
+accepted, the app checks on-device whether the learner's own words touched the
+key terms of the lesson — a voice explanation is echoed back for confirmation,
+and either path must be re-read before continuing. Only then does the
 companion ask one fixed follow-up question from the lesson catalog. A wrong
 answer records a canonical misconception and costs a heart, but never reveals
 the correct answer: the learner gets a scientific hint and must explain again.
@@ -67,8 +69,13 @@ nothing a student needs to learn is behind payment.
   surfaced as the companion's record, with observed vs. resolved needs drawn
   from durable on-device need state — the protégé effect made visible.
 - A RevenueCat-powered optional Plus supporter plan: purchase and restore
-  grant an exclusive Aurora Mantle companion skin on-device, with a server-side
-  entitlement recheck via `/api/revenuecat-webhook`.
+  grant an exclusive Aurora Mantle companion skin on-device, plus a shareable
+  「保護者の方へのレポート」 card on the カルテ screen that summarizes the
+  misconceptions the student's explanations have corrected. Server-side
+  entitlement re-verification (`/api/revenuecat-webhook`,
+  `/api/subscription-sync`) is implemented and unit-tested; it gates the
+  live-conversation quota, which is held disabled pending a minor-safe AI
+  provider agreement.
 - A deliberately safe posture for minors: external generative-AI endpoints return
   503 in production, and the app's required path works with no network.
 
@@ -76,36 +83,54 @@ nothing a student needs to learn is behind payment.
 
 Dekisugi uses the RevenueCat SDK (`purchases_flutter`) for one optional
 entitlement: `plus`. Purchase, restore, and entitlement state are implemented
-end-to-end in `app/lib/services/revenuecat_purchase_adapter.dart`, with server
-re-verification in `server/lib/revenuecat.ts` and a webhook at
-`/api/revenuecat-webhook`.
+end-to-end in `app/lib/services/revenuecat_purchase_adapter.dart`. Server-side
+re-verification is implemented and unit-tested (`server/lib/revenuecat.ts`,
+`/api/subscription-sync` called by
+`app/lib/services/subscription_sync_client.dart`, and a webhook at
+`/api/revenuecat-webhook`); it currently gates only the live-conversation
+quota, which is disabled in the shipped build, so the supporter perks (the
+Aurora Mantle skin and the parent report) are granted on-device from the
+RevenueCat entitlement listener.
 
 The paywall shows only the price and period returned by the store, explains
 renewal and cancellation, exposes restore and subscription-management actions,
 and fails closed when configuration is missing rather than inventing billing
 information. RevenueCat receives a random app-scoped UUID and store transaction
 data — never a learner's name, email, advertising ID, voice, transcript, or
-answers.
+answers. The privacy policy is served from the app's own Vercel deployment
+(the project predates the rename: `rika-chousa.vercel.app` is this app's
+server, the same host the API uses).
 
 Plus is a supporter plan, not a paywall for learning: it grants the exclusive
-Aurora Mantle companion skin and will lift the daily live-conversation limit
+Aurora Mantle companion skin and a shareable parent report card on the
+misconception map, and will lift the daily live-conversation limit
 when that feature resumes. Live conversation is disabled in the shipped build
 pending a minor-safe AI provider agreement, so the purchase is fully optional
 and the entire learning loop is free.
 
 ## Demo video notes
 
-The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v3.mp4`, 68s) opens
+The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v4.mp4`, ~110s) opens
 with a short hook card, then shows
 the current build running on an Android emulator in portrait: the learning path,
-a TEACH BACK node (mass conservation), a text explanation, the required
-re-read, the companion's fixed follow-up question, the 3-choice correction,
-the own-words-vs-textbook comparison, completion unlocking the next node, and
-the カルテ (misconception record) screen reached from the profile tab.
+a TEACH BACK node, an explanation, the on-device key-term coverage check, the
+required re-read, the companion's fixed follow-up question, the 3-choice
+correction, the own-words-vs-textbook comparison, completion unlocking the
+next node, then the カルテ (misconception record) screen where the miss just
+recorded appears, the shareable parent report, and the Plus paywall.
 English captions overlay the Japanese UI; there is no audio track.
 
+The on-device coverage check is a vocabulary floor, not a grader: it verifies
+that the key terms from the expected explanation appear in the student's own
+words (stem-matched, normalization applied) before the follow-up question
+proceeds. Correctness is still decided by the fixed 3-choice correction, so a
+missed term asks for more detail instead of wrongly blocking a right answer.
+
 The video does not include a purchase: the RevenueCat Test Store key is not in
-the repository (it is a personal credential). Judges can exercise the full
+the repository (it is a personal credential). The final segment shows the
+paywall's fail-closed branch instead — with no reachable store, the app refuses
+to guess a price and blocks the purchase operation (「ストアの情報を確認できません」),
+while free features keep working. Judges can exercise the full
 paywall themselves with the `--dart-define` command in "Testing instructions".
 
 The earlier web-build capture is archived at `docs/attic/shipaton-demo-v1.mp4`

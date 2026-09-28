@@ -49,6 +49,11 @@ class UnitsClient {
       Expando<Future<_BundledCatalog?>>('dekisugi bundled unit catalog');
   Future<_BundledCatalog?>? _bundledCatalogFuture;
 
+  /// `flutter test` のfake asyncでは実isolateの完了を待てないので、
+  /// test/flutter_test_config.dart からtrueにして同期decodeへ切り替える。
+  @visibleForTesting
+  static bool debugSynchronousBundledCatalog = false;
+
   bool get isConfigured => baseUrl.isNotEmpty;
 
   // schemaを保存keyへ含め、coverageとtagged Notationの無いv9以前を
@@ -178,37 +183,12 @@ class UnitsClient {
   Future<_BundledCatalog?> _readBundledCatalog() async {
     try {
       final raw = await _assetBundle.loadString(_bundledCatalogAsset);
-      final json = jsonDecode(raw);
-      // v10からcoverageと概念固有のNotation task unionも必須。
-      // 旧版や未知schemaから誤診対象を推測せず、catalog全体を拒否する。
-      if (json is! Map ||
-          json.length != 3 ||
-          json.keys.any(
-            (key) =>
-                !const {'schemaVersion', 'language', 'units'}.contains(key),
-          ) ||
-          json['schemaVersion'] != 10 ||
-          json['language'] != 'ja') {
-        return null;
+      // 700KB超の decode＋全単元のfromJsonをmain isolateですると起動中に
+      // frameを落とすので、別isolateへ逃がす。
+      if (debugSynchronousBundledCatalog) {
+        return _decodeBundledCatalog(raw);
       }
-
-      final rawUnits = json['units'];
-      if (rawUnits is! List || rawUnits.any((unit) => unit is! Map)) {
-        return null;
-      }
-
-      final summaries = <UnitSummary>[];
-      final details = <String, UnitDetail>{};
-      for (final rawUnit in rawUnits.cast<Map>()) {
-        final detail = UnitDetail.fromJson(rawUnit.cast<String, Object?>());
-        if (detail == null || !_isUsableDetail(detail)) return null;
-        // 重複IDは、一覧で選んだ教材と本文が一意にならないので全体を拒否する。
-        if (details.containsKey(detail.id)) return null;
-        summaries.add(detail.summary);
-        details[detail.id] = detail;
-      }
-      if (details.isEmpty) return null;
-      return _BundledCatalog(summaries: summaries, details: details);
+      return await compute(_decodeBundledCatalog, raw);
     } catch (e) {
       debugPrint('同梱した教材を読めなかった: $e');
       return null;
@@ -266,4 +246,44 @@ class _BundledCatalog {
 
   final List<UnitSummary> summaries;
   final Map<String, UnitDetail> details;
+}
+
+/// 同梱カタログJSONの decode → schema検証 → UnitDetail化。
+/// `compute` 経由で別isolateから呼ぶためトップレベルに置く。
+_BundledCatalog? _decodeBundledCatalog(String raw) {
+  try {
+    final json = jsonDecode(raw);
+    // v10からcoverageと概念固有のNotation task unionも必須。
+    // 旧版や未知schemaから誤診対象を推測せず、catalog全体を拒否する。
+    if (json is! Map ||
+        json.length != 3 ||
+        json.keys.any(
+          (key) =>
+              !const {'schemaVersion', 'language', 'units'}.contains(key),
+        ) ||
+        json['schemaVersion'] != 10 ||
+        json['language'] != 'ja') {
+      return null;
+    }
+
+    final rawUnits = json['units'];
+    if (rawUnits is! List || rawUnits.any((unit) => unit is! Map)) {
+      return null;
+    }
+
+    final summaries = <UnitSummary>[];
+    final details = <String, UnitDetail>{};
+    for (final rawUnit in rawUnits.cast<Map>()) {
+      final detail = UnitDetail.fromJson(rawUnit.cast<String, Object?>());
+      if (detail == null || !UnitsClient._isUsableDetail(detail)) return null;
+      // 重複IDは、一覧で選んだ教材と本文が一意にならないので全体を拒否する。
+      if (details.containsKey(detail.id)) return null;
+      summaries.add(detail.summary);
+      details[detail.id] = detail;
+    }
+    if (details.isEmpty) return null;
+    return _BundledCatalog(summaries: summaries, details: details);
+  } catch (_) {
+    return null;
+  }
 }

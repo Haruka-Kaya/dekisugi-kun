@@ -2,11 +2,13 @@ import 'dart:async';
 
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
+import '../learning/domain/explanation_coverage.dart';
 import '../learning/domain/learning_heart.dart';
 import '../learning/domain/learning_need.dart';
 import '../models/game_path.dart';
 import '../models/unit.dart';
 import '../services/local_narration.dart';
+import '../services/local_pronunciation_practice.dart';
 import '../services/local_voice_practice.dart';
 import '../ui/_material.dart';
 import '../widgets/game_activity_scaffold.dart';
@@ -15,9 +17,11 @@ import '../widgets/readable_width.dart';
 
 /// 教材を閉じ、生徒がデキすぎ君へ教えてから固定の問い返しに答える画面。
 ///
-/// 自由発話・自由記述は採点しない。概念の確認はcatalogにある固定3択だけを
-/// 端末内で照合する。音声は16kHz PCMとしてRAMに最大60秒だけ保持し、文字、
-/// 選択内容、認識結果とともに保存・送信しない。完了callbackへ渡すのは一般化
+/// 自由発話・自由記述の正誤は採点しない。説明が進むには、その概念の
+/// 「大事な言葉」をデキすぎ君が聞き取れることが条件 —— 無関係な文では
+/// 「もう少し聞かせて」と返す。語彙の聞き取りも誤概念の確認も端末内だけで
+/// 行い、外部へ送信しない。音声は16kHz PCMとしてRAMに最大60秒だけ保持し、
+/// 文字、選択内容、認識候補とともに保存しない。完了callbackへ渡すのは一般化
 /// needと固定課題位置だけで、回答そのものは含めない。
 class ScienceSpeakListenScreen extends StatefulWidget {
   const ScienceSpeakListenScreen({
@@ -31,6 +35,7 @@ class ScienceSpeakListenScreen extends StatefulWidget {
     this.onHeartLoss,
     this.narration,
     this.voicePractice,
+    this.speechRecognizer,
   });
 
   final Section section;
@@ -56,14 +61,23 @@ class ScienceSpeakListenScreen extends StatefulWidget {
   @visibleForTesting
   final LocalVoicePractice? voicePractice;
 
+  /// 声の説明の「聞き取り確認」に使うオンデバイス認識。テスト用の差し替え口。
+  @visibleForTesting
+  final OnDeviceSpeechRecognizer? speechRecognizer;
+
   @override
   State<ScienceSpeakListenScreen> createState() =>
       _ScienceSpeakListenScreenState();
 }
 
-enum _ExplainStep { choose, voice, text, followUp, compare, complete }
+enum _ExplainStep { choose, voice, text, echo, followUp, compare, complete }
 
 enum _AnswerRoute { voice, text }
+
+/// 聞き取り確認の入力方法。声が使えない端末では文字で同じことをする。
+enum _EchoInput { voice, text }
+
+enum _EchoPhase { listening, idle, heard }
 
 class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
     with WidgetsBindingObserver {
@@ -92,10 +106,29 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
   bool _returnStarted = false;
   int _narrationEpoch = 0;
 
+  late final OnDeviceSpeechRecognizer _speechRecognizer;
+  final _echoText = TextEditingController();
+  _EchoInput _echoInput = _EchoInput.voice;
+  _EchoPhase _echoPhase = _EchoPhase.idle;
+  ExplanationCoverage? _echoCoverage;
+  bool _echoMissed = false;
+  int _teachMisses = 0;
+  bool _coverageBlocked = false;
+
   LocalPracticeVariant get _variant =>
       widget.section.practiceVariantForAttempt(widget.practiceAttempt);
 
   LocalCheckpoint get _checkpoint => _variant.checkpoint;
+
+  /// 説明の聞き取りに使う正本。比較まで画面に出ない教材の答えだけを使い、
+  /// legacy fallback（汎用文）では語彙を取らない —— 判定不能なら塞がない。
+  List<String> get _coverageSources =>
+      widget.section.localPracticeVariants.isEmpty
+      ? const []
+      : [_variant.expectedOutcome, _variant.expectedReason];
+
+  ExplanationCoverage _assess(String explanation) =>
+      assessExplanation(explanation, sources: _coverageSources);
 
   String get _spokenQuestion =>
       '教えてくれてありがとう。デキすぎ君から一問。${_checkpoint.lure} '
@@ -137,6 +170,9 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
         _isRevision
             ? GameCharacterReaction.encourage
             : GameCharacterReaction.listening,
+      _ExplainStep.echo => _echoPhase == _EchoPhase.listening
+          ? GameCharacterReaction.listening
+          : GameCharacterReaction.thinking,
       _ExplainStep.followUp => GameCharacterReaction.thinking,
       _ExplainStep.compare => GameCharacterReaction.encourage,
       _ExplainStep.complete => GameCharacterReaction.celebrate,
@@ -148,6 +184,8 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
     super.initState();
     _voice = widget.voicePractice ?? LocalVoicePractice();
     _narration = widget.narration ?? PlatformLocalNarration();
+    _speechRecognizer =
+        widget.speechRecognizer ?? PlatformOnDeviceSpeechRecognizer();
     _voiceSnapshot = _voice.snapshot;
     _voiceSubscription = _voice.changes.listen((snapshot) {
       if (mounted) setState(() => _voiceSnapshot = snapshot);
@@ -158,7 +196,10 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
 
   void _onTextChanged() {
     if (!mounted || _step != _ExplainStep.text) return;
-    setState(() => _textReviewed = false);
+    setState(() {
+      _textReviewed = false;
+      _coverageBlocked = false;
+    });
   }
 
   @override
@@ -183,6 +224,7 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
     _text.removeListener(_onTextChanged);
     _text.clear();
     _text.dispose();
+    _echoText.dispose();
     _scroll.dispose();
     final voiceSubscription = _voiceSubscription;
     _voiceSubscription = null;
@@ -207,6 +249,7 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
     final cleanups = <Future<void>>[
       ignoreFailure(_narration.dispose),
       ignoreFailure(_voice.dispose),
+      ignoreFailure(_speechRecognizer.cancel),
     ];
     if (voiceSubscription != null) {
       cleanups.add(ignoreFailure(voiceSubscription.cancel));
@@ -249,6 +292,8 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
       _isRevision = revisionFallback;
       _revisionBaseline = null;
       _textReviewed = false;
+      _coverageBlocked = false;
+      _teachMisses = 0;
     });
     _toTop();
   }
@@ -327,6 +372,81 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
     await _voice.stopPlayback();
     if (!mounted || _step != _ExplainStep.voice || !_canAdvanceVoice) return;
     _answerRoute = _AnswerRoute.voice;
+    _startEcho();
+  }
+
+  /// 声の説明は録音を文字起こししない。代わりに、大事な言葉を
+  /// もう一度だけ言ってもらい、オンデバイス認識で聞き取れたか確かめる。
+  /// 認識を使えない端末では文字で同じことを確かめる（C8）。
+  void _startEcho() {
+    setState(() {
+      _step = _ExplainStep.echo;
+      _echoInput = _EchoInput.voice;
+      _echoPhase = _EchoPhase.listening;
+      _echoCoverage = null;
+      _echoMissed = false;
+      _echoText.clear();
+    });
+    _toTop();
+    unawaited(_runEchoRecognition());
+  }
+
+  Future<void> _runEchoRecognition() async {
+    final result = await _speechRecognizer.recognize();
+    if (!mounted || _step != _ExplainStep.echo) return;
+    switch (result.status) {
+      case OnDeviceSpeechStatus.recognized:
+        _applyEchoCoverage(_assess(result.candidates.join(' ')));
+      case OnDeviceSpeechStatus.noSpeech ||
+            OnDeviceSpeechStatus.unrelatedSpeech:
+        setState(() {
+          _teachMisses++;
+          _echoPhase = _EchoPhase.idle;
+          _echoMissed = true;
+          _echoCoverage = null;
+        });
+      default:
+        // unavailable / permissionDenied / failed / cancelled —
+        // 文字で同じ確認をする。塞がない。
+        setState(() {
+          _echoInput = _EchoInput.text;
+          _echoPhase = _EchoPhase.idle;
+        });
+    }
+  }
+
+  void _applyEchoCoverage(ExplanationCoverage coverage) {
+    setState(() {
+      _echoCoverage = coverage;
+      if (coverage.isSufficient) {
+        _echoPhase = _EchoPhase.heard;
+      } else {
+        _teachMisses++;
+        _echoPhase = _EchoPhase.idle;
+        _echoMissed = true;
+      }
+    });
+  }
+
+  void _submitEchoText() {
+    if (_step != _ExplainStep.echo || _echoInput != _EchoInput.text) return;
+    _applyEchoCoverage(_assess(_echoText.text));
+  }
+
+  void _useEchoText() {
+    if (_step != _ExplainStep.echo) return;
+    setState(() {
+      _echoInput = _EchoInput.text;
+      _echoPhase = _EchoPhase.idle;
+      _echoMissed = false;
+      _echoCoverage = null;
+    });
+  }
+
+  /// 何度も届かない説明で生徒を閉じ込めない。2回届かなかったら
+  /// 「このまま進む」を開き、確かめは固定の問い返しへ委ねる。
+  void _advanceBypassingCoverage() {
+    if (_teachMisses < 2) return;
     _advanceAfterTeaching();
   }
 
@@ -338,6 +458,16 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
 
   void _advanceText() {
     if (_step != _ExplainStep.text || !_canReviewText || !_textReviewed) {
+      return;
+    }
+    final coverage = _assess(_text.text);
+    if (!coverage.isSufficient) {
+      // 採点ではなく聞き取り —— 大事な言葉が届かなければ
+      // デキすぎ君が「もう少し聞かせて」と返す。答えは教えない。
+      setState(() {
+        _teachMisses++;
+        _coverageBlocked = true;
+      });
       return;
     }
     FocusManager.instance.primaryFocus?.unfocus();
@@ -600,9 +730,30 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
       canReview: _canReviewText,
       reviewed: _textReviewed,
       allowRouteSwitch: !_isRevision,
+      coverage: _textReviewed || _coverageBlocked
+          ? _assess(_text.text)
+          : null,
+      coverageBlocked: _coverageBlocked,
+      canBypass: _teachMisses >= 2,
       onReview: _reviewText,
       onUseVoice: _chooseVoice,
       onAdvance: _advanceText,
+      onBypass: _advanceBypassingCoverage,
+    ),
+    _ExplainStep.echo => _EchoCheck(
+      conceptLabel: widget.conceptLabel,
+      isRevision: _isRevision,
+      input: _echoInput,
+      phase: _echoPhase,
+      coverage: _echoCoverage,
+      missed: _echoMissed,
+      canBypass: _teachMisses >= 2,
+      controller: _echoText,
+      onRetryVoice: _startEcho,
+      onUseText: _useEchoText,
+      onSubmitText: _submitEchoText,
+      onAdvance: _advanceAfterTeaching,
+      onBypass: _advanceBypassingCoverage,
     ),
     _ExplainStep.followUp => _FollowUp(
       spokenQuestion: _spokenQuestion,
@@ -683,6 +834,7 @@ class _Header extends StatelessWidget {
     final stepLabel = switch (step) {
       _ExplainStep.choose => '教え方を選ぶ',
       _ExplainStep.voice || _ExplainStep.text => '教材を隠して教える',
+      _ExplainStep.echo => '聞き取れたか確かめる',
       _ExplainStep.followUp => 'デキすぎ君の問い返し',
       _ExplainStep.compare => '教材と振り返る',
       _ExplainStep.complete => '教え返し完了',
@@ -771,7 +923,7 @@ class _ChooseRoute extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          '教材の答えは隠れたままです。説明のあと、デキすぎ君から固定の質問が1つ返ってきます。自由説明は採点も送信もしません。',
+          '教材の答えは隠れたままです。説明のあと、デキすぎ君から固定の質問が1つ返ってきます。自由説明は採点も送信もしませんが、大事な言葉が届いたかだけ端末内で確かめます。',
           style: theme.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
         ),
         const SizedBox(height: 18),
@@ -978,9 +1130,13 @@ class _TextAnswer extends StatelessWidget {
     required this.canReview,
     required this.reviewed,
     required this.allowRouteSwitch,
+    required this.coverage,
+    required this.coverageBlocked,
+    required this.canBypass,
     required this.onReview,
     required this.onUseVoice,
     required this.onAdvance,
+    required this.onBypass,
   });
 
   final _TeachingPrompt prompt;
@@ -990,9 +1146,15 @@ class _TextAnswer extends StatelessWidget {
   final bool canReview;
   final bool reviewed;
   final bool allowRouteSwitch;
+
+  /// 読み返し後の聞き取り結果。null ならパネル自体を出さない。
+  final ExplanationCoverage? coverage;
+  final bool coverageBlocked;
+  final bool canBypass;
   final VoidCallback onReview;
   final VoidCallback onUseVoice;
   final VoidCallback onAdvance;
+  final VoidCallback onBypass;
 
   @override
   Widget build(BuildContext context) {
@@ -1026,6 +1188,15 @@ class _TextAnswer extends StatelessWidget {
             fillColor: colors.surfaceRaised,
           ),
         ),
+        if (coverage != null) ...[
+          const SizedBox(height: 10),
+          _CoveragePanel(
+            coverage: coverage!,
+            blocked: coverageBlocked,
+            canBypass: canBypass,
+            onBypass: onBypass,
+          ),
+        ],
         const SizedBox(height: 10),
         _Action(
           buttonKey: const ValueKey('science-explain-review-text'),
@@ -1317,7 +1488,7 @@ class _SelfComparison extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '自由説明そのものは自動採点していません。固定の問い返しと教材を使い、足りない条件や理由を自分で確かめます。',
+              '自由説明そのものの正誤は採点していません。大事な言葉の聞き取りと固定の問い返し、教材との比較で、足りない条件や理由を自分で確かめます。',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colors.inkMuted,
               ),
@@ -1786,6 +1957,268 @@ class _Action extends StatelessWidget {
           borderRadius: BorderRadius.circular(GameTokens.radiusMd),
         ),
       ),
+    );
+  }
+}
+
+/// デキすぎ君が説明から聞き取れた「大事な言葉」の表示。
+///
+/// 聞き取れた語だけを見せる —— 届いていない語は答えを漏らすので出さない。
+/// 届かないときは「もう少し聞かせて」と返し、何度も届かなければ
+/// 生徒を閉じ込めないように「このまま進む」を開く。
+class _CoveragePanel extends StatelessWidget {
+  const _CoveragePanel({
+    required this.coverage,
+    required this.blocked,
+    required this.canBypass,
+    required this.onBypass,
+  });
+
+  final ExplanationCoverage coverage;
+  final bool blocked;
+  final bool canBypass;
+  final VoidCallback onBypass;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = context.gamePalette;
+    final heard = coverage.matchedTerms;
+    return Container(
+      key: const ValueKey('science-explain-coverage'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colors.surfaceRaised,
+        borderRadius: BorderRadius.circular(GameTokens.radiusMd),
+        border: Border.all(
+          color: blocked ? colors.pathReview : colors.border,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'デキすぎ君が聞き取れた言葉',
+            style: theme.textTheme.labelLarge
+                ?.copyWith(color: colors.inkMuted)
+                .jaWeight(FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          if (heard.isEmpty)
+            Text(
+              'まだ大事な言葉が届いていないみたい',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.inkMuted,
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final term in heard)
+                  Container(
+                    key: ValueKey('science-explain-cue-$term'),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.pathActive,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      term,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: colors.onPathActive,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          if (blocked) ...[
+            const SizedBox(height: 10),
+            Text(
+              '「もう少し聞かせて！」大事な言葉がまだ足りないみたい。理由や条件も入れて、もう一度説明してあげて。',
+              style: theme.textTheme.bodySmall?.copyWith(color: colors.ink),
+            ),
+            if (canBypass) ...[
+              const SizedBox(height: 4),
+              TextButton(
+                key: const ValueKey('science-explain-coverage-bypass'),
+                onPressed: onBypass,
+                child: const Text('この説明のまま進む'),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// 声で教えたあとの「聞き取り確認」。デキすぎ君が大事な言葉を
+/// もう一度だけ聞き、届いていれば問い返しへ進む。
+class _EchoCheck extends StatelessWidget {
+  const _EchoCheck({
+    required this.conceptLabel,
+    required this.isRevision,
+    required this.input,
+    required this.phase,
+    required this.coverage,
+    required this.missed,
+    required this.canBypass,
+    required this.controller,
+    required this.onRetryVoice,
+    required this.onUseText,
+    required this.onSubmitText,
+    required this.onAdvance,
+    required this.onBypass,
+  });
+
+  final String conceptLabel;
+  final bool isRevision;
+  final _EchoInput input;
+  final _EchoPhase phase;
+  final ExplanationCoverage? coverage;
+  final bool missed;
+  final bool canBypass;
+  final TextEditingController controller;
+  final VoidCallback onRetryVoice;
+  final VoidCallback onUseText;
+  final VoidCallback onSubmitText;
+  final VoidCallback onAdvance;
+  final VoidCallback onBypass;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = context.gamePalette;
+    final listening = phase == _EchoPhase.listening;
+    final heard = phase == _EchoPhase.heard;
+    return Column(
+      key: const ValueKey('science-explain-echo'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _HiddenMaterialNotice(),
+        const SizedBox(height: 14),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: colors.surfaceRaised,
+            borderRadius: BorderRadius.circular(GameTokens.radiusSheet),
+            border: Border.all(color: colors.border),
+          ),
+          child: Column(
+            children: [
+              PathMascotPreview(
+                reaction: listening
+                    ? GameCharacterReaction.listening
+                    : heard
+                    ? GameCharacterReaction.celebrate
+                    : GameCharacterReaction.thinking,
+                size: 112,
+                style: GameActivityScaffold.mascotStyleOf(context),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                listening
+                    ? 'デキすぎ君が聞いています'
+                    : heard
+                    ? '届いた！'
+                    : 'もう一度だけ教えて',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.jaWeight(FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                listening
+                    ? 'いまの説明の大事な言葉を、もう一度だけ声で聞かせてください'
+                    : heard
+                    ? '$conceptLabel の言葉が届きました'
+                    : input == _EchoInput.voice
+                    ? '「$conceptLabel」の大事な言葉が届かなかったみたい。理由や条件を入れて、もう一度言ってみて'
+                    : '録音から言葉を聞き取れない端末です。代わりに、説明の大事な言葉を書いて確かめます',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colors.inkMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (input == _EchoInput.voice) ...[
+          _Action(
+            buttonKey: const ValueKey('science-explain-echo-voice'),
+            label: listening
+                ? '聞き取り中…'
+                : missed
+                ? 'もう一度声で言い直す'
+                : '要点を声で聞かせる',
+            icon: listening ? Icons.hearing : Icons.mic,
+            onPressed: listening ? null : onRetryVoice,
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            key: const ValueKey('science-explain-echo-use-text'),
+            onPressed: onUseText,
+            icon: const Icon(Icons.keyboard_outlined),
+            label: const Text('文字で教える'),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(double.infinity, 48),
+            ),
+          ),
+        ] else ...[
+          TextField(
+            key: const ValueKey('science-explain-echo-text-input'),
+            controller: controller,
+            minLines: 1,
+            maxLines: 3,
+            maxLength: 500,
+            decoration: InputDecoration(
+              hintText: '説明に入れた大事な言葉を書く',
+              filled: true,
+              fillColor: colors.surfaceRaised,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _Action(
+            buttonKey: const ValueKey('science-explain-echo-submit-text'),
+            label: 'これで確かめる',
+            icon: Icons.fact_check_outlined,
+            onPressed: onSubmitText,
+          ),
+        ],
+        if (coverage != null) ...[
+          const SizedBox(height: 12),
+          _CoveragePanel(
+            coverage: coverage!,
+            blocked: missed,
+            canBypass: canBypass,
+            onBypass: onBypass,
+          ),
+        ],
+        if (missed && canBypass) ...[
+          const SizedBox(height: 8),
+          TextButton(
+            key: const ValueKey('science-explain-echo-bypass'),
+            onPressed: onBypass,
+            child: const Text('このまま進む'),
+          ),
+        ],
+        if (heard) ...[
+          const SizedBox(height: 14),
+          _Action(
+            buttonKey: const ValueKey('science-explain-echo-advance'),
+            label: isRevision ? '教材と比べる' : 'デキすぎ君の質問へ',
+            icon: isRevision ? Icons.compare_arrows : Icons.question_answer,
+            onPressed: onAdvance,
+          ),
+        ],
+      ],
     );
   }
 }

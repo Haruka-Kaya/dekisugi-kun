@@ -1,3 +1,4 @@
+import 'package:dekisugi/learning/domain/learning_event.dart';
 import 'package:dekisugi/models/concept_progress.dart';
 import 'package:dekisugi/models/dossier.dart';
 import 'package:dekisugi/models/mission.dart';
@@ -529,6 +530,129 @@ void runSessionStoreContract(
         expect(
           (await store.days()).fold<int>(0, (sum, day) => sum + day.done),
           2,
+        );
+      });
+    });
+
+    group('思い込みの記録（learningNeedStates)', () {
+      // カルテ画面のデータ経路。実機では sqflite を通るので、
+      // メモリ版だけを試すと「テストは通るのに実機で空になる」。
+      LearningEventCommand needEvent({
+        required String eventId,
+        required String nodeId,
+        required String learningDay,
+        required DateTime occurredAt,
+        required LearningAttemptOutcome outcome,
+        required LearningEvidenceLevel evidence,
+        Map<String, Iterable<String>> observed = const {},
+        Map<String, Iterable<String>> resolved = const {},
+        LearningRepairResolution? repairResolution,
+      }) => LearningEventCommand(
+        eventId: eventId,
+        scope: LearningScope.personal,
+        origin: LearningOrigin.practice,
+        courseId: 'course.jhs-science',
+        nodeId: nodeId,
+        activityId: 'activity.karte.v1',
+        skillIds: const {'force-motion/fall'},
+        activityKind: LearningActivityKind.diagram,
+        outcome: outcome,
+        evidence: evidence,
+        contentVersion: 'catalog.v10',
+        learningDay: learningDay,
+        occurredAt: occurredAt,
+        practiceNeedCodes: observed,
+        resolvedPracticeNeedCodes: resolved,
+        repairResolution: repairResolution,
+      );
+
+      test('観測だけならresolvedDayの無いactiveとして読める', () async {
+        await store.commitLearningEvent(
+          needEvent(
+            eventId: 'contract.need.observe',
+            nodeId: 'node.karte.1',
+            learningDay: '2026-08-10',
+            occurredAt: DateTime.utc(2026, 8, 10, 12),
+            outcome: LearningAttemptOutcome.corrected,
+            evidence: LearningEvidenceLevel.selfCompared,
+            observed: const {
+              'force-motion/fall': {'science.fall.foundation'},
+            },
+          ),
+        );
+
+        final states = await store.learningNeedStates(LearningScope.personal);
+        expect(states, hasLength(1));
+        expect(states.single.needCode, 'science.fall.foundation');
+        expect(states.single.skillId, 'force-motion/fall');
+        expect(states.single.resolved, isFalse);
+        expect(states.single.resolvedDay, isNull);
+        expect(states.single.firstObservedDay, '2026-08-10');
+        expect(states.single.lastObservedDay, '2026-08-10');
+      });
+
+      test('解消のcommitがresolved日で反映される', () async {
+        await store.commitLearningEvent(
+          needEvent(
+            eventId: 'contract.need.observe',
+            nodeId: 'node.karte.1',
+            learningDay: '2026-08-10',
+            occurredAt: DateTime.utc(2026, 8, 10, 12),
+            outcome: LearningAttemptOutcome.corrected,
+            evidence: LearningEvidenceLevel.selfCompared,
+            observed: const {
+              'force-motion/fall': {'science.fall.foundation'},
+            },
+          ),
+        );
+        await store.commitLearningEvent(
+          needEvent(
+            eventId: 'contract.need.resolve',
+            nodeId: 'node.karte.2',
+            learningDay: '2026-08-12',
+            occurredAt: DateTime.utc(2026, 8, 12, 12),
+            outcome: LearningAttemptOutcome.structuredSuccess,
+            evidence: LearningEvidenceLevel.structuredCorrection,
+            resolved: const {
+              'force-motion/fall': {'science.fall.foundation'},
+            },
+            repairResolution: LearningRepairResolution(
+              unitId: 'force-motion',
+              conceptKey: 'fall',
+              skillId: 'force-motion/fall',
+              needCode: 'science.fall.foundation',
+              routeKind: LearningRepairRouteKind.practice,
+              practiceAttempt: 0,
+            ),
+          ),
+        );
+
+        final states = await store.learningNeedStates(LearningScope.personal);
+        expect(states, hasLength(1));
+        expect(states.single.resolved, isTrue);
+        expect(states.single.resolvedDay, '2026-08-12');
+        expect(states.single.firstObservedDay, '2026-08-10');
+      });
+
+      test('別scopeのneed状態を混ぜない', () async {
+        await store.commitLearningEvent(
+          needEvent(
+            eventId: 'contract.need.observe',
+            nodeId: 'node.karte.1',
+            learningDay: '2026-08-10',
+            occurredAt: DateTime.utc(2026, 8, 10, 12),
+            outcome: LearningAttemptOutcome.corrected,
+            evidence: LearningEvidenceLevel.selfCompared,
+            observed: const {
+              'force-motion/fall': {'science.fall.foundation'},
+            },
+          ),
+        );
+
+        expect(
+          await store.learningNeedStates(LearningScope.schoolLocal),
+          isEmpty,
+          reason: '個人の観測を学校scopeへ漏らしてはいけない',
         );
       });
     });

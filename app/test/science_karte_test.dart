@@ -221,12 +221,13 @@ void main() {
   });
 
   group('ScienceKarteScreen', () {
-    Widget wrap(SessionStore store) => MaterialApp(
+    Widget wrap(SessionStore store, {VoidCallback? onOpenPlus}) => MaterialApp(
       theme: buildAppTheme(Brightness.light),
       home: ScienceKarteScreen(
         catalog: _catalog,
         store: store,
         scope: LearningScope.personal,
+        onOpenPlus: onOpenPlus,
       ),
     );
 
@@ -258,6 +259,11 @@ void main() {
       );
       expect(find.text('仕組みの土台'), findsOneWidget);
       expect(find.text('迷い中'), findsWidgets);
+      await tester.scrollUntilVisible(
+        find.text('これから'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('これから'), findsOneWidget);
       expect(find.textContaining('誤答の本文や音声は残りません'), findsOneWidget);
     });
@@ -298,6 +304,106 @@ void main() {
       expect(find.text('訂正できた'), findsOneWidget);
       expect(find.textContaining('あなたの説明で分かったこと'), findsOneWidget);
       expect(find.textContaining('つり合っている'), findsOneWidget);
+    });
+
+    testWidgets('paywall導線が無ければ保護者レポートカード自体を出さない', (
+      tester,
+    ) async {
+      final store = MemorySessionStore();
+      await tester.pumpWidget(wrap(store));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('science-karte-parent-report')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('サポーターでなければレポートカードはpaywallへ橋渡しする', (
+      tester,
+    ) async {
+      final store = MemorySessionStore();
+      var plusOpened = 0;
+      await tester.pumpWidget(
+        wrap(store, onOpenPlus: () => plusOpened++),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Plusサポーター特典'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const ValueKey('science-karte-report-plus')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(plusOpened, 1);
+      expect(
+        find.byKey(const ValueKey('science-karte-report')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('サポーターは保護者レポートを開いて思い込みの変化を見られる', (
+      tester,
+    ) async {
+      final store = MemorySessionStore();
+      await store.commitLearningEvent(
+        needEvent(
+          eventId: 'karte.report.observe',
+          nodeId: 'node.karte.r1',
+          learningDay: '2026-08-10',
+          occurredAt: DateTime.utc(2026, 8, 10, 12),
+          outcome: LearningAttemptOutcome.corrected,
+          evidence: LearningEvidenceLevel.selfCompared,
+          observed: const {
+            'force-motion/fall': {'science.fall.foundation'},
+          },
+        ),
+      );
+      await store.commitLearningEvent(
+        needEvent(
+          eventId: 'karte.report.resolve',
+          nodeId: 'node.karte.r2',
+          learningDay: '2026-08-12',
+          occurredAt: DateTime.utc(2026, 8, 12, 12),
+          outcome: LearningAttemptOutcome.structuredSuccess,
+          evidence: LearningEvidenceLevel.structuredCorrection,
+          resolved: const {
+            'force-motion/fall': {'science.fall.foundation'},
+          },
+          repairResolution: _repairFoundation,
+        ),
+      );
+      await store.grantLearningPlusCosmetics(
+        scope: LearningScope.personal,
+        occurredAt: DateTime.utc(2026, 8, 12, 13),
+      );
+
+      await tester.pumpWidget(wrap(store, onOpenPlus: () {}));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Plusサポーター特典'), findsNothing);
+      await tester.tap(
+        find.byKey(const ValueKey('science-karte-report-open')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('science-karte-report')),
+        findsOneWidget,
+      );
+      expect(
+        find.text('お子さまの説明で分かってもらえた思い込み（1件）'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('止まっている物には力がはたらかない'),
+        findsWidgets,
+      );
+      expect(find.textContaining('つり合っている'), findsWidgets);
+      expect(
+        find.byKey(const ValueKey('science-karte-report-copy')),
+        findsOneWidget,
+      );
     });
   });
 }

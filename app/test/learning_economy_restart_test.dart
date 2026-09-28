@@ -185,4 +185,43 @@ void main() {
     );
     await second.close();
   });
+
+  test('付与だけ消えて装備が残っても起動時に標準マスコットへ戻る', () async {
+    final tmp = Directory.systemTemp.createTempSync('dekisugi-revoked-');
+    addTearDown(() => tmp.deleteSync(recursive: true));
+    final path = p.join(tmp.path, 'learning.db');
+    final base = DateTime.utc(2026, 9, 1, 9);
+
+    final first = await SqfliteSessionStore.open(path: path);
+    await first.grantLearningPlusCosmetics(
+      scope: LearningScope.personal,
+      occurredAt: base,
+    );
+    await first.equipLearningCosmetic(
+      scope: LearningScope.personal,
+      productId: SafeLearningEconomyCatalogV1.auroraMascotId,
+      occurredAt: base.add(const Duration(minutes: 1)),
+    );
+    await first.close();
+
+    // 返金や台帳の手修で付与だけが消えた状態を再現する。
+    final db = await databaseFactory.openDatabase(path);
+    await db.delete('learning_cosmetic_grants');
+    await db.close();
+
+    final second = await SqfliteSessionStore.open(path: path);
+    final snapshot = await second.learningProgressSnapshot(
+      LearningScope.personal,
+    );
+    expect(
+      snapshot.cosmetics?.ownedProductIds,
+      isNot(contains(SafeLearningEconomyCatalogV1.auroraMascotId)),
+    );
+    expect(
+      snapshot.cosmetics?.equippedPathMascotId,
+      SafeLearningEconomyCatalogV1.standardMascotId,
+      reason: '未所有の装備でアプリを起動不能にしない',
+    );
+    await second.close();
+  });
 }

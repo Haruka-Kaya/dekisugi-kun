@@ -1,0 +1,59 @@
+1
+00:00:00,000 --> 00:00:03,000
+Most study apps stop at the right answer — this one starts from what you can teach.
+
+2
+00:00:03,000 --> 00:00:08,000
+A middle-school science app where students teach an AI companion.
+
+3
+00:00:08,000 --> 00:00:12,000
+Your turn to teach — the textbook is hidden while you explain.
+
+4
+00:00:12,000 --> 00:00:20,000
+{\an8}On-device check: did the key ideas make it into your explanation?
+
+5
+00:00:20,000 --> 00:00:30,000
+{\an8}Miss them and he asks for more — no points lost, just another try.
+
+6
+00:00:33,000 --> 00:00:40,000
+{\an8}The key terms he caught, chip by chip.
+
+7
+00:00:40,000 --> 00:00:44,500
+{\an8}Then he asks a cataloged follow-up — never a free-form chat.
+
+8
+00:00:44,500 --> 00:00:49,000
+Pick the answer that matches what he believes…
+
+9
+00:00:49,000 --> 00:00:55,000
+A miss costs a heart, records the gap, and triggers a hint — never the answer.
+
+10
+00:00:55,000 --> 00:00:60,500
+{\an8}Re-explain with the hint — same method, second try.
+
+11
+00:00:60,500 --> 00:00:70,000
+{\an8}Compare it against the textbook yourself.
+
+12
+00:00:70,000 --> 00:00:78,700
+Only progress is recorded — the explanation itself is never stored.
+
+13
+00:00:78,700 --> 00:00:90,500
+{\an8}The miss you just saw is already on his karte.
+
+14
+00:00:90,500 --> 00:00:99,500
+{\an8}Plus perk: a parent-ready report of what your teaching fixed.
+
+15
+00:00:99,500 --> 00:00:111,500
+{\an8}Plus via RevenueCat — store unreachable, so buying stays blocked.

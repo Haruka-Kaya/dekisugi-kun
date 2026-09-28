@@ -1,5 +1,10 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
+
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
+import '../learning/domain/learning_economy.dart';
 import '../learning/domain/learning_event.dart';
 import '../learning/services/learning_karte_projection.dart';
 import '../models/unit.dart';
@@ -19,11 +24,16 @@ class ScienceKarteScreen extends StatefulWidget {
     required this.catalog,
     required this.store,
     required this.scope,
+    this.onOpenPlus,
   });
 
   final List<UnitSummary> catalog;
   final SessionStore store;
   final LearningScope scope;
+
+  /// Plus特典の案内カードからpaywallを開く。学校・local scopeではnullのまま
+  /// （カード自体を出さない）。
+  final VoidCallback? onOpenPlus;
 
   @override
   State<ScienceKarteScreen> createState() => _ScienceKarteScreenState();
@@ -31,7 +41,7 @@ class ScienceKarteScreen extends StatefulWidget {
 
 class _ScienceKarteScreenState extends State<ScienceKarteScreen> {
   static const _projection = LearningKarteProjection();
-  late Future<LearningKarteView> _view;
+  late Future<({LearningKarteView view, bool supporter})> _view;
 
   @override
   void initState() {
@@ -39,13 +49,20 @@ class _ScienceKarteScreenState extends State<ScienceKarteScreen> {
     _view = _load();
   }
 
-  Future<LearningKarteView> _load() async {
+  Future<({LearningKarteView view, bool supporter})> _load() async {
     final needStates = await widget.store.learningNeedStates(widget.scope);
     final snapshot = await widget.store.learningProgressSnapshot(widget.scope);
-    return _projection.build(
-      catalog: widget.catalog,
-      needStates: needStates,
-      skills: snapshot.skills,
+    return (
+      view: _projection.build(
+        catalog: widget.catalog,
+        needStates: needStates,
+        skills: snapshot.skills,
+      ),
+      supporter:
+          snapshot.cosmetics?.owns(
+            SafeLearningEconomyCatalogV1.auroraMascotId,
+          ) ??
+          false,
     );
   }
 
@@ -55,10 +72,11 @@ class _ScienceKarteScreenState extends State<ScienceKarteScreen> {
     return Scaffold(
       backgroundColor: colors.canvas,
       body: SafeArea(
-        child: FutureBuilder<LearningKarteView>(
+        child: FutureBuilder<({LearningKarteView view, bool supporter})>(
           future: _view,
           builder: (context, snapshot) {
-            final view = snapshot.data;
+            final view = snapshot.data?.view;
+            final supporter = snapshot.data?.supporter ?? false;
             return ListView(
               key: const ValueKey('science-karte-screen'),
               padding: EdgeInsets.fromLTRB(
@@ -127,6 +145,19 @@ class _ScienceKarteScreenState extends State<ScienceKarteScreen> {
                     ).textTheme.bodySmall?.copyWith(color: colors.inkMuted),
                   ),
                 ),
+                const SizedBox(height: GameTokens.spaceMd),
+                if (view != null && widget.onOpenPlus != null)
+                  _ParentReportCard(
+                    supporter: supporter,
+                    onOpenReport: () => unawaited(
+                      Navigator.of(context).push<void>(
+                        MaterialPageRoute<void>(
+                          builder: (_) => _KarteParentReportScreen(view: view),
+                        ),
+                      ),
+                    ),
+                    onOpenPlus: widget.onOpenPlus!,
+                  ),
                 const SizedBox(height: GameTokens.spaceXl),
                 if (view == null)
                   const Center(child: CircularProgressIndicator())
@@ -294,6 +325,287 @@ class _KarteStatusChip extends StatelessWidget {
                 ?.copyWith(color: foreground)
                 .jaWeight(FontWeight.w700),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 保護者向けレポートの案内カード。Plusサポーターはそのままレポートを開き、
+/// それ以外はpaywallへ橋渡しする。学校・local scopeではカード自体を出さない。
+class _ParentReportCard extends StatelessWidget {
+  const _ParentReportCard({
+    required this.supporter,
+    required this.onOpenReport,
+    required this.onOpenPlus,
+  });
+
+  final bool supporter;
+  final VoidCallback onOpenReport;
+  final VoidCallback onOpenPlus;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    final colors = context.gamePalette;
+    return GameSolidSurface(
+      surfaceKey: const ValueKey('science-karte-parent-report'),
+      raised: true,
+      padding: const EdgeInsets.all(GameTokens.spaceLg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '保護者の方へのレポート',
+                  style: t.textTheme.titleSmall
+                      ?.copyWith(color: colors.ink)
+                      .jaWeight(FontWeight.w800),
+                ),
+              ),
+              if (!supporter)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: GameTokens.spaceMd,
+                    vertical: GameTokens.spaceXs,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(GameTokens.radiusPill),
+                    border: Border.all(color: colors.border),
+                  ),
+                  child: Text(
+                    'Plusサポーター特典',
+                    style: t.textTheme.labelSmall?.copyWith(
+                      color: colors.inkMuted,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: GameTokens.spaceSm),
+          Text(
+            supporter
+                ? 'お子さまの説明でデキすぎ君が理解した思い込みを、'
+                      '保護者の方に渡せる文章でまとめます。'
+                : 'お子さまがデキすぎ君に教えて直した思い込みを、'
+                      '保護者の方へ渡せるレポートにまとめられます。',
+            style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
+          ),
+          const SizedBox(height: GameTokens.spaceMd),
+          FilledButton(
+            key: ValueKey(
+              supporter
+                  ? 'science-karte-report-open'
+                  : 'science-karte-report-plus',
+            ),
+            onPressed: supporter ? onOpenReport : onOpenPlus,
+            child: Text(supporter ? 'レポートを開く' : 'Plusを見る'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 保護者の方へ渡すための、デキすぎ君カルテの文章レポート。
+///
+/// 生徒の点数や誤答ではなく「AI の思い込みがどう変わったか」だけをまとめる
+/// （C9）。本文は端末内生成で、コピーして渡すだけ。記録される回答・音声は
+/// ここにも現れない。
+class _KarteParentReportScreen extends StatelessWidget {
+  const _KarteParentReportScreen({required this.view});
+
+  final LearningKarteView view;
+
+  List<LearningKarteConcept> get _resolved => view.concepts
+      .where((entry) => entry.hasResolvedNeeds && entry.misconception != null)
+      .toList();
+
+  List<LearningKarteConcept> get _inProgress => view.concepts
+      .where((entry) => entry.hasActiveNeeds && entry.misconception != null)
+      .toList();
+
+  int get _untouchedCount => view.concepts
+      .where(
+        (entry) =>
+            !entry.taught && !entry.hasActiveNeeds && !entry.hasResolvedNeeds,
+      )
+      .length;
+
+  String _reportText() {
+    final lines = <String>[
+      'デキすぎ君のカルテ — 保護者の方へのレポート',
+      '',
+      'デキすぎ君は、教科書にありがちな思い込みを持っているAIです。',
+      'お子さまは教材を読んでからデキすぎ君に説明し、デキすぎ君が'
+          '分かるまで付き合います。ここにまとめるのは、お子さまの説明で'
+          'デキすぎ君の思い込みがどう変わったかの記録です。',
+      '',
+      '■ お子さまの説明で分かってもらえた思い込み（${_resolved.length}件）',
+      for (final entry in _resolved) ...[
+        '・「${entry.misconception!.statement}」（${entry.unitTitle}）',
+        '  → ${entry.misconception!.correct}',
+      ],
+      if (_resolved.isEmpty) '・まだありません。',
+      '',
+      '■ いま一緒に確かめている思い込み（${_inProgress.length}件）',
+      for (final entry in _inProgress)
+        '・「${entry.misconception!.statement}」（${entry.unitTitle}）'
+            '— お子さまの説明がまだ届ききっていません。',
+      if (_inProgress.isEmpty) '・ありません。',
+      '',
+      '残り $_untouchedCount 件の思い込みは、これから一緒に確かめます。',
+      '',
+      '※ お子さまの誤答の本文・音声・点数は記録されていません。このレポートは'
+          'AI の思い込みの変化だけをまとめたものです。',
+    ];
+    return lines.join('\n');
+  }
+
+  Future<void> _copyReport(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: _reportText()));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('レポートをコピーしました')));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    final colors = context.gamePalette;
+    return Scaffold(
+      backgroundColor: colors.canvas,
+      body: SafeArea(
+        child: ListView(
+          key: const ValueKey('science-karte-report'),
+          padding: EdgeInsets.fromLTRB(
+            GameTokens.spaceXl,
+            GameTokens.spaceLg,
+            GameTokens.spaceXl,
+            GameTokens.spaceXl + MediaQuery.paddingOf(context).bottom,
+          ),
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  key: const ValueKey('science-karte-report-back'),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  icon: const Icon(Icons.arrow_back),
+                  tooltip: 'もどる',
+                ),
+                const SizedBox(width: GameTokens.spaceSm),
+                Expanded(
+                  child: Text(
+                    '保護者の方へのレポート',
+                    style: t.textTheme.titleMedium
+                        ?.copyWith(color: colors.ink)
+                        .jaWeight(FontWeight.w900),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: GameTokens.spaceMd),
+            GameSolidSurface(
+              raised: true,
+              padding: const EdgeInsets.all(GameTokens.spaceLg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'デキすぎ君は、教科書にありがちな思い込みを持っているAIです。'
+                    'お子さまは教材を読んでからデキすぎ君に説明し、デキすぎ君が'
+                    '分かるまで付き合います。',
+                    style: t.textTheme.bodySmall?.copyWith(
+                      color: colors.inkMuted,
+                    ),
+                  ),
+                  const SizedBox(height: GameTokens.spaceLg),
+                  Text(
+                    'お子さまの説明で分かってもらえた思い込み（${_resolved.length}件）',
+                    style: t.textTheme.titleSmall
+                        ?.copyWith(color: colors.ink)
+                        .jaWeight(FontWeight.w800),
+                  ),
+                  const SizedBox(height: GameTokens.spaceSm),
+                  if (_resolved.isEmpty)
+                    Text(
+                      'まだありません。',
+                      style: t.textTheme.bodySmall?.copyWith(
+                        color: colors.inkMuted,
+                      ),
+                    )
+                  else
+                    for (final entry in _resolved)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: GameTokens.spaceSm,
+                        ),
+                        child: Text(
+                          '「${entry.misconception!.statement}」\n'
+                          '→ ${entry.misconception!.correct}',
+                          style: t.textTheme.bodySmall?.copyWith(
+                            color: colors.ink,
+                          ),
+                        ),
+                      ),
+                  const SizedBox(height: GameTokens.spaceMd),
+                  Text(
+                    'いま一緒に確かめている思い込み（${_inProgress.length}件）',
+                    style: t.textTheme.titleSmall
+                        ?.copyWith(color: colors.ink)
+                        .jaWeight(FontWeight.w800),
+                  ),
+                  const SizedBox(height: GameTokens.spaceSm),
+                  if (_inProgress.isEmpty)
+                    Text(
+                      'ありません。',
+                      style: t.textTheme.bodySmall?.copyWith(
+                        color: colors.inkMuted,
+                      ),
+                    )
+                  else
+                    for (final entry in _inProgress)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: GameTokens.spaceSm,
+                        ),
+                        child: Text(
+                          '「${entry.misconception!.statement}」'
+                          '— 説明がまだ届ききっていません。',
+                          style: t.textTheme.bodySmall?.copyWith(
+                            color: colors.ink,
+                          ),
+                        ),
+                      ),
+                  const SizedBox(height: GameTokens.spaceMd),
+                  Text(
+                    '残り $_untouchedCount 件の思い込みは、これから一緒に確かめます。',
+                    style: t.textTheme.bodySmall?.copyWith(
+                      color: colors.inkMuted,
+                    ),
+                  ),
+                  const SizedBox(height: GameTokens.spaceLg),
+                  Text(
+                    '※ お子さまの誤答の本文・音声・点数は記録されていません。'
+                    'このレポートはAIの思い込みの変化だけをまとめたものです。',
+                    style: t.textTheme.bodySmall?.copyWith(
+                      color: colors.inkMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: GameTokens.spaceMd),
+            FilledButton.icon(
+              key: const ValueKey('science-karte-report-copy'),
+              onPressed: () => unawaited(_copyReport(context)),
+              icon: const Icon(Icons.copy),
+              label: const Text('レポートをコピー'),
+            ),
+          ],
         ),
       ),
     );
