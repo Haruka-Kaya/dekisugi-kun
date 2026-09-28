@@ -98,8 +98,10 @@ void main() {
     });
 
     test('しきい値が逆なら組み立て時に落とす', () {
-      expect(() => SpeechGate(onThreshold: 0.01, offThreshold: 0.5),
-          throwsA(isA<AssertionError>()));
+      expect(
+        () => SpeechGate(onThreshold: 0.01, offThreshold: 0.5),
+        throwsA(isA<AssertionError>()),
+      );
     });
   });
 }

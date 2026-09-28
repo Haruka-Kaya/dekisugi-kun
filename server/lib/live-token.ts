@@ -1,6 +1,7 @@
 import { type Lang, localizeUnit } from './i18n.js'
 import { LIVE_MODEL, liveSessionConfig, newDirectorPrefix } from './live-config.js'
-import { unitById } from './units.js'
+import { type MissionKind, type TeachingTactic } from './mission.js'
+import { focusUnit, unitById } from './units.js'
 import { VERTEX_LOCATION, VERTEX_PROJECT, vertexAccessToken } from './vertex.js'
 
 /**
@@ -69,17 +70,26 @@ export async function createLiveGrant(
   unitId: string,
   resumeHandle?: string,
   lang: Lang = 'ja',
+  focusConceptKey?: string,
+  options: {
+    missionKind?: MissionKind
+    teachingTactic?: TeachingTactic
+    accessToken?: typeof vertexAccessToken
+    directorPrefix?: typeof newDirectorPrefix
+  } = {},
 ): Promise<LiveGrant> {
   const raw = unitById(unitId)
   if (!raw) throw new Error(`未知の単元: ${unitId}`)
+  const focused = focusUnit(raw, focusConceptKey)
+  if (!focused) throw new Error(`未知の概念: ${unitId}/${focusConceptKey}`)
   // **システム指示に入る単元名と概念も訳す。**
   // ここが日本語のままだと、英語で話しているのに
   // 概念の名前だけ日本語で出てくる
-  const unit = localizeUnit(raw, lang)
+  const unit = localizeUnit(focused, lang)
 
-  const { token, expiresAt } = await vertexAccessToken()
+  const { token, expiresAt } = await (options.accessToken ?? vertexAccessToken)()
   // **毎回作り直す。** 使い回すと、1度知られた合図がずっと通る
-  const directorPrefix = newDirectorPrefix()
+  const directorPrefix = (options.directorPrefix ?? newDirectorPrefix)()
 
   return {
     directorPrefix,
@@ -90,7 +100,15 @@ export async function createLiveGrant(
     model:
       `projects/${VERTEX_PROJECT}/locations/${VERTEX_LOCATION}` +
       `/publishers/google/models/${LIVE_MODEL}`,
-    setupConfig: liveSessionConfig(unit, directorPrefix, resumeHandle, lang),
+    setupConfig: liveSessionConfig(
+      unit,
+      directorPrefix,
+      resumeHandle,
+      lang,
+      focusConceptKey,
+      options.missionKind ?? 'teach',
+      options.missionKind === 'caseRetry' ? 'reason' : options.teachingTactic ?? 'reason',
+    ),
     expiresAt: expiresAt.toISOString(),
     // 実測: 9分時点で code=1000 "The operation was cancelled."
     sessionMinutes: 10,

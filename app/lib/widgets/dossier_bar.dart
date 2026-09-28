@@ -53,61 +53,73 @@ class _DossierBarState extends State<DossierBar> {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
-    final scheme = t.colorScheme;
+    final c = context.appColors;
+    final visible = widget.dossier.slots.where((s) => !s.isEmpty).toList();
+    if (visible.isEmpty) return const SizedBox.shrink();
 
-    return Container(
+    final newlySaved = _celebrating.isNotEmpty;
+    final panel = Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainer,
-        border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
+        color: c.coolSurface,
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        border: newlySaved ? Border.all(color: c.gotItFg, width: 2) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('説明できたところ', style: t.textTheme.labelLarge),
-              const Spacer(),
-              Text('${widget.dossier.coverage}%',
-                  style: t.textTheme.labelLarge?.jaWeight(FontWeight.w700)),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Semantics(
-            label: '説明できたところ',
-            value: '${widget.dossier.coverage}パーセント',
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-              // 値が変わったら補間する。Tween は使い回さない
-              // （TweenAnimationBuilder は渡した Tween を破壊的に書き換える）
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: widget.dossier.coverage / 100),
-                duration: Motion.state,
-                curve: Motion.stateCurve,
-                builder: (context, v, _) => LinearProgressIndicator(
-                  value: v,
-                  minHeight: 6,
-                  backgroundColor: scheme.surfaceContainerHigh,
+              Icon(
+                newlySaved ? Icons.edit_note : Icons.notes,
+                size: 21,
+                color: c.onCoolSurface,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Semantics(
+                  liveRegion: newlySaved,
+                  child: Text(
+                    newlySaved ? '今の説明をノートに残しました' : 'いまの会話ノート',
+                    style: t.textTheme.titleSmall
+                        ?.copyWith(color: c.onCoolSurface)
+                        .jaWeight(FontWeight.w700),
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              for (final s in widget.dossier.slots)
-                _ConceptChip(
-                  label: s.label,
-                  status: statusOf(s),
-                  celebrating: _celebrating.contains(s.key),
-                ),
             ],
           ),
+          const SizedBox(height: 10),
+          for (final slot in visible)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 7),
+              child: _NoteLine(slot: slot),
+            ),
         ],
       ),
+    );
+
+    final reduce = ReduceMotionScope.of(context);
+    return Semantics(
+      container: true,
+      explicitChildNodes: true,
+      child: reduce || !newlySaved
+          ? panel
+          : TweenAnimationBuilder<double>(
+              key: const ValueKey('celebrate'),
+              tween: Tween(begin: 0.96, end: 1.0),
+              duration: Motion.celebrate,
+              curve: Motion.celebrateCurve,
+              builder: (context, v, child) => Transform.scale(
+                scale: v,
+                alignment: Alignment.topCenter,
+                child: child,
+              ),
+              child: panel,
+            ),
     );
   }
 }
@@ -127,62 +139,47 @@ ExplainStatus statusOf(Slot slot) {
   };
 }
 
-class _ConceptChip extends StatelessWidget {
-  const _ConceptChip({
-    required this.label,
-    required this.status,
-    this.celebrating = false,
-  });
+class _NoteLine extends StatelessWidget {
+  const _NoteLine({required this.slot});
 
-  final String label;
-  final ExplainStatus status;
-
-  /// いま「説明できた」に上がったところ
-  final bool celebrating;
+  final Slot slot;
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     final c = context.appColors;
+    final status = statusOf(slot);
     final fg = c.fgFor(status);
-    final reduce = ReduceMotionScope.of(context);
-
-    final chip = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: c.chipFor(status),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        // 祝っている間は枠でも示す。**動きだけに頼らない**
-        border: celebrating ? Border.all(color: fg, width: 2) : null,
-      ),
+    return Semantics(
+      label: '${slot.label} は ${statusLabel(status)}',
+      excludeSemantics: true,
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 色だけで状態を伝えない (SC 1.4.1)
-          Icon(statusIcon(status), size: 16, color: fg),
-          const SizedBox(width: 5),
-          Text(label,
-              style: t.textTheme.bodyMedium?.copyWith(color: fg, height: 1.0)),
+          Icon(statusIcon(status), size: 17, color: fg),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(
+              slot.label,
+              style: t.textTheme.bodyMedium?.copyWith(color: c.onCoolSurface),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: c.chipFor(status),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+            child: Text(
+              statusLabel(status),
+              style: t.textTheme.labelSmall
+                  ?.copyWith(color: fg)
+                  .jaWeight(FontWeight.w700),
+            ),
+          ),
         ],
       ),
-    );
-
-    return Semantics(
-      label: '$label は ${statusLabel(status)}',
-      excludeSemantics: true,
-      child: reduce || !celebrating
-          ? chip
-          // 達成の瞬間だけ expressive に振る。
-          // 「画面内に入ってくる要素」用として仕様で定義されているカーブ
-          : TweenAnimationBuilder<double>(
-              key: const ValueKey('celebrate'),
-              tween: Tween(begin: 0.85, end: 1.0),
-              duration: Motion.celebrate,
-              curve: Motion.celebrateCurve,
-              builder: (context, v, child) =>
-                  Transform.scale(scale: v, child: child),
-              child: chip,
-            ),
     );
   }
 }

@@ -1,6 +1,12 @@
 # app — デキすぎ君 本体（Flutter）
 
-段階5（認証・同意・無料枠）まで実装済み。エミュレータで通し確認済み。
+現行productionは6タブのゲーム型学習UIと、catalog schema v10の10単元29概念を使う。
+必修Pathは端末内で完結し、Teach-backの音声PCM・自由文・選択内容を保存／送信しない。
+旧Live/Talk実装は研究用に残るがproduction 6タブから到達不能で、外部生成AIを進行条件にしない。
+
+> [!NOTE]
+> 以下の「無料の上限」以降には、production未接続の旧Live研究実装についての技術記録も含む。
+> 現行のTeach-back契約はroot READMEと`docs/game-redesign-2026.md`を正本にする。
 
 ## 無料の上限（1日15分）
 

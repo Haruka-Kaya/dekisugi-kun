@@ -4,6 +4,7 @@ import { beforeEach, describe, it } from 'node:test'
 import director from '../api/director.js'
 import register from '../api/register.js'
 import { issueToken } from '../lib/auth.js'
+import { PER_DEVICE_HOURLY } from '../lib/ratelimit.js'
 
 const DEVICE = '3f2504e0-4f89-11d3-9a0c-0305e82c3301'
 
@@ -27,12 +28,14 @@ function fakeRes() {
   return { res, out }
 }
 
-function authed(): Record<string, string> {
-  return { authorization: `Bearer ${issueToken(DEVICE)}` }
+function authed(device = DEVICE): Record<string, string> {
+  return { authorization: `Bearer ${issueToken(device)}` }
 }
 
 beforeEach(() => {
   process.env.AUTH_SECRET = 'x'.repeat(48)
+  delete process.env.VERCEL_ENV
+  process.env.DEKISUGI_INTERNAL_AI_TESTING = '1'
   delete process.env.KV_REST_API_URL
 })
 
@@ -130,5 +133,69 @@ describe('入力の検証（門を通ったあと）', () => {
       res,
     )
     assert.equal(out.code, 413)
+  })
+
+  it('Vercelがparse済みの大きなobjectも413で返す', async () => {
+    const { res, out } = fakeRes()
+    await director(
+      {
+        method: 'POST',
+        body: {
+          unitId: 'force-motion',
+          utterances: [{ id: 'u01', speaker: 'student', text: 'あ'.repeat(100 * 1024) }],
+        },
+        headers: authed(),
+      },
+      res,
+    )
+    assert.equal(out.code, 413)
+    assert.deepEqual(out.body, { error: 'too_large' })
+  })
+
+  it('不正なmissionKindはDirectorでもrateを使う前に400', async () => {
+    const missionDevice = 'a6c5d5c4-9220-4e2e-8cf8-526345e5d678'
+    const headers = authed(missionDevice)
+
+    // parseInputがrateより後ろに移ると、途中から429になる。
+    for (let i = 0; i <= PER_DEVICE_HOURLY; i++) {
+      const { res, out } = fakeRes()
+      await director(
+        {
+          method: 'POST',
+          headers,
+          body: {
+            unitId: 'force-motion',
+            focusConceptKey: 'fall',
+            missionKind: i % 2 === 0 ? 'case' : null,
+          },
+        },
+        res,
+      )
+      assert.equal(out.code, 400, `${i + 1}回目でrateを消費した`)
+      assert.deepEqual(out.body, { error: 'unknown_mission_kind' })
+    }
+  })
+
+  it('不正なteachingTacticはDirectorでもrateを使う前に400', async () => {
+    const tacticDevice = 'a6c5d5c4-9220-4e2e-8cf8-526345e5d679'
+    const headers = authed(tacticDevice)
+
+    for (let i = 0; i <= PER_DEVICE_HOURLY; i++) {
+      const { res, out } = fakeRes()
+      await director(
+        {
+          method: 'POST',
+          headers,
+          body: {
+            unitId: 'force-motion',
+            focusConceptKey: 'fall',
+            teachingTactic: i % 2 === 0 ? 'examples' : null,
+          },
+        },
+        res,
+      )
+      assert.equal(out.code, 400, `${i + 1}回目でrateを消費した`)
+      assert.deepEqual(out.body, { error: 'unknown_teaching_tactic' })
+    }
   })
 })

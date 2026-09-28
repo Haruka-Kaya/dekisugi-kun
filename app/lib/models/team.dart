@@ -28,7 +28,11 @@ class TeamMembership {
 
 /// チーム到達。**チーム単位で、個人には出ない。**
 class Milestone {
-  const Milestone({required this.key, required this.label, required this.reached});
+  const Milestone({
+    required this.key,
+    required this.label,
+    required this.reached,
+  });
 
   final String key;
   final String label;
@@ -84,23 +88,23 @@ class TeamSummary {
   /// 個人に関わるものをサーバが誤って返しても、ここに受け皿が無いので
   /// 画面まで到達しない。
   factory TeamSummary.fromJson(Map<String, dynamic> json) => TeamSummary(
-        pending: json['state'] == 'pending',
-        name: json['teamName'] as String? ?? '',
-        total: (json['teamTotal'] as num?)?.toInt(),
-        myTotal: (json['myTotal'] as num?)?.toInt() ?? 0,
-        memberCount: (json['memberCount'] as num?)?.toInt() ?? 0,
-        periodStart: json['periodStart'] as String? ?? '',
-        periodEnd: json['periodEnd'] as String? ?? '',
-        milestones: [
-          for (final m in (json['milestones'] as List?) ?? const [])
-            if (m is Map && m['key'] is String)
-              Milestone(
-                key: m['key'] as String,
-                label: m['label'] as String? ?? '',
-                reached: m['reached'] == true,
-              ),
-        ],
-      );
+    pending: json['state'] == 'pending',
+    name: json['teamName'] as String? ?? '',
+    total: (json['teamTotal'] as num?)?.toInt(),
+    myTotal: (json['myTotal'] as num?)?.toInt() ?? 0,
+    memberCount: (json['memberCount'] as num?)?.toInt() ?? 0,
+    periodStart: json['periodStart'] as String? ?? '',
+    periodEnd: json['periodEnd'] as String? ?? '',
+    milestones: [
+      for (final m in (json['milestones'] as List?) ?? const [])
+        if (m is Map && m['key'] is String)
+          Milestone(
+            key: m['key'] as String,
+            label: m['label'] as String? ?? '',
+            reached: m['reached'] == true,
+          ),
+    ],
+  );
 }
 
 /// 参加できなかった理由。**画面の文言を1か所に閉じる。**
@@ -124,29 +128,36 @@ enum JoinFailure {
   unknown;
 
   static JoinFailure fromError(String? code, int? status) => switch (code) {
-        'unknown_code' => JoinFailure.unknownCode,
-        'expired' => JoinFailure.expired,
-        'in_other_team' => JoinFailure.inOtherTeam,
-        'team_full' => JoinFailure.teamFull,
-        'cooldown' => JoinFailure.cooldown,
-        _ => status == null ? JoinFailure.network : JoinFailure.unknown,
-      };
+    'unknown_code' => JoinFailure.unknownCode,
+    'expired' => JoinFailure.expired,
+    'in_other_team' => JoinFailure.inOtherTeam,
+    'team_full' => JoinFailure.teamFull,
+    'cooldown' => JoinFailure.cooldown,
+    _ => status == null ? JoinFailure.network : JoinFailure.unknown,
+  };
 
   /// 生徒に見せる文。**責めない。次にやることを書く。**
   String get message => switch (this) {
-        JoinFailure.unknownCode => 'そのコードは見つかりませんでした。'
-            '打ち間違いがないか確かめてください。',
-        JoinFailure.expired => 'このコードは使えなくなっています。'
-            '先生にもう一度もらってください。',
-        JoinFailure.inOtherTeam => 'すでに別のクラスに入っています。'
-            '移るときは、先にいまのクラスから抜けてください。',
-        JoinFailure.teamFull => 'このクラスは人数がいっぱいです。'
-            '先生に伝えてください。',
-        JoinFailure.cooldown => 'クラスを抜けたばかりです。'
-            '入り直せるのは1週間後になります。',
-        JoinFailure.network => '通信できませんでした。'
-            'つながるところでもう一度ためしてください。',
-        JoinFailure.unknown => 'うまくいきませんでした。'
-            'しばらくしてからもう一度ためしてください。',
-      };
+    JoinFailure.unknownCode =>
+      'そのコードは見つかりませんでした。'
+          '打ち間違いがないか確かめてください。',
+    JoinFailure.expired =>
+      'このコードは使えなくなっています。'
+          '先生にもう一度もらってください。',
+    JoinFailure.inOtherTeam =>
+      'すでに別のクラスに入っています。'
+          '移るときは、先にいまのクラスから抜けてください。',
+    JoinFailure.teamFull =>
+      'このクラスは人数がいっぱいです。'
+          '先生に伝えてください。',
+    JoinFailure.cooldown =>
+      'クラスを抜けたばかりです。'
+          '入り直せるのは1週間後になります。',
+    JoinFailure.network =>
+      '通信できませんでした。'
+          'つながるところでもう一度ためしてください。',
+    JoinFailure.unknown =>
+      'うまくいきませんでした。'
+          'しばらくしてからもう一度ためしてください。',
+  };
 }

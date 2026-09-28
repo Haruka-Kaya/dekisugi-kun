@@ -47,6 +47,9 @@ class _StubAdapter implements HttpClientAdapter {
 }
 
 Response<Object?> jsonRes(int code, String body) => Response<Object?>(
-    requestOptions: RequestOptions(), statusCode: code, data: body);
+  requestOptions: RequestOptions(),
+  statusCode: code,
+  data: body,
+);
 
 Response<Object?> json200(String body) => jsonRes(200, body);

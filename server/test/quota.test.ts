@@ -5,6 +5,8 @@ import liveToken from '../api/live-token.js'
 import { issueToken } from '../lib/auth.js'
 import { jstDayKey } from '../lib/day.js'
 import { liveSessionConfig } from '../lib/live-config.js'
+import { createLiveGrant } from '../lib/live-token.js'
+import { PER_DEVICE_HOURLY } from '../lib/ratelimit.js'
 import { clampBySessions } from '../lib/team.js'
 import {
   FREE_SESSIONS_PER_DAY,
@@ -45,6 +47,8 @@ function fakeRes() {
 
 beforeEach(() => {
   process.env.AUTH_SECRET = 'x'.repeat(48)
+  delete process.env.VERCEL_ENV
+  process.env.DEKISUGI_INTERNAL_AI_TESTING = '1'
   delete process.env.KV_REST_API_URL
   delete process.env.KV_REST_API_TOKEN
 })
@@ -197,6 +201,118 @@ describe('/api/live-token', () => {
     assert.equal(
       (after.out.body as { remainingSessions: number }).remainingSessions,
       FREE_SESSIONS_PER_DAY,
+    )
+  })
+
+  it('未知・不正な概念は rate / quota を使う前に 400', async () => {
+    const h = authed()
+    const invalid = [
+      { ...unit, focusConceptKey: 'no-such-concept' },
+      { ...unit, focusConceptKey: '' },
+      { ...unit, focusConceptKey: null },
+      { ...unit, focusConceptKey: 42 },
+    ]
+
+    // レート上限より多く送っても全件400のままなら、checkRate より前で
+    // 弾けている。後ろへ移動すると途中から429になり、このテストが落ちる。
+    for (let i = 0; i <= PER_DEVICE_HOURLY; i++) {
+      const { res, out } = fakeRes()
+      await liveToken({ method: 'POST', headers: h, body: invalid[i % invalid.length] }, res)
+      assert.equal(out.code, 400, `${i + 1}回目で rate を消費した`)
+      assert.equal((out.body as { error: string }).error, 'unknown_concept')
+    }
+
+    const after = fakeRes()
+    await liveToken({ method: 'GET', headers: h }, after.res)
+    assert.equal(
+      (after.out.body as { remainingSessions: number }).remainingSessions,
+      FREE_SESSIONS_PER_DAY,
+      '不正な概念で枠が減っている',
+    )
+  })
+
+  it('未知・不正なmissionKindは rate / quota を使う前に 400', async () => {
+    const h = authed()
+    const invalid = ['case', '', null, undefined, 42, false]
+
+    // allowlist検証がrateの後ろに移ると、上限超過後は429になる。
+    for (let i = 0; i <= PER_DEVICE_HOURLY; i++) {
+      const { res, out } = fakeRes()
+      await liveToken(
+        {
+          method: 'POST',
+          headers: h,
+          body: {
+            ...unit,
+            focusConceptKey: 'fall',
+            missionKind: invalid[i % invalid.length],
+          },
+        },
+        res,
+      )
+      assert.equal(out.code, 400, `${i + 1}回目で rate を消費した`)
+      assert.equal((out.body as { error: string }).error, 'unknown_mission_kind')
+    }
+
+    const after = fakeRes()
+    await liveToken({ method: 'GET', headers: h }, after.res)
+    assert.equal(
+      (after.out.body as { remainingSessions: number }).remainingSessions,
+      FREE_SESSIONS_PER_DAY,
+      '不正なmissionKindで枠が減っている',
+    )
+  })
+
+  it('未知・明示nullのteachingTacticは rate / quota を使う前に 400', async () => {
+    const h = authed()
+    const invalid = ['examples', '', null, undefined, 42, false]
+
+    for (let i = 0; i <= PER_DEVICE_HOURLY; i++) {
+      const { res, out } = fakeRes()
+      await liveToken(
+        {
+          method: 'POST',
+          headers: h,
+          body: {
+            ...unit,
+            focusConceptKey: 'fall',
+            teachingTactic: invalid[i % invalid.length],
+          },
+        },
+        res,
+      )
+      assert.equal(out.code, 400, `${i + 1}回目で rate を消費した`)
+      assert.equal((out.body as { error: string }).error, 'unknown_teaching_tactic')
+    }
+
+    const after = fakeRes()
+    await liveToken({ method: 'GET', headers: h }, after.res)
+    assert.equal(
+      (after.out.body as { remainingSessions: number }).remainingSessions,
+      FREE_SESSIONS_PER_DAY,
+      '不正なteachingTacticで枠が減っている',
+    )
+  })
+
+  it('REPAIR / CASEは対象概念なしで枠やrateを消費しない', async () => {
+    const h = authed()
+    for (let i = 0; i <= PER_DEVICE_HOURLY; i++) {
+      const missionKind = i % 2 === 0 ? 'repair' : 'caseRetry'
+      const { res, out } = fakeRes()
+      await liveToken(
+        { method: 'POST', headers: h, body: { ...unit, missionKind } },
+        res,
+      )
+      assert.equal(out.code, 400, `${missionKind}: ${i + 1}回目でrateを消費した`)
+      assert.equal((out.body as { error: string }).error, 'focus_required')
+    }
+
+    const after = fakeRes()
+    await liveToken({ method: 'GET', headers: h }, after.res)
+    assert.equal(
+      (after.out.body as { remainingSessions: number }).remainingSessions,
+      FREE_SESSIONS_PER_DAY,
+      '対象の無いREPAIR / CASEで枠が減っている',
     )
   })
 
@@ -388,6 +504,72 @@ describe('setupConfig の再開', () => {
   it('ハンドルが無ければ空のまま（新しい会話）', () => {
     const cfg = liveSessionConfig(undefined, '[D:x]')
     assert.deepEqual(cfg.sessionResumption, {})
+  })
+
+  it('createLiveGrant が1概念を setupConfig まで失わず渡す', async () => {
+    const grant = await createLiveGrant('force-motion', 'h-1', 'en', 'fall', {
+      accessToken: async () => ({
+        token: 'test-token',
+        expiresAt: new Date('2026-08-09T00:00:00.000Z'),
+      }),
+      directorPrefix: () => '[D:test]',
+    })
+    const setup = grant.setupConfig as Record<string, any>
+    const prompt = setup.systemInstruction.parts[0].text as string
+
+    assert.equal(grant.token, 'test-token')
+    assert.equal(grant.directorPrefix, '[D:test]')
+    assert.deepEqual(setup.sessionResumption, { handle: 'h-1' })
+    assert.ok(prompt.includes('How fast things fall'))
+    assert.ok(!prompt.includes('Inertia'), '対象外の概念が音声モデルへ漏れている')
+    assert.ok(!prompt.includes('Why things stop'), '対象外の概念が音声モデルへ漏れている')
+  })
+
+  it('createLiveGrant がCASEを setupConfig まで失わず渡す', async () => {
+    const grant = await createLiveGrant('force-motion', undefined, 'ja', 'fall', {
+      missionKind: 'caseRetry',
+      accessToken: async () => ({
+        token: 'test-token',
+        expiresAt: new Date('2026-08-09T00:00:00.000Z'),
+      }),
+      directorPrefix: () => '[D:test]',
+    })
+    const setup = grant.setupConfig as Record<string, any>
+    const prompt = setup.systemInstruction.parts[0].text as string
+
+    assert.ok(prompt.includes('CASE MISSION'))
+    assert.ok(prompt.includes('同じ紙を2枚用意して'))
+    assert.ok(prompt.includes('結果の予想と理由'))
+  })
+
+  it('createLiveGrant が選んだ作戦をsetupConfigまで失わず渡す', async () => {
+    const grant = await createLiveGrant('force-motion', undefined, 'ja', 'fall', {
+      teachingTactic: 'experiment',
+      accessToken: async () => ({
+        token: 'test-token',
+        expiresAt: new Date('2026-08-09T00:00:00.000Z'),
+      }),
+      directorPrefix: () => '[D:test]',
+    })
+    const setup = grant.setupConfig as Record<string, any>
+    const prompt = setup.systemInstruction.parts[0].text as string
+
+    assert.match(prompt, /試したこと・観察したこと.*その結果/)
+    assert.doesNotMatch(prompt, /身の回りで起きる例/)
+  })
+
+  it('createLiveGrant 自体も未知の概念を資格情報取得前に弾く', async () => {
+    let accessed = false
+    await assert.rejects(
+      createLiveGrant('force-motion', undefined, 'ja', 'no-such-concept', {
+        accessToken: async () => {
+          accessed = true
+          return { token: 'never', expiresAt: new Date() }
+        },
+      }),
+      /未知の概念/,
+    )
+    assert.equal(accessed, false)
   })
 })
 

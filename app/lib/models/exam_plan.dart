@@ -1,3 +1,6 @@
+import 'concept_progress.dart';
+import 'day_key.dart';
+import 'mission.dart';
 import 'review.dart';
 import 'unit.dart';
 
@@ -21,6 +24,7 @@ class ExamPlan {
   const ExamPlan({
     required this.examDate,
     required this.daysLeft,
+    required this.pathDue,
     required this.due,
     required this.untouched,
     required this.doneCount,
@@ -32,6 +36,10 @@ class ExamPlan {
 
   /// 考査まであと何日。未設定なら null
   final int? daysLeft;
+
+  /// Mission Path上で期限が来たREPAIR/CASE。失敗した課題を先に直し、
+  /// その後に保持確認を出す。教材を読むだけの旧reviewより優先する。
+  final List<TodayTask> pathDue;
 
   /// 見直す期限が来ているもの（近い順）
   final List<ReviewItem> due;
@@ -53,13 +61,14 @@ class ExamPlan {
   /// **期限が来た復習を、新しい概念より先に出す。**
   /// 忘れかけているものを放置して先へ進むと、考査までに間に合わない。
   TodayTask? get today {
+    if (pathDue.isNotEmpty) return pathDue.first;
     if (due.isNotEmpty) {
       final r = due.first;
       return TodayTask(
         unitId: r.unitId,
         conceptKey: r.conceptKey,
         label: r.label,
-        isReview: true,
+        missionKind: MissionKind.repair,
       );
     }
     if (untouched.isNotEmpty) {
@@ -68,7 +77,7 @@ class ExamPlan {
         unitId: c.unitId,
         conceptKey: c.key,
         label: c.label,
-        isReview: false,
+        missionKind: MissionKind.teach,
       );
     }
     return null;
@@ -98,15 +107,17 @@ class TodayTask {
     required this.unitId,
     required this.conceptKey,
     required this.label,
-    required this.isReview,
+    required this.missionKind,
   });
 
   final String unitId;
   final String conceptKey;
   final String label;
 
-  /// 期限が来た復習か（新しい概念ではなく）
-  final bool isReview;
+  /// 見た目のRETRYではなく、会話・保存・Directorまで伝える認知課題。
+  final MissionKind missionKind;
+
+  bool get isReview => missionKind != MissionKind.teach;
 }
 
 /// 考査日・復習・単元から、きょうの計画を組む。
@@ -118,14 +129,53 @@ ExamPlan buildExamPlan({
   required List<UnitSummary> units,
   required List<ReviewItem> reviews,
   required Set<String> explainedKeys,
+  List<ConceptProgress> progress = const [],
 }) {
+  final progressById = {
+    for (final item in progress) '${item.unitId}/${item.conceptKey}': item,
+  };
   final due = <ReviewItem>[];
   for (final r in reviews) {
+    if (progressById.containsKey('${r.unitId}/${r.conceptKey}')) continue;
     final gap = nextGap(now: now, examDate: examDate, timesSeen: r.timesSeen);
     if (!r.dueAt(gap).isAfter(now)) due.add(r);
   }
   // 期限が古いものから。放っておいたものほど忘れている
   due.sort((a, b) => a.lastSeen.compareTo(b.lastSeen));
+
+  final todayKey = dayKeyOf(now);
+  final labels = <String, String>{
+    for (final unit in units)
+      for (final concept in unit.concepts)
+        '${unit.id}/${concept.key}': concept.label,
+  };
+  final duePath = <({TodayTask task, String dueDay})>[];
+  for (final item in progress) {
+    final id = '${item.unitId}/${item.conceptKey}';
+    final label = labels[id];
+    if (label == null || !item.isDueOn(todayKey)) continue;
+    duePath.add((
+      task: TodayTask(
+        unitId: item.unitId,
+        conceptKey: item.conceptKey,
+        label: label,
+        missionKind: item.nextMissionKind,
+      ),
+      dueDay: item.nextDueDay,
+    ));
+  }
+  duePath.sort((a, b) {
+    final aRepair = a.task.missionKind == MissionKind.repair ? 0 : 1;
+    final bRepair = b.task.missionKind == MissionKind.repair ? 0 : 1;
+    final byKind = aRepair.compareTo(bRepair);
+    if (byKind != 0) return byKind;
+    final byDay = a.dueDay.compareTo(b.dueDay);
+    if (byDay != 0) return byDay;
+    final byUnit = a.task.unitId.compareTo(b.task.unitId);
+    return byUnit != 0
+        ? byUnit
+        : a.task.conceptKey.compareTo(b.task.conceptKey);
+  });
 
   final untouched = <ConceptRef>[];
   var total = 0;
@@ -134,11 +184,19 @@ ExamPlan buildExamPlan({
     for (final c in u.concepts) {
       total++;
       final id = '${u.id}/${c.key}';
-      if (explainedKeys.contains(id)) {
+      final path = progressById[id];
+      if (path?.lastSuccessDay != null) {
         done++;
+      } else if (path != null) {
+        // 一度挑戦済み。未着手へ戻さず、期限が来たREPAIRとして扱う。
       } else if (!reviews.any((r) => '${r.unitId}/${r.conceptKey}' == id)) {
-        // 復習に載っているものは「まだ触れていない」ではない
-        untouched.add(ConceptRef(unitId: u.id, key: c.key, label: c.label));
+        if (explainedKeys.contains(id)) {
+          // v6移行前データのフォールバック。本番DBではprogressへ移行される。
+          done++;
+        } else {
+          // 復習に載っているものは「まだ触れていない」ではない
+          untouched.add(ConceptRef(unitId: u.id, key: c.key, label: c.label));
+        }
       }
     }
   }
@@ -146,6 +204,7 @@ ExamPlan buildExamPlan({
   return ExamPlan(
     examDate: examDate,
     daysLeft: examDate == null ? null : _daysUntil(now, examDate),
+    pathDue: [for (final item in duePath) item.task],
     due: due,
     untouched: untouched,
     doneCount: done,

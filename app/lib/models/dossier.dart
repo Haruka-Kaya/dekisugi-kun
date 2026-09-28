@@ -11,12 +11,12 @@ enum SlotStatus {
   explained;
 
   static SlotStatus parse(Object? v) => switch (v) {
-        'thin' => SlotStatus.thin,
-        'explained' => SlotStatus.explained,
-        // 知らない値は「まだ触れていない」に倒す。
-        // explained 側に倒すと、説明していないものを説明済みとして扱ってしまう
-        _ => SlotStatus.untouched,
-      };
+    'thin' => SlotStatus.thin,
+    'explained' => SlotStatus.explained,
+    // 知らない値は「まだ触れていない」に倒す。
+    // explained 側に倒すと、説明していないものを説明済みとして扱ってしまう
+    _ => SlotStatus.untouched,
+  };
 
   String get wire => name;
 }
@@ -29,14 +29,14 @@ enum ProbeResult {
   accepted;
 
   static ProbeResult parse(Object? v) => switch (v) {
-        'unclear' => ProbeResult.unclear,
-        'corrected' => ProbeResult.corrected,
-        'accepted' => ProbeResult.accepted,
-        // 知らない値を accepted に倒さないこと。
-        // accepted は「誤解している」という強い主張で、間違えると
-        // 触れてもいない誤解を弱点として突きつけることになる
-        _ => ProbeResult.notTried,
-      };
+    'unclear' => ProbeResult.unclear,
+    'corrected' => ProbeResult.corrected,
+    'accepted' => ProbeResult.accepted,
+    // 知らない値を accepted に倒さないこと。
+    // accepted は「誤解している」という強い主張で、間違えると
+    // 触れてもいない誤解を弱点として突きつけることになる
+    _ => ProbeResult.notTried,
+  };
 
   String get wire => name;
 }
@@ -59,18 +59,18 @@ class Probe {
   final bool countered;
 
   factory Probe.fromJson(Map<String, dynamic> json) => Probe(
-        id: json['id'] as String? ?? '',
-        result: ProbeResult.parse(json['result']),
-        evidence: _strings(json['evidence']),
-        countered: json['countered'] == true,
-      );
+    id: json['id'] as String? ?? '',
+    result: ProbeResult.parse(json['result']),
+    evidence: _strings(json['evidence']),
+    countered: json['countered'] == true,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'result': result.wire,
-        'evidence': evidence,
-        'countered': countered,
-      };
+    'id': id,
+    'result': result.wire,
+    'evidence': evidence,
+    'countered': countered,
+  };
 }
 
 class Slot {
@@ -108,28 +108,29 @@ class Slot {
   bool get isExplained => !isEmpty && status == SlotStatus.explained;
 
   factory Slot.fromJson(Map<String, dynamic> json) => Slot(
-        key: json['key'] as String? ?? '',
-        label: json['label'] as String? ?? '',
-        status: SlotStatus.parse(json['status']),
-        content: json['content'] as String? ?? '',
-        evidence: _strings(json['evidence']),
-        followUpHint: json['followUpHint'] as String? ?? '',
-        probes: (json['probes'] as List?)
-                ?.whereType<Map<String, dynamic>>()
-                .map(Probe.fromJson)
-                .toList() ??
-            const [],
-      );
+    key: json['key'] as String? ?? '',
+    label: json['label'] as String? ?? '',
+    status: SlotStatus.parse(json['status']),
+    content: json['content'] as String? ?? '',
+    evidence: _strings(json['evidence']),
+    followUpHint: json['followUpHint'] as String? ?? '',
+    probes:
+        (json['probes'] as List?)
+            ?.whereType<Map<String, dynamic>>()
+            .map(Probe.fromJson)
+            .toList() ??
+        const [],
+  );
 
   Map<String, dynamic> toJson() => {
-        'key': key,
-        'label': label,
-        'status': status.wire,
-        'content': content,
-        'evidence': evidence,
-        'followUpHint': followUpHint,
-        'probes': probes.map((p) => p.toJson()).toList(),
-      };
+    'key': key,
+    'label': label,
+    'status': status.wire,
+    'content': content,
+    'evidence': evidence,
+    'followUpHint': followUpHint,
+    'probes': probes.map((p) => p.toJson()).toList(),
+  };
 }
 
 class Dossier {
@@ -146,24 +147,27 @@ class Dossier {
   final int coverage;
 
   /// 説明しきれた概念のキー。
-  Set<String> get explainedKeys =>
-      {for (final s in slots) if (s.isExplained) s.key};
+  Set<String> get explainedKeys => {
+    for (final s in slots)
+      if (s.isExplained) s.key,
+  };
 
   factory Dossier.fromJson(Map<String, dynamic> json) => Dossier(
-        unitId: json['unitId'] as String? ?? '',
-        slots: (json['slots'] as List?)
-                ?.whereType<Map<String, dynamic>>()
-                .map(Slot.fromJson)
-                .toList() ??
-            const [],
-        coverage: (json['coverage'] as num?)?.round() ?? 0,
-      );
+    unitId: json['unitId'] as String? ?? '',
+    slots:
+        (json['slots'] as List?)
+            ?.whereType<Map<String, dynamic>>()
+            .map(Slot.fromJson)
+            .toList() ??
+        const [],
+    coverage: (json['coverage'] as num?)?.round() ?? 0,
+  );
 
   Map<String, dynamic> toJson() => {
-        'unitId': unitId,
-        'slots': slots.map((s) => s.toJson()).toList(),
-        'coverage': coverage,
-      };
+    'unitId': unitId,
+    'slots': slots.map((s) => s.toJson()).toList(),
+    'coverage': coverage,
+  };
 }
 
 /// 会話の1発話。
@@ -173,6 +177,8 @@ class Utterance {
     required this.isStudent,
     required this.text,
     this.corrected,
+    this.challengeLureId,
+    this.challengeLureText,
   });
 
   final String id;
@@ -184,17 +190,60 @@ class Utterance {
   /// ディレクターが文脈で校正した結果。記録はこちらを使う
   final String? corrected;
 
+  /// このAI発話を生んだ誤概念誘発のID。
+  ///
+  /// 「最後のAI発話」から推測すると、その後の普通の質問をLAST CHALLENGEへ
+  /// 誤表示するため、実際に送ったDirector指示と発話を明示的に結びつける。
+  final String? challengeLureId;
+
+  /// Live発話と突き合わせたDirector由来の固定 lure。
+  ///
+  /// 新クライアントが本文一致を確認した発話にだけ保存する。
+  /// これを持たない旧保存データは、再開時にchallenge済みと信じない。
+  final String? challengeLureText;
+
   String get display => corrected ?? text;
 
-  Utterance withCorrection(String c) =>
-      Utterance(id: id, isStudent: isStudent, text: text, corrected: c);
+  Utterance withCorrection(String c) => Utterance(
+    id: id,
+    isStudent: isStudent,
+    text: text,
+    corrected: c,
+    challengeLureId: challengeLureId,
+    challengeLureText: challengeLureText,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'speaker': isStudent ? 'student' : 'ai',
-        'text': text,
-        if (corrected != null) 'corrected': corrected,
-      };
+    'id': id,
+    'speaker': isStudent ? 'student' : 'ai',
+    'text': text,
+    if (corrected != null) 'corrected': corrected,
+    if (challengeLureId != null) 'challengeLureId': challengeLureId,
+    if (challengeLureText != null) 'challengeLureText': challengeLureText,
+  };
+}
+
+/// カルテが根拠に挙げた、**実在する生徒の発話**を取り出す。
+///
+/// [Slot.content] はディレクターLLMが返した文なので、「本人の言葉」として
+/// そのまま保存・表示してはいけない。ここでは evidence のIDだけを手がかりに、
+/// 端末が持つ逐語から生徒の発話を引き直す。
+///
+/// evidence は会話中に累積するため、すべて連結すると古い誤答まで成果文に
+/// 混ざりうる。最終的に根拠として残った**最新の生徒発話1件**だけを返す。
+///
+/// [Utterance.corrected] もディレクターLLMが作る文なので、ここでは使わない。
+/// 読みやすさより「実際に本人が発した／入力した文字」を優先する。
+String studentExplanationFor(Slot slot, Iterable<Utterance> utterances) {
+  if (!slot.isExplained) return '';
+
+  final evidence = slot.evidence.toSet();
+  for (final utterance in utterances.toList().reversed) {
+    if (!utterance.isStudent || !evidence.contains(utterance.id)) continue;
+    final text = utterance.text.trim();
+    if (text.isNotEmpty) return text;
+  }
+  return '';
 }
 
 /// ディレクターの応答。
@@ -204,6 +253,7 @@ class DirectorResult {
     required this.dossier,
     required this.nextInstruction,
     required this.lureId,
+    this.lureText,
     required this.shouldEnd,
     required this.endReason,
   });
@@ -216,22 +266,27 @@ class DirectorResult {
 
   /// 指示が誤概念の誘発なら、その ID。記録の突き合わせに使う
   final String? lureId;
+
+  /// [lureId] の固定本文。Live出力の機械照合に使う。
+  final String? lureText;
   final bool shouldEnd;
   final String endReason;
 
   factory DirectorResult.fromJson(Map<String, dynamic> json) => DirectorResult(
-        corrections: {
-          for (final c in (json['corrections'] as List?) ?? const [])
-            if (c is Map && c['id'] is String && c['corrected'] is String)
-              c['id'] as String: c['corrected'] as String,
-        },
-        dossier: Dossier.fromJson(
-            (json['dossier'] as Map?)?.cast<String, dynamic>() ?? const {}),
-        nextInstruction: json['nextInstruction'] as String? ?? '',
-        lureId: json['lureId'] as String?,
-        shouldEnd: json['shouldEnd'] == true,
-        endReason: json['endReason'] as String? ?? '',
-      );
+    corrections: {
+      for (final c in (json['corrections'] as List?) ?? const [])
+        if (c is Map && c['id'] is String && c['corrected'] is String)
+          c['id'] as String: c['corrected'] as String,
+    },
+    dossier: Dossier.fromJson(
+      (json['dossier'] as Map?)?.cast<String, dynamic>() ?? const {},
+    ),
+    nextInstruction: json['nextInstruction'] as String? ?? '',
+    lureId: json['lureId'] as String?,
+    lureText: json['lureText'] as String?,
+    shouldEnd: json['shouldEnd'] == true,
+    endReason: json['endReason'] as String? ?? '',
+  );
 }
 
 List<String> _strings(Object? v) =>

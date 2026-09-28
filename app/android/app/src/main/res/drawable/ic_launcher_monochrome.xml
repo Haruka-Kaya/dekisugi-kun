@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Androidが壁紙色で着色する単色シルエット。66dpの安全領域内。 -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M61,29 L65,29 Q67,29 67,31 L67,37 Q67,39 65,39 L61,39 Q59,39 59,37 L59,31 Q59,29 61,29 Z M67,25 A4,4 0,1 1,59,25 A4,4 0,1 1,67,25 Z M71,52 A17,17 0,1 1,37,52 A17,17 0,1 1,71,52 Z M36,65 L72,65 Q78,65 78,71 L78,78 Q78,84 72,84 L36,84 Q30,84 30,78 L30,71 Q30,65 36,65 Z" />
+</vector>

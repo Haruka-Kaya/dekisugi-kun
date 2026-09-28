@@ -16,14 +16,19 @@ import 'session_store.dart';
 /// しかも**止める手段が無かった**。これは端末ごとに切れる。
 class DeviceIdentity {
   DeviceIdentity({required this.baseUrl, required SessionStore store, Dio? dio})
-      : _store = store,
-        _dio = dio ??
-            Dio(BaseOptions(
+    // `store:`は公開named parameterなので`this._store`へ改名しない。
+    // ignore: prefer_initializing_formals
+    : _store = store,
+      _dio =
+          dio ??
+          Dio(
+            BaseOptions(
               connectTimeout: const Duration(seconds: 10),
               receiveTimeout: const Duration(seconds: 15),
               headers: {'Content-Type': 'application/json'},
               validateStatus: (_) => true,
-            ));
+            ),
+          );
 
   final String baseUrl;
   final SessionStore _store;
@@ -34,6 +39,12 @@ class DeviceIdentity {
   static const _kTokenExp = 'device_token_exp';
 
   String? _cached;
+
+  /// RevenueCat など、同じインストールを匿名で結び付ける必要がある処理向けのID。
+  ///
+  /// 予測できない UUID v4 だけを返す。氏名・メール・広告ID・OSの端末IDは
+  /// 含まれない。呼び出し側もこの値を個人情報と結合してはならない。
+  Future<String> get anonymousAppUserId => _deviceId();
 
   /// いま使えるトークン。無ければ取りに行く。
   ///
@@ -107,8 +118,10 @@ class DeviceIdentity {
     final b = List<int>.generate(16, (_) => rnd.nextInt(256));
     b[6] = (b[6] & 0x0f) | 0x40; // version 4
     b[8] = (b[8] & 0x3f) | 0x80; // variant 10
-    String hex(int from, int to) =>
-        b.sublist(from, to).map((x) => x.toRadixString(16).padLeft(2, '0')).join();
+    String hex(int from, int to) => b
+        .sublist(from, to)
+        .map((x) => x.toRadixString(16).padLeft(2, '0'))
+        .join();
     return '${hex(0, 4)}-${hex(4, 6)}-${hex(6, 8)}-${hex(8, 10)}-${hex(10, 16)}';
   }
 

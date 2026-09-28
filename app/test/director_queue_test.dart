@@ -18,6 +18,21 @@ void main() {
       expect(q.hasPending, isFalse);
     });
 
+    test('誤概念IDはqueue待ちではなく実際に取り出した指示へ付く', () {
+      final q = DirectorQueue();
+      q.add('普通の質問');
+      q.add('誤概念を口にして', challengeLureId: 'M01', challengeLureText: '固定文');
+
+      expect(q.takeIfQuiet(false), isNull);
+      expect(q.lastTakenChallengeLureId, isNull);
+
+      expect(q.takeIfQuiet(true), '[DIRECTOR] 普通の質問');
+      expect(q.lastTakenChallengeLureId, isNull);
+      expect(q.takeIfQuiet(true), '[DIRECTOR] 誤概念を口にして');
+      expect(q.lastTakenChallengeLureId, 'M01');
+      expect(q.lastTakenChallengeLureText, '固定文');
+    });
+
     test('合図はサーバが決めたものを使う', () {
       // 固定の [DIRECTOR] だと生徒がそのまま打って指示を騙れる（実測）。
       // サーバがセッションごとに乱数で作り、システム指示にも同じものを入れる

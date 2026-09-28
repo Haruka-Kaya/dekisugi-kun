@@ -34,10 +34,16 @@ class QuotaChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // 色だけで伝えない (SC 1.4.1)
-          Icon(low ? Icons.hourglass_bottom : Icons.schedule, size: 16, color: fg),
+          Icon(
+            low ? Icons.hourglass_bottom : Icons.schedule,
+            size: 16,
+            color: fg,
+          ),
           const SizedBox(width: 4),
-          Text('あと$left回',
-              style: t.textTheme.bodySmall?.copyWith(color: fg, height: 1.0)),
+          Text(
+            'あと$left回',
+            style: t.textTheme.bodySmall?.copyWith(color: fg, height: 1.0),
+          ),
         ],
       ),
     );
@@ -49,43 +55,72 @@ class QuotaChip extends StatelessWidget {
 /// **エラーの顔をさせない。** 使い切るのは仕様どおりに起きることで、
 /// 生徒が何か間違えたわけではない。
 class OutOfTimeCard extends StatelessWidget {
-  const OutOfTimeCard({super.key, required this.resetsAt});
+  const OutOfTimeCard({
+    super.key,
+    required this.resetsAt,
+    this.onOpenPlus,
+    this.plusBusy = false,
+  });
 
   final DateTime? resetsAt;
+  final VoidCallback? onOpenPlus;
+  final bool plusBusy;
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
-    final scheme = t.colorScheme;
+    final c = context.appColors;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.schedule, size: 20, color: scheme.onSurfaceVariant),
-                const SizedBox(width: 8),
-                Text('きょうのぶんは終わりです', style: t.textTheme.titleSmall),
-              ],
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: c.coolSurface,
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.schedule, size: 20, color: c.onCoolSurface),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'きょうのぶんは終わりです',
+                  style: t.textTheme.titleSmall
+                      ?.copyWith(color: c.onCoolSurface)
+                      .jaWeight(FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '無料で話せるのは1日2回までです。1回はおよそ10分です。'
+            '${_resetText(resetsAt)}に、またいちから話せるようになります。',
+            style: t.textTheme.bodyMedium?.copyWith(color: c.onCoolSurface),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '待っているあいだは、「もう一度見るところ」で'
+            'うまく説明しきれなかったところを見直せます。',
+            style: t.textTheme.bodySmall?.copyWith(
+              color: c.onCoolSurface.withValues(alpha: 0.82),
             ),
-            const SizedBox(height: 8),
-            Text(
-              '無料で話せるのは1日2回までです。1回はおよそ10分です。'
-              '${_resetText(resetsAt)}に、またいちから話せるようになります。',
-              style: t.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '待っているあいだは、「もう一度見るところ」で'
-              'うまく説明しきれなかったところを見直せます。',
-              style: t.textTheme.bodySmall
-                  ?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          if (onOpenPlus != null) ...[
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: plusBusy ? null : onOpenPlus,
+              child: Text(
+                plusBusy ? 'Plusを確認しています…' : 'Plusで会話回数を広げる',
+                textAlign: TextAlign.center,
+              ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -95,7 +130,8 @@ class OutOfTimeCard extends StatelessWidget {
     if (at == null) return '日付が変わったころ';
     final local = at.toLocal();
     final now = DateTime.now();
-    final sameDay = local.year == now.year &&
+    final sameDay =
+        local.year == now.year &&
         local.month == now.month &&
         local.day == now.day;
     final h = local.hour.toString();

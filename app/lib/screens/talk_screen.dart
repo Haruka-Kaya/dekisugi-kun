@@ -1,16 +1,26 @@
+import 'dart:async';
+
 import 'package:provider/provider.dart';
 
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../config/env.dart';
+import '../config/motion.dart';
+import '../models/dossier.dart';
+import '../models/mission.dart';
+import '../models/unit.dart';
 import '../services/live_session.dart';
 import '../services/mic_stream.dart';
+import '../services/reminders.dart';
 import '../services/session_store.dart';
 import '../services/units_client.dart';
 import '../ui/_material.dart';
 import '../widgets/dossier_bar.dart';
+import '../widgets/mission_ui.dart';
 import '../widgets/quota_view.dart';
+import '../widgets/session_complete.dart';
 import '../widgets/stage.dart';
+import 'offline_practice_screen.dart';
 import 'review_screen.dart';
 
 /// 会話画面。
@@ -19,33 +29,186 @@ import 'review_screen.dart';
 /// **状態は「キャラの見た目」と「文字」の両方で出す** — 動きが止まっている
 /// 端末（Reduce Motion / 古い端末）でも、いま何が起きているか分かる必要がある。
 class TalkScreen extends StatefulWidget {
-  const TalkScreen({super.key, required this.unitTitle});
+  const TalkScreen({
+    super.key,
+    required this.unitTitle,
+    this.conceptLabel,
+    this.onOpenPlus,
+    this.offlineSection,
+    this.offlineMissionKind = MissionKind.teach,
+  });
 
   /// いま教えている単元。**画面に出す。**
   /// 教材を隠しているので、何について話しているかの手がかりが要る
   final String unitTitle;
 
+  /// 1概念ミッションの表示名。nullは旧来の単元全体会話。
+  final String? conceptLabel;
+
+  /// Plus が設定済みのビルドだけで渡す。画面を閉じた後は、購入の有無に
+  /// かかわらずサーバーの現在枠を読み直す。
+  final Future<void> Function()? onOpenPlus;
+
+  /// 教材を閉じたあとも、通信なしで学習行為を続けるための節。
+  ///
+  /// 単元全体会話や、焦点節を解決できなかった場合は null のままにする。
+  /// 導線は接続失敗時だけに出し、通常のLive会話と競合させない。
+  final Section? offlineSection;
+
+  /// 直前に選んだミッション種別。端末内練習でも課題の文脈を失わせない。
+  final MissionKind offlineMissionKind;
+
   @override
   State<TalkScreen> createState() => _TalkScreenState();
 }
 
-class _TalkScreenState extends State<TalkScreen> {
+class _TalkScreenState extends State<TalkScreen> with WidgetsBindingObserver {
   /// 中断していた会話。あれば「続きから」を出す
   SavedSession? _unfinished;
+  bool _checkingUnfinished = true;
+  bool _pausingForBackground = false;
+  bool _allowPop = false;
+  Reminders? _reminders;
+  bool _remindersEnabled = true;
+  bool _settingReminder = false;
+  bool _openingPlus = false;
+  int _reminderHour = 20;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _lookForUnfinished();
     // 残りは会話を始める前に見せる（枠は引かない）
-    WidgetsBinding.instance.addPostFrameCallback(
-        (_) => context.read<LiveSessionController>().refreshQuota());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<LiveSessionController>().refreshQuota();
+      unawaited(_loadReminderOffer());
+    });
+  }
+
+  Future<void> _loadReminderOffer() async {
+    Reminders? reminders;
+    try {
+      reminders = context.read<Reminders>();
+    } on ProviderNotFoundException {
+      return;
+    }
+    final enabled = await reminders.isEnabled();
+    final hour = await reminders.hour();
+    if (!mounted) return;
+    setState(() {
+      _reminders = reminders;
+      _remindersEnabled = enabled;
+      _reminderHour = hour;
+    });
+  }
+
+  Future<void> _enableTomorrowReminder() async {
+    final reminders = _reminders;
+    final label = widget.conceptLabel;
+    if (reminders == null || label == null || _settingReminder) return;
+    setState(() => _settingReminder = true);
+    try {
+      final allowed = await reminders.requestPermission();
+      if (!allowed) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('端末の設定で通知が切られています。')));
+        }
+        return;
+      }
+      await reminders.setEnabled(true);
+      await reminders.scheduleTomorrowCase(label);
+      if (mounted) {
+        setState(() => _remindersEnabled = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('明日$_reminderHour時ごろに、次のCASEを知らせます。')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _settingReminder = false);
+    }
+  }
+
+  Future<void> _openPlus() async {
+    final open = widget.onOpenPlus;
+    if (open == null || _openingPlus) return;
+    setState(() => _openingPlus = true);
+    try {
+      await open();
+      if (!mounted) return;
+      await context.read<LiveSessionController>().refreshQuota();
+    } finally {
+      if (mounted) setState(() => _openingPlus = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.resumed:
+      case AppLifecycleState.inactive:
+        // マイク権限などのOSダイアログでもinactiveになる。ここで止めると、
+        // 初回の「声ではなす」が許可直後に自己キャンセルされる。
+        return;
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        // 画面が見えないのに録音を続けない。会話は未完了として端末へ残し、
+        // 戻ったときに本人が「続きから」を選ぶ
+        unawaited(_pauseForBackground());
+    }
+  }
+
+  Future<void> _pauseForBackground() async {
+    if (_pausingForBackground || !mounted) return;
+    final live = context.read<LiveSessionController>();
+    if (!live.isActive) return;
+    final store = context.read<SessionStore>();
+
+    _pausingForBackground = true;
+    try {
+      await live.stop();
+      final saved = await store.unfinished(
+        unitId: live.unitId,
+        focusConceptKey: live.focusConceptKey,
+        missionKind: live.missionKind,
+      );
+      if (mounted) {
+        setState(() {
+          _unfinished = saved;
+          _checkingUnfinished = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('中断した会話の保存確認に失敗: $e');
+    } finally {
+      _pausingForBackground = false;
+    }
   }
 
   Future<void> _lookForUnfinished() async {
+    final live = context.read<LiveSessionController>();
     final store = context.read<SessionStore>();
-    final saved = await store.unfinished();
-    if (mounted) setState(() => _unfinished = saved);
+    try {
+      final saved = await store.unfinished(
+        unitId: live.unitId,
+        focusConceptKey: live.focusConceptKey,
+        missionKind: live.missionKind,
+      );
+      if (mounted) setState(() => _unfinished = saved);
+    } catch (e) {
+      debugPrint('中断した会話の読み込みに失敗: $e');
+    } finally {
+      if (mounted) setState(() => _checkingUnfinished = false);
+    }
   }
 
   Future<void> _resume() async {
@@ -61,8 +224,37 @@ class _TalkScreenState extends State<TalkScreen> {
   Future<void> _discard() async {
     final saved = _unfinished;
     if (saved == null) return;
-    await context.read<SessionStore>().finishSession(saved.id);
-    setState(() => _unfinished = null);
+    FocusManager.instance.primaryFocus?.unfocus();
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        scrollable: true,
+        title: const Text('この会話を捨てますか？'),
+        content: const Text(
+          'ここまで話した言葉と会話ノートが端末から消えます。'
+          'この操作は元に戻せません。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('会話を残す'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            child: const Text('この会話を捨てる'),
+          ),
+        ],
+      ),
+    );
+    if (discard != true || !mounted) return;
+    final discarded = await context.read<LiveSessionController>().discardSaved(
+      saved,
+    );
+    if (discarded && mounted) setState(() => _unfinished = null);
   }
 
   /// 会話中に画面を離れようとしたときの確認。
@@ -70,10 +262,14 @@ class _TalkScreenState extends State<TalkScreen> {
   /// ここを離れると会話は終わり、**教材を読み直せる場所に戻れてしまう**（C2 の抜け道）。
   /// 塞ぎきることはできないが、うっかり出てしまうのは防ぐ。
   Future<bool> _confirmLeave() async {
+    // 文字入力中でも確認面をキーボードの上へ押し潰させない。
+    // 大きな文字では本文と操作をdialog内でスクロールできるようにする。
+    FocusManager.instance.primaryFocus?.unfocus();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('話すのをやめますか？'),
+        scrollable: true,
+        title: const Text('いったんやめますか？'),
         content: const Text(
           'ここを出ると会話は終わります。'
           'いま話したところまでは残るので、あとから続きにできます。',
@@ -85,7 +281,7 @@ class _TalkScreenState extends State<TalkScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('やめる'),
+            child: const Text('いったんやめる'),
           ),
         ],
       ),
@@ -93,118 +289,325 @@ class _TalkScreenState extends State<TalkScreen> {
     return ok ?? false;
   }
 
+  Future<void> _pauseAndLeave() async {
+    if (!await _confirmLeave() || !mounted) return;
+    final navigator = Navigator.of(context);
+    await context.read<LiveSessionController>().stop();
+    if (mounted) navigator.pop();
+  }
+
+  void _openReview() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ReviewScreen(
+          store: context.read<SessionStore>(),
+          units: context.read<UnitsClient>(),
+        ),
+      ),
+    );
+  }
+
+  void _goHome() {
+    if (!mounted) return;
+    setState(() => _allowPop = true);
+    // PopScopeへ許可が反映された次のフレームで、Pickerなど中間画面も含めて戻す。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+    });
+  }
+
+  bool _canContinueOffline(LiveSessionController live) {
+    if (widget.offlineSection == null || live.state != LiveState.failed) {
+      return false;
+    }
+    return switch (live.failure) {
+      LiveFailure.network || LiveFailure.auth || LiveFailure.unknown => true,
+      LiveFailure.noPermission || null => false,
+    };
+  }
+
+  void _continueOffline() {
+    final section = widget.offlineSection;
+    if (section == null || !mounted) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() => _allowPop = true);
+    unawaited(
+      Navigator.of(context).pushReplacement<void, void>(
+        MaterialPageRoute<void>(
+          builder: (_) => OfflinePracticeScreen(
+            section: section,
+            conceptLabel: widget.conceptLabel ?? section.title,
+            missionKind: widget.offlineMissionKind,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmLeaveWithoutSaving() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        scrollable: true,
+        title: const Text('保存せずホームへ戻りますか？'),
+        content: const Text(
+          '今回話した言葉がノートに残らない可能性があります。'
+          'この画面で、もう一度保存できます。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop(false);
+              unawaited(
+                context.read<LiveSessionController>().retryCompletionSave(),
+              );
+            },
+            child: const Text('保存をやり直す'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            child: const Text('保存せず戻る'),
+          ),
+        ],
+      ),
+    );
+    if (leave == true) _goHome();
+  }
+
   @override
   Widget build(BuildContext context) {
     final live = context.watch<LiveSessionController>();
+    final saveNeedsAttention =
+        live.state == LiveState.done &&
+        (live.completionSaveFailed || live.completionSaveInProgress);
+    final completed = live.state == LiveState.done;
 
     return PopScope(
-      canPop: !live.isRunning,
+      canPop: _allowPop || (!live.isActive && !completed),
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop || !mounted) return;
-        // 先に Navigator を掴んでおく。await をまたいで context を触らない
-        final navigator = Navigator.of(context);
-        if (!await _confirmLeave()) return;
-        await live.stop();
-        navigator.pop();
+        if (saveNeedsAttention) {
+          if (live.completionSaveInProgress) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('ノートへの保存が終わるまでお待ちください。')),
+            );
+          } else {
+            await _confirmLeaveWithoutSaving();
+          }
+          return;
+        }
+        if (completed) {
+          _goHome();
+          return;
+        }
+        await _pauseAndLeave();
       },
       child: _build(context, live),
     );
   }
 
   Widget _build(BuildContext context, LiveSessionController live) {
+    final missionCleared = switch (live.focusConceptKey) {
+      final key? => missionSnapshotFor(
+        conceptKey: key,
+        dossier: live.dossier,
+        lastLureId: live.lastLureId,
+      ).isClear,
+      null => false,
+    };
+    final canOfferTomorrowCase =
+        missionCleared &&
+        !live.completionSaveFailed &&
+        live.missionKind != MissionKind.caseRetry &&
+        !_remindersEnabled &&
+        _reminders != null;
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('デキすぎ君に教える'),
-            Text(
-              widget.unitTitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+        title: Text(
+          widget.conceptLabel ?? widget.unitTitle,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.jaWeight(FontWeight.w700),
+          overflow: TextOverflow.ellipsis,
         ),
         actions: [
           // 残りは**最初から見せる**。減ってから知らせると、
           // 会話の途中で急に切れて何が起きたか分からなくなる
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            // 200%文字ではchipが約32dpになる。標準56dpのAppBarへ
+            // 戻しても切れないよう、上下余白を合わせて20dp以内にする。
+            padding: const EdgeInsets.symmetric(vertical: 10),
             child: QuotaChip(live: live),
           ),
-          IconButton(
-            tooltip: 'もう一度見るところ',
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
-              builder: (_) => ReviewScreen(
-                store: context.read<SessionStore>(),
-                units: context.read<UnitsClient>(),
-              ),
-            )),
-            icon: const Icon(Icons.bookmarks_outlined),
-          ),
-          if (live.isRunning)
+          // **会話中に教材を開かせない（C2）。** ReviewScreenを重ねるだけだと
+          // TalkScreenはdisposeされず、マイクもWebSocketも動き続ける
+          if (!live.isActive && live.state != LiveState.done)
             IconButton(
-              tooltip: '終わる',
-              onPressed: live.stop,
-              icon: const Icon(Icons.stop_circle_outlined),
+              tooltip: 'もう一度見るところ',
+              onPressed: _openReview,
+              icon: const Icon(Icons.bookmarks_outlined),
+            ),
+          if (live.isActive)
+            IconButton(
+              tooltip: 'いったんやめる',
+              onPressed: _pauseAndLeave,
+              icon: const Icon(Icons.pause_circle_outline),
             ),
         ],
       ),
       body: !Env.hasServer
-          ? const _MissingServer()
-          : Column(
-              children: [
-                Stage(live: live),
-                if (_unfinished != null && !live.isRunning)
-                  _ResumeBanner(
-                    saved: _unfinished!,
-                    onResume: _resume,
-                    onDiscard: _discard,
-                  ),
-                if (live.failure != null) _FailureBanner(failure: live.failure!),
-                if (live.recordingIssue != null)
-                  _IssueBanner(issue: live.recordingIssue!),
-                if (live.suspectsSelfInterruption) const _EchoBanner(),
-                if (live.dossier != null) DossierBar(dossier: live.dossier!),
-                if (live.state == LiveState.outOfTime)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                    child: OutOfTimeCard(resetsAt: live.quotaResetsAt),
-                  ),
-                Expanded(child: _TurnLog(live: live)),
-                _Composer(live: live),
-              ],
+          ? _MissingServer(
+              onPracticeOffline: widget.offlineSection == null
+                  ? null
+                  : _continueOffline,
+            )
+          : live.state == LiveState.done
+          ? SessionCompleteView(
+              achievements: live.sessionAchievements,
+              missionLabel: widget.conceptLabel,
+              missionKind: live.missionKind,
+              missionCleared: missionCleared,
+              onRemindTomorrow: canOfferTomorrowCase
+                  ? () => unawaited(_enableTomorrowReminder())
+                  : null,
+              reminderBusy: _settingReminder,
+              reminderHour: _reminderHour,
+              saveFailed: live.completionSaveFailed,
+              saving: live.completionSaveInProgress,
+              // Picker 経由では Home → Picker → Talk のスタックになる。
+              // 1画面だけ戻すと「ホーム」と書いてあるのにPickerへ戻る。
+              onHome: _goHome,
+              onReview: _openReview,
+              onRetry: () => unawaited(live.retryCompletionSave()),
+            )
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final showComposer =
+                    live.state != LiveState.outOfTime &&
+                    ((!_checkingUnfinished && _unfinished == null) ||
+                        live.isActive);
+                return Column(
+                  children: [
+                    // Stage・会話ノート・安全案内は高さを固定せず、まとめて
+                    // スクロールさせる。大きな文字でも逐語を押し潰さない。
+                    Expanded(
+                      child: _ConversationViewport(
+                        turnCount: live.transcript.length,
+                        interimLength: live.interimStudentText.length,
+                        children: [
+                          if (live.focusConceptKey case final conceptKey?)
+                            TeachingMissionBoard(
+                              conceptKey: conceptKey,
+                              conceptLabel:
+                                  widget.conceptLabel ??
+                                  _labelFor(live.dossier, conceptKey) ??
+                                  widget.unitTitle,
+                              tactic: live.tactic,
+                              dossier: live.dossier,
+                              lastLureId: live.lastLureId,
+                              missionKind: live.missionKind,
+                              challengeText: live.challengeText,
+                            ),
+                          Stage(live: live),
+                          if (_unfinished != null && !live.isRunning)
+                            _ResumeBanner(
+                              saved: _unfinished!,
+                              canResume: live.state != LiveState.outOfTime,
+                              onResume: _resume,
+                              onDiscard: _discard,
+                            ),
+                          if (live.failure != null)
+                            _FailureBanner(failure: live.failure!),
+                          if (_canContinueOffline(live))
+                            _OfflinePracticeOffer(onContinue: _continueOffline),
+                          if (live.recordingIssue != null)
+                            _IssueBanner(issue: live.recordingIssue!),
+                          if (live.suspectsSelfInterruption)
+                            const _EchoBanner(),
+                          if (live.focusConceptKey == null &&
+                              live.dossier != null)
+                            DossierBar(dossier: live.dossier!),
+                          if (live.state == LiveState.outOfTime)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                              child: OutOfTimeCard(
+                                resetsAt: live.quotaResetsAt,
+                                plusBusy: _openingPlus,
+                                onOpenPlus: widget.onOpenPlus == null
+                                    ? null
+                                    : () => unawaited(_openPlus()),
+                              ),
+                            ),
+                          _TurnLog(live: live),
+                        ],
+                      ),
+                    ),
+                    if (showComposer)
+                      // キーボード＋200%文字＋複数行入力でもFlexを溢れさせない。
+                      // 通常時は自然高、狭いときだけcomposer内をスクロールする。
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: constraints.maxHeight * 0.58,
+                        ),
+                        child: SingleChildScrollView(
+                          child: _Composer(live: live, onPause: _pauseAndLeave),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
     );
+  }
+
+  String? _labelFor(Dossier? dossier, String conceptKey) {
+    for (final slot in dossier?.slots ?? const <Slot>[]) {
+      if (slot.key == conceptKey && slot.label.isNotEmpty) return slot.label;
+    }
+    return null;
   }
 }
 
 class _MissingServer extends StatelessWidget {
-  const _MissingServer();
+  const _MissingServer({this.onPracticeOffline});
+
+  final VoidCallback? onPracticeOffline;
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.key_off, size: 40, color: t.colorScheme.onSurfaceVariant),
-            const SizedBox(height: 12),
-            Text('接続先が設定されていません', style: t.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(
-              '--dart-define=SERVER_URL=... を付けてビルドしてください。',
-              style: t.textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-          ],
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 48, 24, 32),
+      children: [
+        Icon(
+          Icons.cloud_off_outlined,
+          size: 40,
+          color: t.colorScheme.onSurfaceVariant,
         ),
-      ),
+        const SizedBox(height: 12),
+        Text(
+          '会話の接続先を確認できません',
+          style: t.textTheme.titleMedium,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          onPracticeOffline == null
+              ? 'あとでもう一度お試しください。'
+              : '端末内練習を続けるか、あとでもう一度お試しください。',
+          style: t.textTheme.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
+        if (onPracticeOffline case final onContinue?) ...[
+          const SizedBox(height: 24),
+          _OfflinePracticeOffer(onContinue: onContinue),
+        ],
+      ],
     );
   }
 }
@@ -218,11 +621,13 @@ class _MissingServer extends StatelessWidget {
 class _ResumeBanner extends StatelessWidget {
   const _ResumeBanner({
     required this.saved,
+    required this.canResume,
     required this.onResume,
     required this.onDiscard,
   });
 
   final SavedSession saved;
+  final bool canResume;
   final VoidCallback onResume;
   final VoidCallback onDiscard;
 
@@ -234,19 +639,37 @@ class _ResumeBanner extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      color: c.highlightFlash,
-      padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
-      child: Row(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        color: c.highlightFlash,
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              '前回の続きがあります（$turns回ぶん）',
-              style: t.textTheme.bodyMedium,
-            ),
+          Text(
+            '前回の続きがあります',
+            style: t.textTheme.titleSmall?.jaWeight(FontWeight.w700),
           ),
-          // 破棄は「捨てる」と分かる文言にする。取り消せない操作なので
-          TextButton(onPressed: onDiscard, child: const Text('捨てる')),
-          FilledButton(onPressed: onResume, child: const Text('続きから')),
+          const SizedBox(height: 3),
+          Text('$turns回ぶんの会話が端末に残っています。', style: t.textTheme.bodySmall),
+          if (!canResume) ...[
+            const SizedBox(height: 6),
+            Text('会話できる回数が戻るまで、この続きは端末に残ります。', style: t.textTheme.bodySmall),
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.end,
+            children: [
+              // 破棄は主導線から弱めるが、取り消せない意味は明示する
+              TextButton(onPressed: onDiscard, child: const Text('この会話を捨てる')),
+              if (canResume)
+                FilledButton(onPressed: onResume, child: const Text('続きから')),
+            ],
+          ),
         ],
       ),
     );
@@ -266,24 +689,99 @@ class _FailureBanner extends StatelessWidget {
     final text = switch (failure) {
       LiveFailure.noPermission => 'マイクを使う許可がありません',
       LiveFailure.network => 'ネットワークにつながりません',
-      LiveFailure.auth => 'APIキーが受け付けられませんでした',
+      LiveFailure.auth => '接続を確認できませんでした。少し待って、もう一度お試しください',
       LiveFailure.unknown => '続けられませんでした',
     };
 
     return Container(
       width: double.infinity,
-      color: c.weakChip,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: c.weakChip,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+      ),
       child: Row(
         children: [
           // 失敗の合図には ✗ を使ってよい。ここは生徒の理解の話ではない
           Icon(Icons.error_outline, size: 18, color: c.weakFg),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(text,
-                style: t.textTheme.bodyMedium?.copyWith(color: c.weakFg)),
+            child: Text(
+              text,
+              style: t.textTheme.bodyMedium?.copyWith(color: c.weakFg),
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 接続だけが成立しなかったときの、完全ローカルな学習継続導線。
+///
+/// マイク拒否なら文字Liveが使えるため出さない。枠切れにも出さない。
+/// 「オフラインでも理解判定できる」と誤認させず、行うことを練習に限定する。
+class _OfflinePracticeOffer extends StatelessWidget {
+  const _OfflinePracticeOffer({required this.onContinue});
+
+  final VoidCallback onContinue;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    final colors = context.appColors;
+    return Semantics(
+      container: true,
+      label: '接続できないため、端末内の文字練習を利用できます',
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+        decoration: BoxDecoration(
+          color: colors.coolSurface,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ExcludeSemantics(
+                  child: Icon(
+                    Icons.phonelink_lock_outlined,
+                    color: colors.onCoolSurface,
+                  ),
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    '会話につながらなくても、教材を閉じた練習は続けられます。',
+                    style: t.textTheme.bodyMedium?.copyWith(
+                      color: colors.onCoolSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              key: const ValueKey('continue-offline-practice'),
+              onPressed: onContinue,
+              icon: const Icon(Icons.edit_note_outlined),
+              label: const Text('端末内で練習を続ける'),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '入力は送信・保存せず、会話できる回数も使いません。',
+              style: t.textTheme.bodySmall?.copyWith(
+                color: colors.onCoolSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -310,15 +808,21 @@ class _IssueBanner extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      color: c.shakyChip,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: c.shakyChip,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+      ),
       child: Row(
         children: [
           Icon(Icons.mic_none, size: 18, color: c.shakyFg),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(text,
-                style: t.textTheme.bodySmall?.copyWith(color: c.shakyFg)),
+            child: Text(
+              text,
+              style: t.textTheme.bodySmall?.copyWith(color: c.shakyFg),
+            ),
           ),
         ],
       ),
@@ -340,8 +844,12 @@ class _EchoBanner extends StatelessWidget {
     final c = context.appColors;
     return Container(
       width: double.infinity,
-      color: c.shakyChip,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: c.shakyChip,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+      ),
       child: Row(
         children: [
           Icon(Icons.headphones, size: 18, color: c.shakyFg),
@@ -377,24 +885,155 @@ class _TurnLog extends StatelessWidget {
         alignment: Alignment.topCenter,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
-          child: Text(
-            'ボタンを押して、教えたいことを声で説明してください。',
-            style: Theme.of(context).textTheme.bodyMedium,
-            textAlign: TextAlign.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '知っていることを、教えてください。',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.jaWeight(FontWeight.w700),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 5),
+              Text(
+                '声でも文字でも、どちらでも大丈夫です。',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: rows.length,
-      itemBuilder: (context, i) {
-        final (isStudent, text) = rows[i];
-        final interim =
-            i == rows.length - 1 && live.interimStudentText.isNotEmpty && isStudent;
-        return _Bubble(isStudent: isStudent, text: text, interim: interim);
-      },
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+      child: Column(
+        children: [
+          for (var i = 0; i < rows.length; i++)
+            _Bubble(
+              isStudent: rows[i].$1,
+              text: rows[i].$2,
+              interim:
+                  i == rows.length - 1 &&
+                  live.interimStudentText.isNotEmpty &&
+                  rows[i].$1,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 最新の発話を見せつつ、読み返している人の位置は奪わない会話面。
+///
+/// 末尾にいるときだけ新しい発話へ追従する。上へ戻って読んでいる間は
+/// 自動スクロールせず、明示的なジャンプだけを出す。
+class _ConversationViewport extends StatefulWidget {
+  const _ConversationViewport({
+    required this.turnCount,
+    required this.interimLength,
+    required this.children,
+  });
+
+  final int turnCount;
+  final int interimLength;
+  final List<Widget> children;
+
+  @override
+  State<_ConversationViewport> createState() => _ConversationViewportState();
+}
+
+class _ConversationViewportState extends State<_ConversationViewport> {
+  static const _followDistance = 96.0;
+
+  final ScrollController _controller = ScrollController();
+  bool _showLatest = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_notePosition);
+  }
+
+  @override
+  void didUpdateWidget(_ConversationViewport oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final changed =
+        oldWidget.turnCount != widget.turnCount ||
+        oldWidget.interimLength != widget.interimLength;
+    if (!changed) return;
+
+    final wasAtLatest =
+        !_controller.hasClients ||
+        oldWidget.turnCount == 0 ||
+        _controller.position.extentAfter <= _followDistance;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_controller.hasClients) return;
+      if (wasAtLatest) {
+        _moveToLatest();
+      } else if (!_showLatest) {
+        setState(() => _showLatest = true);
+      }
+    });
+  }
+
+  void _notePosition() {
+    if (_showLatest &&
+        _controller.hasClients &&
+        _controller.position.extentAfter <= _followDistance) {
+      setState(() => _showLatest = false);
+    }
+  }
+
+  void _moveToLatest() {
+    if (!_controller.hasClients) return;
+    final target = _controller.position.maxScrollExtent;
+    if (ReduceMotionScope.of(context)) {
+      _controller.jumpTo(target);
+    } else {
+      unawaited(
+        _controller.animateTo(
+          target,
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+        ),
+      );
+    }
+    if (_showLatest) setState(() => _showLatest = false);
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_notePosition)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        ListView(
+          controller: _controller,
+          padding: EdgeInsets.zero,
+          children: widget.children,
+        ),
+        if (_showLatest)
+          Positioned(
+            right: 12,
+            bottom: 12,
+            child: FilledButton.tonalIcon(
+              onPressed: _moveToLatest,
+              icon: const Icon(Icons.arrow_downward),
+              label: const Text('新しい会話'),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -424,17 +1063,19 @@ class _Bubble extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         constraints: const BoxConstraints(maxWidth: 300),
         decoration: BoxDecoration(
-          color: isStudent ? scheme.secondaryContainer : scheme.surfaceContainer,
+          color: isStudent
+              ? context.appColors.coolSurface
+              : context.appColors.warmSurface,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: scheme.outlineVariant),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               isStudent ? 'あなた' : 'デキすぎ君',
-              style:
-                  t.textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+              style: t.textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 2),
             Text(
@@ -445,9 +1086,12 @@ class _Bubble extends StatelessWidget {
               ),
             ),
             if (interim)
-              Text('…変換中',
-                  style: t.textTheme.labelSmall
-                      ?.copyWith(color: scheme.onSurfaceVariant)),
+              Text(
+                '…変換中',
+                style: t.textTheme.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
           ],
         ),
       ),
@@ -456,9 +1100,10 @@ class _Bubble extends StatelessWidget {
 }
 
 class _Composer extends StatelessWidget {
-  const _Composer({required this.live});
+  const _Composer({required this.live, required this.onPause});
 
   final LiveSessionController live;
+  final VoidCallback onPause;
 
   @override
   Widget build(BuildContext context) {
@@ -467,32 +1112,43 @@ class _Composer extends StatelessWidget {
 
     return SafeArea(
       top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
+          border: Border(
+            top: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 音量は「聞こえている」を音より先に目で返す層。
-            // 高さぶんの場所は常に確保して、出たり消えたりで行が跳ねないようにする
+            Text(
+              '声でも文字でも、同じように教えられます。',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 7),
             SizedBox(height: 6, child: running ? _MicLevel(live: live) : null),
-            // **文字は音声と対等（C8）。** トグルで排他にしない。
-            // 切替式にすると「既定は音声」が残り、結局こちらが二級になる
+            // **文字は音声と対等（C8）。** 常に出し、切替式にしない。
             _TextInput(live: live),
-            const SizedBox(height: 10),
-            // 文字で始めた会話には、押した時点でマイクを足す。
-            // **最初からマイクを求めない**（C8。文字だけで済ませたい生徒がいる）
-            FilledButton.icon(
+            const SizedBox(height: 9),
+            OutlinedButton.icon(
               onPressed: busy
                   ? null
                   : running
-                      ? (live.hasMic ? live.stop : live.enableMic)
-                      : live.start,
-              icon: Icon(running
-                  ? (live.hasMic ? Icons.stop : Icons.mic)
-                  : Icons.mic),
-              label: Text(running
-                  ? (live.hasMic ? 'おわる' : '声でも話す')
-                  : '声ではなす'),
+                  ? (live.hasMic ? onPause : live.enableMic)
+                  : live.start,
+              icon: Icon(
+                running ? (live.hasMic ? Icons.pause : Icons.mic) : Icons.mic,
+              ),
+              label: Text(
+                running ? (live.hasMic ? 'いったんやめる' : '声でも話す') : '声ではなす',
+              ),
             ),
           ],
         ),
@@ -521,6 +1177,37 @@ class _TextInput extends StatefulWidget {
 class _TextInputState extends State<_TextInput> {
   final _controller = TextEditingController();
 
+  void _useStarter(String starter) {
+    if (_controller.text.trim().isNotEmpty) return;
+    _controller.value = TextEditingValue(
+      text: starter,
+      selection: TextSelection.collapsed(offset: starter.length),
+    );
+    setState(() {});
+  }
+
+  List<String> _starters() {
+    final key = widget.live.focusConceptKey;
+    if (key == null) return const [];
+    final phase = missionSnapshotFor(
+      conceptKey: key,
+      dossier: widget.live.dossier,
+      lastLureId: widget.live.lastLureId,
+    ).phase;
+    return switch (phase) {
+      MissionPhase.teach => [
+        switch (widget.live.tactic) {
+          TeachingTactic.example => 'たとえば、',
+          TeachingTactic.reason => '結論から言うと、',
+          TeachingTactic.experiment => 'やってみると、',
+        },
+      ],
+      MissionPhase.challenge => const ['条件をそろえると、', '違うと思う。なぜなら、', 'たとえば、'],
+      MissionPhase.resolve => const ['正しいのは、', '2つを比べると、', '理由は、'],
+      MissionPhase.clear => const [],
+    };
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -532,16 +1219,21 @@ class _TextInputState extends State<_TextInput> {
   bool _sending = false;
 
   Future<void> _send() async {
-    if (_sending) return;
+    if (_sending ||
+        widget.live.state == LiveState.connecting ||
+        widget.live.state == LiveState.outOfTime ||
+        widget.live.state == LiveState.done) {
+      return;
+    }
     final text = _controller.text;
     if (text.trim().isEmpty) return;
 
     setState(() => _sending = true);
-    // 先に消す。送信が遅いあいだ入力欄に残っていると、
-    // 生徒が「送れていない」と思ってもう一度押す
-    _controller.clear();
     try {
-      await widget.live.sendStudentText(text);
+      final sent = await widget.live.sendStudentText(text);
+      // 接続できなかったときは、書いた文を無言で失わせない。
+      // 送信中は入力自体を無効にしているので、成功後に消しても二重送信しない。
+      if (sent) _controller.clear();
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -549,34 +1241,66 @@ class _TextInputState extends State<_TextInput> {
 
   @override
   Widget build(BuildContext context) {
+    final canSend =
+        !_sending &&
+        widget.live.state != LiveState.connecting &&
+        widget.live.state != LiveState.outOfTime &&
+        widget.live.state != LiveState.done;
+
+    final starters = _starters();
     return Padding(
       padding: const EdgeInsets.only(top: 8),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              enabled: !_sending,
-              textInputAction: TextInputAction.send,
-              minLines: 1,
-              maxLines: 4,
-              onSubmitted: (_) => _send(),
-              decoration: const InputDecoration(
-                // 48dp を割らせない（DESIGN.md: 主要操作は 48dp 以上）。
-                // isDense を外して既定の高さに戻すのではなく、明示して固定する
-                constraints: BoxConstraints(minHeight: 48),
-                border: OutlineInputBorder(),
-                hintText: '文字で説明する',
+          if (starters.isNotEmpty) ...[
+            Text(
+              '考え始めるヒント  /  タップしても送信されません',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          IconButton.filled(
-            onPressed: _sending ? null : _send,
-            icon: const Icon(Icons.send),
-            tooltip: '送る',
-            // 既定は 40dp なので明示して広げる
-            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final starter in starters)
+                  ActionChip(
+                    label: Text(starter),
+                    onPressed: canSend ? () => _useStarter(starter) : null,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 7),
+          ],
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  enabled: canSend,
+                  textInputAction: TextInputAction.send,
+                  minLines: 1,
+                  maxLines: 4,
+                  onSubmitted: (_) => _send(),
+                  decoration: const InputDecoration(
+                    // 48dp を割らせない。主要操作は48dp以上を保つ。
+                    // isDense を外して既定の高さに戻すのではなく、明示して固定する
+                    constraints: BoxConstraints(minHeight: 48),
+                    hintText: '文字で説明する',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filled(
+                onPressed: canSend ? _send : null,
+                icon: const Icon(Icons.send),
+                tooltip: '送る',
+                // 既定は 40dp なので明示して広げる
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+              ),
+            ],
           ),
         ],
       ),

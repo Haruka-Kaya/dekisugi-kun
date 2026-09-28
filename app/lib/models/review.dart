@@ -6,18 +6,26 @@ enum ReviewReason {
   notCorrected,
 
   /// 説明が薄いまま（条件や理由が抜けている）
-  thin;
+  thin,
 
-  static ReviewReason parse(Object? v) =>
-      v == 'notCorrected' ? ReviewReason.notCorrected : ReviewReason.thin;
+  /// 時間切れなどで、説明と訂正の決着まで到達しなかった。
+  /// 「できなかった」と断定せず、続きのREPAIRへ戻す。
+  notFinished;
+
+  static ReviewReason parse(Object? v) => switch (v) {
+    'notCorrected' => ReviewReason.notCorrected,
+    'notFinished' => ReviewReason.notFinished,
+    _ => ReviewReason.thin,
+  };
 
   String get wire => name;
 
   /// 生徒に見せる文。**責めない。**
   String get label => switch (this) {
-        ReviewReason.notCorrected => 'もう一度たしかめたいところ',
-        ReviewReason.thin => 'あと少しで説明しきれるところ',
-      };
+    ReviewReason.notCorrected => 'もう一度たしかめたいところ',
+    ReviewReason.thin => 'あと少しで説明しきれるところ',
+    ReviewReason.notFinished => '続きから決着をつけるところ',
+  };
 }
 
 /// 次に見直す1件。
@@ -56,41 +64,43 @@ class ReviewItem {
   final DateTime? lastReviewedAt;
 
   /// 何日後に見直すか（[nextGap] の結果）を足した日。
-  DateTime dueAt(Duration gap) => lastSeen.add(gap);
+  /// 遅れて見直した後も古い会話日を基準にすると、操作直後から期限超過に
+  /// 戻ってしまう。実際に見直した日を優先する。
+  DateTime dueAt(Duration gap) => (lastReviewedAt ?? lastSeen).add(gap);
 
   ReviewItem copyWith({int? timesSeen, DateTime? lastReviewedAt}) => ReviewItem(
-        unitId: unitId,
-        conceptKey: conceptKey,
-        label: label,
-        reason: reason,
-        lastSeen: lastSeen,
-        timesSeen: timesSeen ?? this.timesSeen,
-        lastReviewedAt: lastReviewedAt ?? this.lastReviewedAt,
-      );
+    unitId: unitId,
+    conceptKey: conceptKey,
+    label: label,
+    reason: reason,
+    lastSeen: lastSeen,
+    timesSeen: timesSeen ?? this.timesSeen,
+    lastReviewedAt: lastReviewedAt ?? this.lastReviewedAt,
+  );
 
   Map<String, Object?> toRow() => {
-        'unit_id': unitId,
-        'concept_key': conceptKey,
-        'label': label,
-        'reason': reason.wire,
-        'last_seen': lastSeen.millisecondsSinceEpoch,
-        'times_seen': timesSeen,
-        'last_reviewed_at': lastReviewedAt?.millisecondsSinceEpoch,
-      };
+    'unit_id': unitId,
+    'concept_key': conceptKey,
+    'label': label,
+    'reason': reason.wire,
+    'last_seen': lastSeen.millisecondsSinceEpoch,
+    'times_seen': timesSeen,
+    'last_reviewed_at': lastReviewedAt?.millisecondsSinceEpoch,
+  };
 
   factory ReviewItem.fromRow(Map<String, Object?> row) => ReviewItem(
-        unitId: row['unit_id'] as String? ?? '',
-        conceptKey: row['concept_key'] as String? ?? '',
-        label: row['label'] as String? ?? '',
-        reason: ReviewReason.parse(row['reason']),
-        lastSeen: DateTime.fromMillisecondsSinceEpoch(
-            (row['last_seen'] as int?) ?? 0),
-        timesSeen: (row['times_seen'] as int?) ?? 0,
-        lastReviewedAt: row['last_reviewed_at'] == null
-            ? null
-            : DateTime.fromMillisecondsSinceEpoch(
-                row['last_reviewed_at'] as int),
-      );
+    unitId: row['unit_id'] as String? ?? '',
+    conceptKey: row['concept_key'] as String? ?? '',
+    label: row['label'] as String? ?? '',
+    reason: ReviewReason.parse(row['reason']),
+    lastSeen: DateTime.fromMillisecondsSinceEpoch(
+      (row['last_seen'] as int?) ?? 0,
+    ),
+    timesSeen: (row['times_seen'] as int?) ?? 0,
+    lastReviewedAt: row['last_reviewed_at'] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(row['last_reviewed_at'] as int),
+  );
 }
 
 /// カルテから復習に回すものを取り出す。
@@ -105,13 +115,15 @@ List<ReviewItem> reviewItemsOf(Dossier dossier, DateTime now) {
         ? ReviewReason.notCorrected
         : (s.status == SlotStatus.thin ? ReviewReason.thin : null);
     if (reason == null) continue;
-    out.add(ReviewItem(
-      unitId: dossier.unitId,
-      conceptKey: s.key,
-      label: s.label,
-      reason: reason,
-      lastSeen: now,
-    ));
+    out.add(
+      ReviewItem(
+        unitId: dossier.unitId,
+        conceptKey: s.key,
+        label: s.label,
+        reason: reason,
+        lastSeen: now,
+      ),
+    );
   }
   return out;
 }

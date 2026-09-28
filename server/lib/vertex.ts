@@ -15,9 +15,12 @@ import { GoogleAuth, type JWTInput } from 'google-auth-library'
  * デキすぎ君は中高生向けだと明言している製品なので、真正面から当たる。
  * 有料/無料の区別より前の条項なので、課金しても外れない。
  *
- * Vertex AI は Google Cloud Platform 規約の下にあり、同じ条項が見当たらない。
- * **ただし「見当たらない」は「使ってよい」の証明ではない。**
- * 公開前に一次情報で裏を取ること。詳細は `docs/age-restriction.md`。
+ * 現行の Google Cloud Service Specific Terms §20(d) は、18歳未満向け、
+ * または18歳未満がアクセスする可能性が高いサービスでの生成AI利用を禁止する。
+ * Services Summary は Vertex AI API / Vertex AI Live API を対象に含めているため、
+ * 中高生向けの本製品では Vertex 経路も利用不可。年齢ゲート、学校承認、保護者同意では
+ * 解消しない。18歳以上の開発確認に限り、未成年・学校経路は fail-closed にすること。
+ * 詳細は `docs/age-restriction.md`。
  *
  * ## 資格情報の置き場
  *

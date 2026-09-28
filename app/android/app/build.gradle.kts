@@ -13,11 +13,40 @@ plugins {
 // 鍵を失うと、既存の利用者はもう更新を受け取れない。
 // Play App Signing に登録していても、アップロード鍵を失えば
 // 再登録の手続きが要る。**別媒体に退避すること。**
+val keyPropertiesFile = providers.gradleProperty("dekisugiReleaseKeyProperties")
+    .orNull
+    ?.let { file(it) }
+    ?: rootProject.file("key.properties")
 val keyProperties = Properties().apply {
-    val f = rootProject.file("key.properties")
-    if (f.exists()) f.inputStream().use { load(it) }
+    if (keyPropertiesFile.isFile) {
+        keyPropertiesFile.inputStream().use { load(it) }
+    }
 }
-val hasReleaseKey = keyProperties.getProperty("storeFile") != null
+val requiredReleaseKeyProperties = listOf(
+    "storeFile",
+    "storePassword",
+    "keyAlias",
+    "keyPassword",
+)
+val missingReleaseKeyProperties = requiredReleaseKeyProperties.filter {
+    keyProperties.getProperty(it).isNullOrBlank()
+}
+val releaseStoreFile = keyProperties.getProperty("storeFile")
+    ?.takeIf { it.isNotBlank() }
+    ?.let { file(it) }
+val releaseSigningFailure = when {
+    !keyPropertiesFile.isFile ->
+        "Android release署名設定がありません。" +
+            "android/key.propertiesを用意するか、" +
+            "-PdekisugiReleaseKeyProperties=<path>を指定してください。"
+    missingReleaseKeyProperties.isNotEmpty() ->
+        "Android release署名設定が不足しています: " +
+            missingReleaseKeyProperties.joinToString(", ")
+    releaseStoreFile?.isFile != true ->
+        "Android release署名鍵のstoreFileが存在しません。"
+    else -> null
+}
+val hasReleaseSigning = releaseSigningFailure == null
 
 android {
     namespace = "jp.dekisugi.dekisugi"
@@ -45,9 +74,9 @@ android {
     }
 
     signingConfigs {
-        if (hasReleaseKey) {
+        if (hasReleaseSigning) {
             create("release") {
-                storeFile = file(keyProperties.getProperty("storeFile"))
+                storeFile = releaseStoreFile
                 storePassword = keyProperties.getProperty("storePassword")
                 keyAlias = keyProperties.getProperty("keyAlias")
                 keyPassword = keyProperties.getProperty("keyPassword")
@@ -57,17 +86,29 @@ android {
 
     buildTypes {
         release {
-            // 鍵が無い環境（CI・他人のクローン）では debug 署名のまま通す。
-            // **配布前に必ず署名者を確かめること** —
-            // CN=Android Debug のまま出すと Play に弾かれるか、
-            // 弾かれなかった場合はもっと悪い（更新できない鍵で公開してしまう）。
-            //   apksigner verify --print-certs <apk>
-            signingConfig = if (hasReleaseKey) {
+            // releaseをdebug鍵へfallbackさせない。鍵が無いclean CIでは
+            // debug APKだけを作り、release要求は下のtask graph guardで明示失敗する。
+            signingConfig = if (hasReleaseSigning) {
                 signingConfigs.getByName("release")
             } else {
-                signingConfigs.getByName("debug")
+                null
             }
         }
+    }
+}
+
+// configuration自体はdebug CIでも通す一方、配布artifactを作るtaskだけは
+// key.properties・全4項目・実在keystoreのどれかが欠ければ開始前に止める。
+val appProjectPath = project.path
+gradle.taskGraph.whenReady {
+    val releaseArtifactRequested = allTasks.any { task ->
+        task.project.path == appProjectPath &&
+            (task.name == "assembleRelease" ||
+                task.name == "bundleRelease" ||
+                task.name.startsWith("packageRelease"))
+    }
+    if (releaseArtifactRequested && releaseSigningFailure != null) {
+        throw GradleException(releaseSigningFailure)
     }
 }
 

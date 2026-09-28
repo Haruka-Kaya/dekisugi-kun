@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import '../models/mission.dart';
 import 'device_identity.dart';
 
 /// 会話を始めるための資格情報をサーバから受け取る。
@@ -11,17 +12,17 @@ import 'device_identity.dart';
 ///
 /// つまり1回もらう＝約10分ぶん。だから枠は**セッション数**で数える。
 class LiveTokenClient {
-  LiveTokenClient({
-    required this.baseUrl,
-    required this.identity,
-    Dio? dio,
-  }) : _dio = dio ??
-            Dio(BaseOptions(
+  LiveTokenClient({required this.baseUrl, required this.identity, Dio? dio})
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
               connectTimeout: const Duration(seconds: 10),
               receiveTimeout: const Duration(seconds: 20),
               headers: {'Content-Type': 'application/json'},
               validateStatus: (_) => true,
-            ));
+            ),
+          );
 
   final String baseUrl;
   final DeviceIdentity identity;
@@ -41,17 +42,31 @@ class LiveTokenClient {
   /// Vertex は約10分でセッションを切るので、渡さないと10分ごとに
   /// 生徒の残り回数が1つずつ減っていく。
   /// ハンドルは `setupConfig` に焼き込むのがサーバの仕事で、端末は渡すだけ。
-  Future<LiveGrant> reserve(String unitId, {String? resumeHandle}) async {
+  Future<LiveGrant> reserve(
+    String unitId, {
+    String? resumeHandle,
+    String? focusConceptKey,
+    TeachingTactic tactic = TeachingTactic.reason,
+    MissionKind missionKind = MissionKind.teach,
+  }) async {
     if (!isConfigured) throw const LiveTokenUnavailable('接続先が設定されていません');
 
     final res = await _send(
-      (h) => _dio.post<Object?>('$baseUrl/api/live-token',
-          data: {
-            'unitId': unitId,
-            // null なら項目ごと落ちる
-            'resumeHandle': ?resumeHandle,
-          },
-          options: Options(headers: h)),
+      (h) => _dio.post<Object?>(
+        '$baseUrl/api/live-token',
+        data: {
+          'unitId': unitId,
+          // きょう扱う1概念。省略時だけ従来どおり単元全体を扱う。
+          'focusConceptKey': ?focusConceptKey,
+          // 初回・組み直し・後日の具体場面で、AIの最初の問いも変える。
+          'missionKind': missionKind.wire,
+          // 教材で本人が選んだ説明の足場。CASEはControllerがreasonへ固定する。
+          'teachingTactic': tactic.wire,
+          // null なら項目ごと落ちる
+          'resumeHandle': ?resumeHandle,
+        },
+        options: Options(headers: h),
+      ),
     );
     final data = (res.data as Map?)?.cast<String, dynamic>();
 
@@ -69,23 +84,29 @@ class LiveTokenClient {
     final model = data['model'] as String?;
     final setup = (data['setupConfig'] as Map?)?.cast<String, dynamic>();
     // **中身が足りないまま繋ぎにいかない。** 原因の分からない接続失敗になる
-    if (token == null || token.isEmpty ||
-        wsUrl == null || !wsUrl.startsWith('wss://') ||
-        model == null || model.isEmpty ||
-        setup == null || setup.isEmpty) {
+    if (token == null ||
+        token.isEmpty ||
+        wsUrl == null ||
+        !wsUrl.startsWith('wss://') ||
+        model == null ||
+        model.isEmpty ||
+        setup == null ||
+        setup.isEmpty) {
       throw const LiveTokenUnavailable('資格情報の中身が足りません');
     }
 
     return LiveGrant(
       // 無ければ固定の合図に落とす（古いサーバ相手でも会話は成立させる）
-      directorPrefix: (data['directorPrefix'] as String?)?.trim().isNotEmpty == true
+      directorPrefix:
+          (data['directorPrefix'] as String?)?.trim().isNotEmpty == true
           ? data['directorPrefix'] as String
           : '[DIRECTOR]',
       token: token,
       wsUrl: wsUrl,
       model: model,
       setupConfig: setup,
-      expiresAt: DateTime.tryParse(data['expiresAt'] as String? ?? '') ??
+      expiresAt:
+          DateTime.tryParse(data['expiresAt'] as String? ?? '') ??
           DateTime.now().add(const Duration(minutes: 30)),
       sessionMinutes: (data['sessionMinutes'] as num?)?.toInt() ?? 10,
       remainingSessions: (data['remainingSessions'] as num?)?.toInt(),
@@ -104,7 +125,10 @@ class LiveTokenClient {
     if (!isConfigured) return null;
     try {
       final res = await _send(
-        (h) => _dio.get<Object?>('$baseUrl/api/live-token', options: Options(headers: h)),
+        (h) => _dio.get<Object?>(
+          '$baseUrl/api/live-token',
+          options: Options(headers: h),
+        ),
       );
       final data = (res.data as Map?)?.cast<String, dynamic>();
       if (res.statusCode != 200 || data == null) return null;

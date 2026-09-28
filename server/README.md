@@ -2,26 +2,78 @@
 
 会話の裏で理解カルテを更新し、次の一手を決める。**状態を持たない。**
 
+> [!CAUTION]
+> **このworktreeの実装では**生成AI入口を公開環境で強制停止する。ローカルまたはVercel developmentで
+> `DEKISUGI_INTERNAL_AI_TESTING=1` の場合だけ `/api/live-token`、`/api/director`を開く。
+> production / preview、および `NODE_ENV=production` はフラグがあっても解除できず、認証後に
+> `503 {"error":"generative_ai_unavailable"}` を返し、rate・quota・Googleを呼ばない。
+> 学校や年齢による例外設定はない。公開再開にはレビュー付きのコード変更が必要。
+>
+> **2026-08-10現在、この停止差分はVercel productionへ未デプロイ。**
+> 稼働中の旧本番は `GET /api/live-token` が200を返すことを読み取りで確認済み。
+> 明示承認後に緊急停止のみを分離デプロイし、実APIの503を確認するまで
+> 「本番は停止済み」と扱わない。
+
+学校向けTeam API（admin / join / leave / summary / contribution）もproduction / preview、
+および `NODE_ENV=production` では無条件に `503 {"error":"school_features_unavailable"}` を返す。ローカルまたはVercel
+developmentで `DEKISUGI_INTERNAL_SCHOOL_TESTING=1` の場合だけ開き、AI用フラグとは分離する。
+こちらも公開再開は環境変数操作ではなく、DPA・学校契約の確認を伴うコードレビューで行う。
+
+RevenueCatへ個人・端末データを送る入口も別のguardで強制停止する。
+`/api/subscription-sync`、`/api/revenuecat-webhook` はproduction / preview、および
+`NODE_ENV=production`で無条件に`503 {"error":"restricted_data_processing_unavailable"}`を返す。
+
+匿名アンケートだけは別境界で、`DEKISUGI_ANONYMOUS_SURVEY_ENABLED=1`の環境に限りPOSTを開く。
+kindごとのexact schema、64KiB上限、匿名session 12件/時、全体240件/時、種類5000件上限を適用し、
+IP・User-Agent・言語・viewport・client時刻は保存しない。氏名・学校名・連絡先fieldを拒否し、
+自由記述は入力どおり保存されると明示して個人情報を書かないよう案内する。回答一覧は
+最後の新着から90日でRedis keyごと失効する。GET / DELETEは管理トークン必須で、
+成功時はglobal件数でなくopaque receiptだけを返す。
+
+### 外部契約を使わないLAN social
+
+実在する別端末間のフレンズクエストと週次リーグは、上記Team APIやUpstashを
+再開せず、管理PC上のLAN coordinatorとして分離している。`server/api/`外なので
+VercelへFunction deployされない。自己署名TLSを生成し、Flutterが参加コード内の
+SHA-256 fingerprintをpinする。詳細と起動方法は
+[LAN social設計](../docs/lan-social-2026.md)を参照する。
+
+管理PC向けにはmacOS arm64 / Windows x64 / Linux x64のNode SEA artifactを生成するworkflowがあり、実行先へ
+repo、Node.js、npm、OpenSSLを要求しない。build・smokeは`npm run social:binary`と
+`npm run social:binary:smoke`。macOS / Linuxは実行権限を保持するtar.gz、Windowsはzipへ固め、
+`npm run social:binary:reproducible`で連続buildに加え、別の一時source directoryからも
+SEA本体とarchive双方のSHA-256が一致することを確認する。
+buildにはSEAを有効にした公式Node.js 26.5以上を使う。Homebrew版Nodeで
+`Single executable application is disabled`になる場合は、公式配布binaryを
+`DEKISUGI_SEA_NODE=/absolute/path/to/node`で指定する。GitHub Actionsは
+`actions/setup-node`の公式Node.js 26.7.0を使う。
+Node SEAが現在サポートしないmacOS x64はartifact対象に含めず、Intel Macでは
+Node.jsを入れたsource起動を使う。
+署名・notarize前のため現状はpilot用で、学校配布済みとは扱わない。
+
 ```
 端末（Flutter）
  ├─ Gemini Live へ WebSocket 直結（音声はここを通らない）
  ├─ 逐語・理解カルテを端末が保持
  └─ POST /api/director  { unitId, dossier, utterances, secondsLeft, turnCount }
-                     →  { corrections, dossier, nextInstruction, lureId, shouldEnd, endReason }
+                     →  { corrections, dossier, nextInstruction, lureId, lureText, shouldEnd, endReason }
 
 Vercel（ステートレス）
- ├─ GET  /api/units     … 単元カタログと空のカルテ
- └─ POST /api/director  … カルテ更新 + 次の一手
+├─ GET  /api/units     … 単元カタログと空のカルテ
+├─ POST /api/director  … カルテ更新 + 次の一手
+├─ POST /api/subscription-sync … RevenueCat から Plus を再照会（公開環境は停止）
+├─ POST /api/revenuecat-webhook … Plus 状態変更の受信（公開環境は停止）
+└─ POST /api/survey    … 明示switch付き匿名アンケート回答の保存
 ```
 
 理解カルテは「1台の端末が持つ1つの会話」の状態なので、端末が持ってリクエストごとに送る。
-**DB もセッションもロックも要らない。**
+会話内容のDBは持たない。利用枠・再開窓・Plus entitlement の運用状態だけを KV に持つ。
 
 ## 動かす
 
 ```powershell
 npm install
-npm test          # 56件。ネットワーク不要
+npm test          # ネットワーク不要
 npm run test:live # 実際の Gemini に通す（GEMINI_API_KEY が要る）
 ```
 
@@ -65,45 +117,63 @@ npm run test:live # 実際の Gemini に通す（GEMINI_API_KEY が要る）
 
 ## デプロイ
 
-```powershell
-vercel login          # 人手が要るのはここだけ
-vercel link
-vercel env add GEMINI_API_KEY production
-vercel env add DIRECTOR_TOKEN production
-vercel deploy --prod
-```
+次にproductionへデプロイしてよいのは、上記の強制停止を反映する緊急停止リリースだけ。
+公開AI・学校機能・制限対象データ処理を再開するデプロイは行わない。production反映は
+差分レビューと明示承認を受け、反映後に各APIが`503`であることを確認する。
+
+18歳以上に限定した内部開発確認では、ローカルまたはVercel developmentにだけ
+`DEKISUGI_INTERNAL_AI_TESTING=1` を設定できる。production / preview、または
+`NODE_ENV=production` では同じ値を設定しても開かない。
+公開再開は環境変数操作では行わず、規約確認を伴うレビュー付きコード変更で判断する。
+
+制限対象データ処理を内部確認するときも、ローカルまたはVercel developmentだけに
+`DEKISUGI_INTERNAL_RESTRICTED_DATA_TESTING=1` を設定する。production / previewでは同じ値を
+設定しても開かない。AI・学校Teamの内部テストフラグとは独立している。
 
 端末側にはデプロイ先を渡す:
 
 ```powershell
-pwsh ..\tools\run-dev.ps1 -DirectorUrl https://xxxx.vercel.app -DirectorToken xxxx
+pwsh ..\tools\run-dev.ps1 -ServerUrl http://localhost:3000
 ```
 
-## 無料の上限（1日15分）
+## 利用枠（無料は1日2セッション）
+
+以下は許可された内部テスト環境だけで動作する。停止中は残数照会を含め503となり、
+枠・レート制限・再開窓を一切消費しない。
 
 ```
-POST /api/live-token  → 会話用の一時トークン（寿命 = 与えた会話時間）
-GET  /api/live-token  → 今日あと何分使えるか（引かずに見るだけ）
+POST /api/live-token  → 会話用のアクセストークンを発行し、1枠引く
+GET  /api/live-token  → 今日あと何回始められるかを、引かずに返す
 ```
+
+内部`realtimeGrantHandler`は既存Vertex経路を置換せずに検証する移行候補で、
+Vercel Functionとしては配備していない。OpenAI標準API keyを端末へ返さず、
+`/v1/realtime/client_secrets`で作った短命credentialだけを返す契約をtestする。
+`OPENAI_API_KEY`、OpenAI側で確認済みのZDRを表す
+`OPENAI_REALTIME_ZDR_APPROVED=1`、専用HMAC鍵
+`OPENAI_SAFETY_IDENTIFIER_SECRET`の全てが必要で、どれか欠ければrate・quotaより前に503となる。
+Flutterとのgrant契約と未成年向けの未完了条件は
+[OpenAI Realtime移行境界](../docs/openai-realtime-migration.md)に固定する。
+client secretは30秒で失効させるが、公式仕様上は期限内の複数session作成とclient側のsession設定
+上書きが可能であるため、この経路単体を公開用の費用・学習persona強制境界とは扱わない。
 
 ### なぜ端末側で回避できないか
 
-**APIキーはサーバにしか無い。** 端末が持つのは一時トークンだけで、
-その**期限が来るとセッションごと切られる**。
-
-実測: 寿命60秒のトークンで接続 → 58秒後に `code=1011 reason=auth token has expired`。
-期限後に発話を送っても音声は 0 バイト。
-
-→ **渡すトークンの寿命 ＝ 与えた会話時間**。端末が何を申告しても超えられない。
+**資格情報はサーバにしか無い。** 端末は `/api/live-token` を通さないと会話を始められない。
+Vertex のアクセストークン自体は約60分有効で、会話時間のタイマーには使えない。
+Vertex がセッションを約9分で切る実測と、トークン発行回数の記録を組み合わせて上限を作る。
 
 | 値 | |
 |---|---|
-| 無料枠 | 15分/日（日本時間0時に戻る） |
-| 1回に渡す最大 | 10分 |
-| 渡す最小 | 2分（それ未満は繋いだ瞬間に切れて体験が壊れる） |
+| 無料枠 | 2セッション/日（日本時間0時に戻る） |
+| 1セッション | およそ10分。切断時は12分の窓内で最大3回まで再開 |
+| Plus | RevenueCat が有効と確認した期間は日次の会話枠なし |
 
-**先に引いてから渡す。** 渡してから引くと、途中で落ちたときに
-使われたのに引かれていない時間が残る。
+**先に1枠引いてからトークンを渡す。** 途中切断は、開いた再開窓の中で回数を制限して戻す。
+
+Plus は端末が申告する entitlement を信じない。許可された内部テスト環境では
+`/api/subscription-sync` と webhook を受けたサーバーが、RevenueCat REST API から現在値を
+読み直して付与・取消する。公開環境では制限対象データ処理guardが先に503を返す。
 
 ### 会話設定はサーバが持つ
 
@@ -120,6 +190,9 @@ GET  /api/live-token  → 今日あと何分使えるか（引かずに見るだ
 | 何 | 状態 |
 |---|---|
 | 端末ごとの署名付きトークン（`/api/register`） | 稼働中 |
+| 生成AI全体guard（production / preview / `NODE_ENV=production`は解除不能） | **強制停止** |
+| 制限対象データ処理guard（subscription / webhook） | **強制停止** |
+| 匿名survey専用guard（exact schema / session rate / receipt） | **明示switch** |
 | レート制限（端末 80/時・400/日、全体 20000/日） | **Upstash Redis で稼働中** |
 | 本人確認・アカウント | **無い**（段階5 の範囲外） |
 
