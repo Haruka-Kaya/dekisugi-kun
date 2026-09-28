@@ -3,57 +3,69 @@
 Most study apps stop at the right answer — this one starts from what you can teach.
 
 2
-00:00:03,000 --> 00:00:08,000
-A middle-school science app where students teach an AI companion.
+00:00:03,000 --> 00:00:06,200
+Airplane mode on — the whole loop still runs.
 
 3
-00:00:08,000 --> 00:00:12,000
-Your turn to teach — the textbook is hidden while you explain.
+00:00:06,200 --> 00:00:09,270
+No LLM, no cloud — nothing a student writes leaves the device.
 
 4
-00:00:12,000 --> 00:00:20,000
-{\an8}On-device check: did the key ideas make it into your explanation?
+00:00:09,270 --> 00:00:14,270
+A middle-school science app where students teach an AI companion.
 
 5
-00:00:20,000 --> 00:00:30,000
-{\an8}Miss them and he asks for more — no points lost, just another try.
+00:00:14,270 --> 00:00:18,270
+Your turn to teach — the textbook is hidden while you explain.
 
 6
-00:00:33,000 --> 00:00:40,000
-{\an8}The key terms he caught, chip by chip.
+00:00:18,270 --> 00:00:26,270
+{\an8}On-device check: did the key ideas make it into your explanation?
 
 7
-00:00:40,000 --> 00:00:44,500
-{\an8}Then he asks a cataloged follow-up — never a free-form chat.
+00:00:26,270 --> 00:00:36,270
+{\an8}Miss them and he asks for more — no points lost, just another try.
 
 8
-00:00:44,500 --> 00:00:49,000
-Pick the answer that matches what he believes…
+00:00:39,270 --> 00:00:46,270
+{\an8}The key terms he caught, chip by chip.
 
 9
-00:00:49,000 --> 00:00:55,000
-A miss costs a heart, records the gap, and triggers a hint — never the answer.
+00:00:46,270 --> 00:00:50,770
+{\an8}Then he asks a cataloged follow-up — never a free-form chat.
 
 10
-00:00:55,000 --> 00:00:60,500
-{\an8}Re-explain with the hint — same method, second try.
+00:00:50,770 --> 00:00:55,270
+Pick the answer that matches what he believes…
 
 11
-00:00:60,500 --> 00:00:70,000
-{\an8}Compare it against the textbook yourself.
+00:00:55,270 --> 00:01:01,270
+A miss costs a heart, records the gap, and triggers a hint — never the answer.
 
 12
-00:00:70,000 --> 00:00:78,700
-Only progress is recorded — the explanation itself is never stored.
+00:01:01,270 --> 00:01:06,770
+{\an8}Re-explain with the hint — same method, second try.
 
 13
-00:00:78,700 --> 00:00:90,500
-{\an8}The miss you just saw is already on his karte.
+00:01:06,770 --> 00:01:16,270
+{\an8}Compare it against the textbook yourself.
 
 14
-00:00:90,500 --> 00:00:99,500
-{\an8}Plus perk: a parent-ready report of what your teaching fixed.
+00:01:16,270 --> 00:01:24,970
+Only progress is recorded — the explanation itself is never stored.
 
 15
-00:00:99,500 --> 00:00:111,500
+00:01:24,970 --> 00:01:31,000
+{\an8}The miss you just saw is already on his karte.
+
+16
+00:01:31,000 --> 00:01:36,770
+{\an8}All 29 — cataloged from real classroom surveys.
+
+17
+00:01:36,770 --> 00:01:45,770
+{\an8}Plus perk: a parent-ready report of what your teaching fixed.
+
+18
+00:01:45,770 --> 00:01:57,770
 {\an8}Plus via RevenueCat — store unreachable, so buying stays blocked.

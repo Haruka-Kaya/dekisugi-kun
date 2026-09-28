@@ -110,8 +110,10 @@ and the entire learning loop is free.
 
 ## Demo video notes
 
-The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v4.mp4`, ~110s) opens
-with a short hook card, then shows
+The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v4.mp4`, ~118s) opens
+with a short hook card, then a beat filmed in airplane mode: the teach-back
+loop still types, checks key terms, and responds — the whole loop is
+on-device, no LLM, no cloud, nothing a student writes leaves the phone. Then
 the current build running on an Android emulator in portrait: the learning path,
 a TEACH BACK node, an explanation, the on-device key-term coverage check, the
 required re-read, the companion's fixed follow-up question, the 3-choice
