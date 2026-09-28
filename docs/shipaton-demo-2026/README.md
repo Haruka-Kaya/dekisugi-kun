@@ -8,7 +8,7 @@ to end on a real Android runtime: the quest
 map, a TEACH BACK node (mass conservation), a text explanation, the required
 re-read, Dekisugi-kun's fixed follow-up question, the 3-choice correction,
 the own-words-vs-textbook comparison, completion unlocking the next node,
-and the profile → デキすぎ君のカルテ screen (29 misconceptions, corrected /
+and the profile → デキすぎ君のカルテ screen (32 misconceptions, corrected /
 wavering / untouched states).
 
 The matching caption source is `shipaton-demo-v3-captions.en.srt`.

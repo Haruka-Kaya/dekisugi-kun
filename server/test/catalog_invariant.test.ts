@@ -77,7 +77,10 @@ const EXPECTED_STORY_SIGNATURES = {
   massConservation: ['消えた1.1グラムの密室', '理科室の測定記録。開いた容器と密閉袋で同じ反応をさせた二つの表が残る。', '消えた質量、実は窓から出ていった二酸化炭素でした。密室でも何でもない！'],
   electrolyte: ['消えた豆電球の容疑者たち', '理科室の資料机。食塩水では光り、砂糖水では消えた豆電球の実験記録と写真が並ぶ。', '甘さ仮説は溶解！真犯人は「イオンがいるかどうか」でした。'],
   acidAlkali: ['三色に分かれた液の身元', '放送室の資料画面。3つの液にBTB溶液を加えた記録で、黄・緑・青に分かれている。', '黄色はレモン味のサインじゃなくて、水素イオンのサインでした。飲まなくてよかった！'],
-  neutralizationBattery: ['果物電池に宿った電気の行方', '図書室の資料端末。レモンに亜鉛板と銅板を差して電流が流れた記録と、乾電池の写真がある。', '電気は果汁に宿ってたんじゃなくて、金属たちの「なりたさ」の差で流れてました。レモンさん、疑ってごめん！'],
+  neutralizationBattery: ['果物電池に宿った電気の行方', '図書室の資料端末。レモンに亜鉛板と銅板を差して電流が流れた記録と、乾電池の写真がある。', '電気は果汁に宿ってたんじゃなくて、金属たちの「なりたさ」の差で流れてました。レモンさん、疑ってごめん！'],  reproduction: ['親そっくり署のジャガイモ偽装事件', '理科準備室の棚。発芽したジャガイモと、受精して育つカエルの観察記録が並んでいる。', 'ジャガイモは恋しなくても増えるってことか！親そっくり署、無性生殖の線で結論です！'],
+  heredity: ['しわしわ種子の突然復帰事件', '理科準備室の実験台。エンドウの交配記録カードが広げられ、丸の親からしわの子が出た一行が強調されている。', 'しわは消えてなかった！親の中にかくれて、孫でカムバック。記録係さんごめん、君は正しかった！'],
+  evolution: ['化石ラインナップの順番入れ替え事件', '放課後の理科室。地層ごとの化石写真が時代順に並べられ、古い層と新しい層で姿が違うことが確認されている。', '努力で首が伸びたんじゃなくて、長い首の仲間が多く残ったのか！キリンさん、頑張り屋さんでごめん！'],
+
 } as const
 
 type PublicConcept = {
@@ -168,8 +171,8 @@ describe('学習ミッションのカタログ不変条件', () => {
       'earth-history': ['strataRelativeAge', 'volcanoEarthquakes', 'dailyMotionSeasons'],
     } as const
 
-    assert.equal(UNITS.length, 10)
-    assert.equal(UNITS.flatMap((unit) => unit.concepts).length, 29)
+    assert.equal(UNITS.length, 11)
+    assert.equal(UNITS.flatMap((unit) => unit.concepts).length, 32)
     for (const [unitId, conceptKeys] of Object.entries(expectedStage1)) {
       const unit = unitById(unitId)
       assert.ok(unit, `${unitId}: Stage 1 unitが無い`)
@@ -184,12 +187,12 @@ describe('学習ミッションのカタログ不変条件', () => {
     }
   })
 
-  it('29概念のSpeaking目標を正本化し、欠落・未知field・短文・重複を拒否する', () => {
+  it('32概念のSpeaking目標を正本化し、欠落・未知field・短文・重複を拒否する', () => {
     const sections = UNITS.flatMap((unit) => unit.sections)
-    assert.equal(sections.length, 29)
+    assert.equal(sections.length, 32)
     assert.equal(
       new Set(sections.map((section) => section.conceptKey)).size,
-      29,
+      32,
       'Speaking目標が概念と1対1でない',
     )
     for (const section of sections) {
@@ -260,11 +263,11 @@ describe('学習ミッションのカタログ不変条件', () => {
     }
   })
 
-  it('全29conceptが3周で異なる問い・正答位置・誤答だけのヒントを持つ', () => {
+  it('全32conceptが3周で異なる問い・正答位置・誤答だけのヒントを持つ', () => {
     assert.deepEqual(validateCatalog(), [])
 
     const sections = UNITS.flatMap((unit) => unit.sections)
-    assert.equal(sections.length, 29)
+    assert.equal(sections.length, 32)
     const correctPositions = new Set<number>()
 
     for (const section of sections) {
@@ -376,14 +379,14 @@ describe('学習ミッションのカタログ不変条件', () => {
       }
     }
 
-    assert.equal(cognitiveCount, 87)
-    assert.equal(wrongOptionCount, 174)
-    assert.equal(notationCount, 98)
-    assert.equal(practiceCodes.size, 87)
-    assert.equal(notationCodes.size, 98)
+    assert.equal(cognitiveCount, 96)
+    assert.equal(wrongOptionCount, 192)
+    assert.equal(notationCount, 107)
+    assert.equal(practiceCodes.size, 96)
+    assert.equal(notationCodes.size, 107)
   })
 
-  it('全29concept×3stageのListening聞き取り/意味needを別codeで公開する', () => {
+  it('全32concept×3stageのListening聞き取り/意味needを別codeで公開する', () => {
     const codes = new Set<string>()
     let variantCount = 0
     for (const unit of UNITS) {
@@ -414,14 +417,14 @@ describe('学習ミッションのカタログ不変条件', () => {
         }
       }
     }
-    assert.equal(variantCount, 87)
-    assert.equal(codes.size, 174)
+    assert.equal(variantCount, 96)
+    assert.equal(codes.size, 192)
     assert.throws(() => scienceListeningNeedCodes('unknown-concept', 'foundation'))
   })
 
-  it('全29conceptのNotationをcanonical tagged unionへ損失なく公開し、6種類を網羅する', () => {
+  it('全32conceptのNotationをcanonical tagged unionへ損失なく公開し、6種類を網羅する', () => {
     const sections = UNITS.flatMap((unit) => unit.sections)
-    assert.equal(sections.length, 29)
+    assert.equal(sections.length, 32)
     assert.deepEqual(
       new Set(Object.keys(NOTATION_LABS)),
       new Set(sections.map((section) => section.conceptKey)),
@@ -464,12 +467,12 @@ describe('学習ミッションのカタログ不変条件', () => {
       })
     }
 
-    assert.equal(taskCount, 98)
+    assert.equal(taskCount, 107)
     assert.deepEqual([...usedKinds].sort(), [...NOTATION_TASK_KINDS].sort())
     assert.equal(notationLabFor('unknown-concept'), undefined)
   })
 
-  it('全29 Storyが固有の事件名・舞台・落ちを持ち、foundation正本へ完全一致する', () => {
+  it('全32 Storyが固有の事件名・舞台・落ちを持ち、foundation正本へ完全一致する', () => {
     const seenLineIds = new Set<string>()
     const publishedStories = []
     for (const unit of UNITS) {
@@ -525,11 +528,11 @@ describe('学習ミッションのカタログ不変条件', () => {
         publishedStories.push(publicStory)
       }
     }
-    assert.equal(publishedStories.length, 29)
-    assert.equal(new Set(publishedStories.map((story) => story.id)).size, 29)
-    assert.equal(new Set(publishedStories.map((story) => story.title)).size, 29)
-    assert.equal(new Set(publishedStories.map((story) => story.setting)).size, 29)
-    assert.equal(new Set(publishedStories.map((story) => story.punchline.text)).size, 29)
+    assert.equal(publishedStories.length, 32)
+    assert.equal(new Set(publishedStories.map((story) => story.id)).size, 32)
+    assert.equal(new Set(publishedStories.map((story) => story.title)).size, 32)
+    assert.equal(new Set(publishedStories.map((story) => story.setting)).size, 32)
+    assert.equal(new Set(publishedStories.map((story) => story.punchline.text)).size, 32)
   })
 
   it('既存22 trace taskを維持し、不正なtrace・taskを拒否する', () => {
@@ -629,7 +632,7 @@ describe('学習ミッションのカタログ不変条件', () => {
     assert.ok(validateNotationLab(badChoice).some((problem) => problem.includes('choices')))
   })
 
-  it('87variantが監査どおり異なる認知操作を持ち、表示順で正答を示さ��い', () => {
+  it('96variantが監査どおり異なる認知操作を持ち、表示順で正答を示さ��い', () => {
     const expected = {
       fall: [
         ['singleSelect', 'prediction'],
@@ -776,6 +779,21 @@ describe('学習ミッションのカタログ不変条件', () => {
         ['singleSelect', 'prediction'],
         ['singleSelect', 'experimentPlan'],
       ],
+      reproduction: [
+        ['sequence', 'causalOrder'],
+        ['classify', 'conditionClassify'],
+        ['singleSelect', 'prediction'],
+      ],
+      heredity: [
+        ['singleSelect', 'prediction'],
+        ['classify', 'conditionClassify'],
+        ['sequence', 'causalOrder'],
+      ],
+      evolution: [
+        ['sequence', 'causalOrder'],
+        ['singleSelect', 'prediction'],
+        ['classify', 'conditionClassify'],
+      ],
     } as const
     const directSignals: Readonly<Record<string, readonly RegExp[]>> = {
       fall: [/平らな紙.*丸めた紙/, /着地時刻.*空気.*抵抗/, /質量.*高さ.*着く時刻/],
@@ -891,6 +909,21 @@ describe('学習ミッションのカタログ不変条件', () => {
         /何も残らない.*塩の結晶が残る.*酸そのものが結晶/,
         /イオンへのなりやすさが違う2種類の金属板.*同じ金属の板を2枚.*電気を溜めた容器/,
       ],
+      reproduction: [
+        /細胞が2つに分かれ.*染色体が写し取られる.*成長し.*2つの核へ分けられる/,
+        /カエルの受精卵.*ジャガイモの芽.*イチゴのランナー.*ニワトリの受精卵/,
+        /有性生殖で育った畑は形質にばらつき.*同じ強さをもつ.*生き残る株の差は出ない/,
+      ],
+      heredity: [
+        /すべて優性形質.*およそ3：1.*半々/,
+        /組合せがaa.*組合せがAA.*組合せがAa.*もう一組/,
+        /受精し、受精卵ができる.*形質が現れる.*染色体を半分にする.*体細胞分裂を繰り返し/,
+      ],
+      evolution: [
+        /世代を経て集団の形質の割合が変わる.*ばらつきがある.*姿が変わり.*多く子を残す/,
+        /明るい色の蛾が目立たず増える.*割合は変わらない.*暗色の蛾が見つかりにくく/,
+        /首を伸ばした姿が子に伝わった.*ばらつきがあり、長い個体が多く子を残した.*暗い色の蛾が見つかりにくく.*足を使わなくなった/,
+      ],
     }
     const usedKinds = new Set<string>()
     const usedOperations = new Set<string>()
@@ -977,7 +1010,7 @@ describe('学習ミッションのカタログ不変条件', () => {
 
     assert.deepEqual([...usedKinds].sort(), [...COGNITIVE_TASK_KINDS].sort())
     assert.deepEqual([...usedOperations].sort(), [...COGNITIVE_OPERATIONS].sort())
-    assert.deepEqual(selectPositions, [10, 10, 10])
+    assert.deepEqual(selectPositions, [11, 11, 11])
   })
 
   it('全conceptにsectionと固定misconceptionがちょうど1つずつ対応する', () => {
@@ -1015,13 +1048,13 @@ describe('学習ミッションのカタログ不変条件', () => {
     }
   })
 
-  it('29conceptのcoverage metadataをMEXT本文の印刷ページ番号（PageLabels）・前提・安全条件と1対1で公開する', () => {
+  it('32conceptのcoverage metadataをMEXT本文の印刷ページ番号（PageLabels）・前提・安全条件と1対1で公開する', () => {
     const conceptKeys = UNITS.flatMap((unit) =>
       unit.concepts.map((concept) => concept.key),
     )
     const coverageEntries = Object.values(CURRICULUM_COVERAGE_MANIFEST)
     assert.deepEqual(new Set(Object.keys(CURRICULUM_COVERAGE_MANIFEST)), new Set(conceptKeys))
-    assert.equal(coverageEntries.length, 29)
+    assert.equal(coverageEntries.length, 32)
     assert.deepEqual(
       new Set(coverageEntries.map((entry) => entry.field)),
       new Set(CURRICULUM_FIELDS),
@@ -1168,8 +1201,8 @@ describe('学習ミッションのカタログ不変条件', () => {
     )
     assert.equal(
       new Set(listed.flatMap((unit) => unit.concepts.map((concept) => concept.storyTitle))).size,
-      29,
-      'Story一覧で29件の固有事件名を公開していない',
+      32,
+      'Story一覧で32件の固有事件名を公開していない',
     )
 
     for (const summary of listed) {
@@ -1346,7 +1379,7 @@ describe('学習ミッションのカタログ不変条件', () => {
     assert.match(induction.tryIt, /電源はつながず/)
   })
 
-  it('2・3周目も29conceptの成立条件を外さず、別の科学的判断を要求する', () => {
+  it('2・3周目も32conceptの成立条件を外さず、別の科学的判断を要求する', () => {
     function text(unitId: string, conceptKey: string): string {
       const unit = unitById(unitId)!
       const section = unit.sections.find((candidate) => candidate.conceptKey === conceptKey)!
@@ -1446,7 +1479,7 @@ describe('学習ミッションのカタログ不変条件', () => {
     assert.match(sky, /北半球.*南半球.*地軸が傾いたまま公転.*太陽距離/)
   })
 
-  it('87の具体場面それぞれに、checkpointと別の直接な結果と理由が対応する', () => {
+  it('96の具体場面それぞれに、checkpointと別の直接な結果と理由が対応する', () => {
     const signals: Readonly<Record<string, readonly RegExp[]>> = {
       fall: [
         /丸めた紙が先.*平らな紙.*遅く/,
@@ -1592,6 +1625,21 @@ describe('学習ミッションのカタログ不変条件', () => {
         /中性になるまで混ぜて乾燥させた.*塩化ナトリウム.*水素イオンと水酸化物イオンが結びついて水/,
         /pH7ではなくても.*水素イオンと水酸化物イオンは水になり.*生成した塩と余った酸/,
         /亜鉛が電子を放出して亜鉛イオン.*回路を通って銅板へ流れ.*イオンへのなりやすさの差/,
+      ],
+      reproduction: [
+        /タマネギの根端.*染色体が写し取られ.*細胞の数が増え.*成長/,
+        /両親の染色体を組み合わせてもち.*親と同じ染色体.*減数分裂で半分になった生殖細胞が受精/,
+        /ほぼ同じ形質.*ばらつきがあって耐性のある個体.*集団の形質がそろい/,
+      ],
+      heredity: [
+        /すべて丸の種子になり.*およそ3：1.*優性形質.*劣性形質/,
+        /両親はともにaをもつAa.*AA・Aa・Aa・aa.*優性形質を示す親はAAとは限らず/,
+        /減数分裂で染色体が半分になり.*両親の染色体を受け継ぎ.*染色体にのって生殖細胞/,
+      ],
+      evolution: [
+        /古い層から新しい層.*姿の異なる生物.*段階的に並ぶ.*種類が時間とともに変わってきた証拠/,
+        /ばらつきのあった蛾.*暗色の蛾が鳥に見つかりにくく.*暗色の個体の割合が増え/,
+        /首の長さにばらつきがあり.*多く子を残した.*集団の形質の割合の変化/,
       ],
     }
 

@@ -2023,6 +2023,220 @@ const EN_UNITS: Record<string, UnitText> = {
       },
     },
   },
+  'life-continuity': {
+    title: 'Continuity of Life',
+    brief:
+      'Read how cell division and reproduction work, decode the rules by which '
+      + 'traits pass from parent to child, and connect them to the evidence '
+      + 'that living things have changed over long spans of time.',
+    concepts: {
+      reproduction: {
+        label: 'Cell division and reproduction',
+        intent:
+          'That cells increase by dividing, that multicellular organisms grow '
+          + 'through cell division plus the growth of each cell, and that '
+          + 'sexual reproduction passes on chromosomes from both parents '
+          + 'through meiosis and fertilization while asexual reproduction '
+          + 'produces offspring with the same chromosomes as the parent.',
+      },
+      heredity: {
+        label: 'The rules of heredity',
+        intent:
+          'That contrasting traits pass from parents to offspring through '
+          + 'combinations of genes, that recessive traits can appear in the '
+          + 'children of parents who both show the dominant trait, and that '
+          + 'genes ride on chromosomes with DNA as their substance.',
+      },
+      evolution: {
+        label: 'Change and evolution of living things',
+        intent:
+          'That fossils record different forms of life in order of the age of '
+          + 'their strata as evidence that living things have changed, that '
+          + 'natural selection keeps the variations best fitted to the '
+          + 'environment, and how this differs from the idea that traits an '
+          + 'individual acquires by effort are passed on.',
+      },
+    },
+    sections: {
+      reproduction: {
+        title: 'Cells divide, and bodies and kin multiply',
+        localSpeakingPractice: {
+          targetPhrase: 'Cells increase by division, and reproduction is sexual or asexual',
+          acceptedTranscripts: [
+            'Cells increase by division, and reproduction is sexual or asexual',
+            'Cell division grows the body, and reproduction comes in sexual and asexual forms',
+          ],
+        },
+        body: [
+          'Under a microscope, the tip of an onion root shows chromosomes being '
+          + 'copied inside the nucleus and then divided between two cells. '
+          + 'A cell splits into two, and more cells of the same kind appear.',
+          'A multicellular organism does not grow because its cells keep '
+          + 'getting bigger. Cells repeat **mitosis** to increase in number, '
+          + 'and each new cell then grows.',
+          'Living things leave offspring through **reproduction**, which comes '
+          + 'in two routes. **Sexual reproduction**, as in frogs, runs through '
+          + 'meiosis and fertilization, so the fertilized egg carries '
+          + 'chromosomes from both parents. **Asexual reproduction**, as in '
+          + 'dividing paramecia or potatoes and strawberries, grows a new '
+          + 'individual directly from part of the parent.',
+          'A child of sexual reproduction inherits chromosomes from each '
+          + 'parent, so its combination differs a little from either parent '
+          + 'or sibling. A child of asexual reproduction carries the same '
+          + 'chromosomes as the parent, so its traits are nearly identical.',
+        ],
+        tryIt:
+          'Safely watch a sprouting potato or a strawberry runner and note '
+          + 'over several days which part of the parent the new individual '
+          + 'grows from (do not eat or cut it up). '
+          + 'Or read the school handout "mitosis photo record" and write down '
+          + 'two things about how the chromosomes are shared out.',
+        localCheckpoint: {
+          lure: 'When living things make offspring, sperm and egg cells always fertilize.',
+          options: [
+            {
+              id: 'fertilization-always',
+              text: 'Fertilization is always needed, so the potato sprout is also a result of fertilization.',
+              hint: 'Look at where on the parent the potato sprout actually emerges.',
+            },
+            {
+              id: 'asexual-same-chromosomes',
+              text: 'In asexual reproduction such as division and vegetative propagation, a child with the same chromosomes grows from part of the parent.',
+            },
+            {
+              id: 'sexual-identical',
+              text: 'A fertilized child carries exactly the same chromosomes as both parents, so its traits are always the same.',
+              hint: 'Check whether sexual reproduction combines chromosomes received from each parent.',
+            },
+          ],
+          correctOptionId: 'asexual-same-chromosomes',
+          explanation:
+            'In asexual reproduction a new individual with the same chromosomes '
+            + 'grows from part of the parent. Fertilization that combines '
+            + 'chromosomes from both parents is sexual reproduction.',
+        },
+      },
+      heredity: {
+        title: 'What passes from parent to child, and the invisible rules',
+        localSpeakingPractice: {
+          targetPhrase: 'Gene pairs decide traits; recessive children can come from dominant parents',
+          acceptedTranscripts: [
+            'Gene pairs decide traits; recessive children can come from dominant parents',
+            'Traits follow gene pairs, so recessive children can come from dominant parents',
+          ],
+        },
+        body: [
+          'Pea seeds come as round or wrinkled. When one trait shows two '
+          + 'forms and an individual displays only one of them, the pair is '
+          + 'called **contrasting traits**.',
+          'Pure round lines make round children and pure wrinkled lines make '
+          + 'wrinkled children, but crossing a pure round line with a pure '
+          + 'wrinkled line makes all children round. The trait that appears '
+          + 'in the children is the **dominant trait**; the one that stays '
+          + 'hidden is the **recessive trait**.',
+          'The element that carries a trait is a **gene**, and genes ride on '
+          + 'chromosomes from parent to child. Genes work in pairs: writing '
+          + 'the round gene as A and the wrinkled gene as a, a child has '
+          + 'one of AA, Aa or aa. With A the seed is round (dominant); only '
+          + 'aa shows wrinkles (recessive).',
+          'When two round children (Aa) are crossed, the offspring '
+          + 'combinations are AA, Aa, Aa and aa, so round and wrinkled appear '
+          + 'in a ratio of about 3:1. Recessive children can appear even '
+          + 'from dominant parents because the parents carried a. '
+          + 'The substance of genes is DNA.',
+        ],
+        tryIt:
+          'Compare traits in your own family — earlobe shape, eyelids and so '
+          + 'on — and note two differences that look like contrasting traits. '
+          + 'Then read the school handout "pea cross record" and explain with '
+          + 'gene letters (A, a) why round to wrinkled comes out about 3:1.',
+        localCheckpoint: {
+          lure: 'If parents who both show the dominant trait are crossed, the recessive trait can never appear in the children.',
+          options: [
+            {
+              id: 'dominant-only',
+              text: 'Parents who show the dominant trait carry no recessive gene, so all children are dominant.',
+              hint: 'A parent showing the dominant trait can still have the combination Aa.',
+            },
+            {
+              id: 'recessive-reappears',
+              text: 'If dominant parents are both Aa, an aa child can be formed and the recessive trait appears.',
+            },
+            {
+              id: 'half-blend',
+              text: 'Parental traits blend half and half, so children of dominant parents become intermediate.',
+              hint: 'Check whether traits blend into an intermediate or appear as one of the two.',
+            },
+          ],
+          correctOptionId: 'recessive-reappears',
+          explanation:
+            'An individual showing the dominant trait is not always AA; it '
+            + 'can be Aa. In an Aa×Aa cross an aa child forms about a quarter '
+            + 'of the time, and the recessive trait appears.',
+        },
+      },
+      evolution: {
+        title: 'What fossils tell us about change over deep time',
+        localSpeakingPractice: {
+          targetPhrase: 'Fitting variation survives; living things evolve over long spans of time',
+          acceptedTranscripts: [
+            'Fitting variation survives; living things evolve over long spans of time',
+            'Natural selection keeps fitting traits; life changes over long spans',
+          ],
+        },
+        body: [
+          'Deeper strata are older, and the fossils in them record the forms '
+          + 'of life from that era. Following the layers from oldest to '
+          + 'newest shows the forms of living things gradually changing.',
+          'Even within one species, individuals show **variation** in their '
+          + 'traits. Individuals whose traits fit the environment leave more '
+          + 'offspring, and those that do not fit leave fewer — this '
+          + 'mechanism is called **natural selection**.',
+          'When this selection accumulates over long spans of time, the '
+          + 'form of the species changes and new, diverse living things '
+          + 'appear. This is **evolution**.',
+          'There was also an idea that individuals change to fit their '
+          + 'environment and pass that change to their children. But '
+          + 'evolution is not individuals changing; it is the survival of '
+          + 'traits that already existed as variation. The long-necked '
+          + 'giraffe is explained by variation in neck length among its '
+          + 'ancestors, where longer-necked individuals could eat high '
+          + 'leaves and left more offspring.',
+        ],
+        tryIt:
+          'Read the school handout "fossil list by stratum" or a fossil page '
+          + 'in a field guide, and write down two differences between the '
+          + 'forms in an old layer and a new layer. Check that you can '
+          + 'explain the difference as "a change in which traits survived" '
+          + 'rather than "a change in individuals".',
+        localCheckpoint: {
+          lure: 'Living things change their own bodies to fit the environment, and the changed form passes to their children.',
+          options: [
+            {
+              id: 'effort-inherited',
+              text: 'Individuals that stretched their necks to reach high leaves pass that form on, and that is evolution.',
+              hint: 'Distinguish an individual changing from which traits in a population get left behind.',
+            },
+            {
+              id: 'selection-variation',
+              text: 'Among the variation already present, the traits that fit the environment leave more offspring, so the population’s form changes.',
+            },
+            {
+              id: 'species-fixed',
+              text: 'Species have never changed since they appeared, so differences in fossils are just mixed-in other species.',
+              hint: 'Think about how to explain records where forms change in order of the layers’ age.',
+            },
+          ],
+          correctOptionId: 'selection-variation',
+          explanation:
+            'Evolution does not come from effort changing individuals. From '
+            + 'variation that already existed, the traits fitting the '
+            + 'environment are left behind. Fossils are the evidence that '
+            + 'forms have changed in order from older to newer layers.',
+        },
+      },
+    },
+  },
 }
 
 // ── 誤概念 ──────────────────────────────────────────────────
@@ -2269,6 +2483,30 @@ const EN_MISCONCEPTIONS: Record<string, MisconceptionText> = {
       + 'the liquid does not turn neutral, but water and a salt are still produced.',
     misconception: 'Mixing an acid and an alkali always yields a neutral liquid, and if it does not turn neutral no reaction happened.',
     lure: 'Mixing an acid and an alkali always makes a neutral liquid, doesn’t it?',
+  },
+  M30: {
+    correct:
+      'In asexual reproduction an individual with the same chromosomes grows '
+      + 'from part of the parent. Inheriting chromosomes from both parents '
+      + 'through fertilization is sexual reproduction.',
+    misconception: 'Whenever living things make offspring, male and female reproductive cells always fertilize.',
+    lure: 'When living things increase, fertilization always happens, doesn’t it?',
+  },
+  M31: {
+    correct:
+      'If parents showing the dominant trait are both Aa, an aa child can '
+      + 'form and the recessive trait appears about a quarter of the time.',
+    misconception: 'If parents who both show the dominant trait are crossed, the recessive trait can never appear in the children.',
+    lure: 'Children of parents that only have the dominant form can never show the recessive form, right?',
+  },
+  M32: {
+    correct:
+      'In evolution, among the variation already present, the traits that '
+      + 'fit the environment leave more offspring, and the population’s mix '
+      + 'of traits changes. Traits an individual gains by effort are not '
+      + 'passed on.',
+    misconception: 'Living things change their own bodies to fit the environment, and the changed form passes to their children.',
+    lure: 'Giraffes’ necks got long because they worked hard to reach high leaves, so their children also have long necks, right?',
   },
 }
 
