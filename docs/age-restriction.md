@@ -1,5 +1,13 @@
 # 未成年に使わせてよいか — 外部 AI 規約の確認
 
+> **English abstract (for judges):** This document audits each AI provider's
+> terms against distribution to minors. Conclusion driving the current build:
+> external generative-AI conversation (Google Cloud TOS §20(d) and peers)
+> cannot be offered to middle/high-school students without a negotiated
+> provider agreement, so live AI endpoints ship disabled (HTTP 503) in
+> production and the entire learning loop runs on-device. The optional Plus
+> purchase exists but unlocks nothing that touches external AI today.
+
 初回調査: 2026-08-05
 最終確認: **2026-08-10**
 
