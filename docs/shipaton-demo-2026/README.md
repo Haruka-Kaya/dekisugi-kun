@@ -1,14 +1,17 @@
 # Shipaton demo 2026
 
-`shipaton-demo-v2.mp4` is the current submission candidate: **54s**, Android
+`shipaton-demo-v3.mp4` is the current submission candidate: **64s**, Android
 emulator footage at 1178x2416 portrait, English captions burned in, no audio.
 It shows the teach-back loop end to end on a real Android runtime: the quest
 map, a TEACH BACK node (mass conservation), a text explanation, the required
 re-read, Dekisugi-kun's fixed follow-up question, the 3-choice correction,
-the own-words-vs-textbook comparison, and completion unlocking the next node.
+the own-words-vs-textbook comparison, completion unlocking the next node,
+and the profile → デキすぎ君のカルテ screen (29 misconceptions, corrected /
+wavering / untouched states).
 
-The matching caption source is `shipaton-demo-v2-captions.en.srt`. The final
-caption points judges to the paywall implementation
+The matching caption source is `shipaton-demo-v3-captions.en.srt`.
+`shipaton-demo-v2.mp4` (54s) is the same footage minus the karte segment; its
+final caption points judges to the paywall implementation
 (`app/lib/screens/plus_screen.dart`) because no purchase appears on camera.
 
 `shipaton-demo-v1.mp4` (114s) is archived at `docs/attic/shipaton-demo-v1.mp4`:

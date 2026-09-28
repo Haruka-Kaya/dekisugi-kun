@@ -44,8 +44,9 @@ Only cataloged need codes persist there; answer text and voice are never
 stored.
 
 The core loop is entirely on-device: no account, no free-text upload, no LLM
-grading of student writing. Voice audio and free text stay in RAM; the device
-stores only lesson IDs, canonical misconception flags, hearts, and progress.
+grading of student writing. In the current build, voice audio and free text
+stay in RAM; the device stores only lesson IDs, canonical misconception flags,
+hearts, and progress.
 Optional Plus, powered by the RevenueCat SDK, is a supporter plan: it grants an
 exclusive Aurora Mantle look for the study companion immediately, and lifts the
 daily limit on guided live-conversation sessions once that feature resumes —
@@ -94,18 +95,19 @@ and the entire learning loop is free.
 
 ## Demo video notes
 
-The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v2.mp4`, 54s) shows
+The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v3.mp4`, 64s) shows
 the current build running on an Android emulator in portrait: the learning path,
 a TEACH BACK node (mass conservation), a text explanation, the required
 re-read, the companion's fixed follow-up question, the 3-choice correction,
-the own-words-vs-textbook comparison, and completion unlocking the next node.
+the own-words-vs-textbook comparison, completion unlocking the next node, and
+the カルテ (misconception record) screen reached from the profile tab.
 English captions overlay the Japanese UI; there is no audio track.
 
 The video does not include a purchase: the RevenueCat Test Store key is not in
 the repository (it is a personal credential). Judges can exercise the full
 paywall themselves with the `--dart-define` command in "Testing instructions".
 
-The earlier web-build capture is kept as `docs/shipaton-demo-2026/shipaton-demo-v1.mp4`
+The earlier web-build capture is archived at `docs/attic/shipaton-demo-v1.mp4`
 for reference; the submitted video is the emulator capture.
 
 ## Testing instructions (for judges)

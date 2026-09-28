@@ -52,8 +52,8 @@ weaknesses:
 This is what makes the pedagogy visible: progress is literally "beliefs of
 the AI corrected", which is the protégé effect made legible. Privacy-wise the
 record is minimal — the note on screen states that answer text and voice are
-not retained; only cataloged misconception codes and their resolution events
-persist.
+not retained in the shipped build; only cataloged misconception codes and
+their resolution events persist.
 
 ## Product constitution (C1–C9)
 
