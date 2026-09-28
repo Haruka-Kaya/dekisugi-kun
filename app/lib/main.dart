@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'config/app_radius.dart';
 import 'config/app_language.dart';
+import 'config/app_language.dart' as l10n;
 import 'config/app_theme.dart';
 import 'config/env.dart';
 import 'config/motion.dart';
@@ -151,7 +152,7 @@ class DekisugiApp extends StatelessWidget {
           // 既定値に従い、確定し次第 Consumer が全画面を組み直す。
           final lang = language?.language ?? appLanguage;
           return MaterialApp(
-            title: 'デキすぎ君',
+            title: l10n.t('デキすぎ君', 'Dekisugi-kun'),
             debugShowCheckedModeBanner: false,
             locale: lang.locale,
             supportedLocales: const [Locale('ja'), Locale('en')],
@@ -235,7 +236,7 @@ class _GateState extends State<_Gate> {
               const Character(state: LiveState.idle, size: 112),
               const SizedBox(height: 14),
               Text(
-                '教える準備をしています',
+                l10n.t('教える準備をしています', 'Getting ready to teach'),
                 style: Theme.of(
                   context,
                 ).textTheme.titleSmall?.jaWeight(FontWeight.w700),
@@ -486,11 +487,18 @@ class _LocalOnlyHome extends StatefulWidget {
 
 class _LocalOnlyHomeState extends State<_LocalOnlyHome>
     with WidgetsBindingObserver {
-  static const _assurance =
-      '端末内モード。外部AI、学校サーバ、購入機能へ接続しません。'
-      '入力した説明は送信も保存もせず、自動採点や理解認定も行いません。'
-      '授業課題は直近1件の教材・概念・A/B/C・再開段階または完了状態・更新日時、'
-      '個人練習は教材・概念・完了回数・最終完了日時だけを、この端末に残します。';
+  static String get _assurance => l10n.t(
+    '端末内モード。外部AI、学校サーバ、購入機能へ接続しません。'
+        '入力した説明は送信も保存もせず、自動採点や理解認定も行いません。'
+        '授業課題は直近1件の教材・概念・A/B/C・再開段階または完了状態・更新日時、'
+        '個人練習は教材・概念・完了回数・最終完了日時だけを、この端末に残します。',
+    'Device-only mode. Does not connect to outside AI, school servers, or purchases. '
+        'Your explanations are never sent or saved, and there is no automatic grading '
+        'or "understood" rating. This device keeps only: for class tasks, the latest '
+        'material, concept, A/B/C round, resume step or completion, and update time; '
+        'for personal practice, the material, concept, times completed, and last '
+        'completed time.',
+  );
 
   List<UnitSummary> _catalog = const [];
   List<LocalPracticeRecord> _records = const [];
@@ -607,7 +615,14 @@ class _LocalOnlyHomeState extends State<_LocalOnlyHome>
       if (!mounted) return;
       if (unit == null || unit.sectionFor(mission.conceptKey) == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('この教材を読み込めませんでした。もう一度お試しください。')),
+          SnackBar(
+            content: Text(
+              l10n.t(
+                'この教材を読み込めませんでした。もう一度お試しください。',
+                "Couldn't load this material. Please try again.",
+              ),
+            ),
+          ),
         );
         return;
       }
@@ -645,7 +660,14 @@ class _LocalOnlyHomeState extends State<_LocalOnlyHome>
         .firstOrNull;
     if (section == null || conceptLabel == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('この教材を読み込めませんでした。もう一度お試しください。')),
+        SnackBar(
+            content: Text(
+              l10n.t(
+                'この教材を読み込めませんでした。もう一度お試しください。',
+                "Couldn't load this material. Please try again.",
+              ),
+            ),
+          ),
       );
       return;
     }
@@ -699,19 +721,25 @@ class _LocalOnlyHomeState extends State<_LocalOnlyHome>
       context: context,
       builder: (dialogContext) => AlertDialog(
         scrollable: true,
-        title: const Text('端末内の練習履歴を消しますか？'),
-        content: const Text(
-          '教材・概念・完了回数・最終完了日時の印を、この端末から消します。'
-          '入力した説明はもともと保存していません。',
+        title: Text(
+          l10n.t('端末内の練習履歴を消しますか？', 'Clear practice history on this device?'),
+        ),
+        content: Text(
+          l10n.t(
+            '教材・概念・完了回数・最終完了日時の印を、この端末から消します。'
+                '入力した説明はもともと保存していません。',
+            'This removes the material, concept, times completed, and last completed '
+                'time from this device. Your explanations were never saved.',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('履歴を残す'),
+            child: Text(l10n.t('履歴を残す', 'Keep history')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('練習の印を消す'),
+            child: Text(l10n.t('練習の印を消す', 'Clear practice marks')),
           ),
         ],
       ),
@@ -746,10 +774,13 @@ class _LocalOnlyHomeState extends State<_LocalOnlyHome>
             children: [
               const StudioWordmark(),
               const SizedBox(height: 28),
-              const StudioPageIntro(
-                eyebrow: 'DEVICE-ONLY STUDIO  /  端末内',
-                title: '答えを送らず、\n考え抜く。',
-                body: '同梱教材を読んで、自分の言葉で思い出し、固定の思い込みを直して、次の1件へ進みます。',
+              StudioPageIntro(
+                eyebrow: l10n.t('DEVICE-ONLY STUDIO  /  端末内', 'DEVICE-ONLY STUDIO'),
+                title: l10n.t('答えを送らず、\n考え抜く。', "Don't send answers.\nThink it through."),
+                body: l10n.t(
+                  '同梱教材を読んで、自分の言葉で思い出し、固定の思い込みを直して、次の1件へ進みます。',
+                  'Read the built-in material, recall it in your own words, fix the set misconception, then move on to the next one.',
+                ),
               ),
               const SizedBox(height: 22),
               if (_loading)
@@ -775,7 +806,7 @@ class _LocalOnlyHomeState extends State<_LocalOnlyHome>
                 key: const ValueKey('local-only-pick-unit'),
                 onPressed: _opening ? null : _openPicker,
                 icon: const Icon(Icons.auto_stories_outlined),
-                label: const Text('自分でほかの教材を選ぶ'),
+                label: Text(l10n.t('自分でほかの教材を選ぶ', 'Choose other material yourself')),
               ),
               const SizedBox(height: 12),
               LocalClassroomEntryCard(
@@ -808,7 +839,7 @@ class _LocalOnlyHomeState extends State<_LocalOnlyHome>
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'この端末の中だけで学びます',
+                                l10n.t('この端末の中だけで学びます', 'You learn only on this device'),
                                 style: t.textTheme.titleSmall
                                     ?.copyWith(color: colors.onCoolSurface)
                                     .jaWeight(FontWeight.w700),
@@ -818,18 +849,31 @@ class _LocalOnlyHomeState extends State<_LocalOnlyHome>
                         ),
                         const SizedBox(height: 9),
                         Text(
-                          '外部AI・学校サーバ・購入機能には接続しません。'
-                          'ここで入力する説明は送信も保存もされません。'
-                          '授業課題は直近1件の教材・概念・A/B/C・再開段階または完了状態・更新日時、'
-                          '個人練習は教材・概念・完了回数・最終完了日時だけを、この端末に残します。',
+                          l10n.t(
+                            '外部AI・学校サーバ・購入機能には接続しません。'
+                                'ここで入力する説明は送信も保存もされません。'
+                                '授業課題は直近1件の教材・概念・A/B/C・再開段階または完了状態・更新日時、'
+                                '個人練習は教材・概念・完了回数・最終完了日時だけを、この端末に残します。',
+                            'No connection to outside AI, school servers, or purchases. '
+                                'The explanations you type here are never sent or saved. '
+                                'This device keeps only: for class tasks, the latest material, '
+                                'concept, A/B/C round, resume step or completion, and update time; '
+                                'for personal practice, the material, concept, times completed, '
+                                'and last completed time.',
+                          ),
                           style: t.textTheme.bodyMedium?.copyWith(
                             color: colors.onCoolSurface,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          '入力した説明は自動採点せず、「理解した」という認定もしません。'
-                          '最後の固定3択は、教材の思い込みを自分で直すための確認です。',
+                          l10n.t(
+                            '入力した説明は自動採点せず、「理解した」という認定もしません。'
+                                '最後の固定3択は、教材の思い込みを自分で直すための確認です。',
+                            'Your explanations are not graded automatically, and nothing marks '
+                                'you as "understood". The final fixed 3-choice question is a check '
+                                'to help you fix the misconception yourself.',
+                          ),
                           style: t.textTheme.bodySmall?.copyWith(
                             color: colors.onCoolSurface,
                           ),
@@ -840,27 +884,49 @@ class _LocalOnlyHomeState extends State<_LocalOnlyHome>
                 ),
               ),
               const SizedBox(height: 28),
-              const StudioSectionHeader(
-                title: '4段階で、考えを強くする',
-                description: '点数ではなく、説明の中身を自分で見直します。',
+              StudioSectionHeader(
+                title: l10n.t('4段階で、考えを強くする', 'Strengthen your thinking in 4 steps'),
+                description: l10n.t(
+                  '点数ではなく、説明の中身を自分で見直します。',
+                  'Not a score: you review what your explanation says yourself.',
+                ),
               ),
               const SizedBox(height: 14),
-              const _LocalStep(number: '01', label: '同梱教材を読む'),
-              const _LocalStep(number: '02', label: '見ずに、自分の言葉で思い出す'),
-              const _LocalStep(number: '03', label: '選ぶ・分類する・順に組む。その理由を足す'),
-              const _LocalStep(number: '04', label: '固定の思い込みを直し、組んだ答えを教材と見比べる'),
+              _LocalStep(number: '01', label: l10n.t('同梱教材を読む', 'Read the built-in material')),
+              _LocalStep(
+                number: '02',
+                label: l10n.t('見ずに、自分の言葉で思い出す', 'Without looking, recall it in your own words'),
+              ),
+              _LocalStep(
+                number: '03',
+                label: l10n.t(
+                  '選ぶ・分類する・順に組む。その理由を足す',
+                  'Choose, sort, or put in order. Then add your reason',
+                ),
+              ),
+              _LocalStep(
+                number: '04',
+                label: l10n.t(
+                  '固定の思い込みを直し、組んだ答えを教材と見比べる',
+                  'Fix the set misconception and compare your answer with the material',
+                ),
+              ),
               if (_practicedConcepts > 0) ...[
                 const SizedBox(height: 8),
                 TextButton(
                   key: const ValueKey('local-only-clear-progress'),
                   onPressed: _clearing ? null : _clearProgress,
-                  child: Text(_clearing ? '消しています…' : '端末内の練習履歴を消す'),
+                  child: Text(
+                    _clearing
+                        ? l10n.t('消しています…', 'Clearing…')
+                        : l10n.t('端末内の練習履歴を消す', 'Clear practice history on this device'),
+                  ),
                 ),
               ],
               const SizedBox(height: 10),
               TextButton(
                 onPressed: widget.onExit,
-                child: const Text('通信を使うモードの確認に戻る'),
+                child: Text(l10n.t('通信を使うモードの確認に戻る', 'Back to the online mode check')),
               ),
             ],
           ),
@@ -897,9 +963,14 @@ class _LocalMissionCard extends StatelessWidget {
       container: true,
       explicitChildNodes: true,
       label:
-          '次の端末内ミッション、${mission.conceptLabel}。'
-          '今回は${practiceStage.label}。'
-          '全$totalConcepts件のうち$practicedConcepts件に練習済みの印があります',
+          l10n.t(
+            '次の端末内ミッション、${mission.conceptLabel}。'
+                '今回は${practiceStage.label}。'
+                '全$totalConcepts件のうち$practicedConcepts件に練習済みの印があります',
+            'Next device-only mission: ${mission.conceptLabel}. '
+                'This time: ${practiceStage.label}. '
+                '$practicedConcepts of $totalConcepts marked as practiced',
+          ),
       child: Container(
         padding: const EdgeInsets.fromLTRB(18, 17, 18, 18),
         decoration: BoxDecoration(
@@ -935,15 +1006,19 @@ class _LocalMissionCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '今回：${practiceStage.label}',
+                    l10n.t('今回：${practiceStage.label}', 'This time: ${practiceStage.label}'),
                     style: t.textTheme.labelLarge
                         ?.copyWith(color: colors.onWarmSurface)
                         .jaWeight(FontWeight.w700),
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    '全$totalConcepts件のうち、$practicedConcepts件に練習済みの印があります。'
-                    '${isNew ? 'まだ取り組んでいない1件を先に出します。' : '前の学習日より前に取り組んだ中で、一番間が空いた1件です。'}',
+                    l10n.t(
+                      '全$totalConcepts件のうち、$practicedConcepts件に練習済みの印があります。'
+                          '${isNew ? 'まだ取り組んでいない1件を先に出します。' : '前の学習日より前に取り組んだ中で、一番間が空いた1件です。'}',
+                      '$practicedConcepts of $totalConcepts marked as practiced. '
+                          '${isNew ? "Showing one you haven't tried yet first." : "Of the ones you did before your last study day, this one has gone longest without practice."}',
+                    ),
                     style: t.textTheme.bodySmall?.copyWith(
                       color: colors.onWarmSurface,
                     ),
@@ -955,7 +1030,11 @@ class _LocalMissionCard extends StatelessWidget {
             FilledButton(
               key: const ValueKey('local-only-next-mission'),
               onPressed: busy ? null : onStart,
-              child: Text(busy ? '教材を開いています…' : 'この1件をはじめる'),
+              child: Text(
+                busy
+                    ? l10n.t('教材を開いています…', 'Opening material…')
+                    : l10n.t('この1件をはじめる', 'Start this one'),
+              ),
             ),
           ],
         ),
@@ -981,9 +1060,14 @@ class _LocalMissionWaiting extends StatelessWidget {
       key: const ValueKey('local-only-next-day'),
       container: true,
       label:
-          'きょうの予定分はここまで。全$totalConcepts件のうち、'
-          '$practicedConcepts件に練習済みの印があります。'
-          '次のケースは次の学習日から出します。自分で選ぶ練習と先生の教材番号は今も使えます',
+          l10n.t(
+            'きょうの予定分はここまで。全$totalConcepts件のうち、'
+                '$practicedConcepts件に練習済みの印があります。'
+                '次のケースは次の学習日から出します。自分で選ぶ練習と先生の教材番号は今も使えます',
+            "That's all planned for today. $practicedConcepts of $totalConcepts "
+                'marked as practiced. The next case comes on your next study day. '
+                "You can still choose practice yourself or use your teacher's material number",
+          ),
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.fromLTRB(18, 17, 18, 18),
@@ -997,15 +1081,19 @@ class _LocalMissionWaiting extends StatelessWidget {
               Icon(Icons.event_available_outlined, color: colors.onCoolSurface),
               const SizedBox(height: 10),
               Text(
-                'きょうの予定分はここまで。',
+                l10n.t('きょうの予定分はここまで。', "That's all planned for today."),
                 style: t.textTheme.titleLarge
                     ?.copyWith(color: colors.onCoolSurface)
                     .jaWeight(FontWeight.w800),
               ),
               const SizedBox(height: 7),
               Text(
-                '次のケースは、次の学習日から出します。'
-                '自分で選ぶ練習と、先生の教材番号は今も使えます。',
+                l10n.t(
+                  '次のケースは、次の学習日から出します。'
+                      '自分で選ぶ練習と、先生の教材番号は今も使えます。',
+                  'The next case comes on your next study day. '
+                      "You can still choose practice yourself or use your teacher's material number.",
+                ),
                 style: t.textTheme.bodyMedium?.copyWith(
                   color: colors.onCoolSurface,
                 ),
@@ -1024,7 +1112,7 @@ class _LocalMissionLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     key: const ValueKey('local-only-mission-loading'),
-    label: '次の端末内ミッションを準備しています',
+    label: l10n.t('次の端末内ミッションを準備しています', 'Preparing the next device-only mission'),
     child: const Padding(
       padding: EdgeInsets.symmetric(vertical: 18),
       child: LinearProgressIndicator(),
@@ -1043,9 +1131,16 @@ class _LocalMissionUnavailable extends StatelessWidget {
     key: const ValueKey('local-only-mission-unavailable'),
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Text(failed ? '端末内の教材を読み込めませんでした。' : '端末内の教材がまだありません。'),
+      Text(
+        failed
+            ? l10n.t('端末内の教材を読み込めませんでした。', "Couldn't load the material on this device.")
+            : l10n.t('端末内の教材がまだありません。', 'No material on this device yet.'),
+      ),
       const SizedBox(height: 8),
-      OutlinedButton(onPressed: onRetry, child: const Text('もう一度読み込む')),
+      OutlinedButton(
+        onPressed: onRetry,
+        child: Text(l10n.t('もう一度読み込む', 'Load again')),
+      ),
     ],
   );
 }
@@ -1133,7 +1228,14 @@ class _Home extends StatelessWidget {
             (missionKind == MissionKind.caseRetry &&
                 focusedSection.tryIt.trim().isEmpty))) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('このミッションの教材を読み込めませんでした。もう一度お試しください。')),
+        SnackBar(
+          content: Text(
+            l10n.t(
+              'このミッションの教材を読み込めませんでした。もう一度お試しください。',
+              "Couldn't load this mission's material. Please try again.",
+            ),
+          ),
+        ),
       );
       return;
     }
@@ -1278,7 +1380,13 @@ class _Home extends StatelessWidget {
         if (detail == null) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('この教材をまだ読み込めていません。')));
+          ).showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n.t('この教材をまだ読み込めていません。', "This material hasn't loaded yet."),
+              ),
+            ),
+          );
           return;
         }
         // **きょうの1件の概念に焦点を当てて読ませる。**

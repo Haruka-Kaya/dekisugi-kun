@@ -1,4 +1,5 @@
 import '../models/dossier.dart';
+import '../config/app_language.dart';
 
 /// 復習に回す理由。**「弱点」とは呼ばない**（C9）。
 enum ReviewReason {
@@ -22,9 +23,9 @@ enum ReviewReason {
 
   /// 生徒に見せる文。**責めない。**
   String get label => switch (this) {
-    ReviewReason.notCorrected => 'もう一度たしかめたいところ',
-    ReviewReason.thin => 'あと少しで説明しきれるところ',
-    ReviewReason.notFinished => '続きから決着をつけるところ',
+    ReviewReason.notCorrected => t('もう一度たしかめたいところ', 'Worth checking again'),
+    ReviewReason.thin => t('あと少しで説明しきれるところ', 'Almost fully explained'),
+    ReviewReason.notFinished => t('続きから決着をつけるところ', 'Pick up where you left off'),
   };
 }
 
