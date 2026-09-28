@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../models/streak.dart';
@@ -50,24 +51,57 @@ class SessionCompleteView extends StatelessWidget {
     final isMission = missionLabel?.isNotEmpty == true;
     final cleared = isMission && missionCleared && hasWords && !saveFailed;
     final clearEyebrow = switch (missionKind) {
-      MissionKind.teach => 'MISSION CLEAR  ·  教え切った',
-      MissionKind.repair => 'REPAIR CLEAR  ·  決着した',
-      MissionKind.caseRetry => 'CASE CLEAR  ·  別の場面でも使えた',
+      MissionKind.teach => lang.t(
+        'MISSION CLEAR  ·  教え切った',
+        'MISSION CLEAR  ·  Fully taught',
+      ),
+      MissionKind.repair => lang.t(
+        'REPAIR CLEAR  ·  決着した',
+        'REPAIR CLEAR  ·  Settled',
+      ),
+      MissionKind.caseRetry => lang.t(
+        'CASE CLEAR  ·  別の場面でも使えた',
+        'CASE CLEAR  ·  Worked in a new situation',
+      ),
     };
     final clearTitle = switch (missionKind) {
-      MissionKind.teach => '「$missionLabel」を\n教え切った。',
-      MissionKind.repair => '「$missionLabel」に\n今度こそ決着した。',
-      MissionKind.caseRetry => '「$missionLabel」を\n別の場面でも使えた。',
+      MissionKind.teach => lang.t(
+        '「$missionLabel」を\n教え切った。',
+        'You fully taught\n"$missionLabel".',
+      ),
+      MissionKind.repair => lang.t(
+        '「$missionLabel」に\n今度こそ決着した。',
+        'You finally settled\n"$missionLabel".',
+      ),
+      MissionKind.caseRetry => lang.t(
+        '「$missionLabel」を\n別の場面でも使えた。',
+        'You used "$missionLabel"\nin a new situation.',
+      ),
     };
     final clearBody = switch (missionKind) {
-      MissionKind.teach => '自分の説明で、デキすぎ君の思い込みまで見破りました。',
-      MissionKind.repair => '曖昧だった条件や理由を組み直し、思い込みに決着しました。',
-      MissionKind.caseRetry => '具体場面の予想と理由をつなげ、思い込みまで見破りました。',
+      MissionKind.teach => lang.t(
+        '自分の説明で、デキすぎ君の思い込みまで見破りました。',
+        "With your own explanation, you caught Dekisugi-kun's misconception.",
+      ),
+      MissionKind.repair => lang.t(
+        '曖昧だった条件や理由を組み直し、思い込みに決着しました。',
+        'You rebuilt the unclear conditions and reasons and settled the misconception.',
+      ),
+      MissionKind.caseRetry => lang.t(
+        '具体場面の予想と理由をつなげ、思い込みまで見破りました。',
+        'You connected a prediction and reason for a real situation and caught the misconception.',
+      ),
     };
 
     final announcement = saveFailed
-        ? '会話が完了しました。ノートへの保存に失敗しました。'
-        : '会話が完了しました。デキすぎ君のノートに保存しました。';
+        ? lang.t(
+            '会話が完了しました。ノートへの保存に失敗しました。',
+            'Conversation finished. Saving to the notebook failed.',
+          )
+        : lang.t(
+            '会話が完了しました。デキすぎ君のノートに保存しました。',
+            "Conversation finished. Saved to Dekisugi-kun's notebook.",
+          );
 
     return Semantics(
       container: true,
@@ -93,30 +127,62 @@ class SessionCompleteView extends StatelessWidget {
               const SizedBox(height: 14),
               StudioPageIntro(
                 eyebrow: saveFailed
-                    ? 'NOT SAVED  ·  まだ保存できていません'
+                    ? lang.t(
+                        'NOT SAVED  ·  まだ保存できていません',
+                        'NOT SAVED  ·  Not saved yet',
+                      )
                     : cleared
                     ? clearEyebrow
                     : isMission
-                    ? 'MISSION LOG  ·  ここまで進んだ'
-                    : 'DEKISUGI NOTE  ·  今日の記録',
+                    ? lang.t(
+                        'MISSION LOG  ·  ここまで進んだ',
+                        'MISSION LOG  ·  Progress so far',
+                      )
+                    : lang.t(
+                        'DEKISUGI NOTE  ·  今日の記録',
+                        "DEKISUGI NOTE  ·  Today's record",
+                      ),
                 title: saveFailed
-                    ? 'まだノートに\n残せていません。'
+                    ? lang.t(
+                        'まだノートに\n残せていません。',
+                        'Not saved to\nthe notebook yet.',
+                      )
                     : cleared
                     ? clearTitle
                     : isMission && !hasWords
-                    ? '次は、ここから\nもう一度挑める。'
+                    ? lang.t(
+                        '次は、ここから\nもう一度挑める。',
+                        'Next time, you can\ntry again from here.',
+                      )
                     : hasWords
-                    ? 'デキすぎ君の\nノートに残った。'
-                    : '話したところまで、\nノートに残った。',
-                body: cleared ? clearBody : '教えてくれて、ありがとう。',
+                    ? lang.t(
+                        'デキすぎ君の\nノートに残った。',
+                        "It's in Dekisugi-kun's\nnotebook.",
+                      )
+                    : lang.t(
+                        '話したところまで、\nノートに残った。',
+                        'What you said is\nin the notebook.',
+                      ),
+                body: cleared
+                    ? clearBody
+                    : lang.t('教えてくれて、ありがとう。', 'Thanks for teaching me.'),
               ),
               const SizedBox(height: 10),
               Text(
                 saveFailed
-                    ? '話した言葉は、まだこの画面にだけ残っています。'
+                    ? lang.t(
+                        '話した言葉は、まだこの画面にだけ残っています。',
+                        'What you said is only on this screen for now.',
+                      )
                     : hasWords
-                    ? '要約ではなく、あなたが実際に話した言葉です。'
-                    : '今回は、まだ一文として残せる説明はありません。',
+                    ? lang.t(
+                        '要約ではなく、あなたが実際に話した言葉です。',
+                        'These are not summaries. They are your actual words.',
+                      )
+                    : lang.t(
+                        '今回は、まだ一文として残せる説明はありません。',
+                        'This time, there is no explanation to keep as a sentence yet.',
+                      ),
                 style: t.textTheme.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -136,9 +202,12 @@ class SessionCompleteView extends StatelessWidget {
                 ),
                 if (achievements.length > 1) ...[
                   const SizedBox(height: 28),
-                  const StudioSectionHeader(
-                    title: 'この会話で残った言葉',
-                    description: 'どれも、あなた自身が話した文です。',
+                  StudioSectionHeader(
+                    title: lang.t('この会話で残った言葉', 'Words from this conversation'),
+                    description: lang.t(
+                      'どれも、あなた自身が話した文です。',
+                      'Every one is a sentence you said yourself.',
+                    ),
                     leading: Icon(Icons.format_quote),
                   ),
                   const SizedBox(height: 12),
@@ -167,8 +236,10 @@ class SessionCompleteView extends StatelessWidget {
                   onPressed: saveFailed ? (saving ? null : onRetry) : onHome,
                   child: Text(
                     saveFailed
-                        ? (saving ? '保存しています…' : 'もう一度保存する')
-                        : 'ホームでノートを見る',
+                        ? (saving
+                              ? lang.t('保存しています…', 'Saving…')
+                              : lang.t('もう一度保存する', 'Save again'))
+                        : lang.t('ホームでノートを見る', 'See the notebook at Home'),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -179,7 +250,9 @@ class SessionCompleteView extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: saveFailed ? onHome : onReview,
                   child: Text(
-                    saveFailed ? '保存せずホームへ' : '次に話すことを整える',
+                    saveFailed
+                        ? lang.t('保存せずホームへ', 'Go Home without saving')
+                        : lang.t('次に話すことを整える', 'Prepare what to say next'),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -188,7 +261,7 @@ class SessionCompleteView extends StatelessWidget {
                 const SizedBox(height: 4),
                 TextButton(
                   onPressed: onReview,
-                  child: const Text('次に話すことを整える'),
+                  child: Text(lang.t('次に話すことを整える', 'Prepare what to say next')),
                 ),
               ],
             ],
@@ -227,14 +300,17 @@ class _TomorrowCase extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'NEXT CASE  /  明日',
+            lang.t('NEXT CASE  /  明日', 'NEXT CASE  /  Tomorrow'),
             style: t.textTheme.labelMedium
                 ?.copyWith(color: c.onCoolSurface)
                 .jaWeight(FontWeight.w700),
           ),
           const SizedBox(height: 7),
           Text(
-            '次は、教材の答えを見ずに別の場面で使います。',
+            lang.t(
+              '次は、教材の答えを見ずに別の場面で使います。',
+              'Next time, you will use it in a new situation without looking at the answer.',
+            ),
             style: t.textTheme.bodyMedium?.copyWith(color: c.onCoolSurface),
           ),
           const SizedBox(height: 12),
@@ -244,7 +320,12 @@ class _TomorrowCase extends StatelessWidget {
               onPressed: busy ? null : onEnable,
               style: OutlinedButton.styleFrom(foregroundColor: c.onCoolSurface),
               child: Text(
-                busy ? '設定しています…' : '明日$hour時ごろに知らせる',
+                busy
+                    ? lang.t('設定しています…', 'Setting up…')
+                    : lang.t(
+                        '明日$hour時ごろに知らせる',
+                        'Remind me tomorrow around $hour:00',
+                      ),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -286,15 +367,22 @@ class _SaveProblem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '端末への保存が完了していません。',
+                      lang.t(
+                        '端末への保存が完了していません。',
+                        'Saving to this device is not finished.',
+                      ),
                       style: t.textTheme.titleSmall
                           ?.copyWith(color: scheme.onErrorContainer)
                           .jaWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'ホームへ戻る前に再試行できます。'
-                      '保存せず戻ると、この言葉がノートに残る保証はありません。',
+                      lang.t(
+                        'ホームへ戻る前に再試行できます。'
+                            '保存せず戻ると、この言葉がノートに残る保証はありません。',
+                        'You can retry before going Home. '
+                            'If you go back without saving, these words may not stay in the notebook.',
+                      ),
                       style: t.textTheme.bodyMedium?.copyWith(
                         color: scheme.onErrorContainer,
                       ),
@@ -307,7 +395,7 @@ class _SaveProblem extends StatelessWidget {
           if (saving) ...[
             const SizedBox(height: 14),
             Semantics(
-              label: 'ノートに保存しています',
+              label: lang.t('ノートに保存しています', 'Saving to the notebook'),
               child: const LinearProgressIndicator(),
             ),
           ],
@@ -336,7 +424,10 @@ class _NotebookQuote extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: '${item.label}。あなたが話した言葉。${item.said}',
+      label: lang.t(
+        '${item.label}。あなたが話した言葉。${item.said}',
+        '${item.label}. Your words. ${item.said}',
+      ),
       child: ExcludeSemantics(
         child: Container(
           width: double.infinity,
@@ -366,7 +457,9 @@ class _NotebookQuote extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      saved ? 'デキすぎ君のノート' : 'この画面に残っている言葉',
+                      saved
+                          ? lang.t('デキすぎ君のノート', "Dekisugi-kun's notebook")
+                          : lang.t('この画面に残っている言葉', 'Words on this screen'),
                       style: t.textTheme.labelMedium
                           ?.copyWith(color: c.onWarmSurface)
                           .jaWeight(FontWeight.w700),
@@ -383,7 +476,7 @@ class _NotebookQuote extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                '「${item.said}」',
+                lang.t('「${item.said}」', '"${item.said}"'),
                 style:
                     (primary
                             ? t.textTheme.headlineSmall
@@ -393,7 +486,7 @@ class _NotebookQuote extends StatelessWidget {
               ),
               const SizedBox(height: 18),
               Text(
-                '—  あなたが話した言葉',
+                lang.t('—  あなたが話した言葉', '—  Your words'),
                 style: t.textTheme.bodySmall?.copyWith(
                   color: c.onWarmSurface.withValues(alpha: 0.78),
                 ),
@@ -427,15 +520,19 @@ class _NextBlank extends StatelessWidget {
           Icon(Icons.chat_bubble_outline, size: 24, color: c.onCoolSurface),
           const SizedBox(height: 14),
           Text(
-            '次に言葉にするところ',
+            lang.t('次に言葉にするところ', 'What to explain next'),
             style: t.textTheme.titleMedium
                 ?.copyWith(color: c.onCoolSurface)
                 .jaWeight(FontWeight.w700),
           ),
           const SizedBox(height: 6),
           Text(
-            '今回まだ説明しきれなかったところは、'
-            '「次に話すこと」として整えられます。',
+            lang.t(
+              '今回まだ説明しきれなかったところは、'
+                  '「次に話すこと」として整えられます。',
+              'Parts you could not fully explain this time '
+                  'can be set up as "What to say next".',
+            ),
             style: t.textTheme.bodyMedium?.copyWith(color: c.onCoolSurface),
           ),
         ],

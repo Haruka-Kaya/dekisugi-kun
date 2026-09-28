@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../ui/_material.dart';
@@ -12,18 +13,24 @@ enum PredictionComparisonDecision {
   revise;
 
   String get actionLabel => switch (this) {
-    keep => '残す点がある',
-    revise => '直す点がある',
+    keep => lang.t('残す点がある', 'Something to keep'),
+    revise => lang.t('直す点がある', 'Something to fix'),
   };
 
   String get reflectionLabel => switch (this) {
-    keep => '結果につながった自分の理由',
-    revise => '教材を見て直す理由',
+    keep => lang.t('結果につながった自分の理由', 'My reason that matched the result'),
+    revise => lang.t('教材を見て直す理由', 'A reason to fix after checking the lesson'),
   };
 
   String get reflectionHint => switch (this) {
-    keep => '例：空気抵抗がない条件まで考えられた',
-    revise => '例：重さではなく、加速度を比べる',
+    keep => lang.t(
+      '例：空気抵抗がない条件まで考えられた',
+      'e.g. I thought about the no-air-resistance condition',
+    ),
+    revise => lang.t(
+      '例：重さではなく、加速度を比べる',
+      'e.g. Compare acceleration, not weight',
+    ),
   };
 }
 
@@ -73,24 +80,30 @@ class PredictionResultCompare extends StatelessWidget {
       key: const ValueKey('prediction-result-compare'),
       container: true,
       liveRegion: true,
-      label: 'チェックポイント通過。自分の予想と教材の結果を比べて、残す点か直す点を選んでください',
+      label: lang.t(
+        'チェックポイント通過。自分の予想と教材の結果を比べて、残す点か直す点を選んでください',
+        'Checkpoint passed. Compare your prediction with the lesson result and choose something to keep or something to fix',
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            '予想と結果を、つなぐ',
+            lang.t('予想と結果を、つなぐ', 'Connect prediction and result'),
             style: t.textTheme.titleLarge?.jaWeight(FontWeight.w800),
           ),
           const SizedBox(height: 8),
           Text(
-            '当てたかどうかではなく、どの理由を残し、どこを組み直すかを見つけます。',
+            lang.t(
+              '当てたかどうかではなく、どの理由を残し、どこを組み直すかを見つけます。',
+              'It is not about guessing right. Find which reason to keep and what to rebuild.',
+            ),
             style: t.textTheme.bodyLarge,
           ),
           const SizedBox(height: 18),
           _ComparisonSurface(
             key: const ValueKey('prediction-result-situation'),
             icon: Icons.science_outlined,
-            label: '考えた場面',
+            label: lang.t('考えた場面', 'The situation'),
             text: situation,
             background: colors.surface,
             foreground: colors.ink,
@@ -100,7 +113,7 @@ class PredictionResultCompare extends StatelessWidget {
           _ComparisonSurface(
             key: const ValueKey('prediction-result-prediction'),
             icon: Icons.edit_note_outlined,
-            label: 'あなたの予想',
+            label: lang.t('あなたの予想', 'Your prediction'),
             text: prediction,
             background: colors.legendary,
             foreground: colors.onLegendary,
@@ -109,7 +122,7 @@ class PredictionResultCompare extends StatelessWidget {
           _ComparisonSurface(
             key: const ValueKey('prediction-result-prediction-reason'),
             icon: Icons.lightbulb_outline,
-            label: 'あなたの理由',
+            label: lang.t('あなたの理由', 'Your reason'),
             text: predictionReason,
             background: colors.legendary,
             foreground: colors.onLegendary,
@@ -122,9 +135,9 @@ class PredictionResultCompare extends StatelessWidget {
           _ComparisonSurface(
             key: const ValueKey('prediction-result-outcome'),
             icon: Icons.fact_check_outlined,
-            label: '教材で確かめた結果',
+            label: lang.t('教材で確かめた結果', 'Result from the lesson'),
             text: result,
-            detailLabel: '教材の理由',
+            detailLabel: lang.t('教材の理由', 'Lesson reason'),
             detail: explanation,
             background: colors.surfaceRaised,
             foreground: colors.ink,
@@ -141,10 +154,10 @@ class PredictionResultCompare extends StatelessWidget {
               child: ExpansionTile(
                 key: const ValueKey('prediction-result-source'),
                 title: Text(
-                  '教材の根拠を読み直す',
+                  lang.t('教材の根拠を読み直す', 'Reread the lesson evidence'),
                   style: t.textTheme.titleSmall?.jaWeight(FontWeight.w700),
                 ),
-                subtitle: const Text('必要なときだけ開く'),
+                subtitle: Text(lang.t('必要なときだけ開く', 'Open only when needed')),
                 childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -164,12 +177,15 @@ class PredictionResultCompare extends StatelessWidget {
           ],
           const SizedBox(height: 22),
           Text(
-            '比べて、どちらが近い？',
+            lang.t('比べて、どちらが近い？', 'Compare: which is closer?'),
             style: t.textTheme.titleMedium?.jaWeight(FontWeight.w700),
           ),
           const SizedBox(height: 5),
           Text(
-            'アプリは一致・不一致を判定しません。自分で見つけた方を選びます。',
+            lang.t(
+              'アプリは一致・不一致を判定しません。自分で見つけた方を選びます。',
+              'The app does not judge match or mismatch. Choose the one you found yourself.',
+            ),
             style: t.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
           ),
           const SizedBox(height: 12),
@@ -178,7 +194,10 @@ class PredictionResultCompare extends StatelessWidget {
             selected: decision == PredictionComparisonDecision.keep,
             icon: Icons.link_outlined,
             title: PredictionComparisonDecision.keep.actionLabel,
-            body: '結果につながった、自分の理由を1つ残す',
+            body: lang.t(
+              '結果につながった、自分の理由を1つ残す',
+              'Keep one of your reasons that led to the result',
+            ),
             onTap: () => onDecisionChanged(PredictionComparisonDecision.keep),
           ),
           const SizedBox(height: 10),
@@ -187,7 +206,10 @@ class PredictionResultCompare extends StatelessWidget {
             selected: decision == PredictionComparisonDecision.revise,
             icon: Icons.construction_outlined,
             title: PredictionComparisonDecision.revise.actionLabel,
-            body: '教材を見て変わった理由を1つ言葉にする',
+            body: lang.t(
+              '教材を見て変わった理由を1つ言葉にする',
+              'Put into words one reason that changed after checking the lesson',
+            ),
             onTap: () => onDecisionChanged(PredictionComparisonDecision.revise),
           ),
           if (decision != null) ...[
@@ -218,7 +240,10 @@ class PredictionResultCompare extends StatelessWidget {
                 const SizedBox(width: 7),
                 Expanded(
                   child: Text(
-                    '比べるための一文です。採点・送信・保存はしません。',
+                    lang.t(
+                      '比べるための一文です。採点・送信・保存はしません。',
+                      'Just a sentence for comparing. It is not graded, sent, or saved.',
+                    ),
                     style: t.textTheme.bodySmall?.copyWith(
                       color: colors.inkMuted,
                     ),
@@ -232,14 +257,19 @@ class PredictionResultCompare extends StatelessWidget {
             key: const ValueKey('prediction-result-complete'),
             onPressed: _canComplete ? onComplete : null,
             icon: const Icon(Icons.arrow_forward),
-            label: const Text('見つけたことを持って完了'),
+            label: Text(lang.t('見つけたことを持って完了', 'Finish with what you found')),
           ),
           const SizedBox(height: 8),
           TextButton.icon(
             key: const ValueKey('prediction-result-rewrite'),
             onPressed: onRewritePrediction,
             icon: const Icon(Icons.replay_outlined),
-            label: const Text('結果を閉じて、予想を組み直す'),
+            label: Text(
+              lang.t(
+                '結果を閉じて、予想を組み直す',
+                'Close the result and rebuild your prediction',
+              ),
+            ),
           ),
         ],
       ),
@@ -307,7 +337,7 @@ class _ComparisonSurface extends StatelessWidget {
             Container(height: 1, color: foreground.withValues(alpha: 0.24)),
             const SizedBox(height: 10),
             Text(
-              detailLabel ?? '理由',
+              detailLabel ?? lang.t('理由', 'Reason'),
               style: t.textTheme.labelMedium
                   ?.copyWith(color: foreground)
                   .jaWeight(FontWeight.w700),
@@ -348,7 +378,7 @@ class _DecisionChoice extends StatelessWidget {
       button: true,
       selected: selected,
       onTap: onTap,
-      label: '$title。$body',
+      label: lang.t('$title。$body', '$title. $body'),
       child: ExcludeSemantics(
         child: Material(
           color: selected ? colors.pathActive : colors.surface,

@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../models/game_path.dart';
@@ -130,10 +131,13 @@ class PlayerStatusBar extends StatelessWidget {
                 icon: Icons.electric_bolt_rounded,
                 iconColor: colors.streak,
                 visualValue: _compact(status.streakDays),
-                semanticLabel:
-                    '連続学習、${status.streakDays}日。'
-                    '連続記録の保護、${status.streakFreezeRemaining}回分',
-                tooltip: '連続学習',
+                semanticLabel: lang.t(
+                  '連続学習、${status.streakDays}日。'
+                      '連続記録の保護、${status.streakFreezeRemaining}回分',
+                  'Streak, ${status.streakDays} days. '
+                      'Streak freezes left: ${status.streakFreezeRemaining}',
+                ),
+                tooltip: lang.t('連続学習', 'Streak'),
                 onTap: onStreakTap,
               ),
             ),
@@ -144,8 +148,11 @@ class PlayerStatusBar extends StatelessWidget {
                 icon: Icons.diamond_rounded,
                 iconColor: colors.gem,
                 visualValue: _compact(status.gems),
-                semanticLabel: 'ひらめき結晶、${status.gems}個',
-                tooltip: 'ひらめき結晶',
+                semanticLabel: lang.t(
+                  'ひらめき結晶、${status.gems}個',
+                  'Spark gems, ${status.gems}',
+                ),
+                tooltip: lang.t('ひらめき結晶', 'Spark gems'),
                 onTap: onGemsTap,
               ),
             ),
@@ -159,10 +166,16 @@ class PlayerStatusBar extends StatelessWidget {
               visualValue: status.unlimitedHearts ? '∞' : '${status.hearts}',
               semanticLabel: status.unlimitedHearts
                   ? schoolMode
-                        ? '授業モード。ハート、無制限。個人報酬は記録しません'
-                        : 'ハート、無制限'
-                  : '学習ハート、${status.maxHearts}個中${status.hearts}個',
-              tooltip: '学習ハート',
+                        ? lang.t(
+                            '授業モード。ハート、無制限。個人報酬は記録しません',
+                            'Class mode. Hearts, unlimited. Personal rewards are not recorded',
+                          )
+                        : lang.t('ハート、無制限', 'Hearts, unlimited')
+                  : lang.t(
+                      '学習ハート、${status.maxHearts}個中${status.hearts}個',
+                      'Hearts, ${status.hearts} of ${status.maxHearts}',
+                    ),
+              tooltip: lang.t('学習ハート', 'Hearts'),
               onTap: onHeartsTap,
             ),
           ),
@@ -271,8 +284,12 @@ class _QuestButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
-    final noun = schoolMode ? '授業目標' : 'クエスト';
-    final label = count == 0 ? '$noun。進行中はありません' : '$noun。進行中$count件';
+    final noun = schoolMode
+        ? lang.t('授業目標', 'Class goals')
+        : lang.t('クエスト', 'Quests');
+    final label = count == 0
+        ? lang.t('$noun。進行中はありません', '$noun. None in progress')
+        : lang.t('$noun。進行中$count件', '$noun. $count in progress');
     return Semantics(
       key: const ValueKey('game-quest-button'),
       button: true,
@@ -398,7 +415,9 @@ class _QuestSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     final colors = context.gamePalette;
-    final title = schoolMode ? 'この端末の授業目標' : 'クエスト';
+    final title = schoolMode
+        ? lang.t('この端末の授業目標', 'Class goals on this device')
+        : lang.t('クエスト', 'Quests');
     return Semantics(
       container: true,
       namesRoute: true,
@@ -430,8 +449,14 @@ class _QuestSheet extends StatelessWidget {
                       const SizedBox(height: GameTokens.spaceXs),
                       Text(
                         schoolMode
-                            ? '順位やクラス件数は集計せず、この端末で授業の学習を進めます。'
-                            : '学習の中身につながる目標だけを集めています。',
+                            ? lang.t(
+                                '順位やクラス件数は集計せず、この端末で授業の学習を進めます。',
+                                'No rankings or class counts are tallied. Class learning continues on this device.',
+                              )
+                            : lang.t(
+                                '学習の中身につながる目標だけを集めています。',
+                                'Only goals tied to what you actually learn are collected here.',
+                              ),
                         style: t.textTheme.bodyMedium?.copyWith(
                           color: colors.inkMuted,
                         ),
@@ -442,7 +467,7 @@ class _QuestSheet extends StatelessWidget {
                 const SizedBox(width: GameTokens.spaceSm),
                 IconButton(
                   key: const ValueKey('game-quest-sheet-close'),
-                  tooltip: '閉じる',
+                  tooltip: lang.t('閉じる', 'Close'),
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close_rounded),
                 ),
@@ -461,8 +486,14 @@ class _QuestSheet extends StatelessWidget {
                   children: [
                     Text(
                       questUnavailable
-                          ? 'クエストを読み込めませんでした。学習パスはそのまま使えます。'
-                          : 'いま進行中のクエストはありません。',
+                          ? lang.t(
+                              'クエストを読み込めませんでした。学習パスはそのまま使えます。',
+                              'Could not load quests. The learning path still works.',
+                            )
+                          : lang.t(
+                              'いま進行中のクエストはありません。',
+                              'No quests in progress right now.',
+                            ),
                       style: t.textTheme.bodyLarge?.copyWith(color: colors.ink),
                     ),
                     if (questUnavailable && onQuestRetry != null) ...[
@@ -470,7 +501,7 @@ class _QuestSheet extends StatelessWidget {
                       FilledButton.tonal(
                         key: const ValueKey('game-quest-retry'),
                         onPressed: onQuestRetry,
-                        child: const Text('もう一度読み込む'),
+                        child: Text(lang.t('もう一度読み込む', 'Reload')),
                       ),
                     ],
                   ],
@@ -510,19 +541,28 @@ class _QuestCard extends StatelessWidget {
     final t = Theme.of(context);
     final colors = context.gamePalette;
     final kind = switch (quest.kind) {
-      GameQuestKind.daily => 'デイリー',
-      GameQuestKind.monthly => 'マンスリー',
-      GameQuestKind.friend => 'フレンズ',
-      GameQuestKind.classroom => '授業',
+      GameQuestKind.daily => lang.t('デイリー', 'Daily'),
+      GameQuestKind.monthly => lang.t('マンスリー', 'Monthly'),
+      GameQuestKind.friend => lang.t('フレンズ', 'Friends'),
+      GameQuestKind.classroom => lang.t('授業', 'Class'),
     };
     final state = switch (quest.state) {
-      GameQuestState.active => '進行中',
-      GameQuestState.completed => schoolMode ? 'この端末で達成済み' : '達成。報酬を受け取れます',
-      GameQuestState.claimed => schoolMode ? 'この端末で達成済み' : '達成済み',
+      GameQuestState.active => lang.t('進行中', 'In progress'),
+      GameQuestState.completed =>
+        schoolMode
+            ? lang.t('この端末で達成済み', 'Completed on this device')
+            : lang.t('達成。報酬を受け取れます', 'Completed. Reward ready to claim'),
+      GameQuestState.claimed =>
+        schoolMode
+            ? lang.t('この端末で達成済み', 'Completed on this device')
+            : lang.t('達成済み', 'Completed'),
     };
-    final semantic =
-        '$kindクエスト、${quest.title}。${quest.description}。'
-        '${quest.target}回中${quest.current}回。$state';
+    final semantic = lang.t(
+      '$kindクエスト、${quest.title}。${quest.description}。'
+          '${quest.target}回中${quest.current}回。$state',
+      '$kind quest, ${quest.title}. ${quest.description}. '
+          '${quest.current} of ${quest.target}. $state',
+    );
 
     return Semantics(
       container: true,
@@ -609,7 +649,9 @@ class _QuestCard extends StatelessWidget {
               const SizedBox(height: GameTokens.spaceSm),
               TextButton(
                 onPressed: onTap,
-                child: Text(quest.actionLabel ?? 'このクエストを見る'),
+                child: Text(
+                  quest.actionLabel ?? lang.t('このクエストを見る', 'View this quest'),
+                ),
               ),
             ],
           ],

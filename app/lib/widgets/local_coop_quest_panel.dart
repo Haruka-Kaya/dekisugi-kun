@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_progress.dart';
@@ -45,14 +46,17 @@ class LocalCoopQuestPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '端末内ペアクエスト',
+                      lang.t('端末内ペアクエスト', 'On-device pair quest'),
                       style: t.textTheme.titleLarge
                           ?.copyWith(color: colors.ink)
                           .jaWeight(FontWeight.w900),
                     ),
                     const SizedBox(height: GameTokens.spaceXs),
                     Text(
-                      '実在する2人がこの端末を手渡し、それぞれ1件ずつ学習します。名前・回答・正誤は保存しません。',
+                      lang.t(
+                        '実在する2人がこの端末を手渡し、それぞれ1件ずつ学習します。名前・回答・正誤は保存しません。',
+                        'Two real people pass this device and each finish one lesson. Names, answers, and results are not saved.',
+                      ),
                       style: t.textTheme.bodySmall?.copyWith(
                         color: colors.inkMuted,
                       ),
@@ -71,7 +75,7 @@ class LocalCoopQuestPanel extends StatelessWidget {
                   key: const ValueKey('local-coop-start'),
                   onPressed: unavailableReason == null ? onStart : null,
                   icon: const Icon(Icons.group_add_outlined),
-                  label: const Text('2人クエストを作る'),
+                  label: Text(lang.t('2人クエストを作る', 'Create a 2-person quest')),
                 ),
                 if (unavailableReason case final reason?) ...[
                   const SizedBox(height: GameTokens.spaceSm),
@@ -90,10 +94,14 @@ class LocalCoopQuestPanel extends StatelessWidget {
             )
           else ...[
             Semantics(
-              label:
-                  '端末内ペアクエスト、${active.target}件中${active.progress}件'
-                  '${active.completed ? '、達成済み' : '、進行中'}'
-                  '、結晶${active.rewardGems}個',
+              label: lang.t(
+                '端末内ペアクエスト、${active.target}件中${active.progress}件'
+                    '${active.completed ? '、達成済み' : '、進行中'}'
+                    '、結晶${active.rewardGems}個',
+                'On-device pair quest, ${active.progress} of ${active.target}'
+                    '${active.completed ? ', completed' : ', in progress'}'
+                    ', ${active.rewardGems} gems',
+              ),
               child: ExcludeSemantics(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -130,7 +138,10 @@ class LocalCoopQuestPanel extends StatelessWidget {
                   const SizedBox(width: GameTokens.spaceSm),
                   Expanded(
                     child: Text(
-                      '2人の学習がそろいました。報酬は端末内の個人walletへ一度だけ記録済みです。',
+                      lang.t(
+                        '2人の学習がそろいました。報酬は端末内の個人walletへ一度だけ記録済みです。',
+                        'Both learners are done. The reward was recorded once to the personal wallet on this device.',
+                      ),
                       style: t.textTheme.bodyMedium?.copyWith(
                         color: colors.ink,
                       ),
@@ -140,7 +151,7 @@ class LocalCoopQuestPanel extends StatelessWidget {
               )
             else ...[
               Text(
-                '次に学習する人を選ぶ',
+                lang.t('次に学習する人を選ぶ', 'Choose who learns next'),
                 style: t.textTheme.titleSmall
                     ?.copyWith(color: colors.ink)
                     .jaWeight(FontWeight.w800),
@@ -162,8 +173,14 @@ class LocalCoopQuestPanel extends StatelessWidget {
               ],
               Text(
                 selectedParticipantId == null
-                    ? '人を選んでからPathへ戻り、初回または期限の復習を1件終えてください。'
-                    : '選択中です。次に完了した意味のある学習1件だけを、この枠へ記録します。',
+                    ? lang.t(
+                        '人を選んでからPathへ戻り、初回または期限の復習を1件終えてください。',
+                        'Choose a person, then go back to the Path and finish one new lesson or due review.',
+                      )
+                    : lang.t(
+                        '選択中です。次に完了した意味のある学習1件だけを、この枠へ記録します。',
+                        'Selected. Only the next meaningful lesson finished will be recorded to this slot.',
+                      ),
                 style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
               ),
             ],
@@ -191,17 +208,23 @@ class _ParticipantButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = '$slotNumber人目';
+    final label = lang.t('$slotNumber人目', 'Person $slotNumber');
     return Semantics(
       button: !contributed,
       enabled: !contributed,
       selected: selected,
-      label:
-          '$label、${contributed
-              ? '学習記録済み'
-              : selected
-              ? '次に学習する人として選択中'
-              : '未選択'}',
+      label: lang.t(
+        '$label、${contributed
+            ? '学習記録済み'
+            : selected
+            ? '次に学習する人として選択中'
+            : '未選択'}',
+        '$label, ${contributed
+            ? 'lesson recorded'
+            : selected
+            ? 'selected to learn next'
+            : 'not selected'}',
+      ),
       onTap: contributed ? null : onTap,
       child: ExcludeSemantics(
         child: OutlinedButton.icon(
@@ -216,10 +239,10 @@ class _ParticipantButton extends StatelessWidget {
           ),
           label: Text(
             contributed
-                ? '$label ・ 記録済み'
+                ? lang.t('$label ・ 記録済み', '$label · Recorded')
                 : selected
-                ? '$label ・ 選択中'
-                : '$labelを選ぶ',
+                ? lang.t('$label ・ 選択中', '$label · Selected')
+                : lang.t('$labelを選ぶ', 'Choose $label'),
           ),
         ),
       ),
