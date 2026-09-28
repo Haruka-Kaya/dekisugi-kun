@@ -39,6 +39,12 @@ for the full design contract (C1–C9).
 
 ![Dekisugi learning path](docs/store-shots-2026/devpost/shot-1179x2556.png)
 
+The English build on-device (Android emulator captures, `--dart-define=APP_LANG=en`):
+
+| Path | Teach-back | Story | Karte | Plus |
+|---|---|---|---|---|
+| ![EN path](docs/screenshots-en/path.png) | ![EN teach-back](docs/screenshots-en/teach-back.png) | ![EN story](docs/screenshots-en/story.png) | ![EN karte](docs/screenshots-en/karte.png) | ![EN plus](docs/screenshots-en/plus.png) |
+
 *The name:* in Japanese slang, *dekisugi* (デキすぎ) is the kid who is
 suspiciously good at everything — here it's the companion's persona: it knows
 the answers but is not allowed to reveal them, so the student has to teach it.
@@ -76,7 +82,7 @@ flutter run            # bundled-catalog mode works with no network
 
 ```bash
 cd app && flutter test     # 1263 tests, no network
-cd server && npm install && npm test   # 394 tests, no network
+cd server && npm install && npm test   # 399 tests, no network
 ```
 
 Optional Live-AI research endpoints are disabled in production by design
