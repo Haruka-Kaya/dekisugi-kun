@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../config/app_language.dart';
 import '../config/game_tokens.dart';
 import '../ui/_material.dart';
 
@@ -68,7 +69,10 @@ class _QrScanScreenState extends State<QrScanScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(GameTokens.spaceLg),
                 child: Text(
-              QrScanScreen.cameraUnavailableMessage,
+              t(
+                QrScanScreen.cameraUnavailableMessage,
+                'Could not start the camera. You can type the code on the previous screen.',
+              ),
                   textAlign: TextAlign.center,
                   style: Theme.of(
                     context,
@@ -81,10 +85,10 @@ class _QrScanScreenState extends State<QrScanScreen> {
     return Scaffold(
       backgroundColor: colors.canvas,
       appBar: AppBar(
-        title: const Text('QRを読み取る'),
+        title: Text(t('QRを読み取る', 'Scan QR code')),
         leading: IconButton(
           key: const ValueKey('qr-scan-cancel'),
-          tooltip: '前の画面へ戻る',
+          tooltip: t('前の画面へ戻る', 'Back to previous screen'),
           onPressed: () => Navigator.of(context).pop(),
           icon: const Icon(Icons.arrow_back),
         ),
@@ -99,7 +103,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
               color: colors.surface,
               padding: const EdgeInsets.all(GameTokens.spaceLg),
               child: Text(
-                'QRを読み取った後も、内容を確認してから操作を続けます。映像や読み取った値を保存しません。',
+                t('QRを読み取った後も、内容を確認してから操作を続けます。映像や読み取った値を保存しません。', 'After scanning, you will review the contents before continuing. Camera images and scanned values are not saved.'),
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
