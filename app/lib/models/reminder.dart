@@ -24,6 +24,8 @@
 ///    アプリが嘘を言うことになる
 library;
 
+import '../config/app_language.dart';
+
 /// 1日に送ってよい上限。**増やさない。**
 const int kMaxNotificationsPerDay = 1;
 
@@ -72,13 +74,22 @@ String? reminderText(ReminderState s) {
   if (s.doneToday) return null;
 
   if (s.daysLeft case final left? when left >= 0 && s.remaining > 0) {
-    return '考査まであと$left日。まだ説明していないところが${s.remaining}つあります。';
+    return t(
+      '考査まであと$left日。まだ説明していないところが${s.remaining}つあります。',
+      '$left days until the test. ${s.remaining} topics still to explain.',
+    );
   }
   if (s.dueCount > 0) {
-    return 'もう一度見るところが${s.dueCount}件あります。';
+    return t(
+      'もう一度見るところが${s.dueCount}件あります。',
+      '${s.dueCount} topics to look at again.',
+    );
   }
   if (s.remaining > 0) {
-    return 'まだ説明していないところが${s.remaining}つあります。';
+    return t(
+      'まだ説明していないところが${s.remaining}つあります。',
+      '${s.remaining} topics still to explain.',
+    );
   }
   // 猶予の残りは**それ単体では送らない**。
   // 「使わずに済ませる」ための情報であって、呼び出す理由ではない
@@ -86,9 +97,12 @@ String? reminderText(ReminderState s) {
 }
 
 /// 通知の見出し。**アプリ名だけ。** 煽らない。
-const String kReminderTitle = 'デキすぎ君';
+String get kReminderTitle => t('デキすぎ君', 'Dekisugi-kun');
 
 /// CLEAR翌日に予約する1通。キャラの感情や連続日数ではなく、次に行う
 /// 学習行為だけを事実として伝える。
 String missionFollowUpText(String conceptLabel) =>
-    '「$conceptLabel」を、別の場面でたしかめる日です。';
+    t(
+      '「$conceptLabel」を、別の場面でたしかめる日です。',
+      'Today, check "$conceptLabel" in a new situation.',
+    );

@@ -9,6 +9,8 @@
 /// **通る場所を全部塞ぐ**ことで守る。
 library;
 
+import '../config/app_language.dart';
+
 /// 参加しているチーム。端末に控えておく。
 class TeamMembership {
   const TeamMembership({required this.id, required this.name});
@@ -139,25 +141,46 @@ enum JoinFailure {
   /// 生徒に見せる文。**責めない。次にやることを書く。**
   String get message => switch (this) {
     JoinFailure.unknownCode =>
-      'そのコードは見つかりませんでした。'
-          '打ち間違いがないか確かめてください。',
+      t(
+        'そのコードは見つかりませんでした。'
+            '打ち間違いがないか確かめてください。',
+        "We couldn't find that code. Check for typos.",
+      ),
     JoinFailure.expired =>
-      'このコードは使えなくなっています。'
-          '先生にもう一度もらってください。',
+      t(
+        'このコードは使えなくなっています。'
+            '先生にもう一度もらってください。',
+        'This code no longer works. Ask your teacher for a new one.',
+      ),
     JoinFailure.inOtherTeam =>
-      'すでに別のクラスに入っています。'
-          '移るときは、先にいまのクラスから抜けてください。',
+      t(
+        'すでに別のクラスに入っています。'
+            '移るときは、先にいまのクラスから抜けてください。',
+        "You're already in another class. To switch, leave your current class first.",
+      ),
     JoinFailure.teamFull =>
-      'このクラスは人数がいっぱいです。'
-          '先生に伝えてください。',
+      t(
+        'このクラスは人数がいっぱいです。'
+            '先生に伝えてください。',
+        'This class is full. Please tell your teacher.',
+      ),
     JoinFailure.cooldown =>
-      'クラスを抜けたばかりです。'
-          '入り直せるのは1週間後になります。',
+      t(
+        'クラスを抜けたばかりです。'
+            '入り直せるのは1週間後になります。',
+        'You just left this class. You can rejoin in one week.',
+      ),
     JoinFailure.network =>
-      '通信できませんでした。'
-          'つながるところでもう一度ためしてください。',
+      t(
+        '通信できませんでした。'
+            'つながるところでもう一度ためしてください。',
+        "Couldn't connect. Try again where you have a connection.",
+      ),
     JoinFailure.unknown =>
-      'うまくいきませんでした。'
-          'しばらくしてからもう一度ためしてください。',
+      t(
+        'うまくいきませんでした。'
+            'しばらくしてからもう一度ためしてください。',
+        'Something went wrong. Please try again in a little while.',
+      ),
   };
 }

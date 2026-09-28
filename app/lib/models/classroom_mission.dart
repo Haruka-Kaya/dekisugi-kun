@@ -1,24 +1,44 @@
 import 'mission.dart';
 import 'unit.dart';
+import '../config/app_language.dart';
 
 /// 板書コードで固定する授業ラウンド。
 ///
 /// 端末履歴から選ばない。教師と全生徒が同じコードを入力したとき、同じ教材、
 /// prompt、checkpointになるための公開契約。
 enum ClassroomRound {
-  a(code: 'A', practiceAttempt: 0, label: '原理を思い出す'),
-  b(code: 'B', practiceAttempt: 1, label: '条件を見分ける'),
-  c(code: 'C', practiceAttempt: 2, label: '別の場面へ使う');
+  a(
+    code: 'A',
+    practiceAttempt: 0,
+    labelJa: '原理を思い出す',
+    labelEn: 'Recall the principle',
+  ),
+  b(
+    code: 'B',
+    practiceAttempt: 1,
+    labelJa: '条件を見分ける',
+    labelEn: 'Tell the conditions apart',
+  ),
+  c(
+    code: 'C',
+    practiceAttempt: 2,
+    labelJa: '別の場面へ使う',
+    labelEn: 'Apply it to a new situation',
+  );
 
   const ClassroomRound({
     required this.code,
     required this.practiceAttempt,
-    required this.label,
+    required this._labelJa,
+    required this._labelEn,
   });
 
   final String code;
   final int practiceAttempt;
-  final String label;
+  final String _labelJa;
+  final String _labelEn;
+
+  String get label => t(_labelJa, _labelEn);
 
   /// Aは本文から初めて説明する。B/Cは答えを見せず、指定場面へ適用する。
   MissionKind get missionKind => switch (this) {

@@ -1,5 +1,6 @@
 import '../ui/_material.dart';
 import '../ui/adaptive.dart';
+import 'app_language.dart';
 import 'game_tokens.dart';
 
 /// 同梱している可変フォントの family 名（pubspec.yaml の `fonts:` と一致させる）。
@@ -324,10 +325,10 @@ IconData statusIcon(ExplainStatus s) => switch (s) {
 
 /// 状態のラベル。アイコンと必ずセットで出す。
 String statusLabel(ExplainStatus s) => switch (s) {
-  ExplainStatus.gotIt => '説明できた',
-  ExplainStatus.shaky => 'あと少し',
-  ExplainStatus.weak => 'ここを復習',
-  ExplainStatus.untouched => 'まだ',
+  ExplainStatus.gotIt => t('説明できた', 'Explained it'),
+  ExplainStatus.shaky => t('あと少し', 'Almost'),
+  ExplainStatus.weak => t('ここを復習', 'Review this'),
+  ExplainStatus.untouched => t('まだ', 'Not yet'),
 };
 
 /// 拡張色への短縮アクセス。`final c = context.appColors;`

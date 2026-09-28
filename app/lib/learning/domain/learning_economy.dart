@@ -4,6 +4,8 @@
 /// 正本として再照合し、学習の完了・XP・正答を商品へ追加できない構造にする。
 library;
 
+import '../../config/app_language.dart';
+
 enum LearningCosmeticSlot {
   pathMascot;
 
@@ -32,10 +34,10 @@ enum LearningPathMascotStyle {
   };
 
   String get label => switch (this) {
-    LearningPathMascotStyle.standard => 'いつものデキすぎ君',
-    LearningPathMascotStyle.orbit => '軌道リングのデキすぎ君',
-    LearningPathMascotStyle.nova => '星雲スーツのデキすぎ君',
-    LearningPathMascotStyle.aurora => 'オーロラマントのデキすぎ君',
+    LearningPathMascotStyle.standard => t('いつものデキすぎ君', 'Classic Dekisugi-kun'),
+    LearningPathMascotStyle.orbit => t('軌道リングのデキすぎ君', 'Orbit Ring Dekisugi-kun'),
+    LearningPathMascotStyle.nova => t('星雲スーツのデキすぎ君', 'Nebula Suit Dekisugi-kun'),
+    LearningPathMascotStyle.aurora => t('オーロラマントのデキすぎ君', 'Aurora Cape Dekisugi-kun'),
   };
 }
 
