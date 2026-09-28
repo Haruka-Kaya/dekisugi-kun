@@ -7,6 +7,7 @@ import '../models/reminder.dart';
 import '../services/reminders.dart';
 import '../ui/_material.dart';
 import '../ui/adaptive.dart';
+import '../widgets/app_language_tile.dart';
 import '../widgets/readable_width.dart';
 import '../widgets/studio_ui.dart';
 
@@ -111,6 +112,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onToggle: _toggle,
                     onPickHour: _pickHour,
                   ),
+                  const SizedBox(height: 14),
+                  const AppLanguageTile(),
                   if (widget.onOpenPlus case final openPlus?) ...[
                     const SizedBox(height: 24),
                     StudioSectionHeader(
