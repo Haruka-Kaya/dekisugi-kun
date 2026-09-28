@@ -138,10 +138,9 @@ to guess a price and blocks the purchase operation ("Can't check store informati
 while free features keep working. Judges can exercise the full
 paywall themselves with the `--dart-define` command in "Testing instructions".
 
-The earlier Japanese-UI capture (`shipaton-demo-v4.mp4`, ~118s, airplane-mode
-beat included) remains in this directory for reference; the submitted video
-is the English-build capture. An even earlier web-build capture is archived
-at `docs/attic/shipaton-demo-v1.mp4`.
+Earlier cuts (Japanese-UI v4 with the airplane-mode beat, v3, v2, and the
+web-build v1) are archived under `docs/attic/`; the submitted video is the
+English-build v6 capture.
 
 ## Testing instructions (for judges)
 
