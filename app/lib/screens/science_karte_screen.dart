@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_economy.dart';
@@ -92,12 +93,12 @@ class _ScienceKarteScreenState extends State<ScienceKarteScreen> {
                       key: const ValueKey('science-karte-back'),
                       onPressed: () => Navigator.of(context).maybePop(),
                       icon: const Icon(Icons.arrow_back),
-                      tooltip: 'もどる',
+                      tooltip: lang.t('もどる', 'Back'),
                     ),
                     const SizedBox(width: GameTokens.spaceSm),
                     Expanded(
                       child: Text(
-                        'デキすぎ君のカルテ',
+                        lang.t('デキすぎ君のカルテ', 'Dekisugi-kun\'s record'),
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(color: colors.ink)
                             .jaWeight(FontWeight.w900),
@@ -110,15 +111,31 @@ class _ScienceKarteScreenState extends State<ScienceKarteScreen> {
                   surfaceKey: const ValueKey('science-karte-summary'),
                   color: colors.story,
                   foregroundColor: colors.onStory,
-                  eyebrow: '思い込みの記録',
+                  eyebrow: lang.t('思い込みの記録', 'Misconception record'),
                   title: view == null
-                      ? '読み込み中…'
-                      : '訂正できた ${view.summary.resolvedNeedCount}・'
-                            '迷い中 ${view.summary.activeNeedCount}',
-                  body: 'デキすぎ君は教科書にありがちな思い込みを'
-                      '${view == null ? '' : view.summary.conceptCount}個持っています。'
-                      'あなたの説明で、ひとつずつ訂正していきます。',
-                  semanticSummary: 'デキすぎ君のカルテ。思い込みの記録。',
+                      ? lang.t('読み込み中…', 'Loading…')
+                      : lang.t(
+                              '訂正できた ${view.summary.resolvedNeedCount}・',
+                              'Corrected: ${view.summary.resolvedNeedCount} ·',
+                            ) +
+                            lang.t(
+                              '迷い中 ${view.summary.activeNeedCount}',
+                              ' Still unsure: ${view.summary.activeNeedCount}',
+                            ),
+                  body:
+                      lang.t('デキすぎ君は教科書にありがちな思い込みを', 'Dekisugi-kun has') +
+                      lang.t(
+                        '${view == null ? '' : view.summary.conceptCount}個持っています。',
+                        ' ${view == null ? '' : view.summary.conceptCount} common textbook misconceptions.',
+                      ) +
+                      lang.t(
+                        'あなたの説明で、ひとつずつ訂正していきます。',
+                        ' Your teaching helps correct them one by one.',
+                      ),
+                  semanticSummary: lang.t(
+                    'デキすぎ君のカルテ。思い込みの記録。',
+                    'Dekisugi-kun\'s record. Misconception history.',
+                  ),
                   leading: DecoratedBox(
                     decoration: BoxDecoration(
                       color: colors.surface,
@@ -138,9 +155,18 @@ class _ScienceKarteScreenState extends State<ScienceKarteScreen> {
                   surfaceKey: const ValueKey('science-karte-note'),
                   raised: true,
                   child: Text(
-                    'ここにあるのは答え合わせではなく、デキすぎ君が持っている思い込みと、'
-                    'あなたの説明で変わったところの記録です。誤答の本文や音声は残りません。'
-                    '思い込みは、実際の中高生へのアンケート回答をもとに作られました。',
+                    lang.t(
+                          'ここにあるのは答え合わせではなく、デキすぎ君が持っている思い込みと、',
+                          'This is a record of Dekisugi-kun\'s misconceptions and',
+                        ) +
+                        lang.t(
+                          'あなたの説明で変わったところの記録です。誤答の本文や音声は残りません。',
+                          ' how your teaching changed them, not an answer key. Wrong answers and audio are not saved.',
+                        ) +
+                        lang.t(
+                          '思い込みは、実際の中高生へのアンケート回答をもとに作られました。',
+                          ' The misconceptions come from surveys of real middle and high school students.',
+                        ),
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: colors.inkMuted),
@@ -166,7 +192,10 @@ class _ScienceKarteScreenState extends State<ScienceKarteScreen> {
                   GameSolidSurface(
                     raised: true,
                     child: Text(
-                      'カタログをまだ読めていません。',
+                      lang.t(
+                        'カタログをまだ読めていません。',
+                        'The catalog has not loaded yet.',
+                      ),
                       style: Theme.of(
                         context,
                       ).textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
@@ -176,7 +205,10 @@ class _ScienceKarteScreenState extends State<ScienceKarteScreen> {
                   for (final unit in _unitsInOrder(view)) ...[
                     GameSectionHeader(
                       title: unit.title,
-                      description: 'この単元の思い込みと、観測した作業の記録。',
+                      description: lang.t(
+                        'この単元の思い込みと、観測した作業の記録。',
+                        'Misconceptions in this unit and a record of what you observed.',
+                      ),
                     ),
                     const SizedBox(height: GameTokens.spaceMd),
                     for (final concept in view.concepts.where(
@@ -234,7 +266,7 @@ class _KarteConceptCard extends StatelessWidget {
           if (entry.misconception != null) ...[
             const SizedBox(height: GameTokens.spaceSm),
             Text(
-              'デキすぎ君の思い込み',
+              lang.t('デキすぎ君の思い込み', 'Dekisugi-kun\'s misconceptions'),
               style: t.textTheme.labelSmall?.copyWith(color: colors.inkMuted),
             ),
             const SizedBox(height: GameTokens.spaceXs),
@@ -249,7 +281,10 @@ class _KarteConceptCard extends StatelessWidget {
             const SizedBox(height: GameTokens.spaceSm),
             if (entry.misconception != null)
               Text(
-                'あなたの説明で分かったこと: ${entry.misconception!.correct}',
+                lang.t(
+                  'あなたの説明で分かったこと: ${entry.misconception!.correct}',
+                  'What your teaching helped clarify: ${entry.misconception!.correct}',
+                ),
                 style: t.textTheme.bodySmall?.copyWith(
                   color: colors.pathComplete,
                 ),
@@ -281,7 +316,10 @@ class _KarteConceptCard extends StatelessWidget {
           if (!entry.taught && !entry.hasActiveNeeds) ...[
             const SizedBox(height: GameTokens.spaceSm),
             Text(
-              'まだ一緒に確かめていない思い込みです。',
+              lang.t(
+                'まだ一緒に確かめていない思い込みです。',
+                'You have not explored this misconception together yet.',
+              ),
               style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
             ),
           ],
@@ -301,12 +339,12 @@ class _KarteStatusChip extends StatelessWidget {
     final t = Theme.of(context);
     final colors = context.gamePalette;
     final (label, fill, foreground) = entry.hasActiveNeeds
-        ? ('迷い中', colors.story, colors.onStory)
+        ? (lang.t('迷い中', 'Still unsure'), colors.story, colors.onStory)
         : entry.hasResolvedNeeds
-        ? ('訂正できた', colors.pathComplete, colors.surface)
+        ? (lang.t('訂正できた', 'Corrected'), colors.pathComplete, colors.surface)
         : entry.taught
-        ? ('観測中', colors.surface, colors.inkMuted)
-        : ('これから', colors.surface, colors.inkMuted);
+        ? (lang.t('観測中', 'Exploring'), colors.surface, colors.inkMuted)
+        : (lang.t('これから', 'Up next'), colors.surface, colors.inkMuted);
     return Semantics(
       label: label,
       child: ExcludeSemantics(
@@ -360,7 +398,7 @@ class _ParentReportCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '保護者の方へのレポート',
+                  lang.t('保護者の方へのレポート', 'Report for parents'),
                   style: t.textTheme.titleSmall
                       ?.copyWith(color: colors.ink)
                       .jaWeight(FontWeight.w800),
@@ -377,7 +415,7 @@ class _ParentReportCard extends StatelessWidget {
                     border: Border.all(color: colors.border),
                   ),
                   child: Text(
-                    'Plusサポーター特典',
+                    lang.t('Plusサポーター特典', 'Plus supporter benefit'),
                     style: t.textTheme.labelSmall?.copyWith(
                       color: colors.inkMuted,
                     ),
@@ -388,10 +426,22 @@ class _ParentReportCard extends StatelessWidget {
           const SizedBox(height: GameTokens.spaceSm),
           Text(
             supporter
-                ? 'お子さまの説明でデキすぎ君が理解した思い込みを、'
-                      '保護者の方に渡せる文章でまとめます。'
-                : 'お子さまがデキすぎ君に教えて直した思い込みを、'
-                      '保護者の方へ渡せるレポートにまとめられます。',
+                ? lang.t(
+                        'お子さまの説明でデキすぎ君が理解した思い込みを、',
+                        'Summarize what Dekisugi-kun understood through your child\'s teaching',
+                      ) +
+                      lang.t(
+                        '保護者の方に渡せる文章でまとめます。',
+                        ' in a report you can share with parents.',
+                      )
+                : lang.t(
+                        'お子さまがデキすぎ君に教えて直した思い込みを、',
+                        'Create a report about misconceptions your child helped Dekisugi-kun correct',
+                      ) +
+                      lang.t(
+                        '保護者の方へ渡せるレポートにまとめられます。',
+                        ' to share with parents.',
+                      ),
             style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
           ),
           const SizedBox(height: GameTokens.spaceMd),
@@ -402,7 +452,11 @@ class _ParentReportCard extends StatelessWidget {
                   : 'science-karte-report-plus',
             ),
             onPressed: supporter ? onOpenReport : onOpenPlus,
-            child: Text(supporter ? 'レポートを開く' : 'Plusを見る'),
+            child: Text(
+              supporter
+                  ? lang.t('レポートを開く', 'Open report')
+                  : lang.t('Plusを見る', 'View Plus'),
+            ),
           ),
         ],
       ),
@@ -437,30 +491,72 @@ class _KarteParentReportScreen extends StatelessWidget {
 
   String _reportText() {
     final lines = <String>[
-      'デキすぎ君のカルテ — 保護者の方へのレポート',
+      lang.t(
+        'デキすぎ君のカルテ — 保護者の方へのレポート',
+        'Dekisugi-kun\'s record — Report for parents',
+      ),
       '',
-      'デキすぎ君は、教科書にありがちな思い込みを持っているAIです。',
-      'お子さまは教材を読んでからデキすぎ君に説明し、デキすぎ君が'
-          '分かるまで付き合います。ここにまとめるのは、お子さまの説明で'
-          'デキすぎ君の思い込みがどう変わったかの記録です。',
+      lang.t(
+        'デキすぎ君は、教科書にありがちな思い込みを持っているAIです。',
+        'Dekisugi-kun is an AI with common textbook misconceptions.',
+      ),
+      lang.t(
+            'お子さまは教材を読んでからデキすぎ君に説明し、デキすぎ君が',
+            'Your child reads the material and teaches Dekisugi-kun,',
+          ) +
+          lang.t(
+            '分かるまで付き合います。ここにまとめるのは、お子さまの説明で',
+            ' helping him until he understands. This report shows',
+          ) +
+          lang.t(
+            'デキすぎ君の思い込みがどう変わったかの記録です。',
+            ' how your child\'s teaching changed his misconceptions.',
+          ),
       '',
-      '■ お子さまの説明で分かってもらえた思い込み（${_resolved.length}件）',
+      lang.t(
+        '■ お子さまの説明で分かってもらえた思い込み（${_resolved.length}件）',
+        '■ Misconceptions clarified by your child\'s teaching (${_resolved.length})',
+      ),
       for (final entry in _resolved) ...[
-        '・「${entry.misconception!.statement}」（${entry.unitTitle}）',
-        '  → ${entry.misconception!.correct}',
+        lang.t(
+          '・「${entry.misconception!.statement}」（${entry.unitTitle}）',
+          '• "${entry.misconception!.statement}" (${entry.unitTitle})',
+        ),
+        lang.t(
+          '  → ${entry.misconception!.correct}',
+          '  → ${entry.misconception!.correct}',
+        ),
       ],
-      if (_resolved.isEmpty) '・まだありません。',
+      if (_resolved.isEmpty) lang.t('・まだありません。', '• None yet.'),
       '',
-      '■ いま一緒に確かめている思い込み（${_inProgress.length}件）',
+      lang.t(
+        '■ いま一緒に確かめている思い込み（${_inProgress.length}件）',
+        '■ Misconceptions being explored together (${_inProgress.length})',
+      ),
       for (final entry in _inProgress)
-        '・「${entry.misconception!.statement}」（${entry.unitTitle}）'
-            '— お子さまの説明がまだ届ききっていません。',
-      if (_inProgress.isEmpty) '・ありません。',
+        lang.t(
+              '・「${entry.misconception!.statement}」（${entry.unitTitle}）',
+              '• "${entry.misconception!.statement}" (${entry.unitTitle})',
+            ) +
+            lang.t(
+              '— お子さまの説明がまだ届ききっていません。',
+              ' — Your child\'s teaching has not cleared this up yet.',
+            ),
+      if (_inProgress.isEmpty) lang.t('・ありません。', '• None.'),
       '',
-      '残り $_untouchedCount 件の思い込みは、これから一緒に確かめます。',
+      lang.t(
+        '残り $_untouchedCount 件の思い込みは、これから一緒に確かめます。',
+        'The remaining $_untouchedCount misconceptions are still to explore together.',
+      ),
       '',
-      '※ お子さまの誤答の本文・音声・点数は記録されていません。このレポートは'
-          'AI の思い込みの変化だけをまとめたものです。',
+      lang.t(
+            '※ お子さまの誤答の本文・音声・点数は記録されていません。このレポートは',
+            'Note: Wrong answers, audio, and scores are not recorded. This report',
+          ) +
+          lang.t(
+            'AI の思い込みの変化だけをまとめたものです。',
+            ' only summarizes how the AI\'s misconceptions changed.',
+          ),
     ];
     return lines.join('\n');
   }
@@ -468,9 +564,9 @@ class _KarteParentReportScreen extends StatelessWidget {
   Future<void> _copyReport(BuildContext context) async {
     await Clipboard.setData(ClipboardData(text: _reportText()));
     if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('レポートをコピーしました')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(lang.t('レポートをコピーしました', 'Report copied'))),
+    );
   }
 
   @override
@@ -495,12 +591,12 @@ class _KarteParentReportScreen extends StatelessWidget {
                   key: const ValueKey('science-karte-report-back'),
                   onPressed: () => Navigator.of(context).maybePop(),
                   icon: const Icon(Icons.arrow_back),
-                  tooltip: 'もどる',
+                  tooltip: lang.t('もどる', 'Back'),
                 ),
                 const SizedBox(width: GameTokens.spaceSm),
                 Expanded(
                   child: Text(
-                    '保護者の方へのレポート',
+                    lang.t('保護者の方へのレポート', 'Report for parents'),
                     style: t.textTheme.titleMedium
                         ?.copyWith(color: colors.ink)
                         .jaWeight(FontWeight.w900),
@@ -516,16 +612,28 @@ class _KarteParentReportScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'デキすぎ君は、教科書にありがちな思い込みを持っているAIです。'
-                    'お子さまは教材を読んでからデキすぎ君に説明し、デキすぎ君が'
-                    '分かるまで付き合います。',
+                    lang.t(
+                          'デキすぎ君は、教科書にありがちな思い込みを持っているAIです。',
+                          'Dekisugi-kun is an AI with common textbook misconceptions.',
+                        ) +
+                        lang.t(
+                          'お子さまは教材を読んでからデキすぎ君に説明し、デキすぎ君が',
+                          ' Your child reads the material and teaches Dekisugi-kun,',
+                        ) +
+                        lang.t(
+                          '分かるまで付き合います。',
+                          ' helping him until he understands.',
+                        ),
                     style: t.textTheme.bodySmall?.copyWith(
                       color: colors.inkMuted,
                     ),
                   ),
                   const SizedBox(height: GameTokens.spaceLg),
                   Text(
-                    'お子さまの説明で分かってもらえた思い込み（${_resolved.length}件）',
+                    lang.t(
+                      'お子さまの説明で分かってもらえた思い込み（${_resolved.length}件）',
+                      'Misconceptions clarified by your child\'s teaching (${_resolved.length})',
+                    ),
                     style: t.textTheme.titleSmall
                         ?.copyWith(color: colors.ink)
                         .jaWeight(FontWeight.w800),
@@ -533,7 +641,7 @@ class _KarteParentReportScreen extends StatelessWidget {
                   const SizedBox(height: GameTokens.spaceSm),
                   if (_resolved.isEmpty)
                     Text(
-                      'まだありません。',
+                      lang.t('まだありません。', 'None yet.'),
                       style: t.textTheme.bodySmall?.copyWith(
                         color: colors.inkMuted,
                       ),
@@ -554,7 +662,10 @@ class _KarteParentReportScreen extends StatelessWidget {
                       ),
                   const SizedBox(height: GameTokens.spaceMd),
                   Text(
-                    'いま一緒に確かめている思い込み（${_inProgress.length}件）',
+                    lang.t(
+                      'いま一緒に確かめている思い込み（${_inProgress.length}件）',
+                      'Misconceptions being explored together (${_inProgress.length})',
+                    ),
                     style: t.textTheme.titleSmall
                         ?.copyWith(color: colors.ink)
                         .jaWeight(FontWeight.w800),
@@ -562,7 +673,7 @@ class _KarteParentReportScreen extends StatelessWidget {
                   const SizedBox(height: GameTokens.spaceSm),
                   if (_inProgress.isEmpty)
                     Text(
-                      'ありません。',
+                      lang.t('ありません。', 'None.'),
                       style: t.textTheme.bodySmall?.copyWith(
                         color: colors.inkMuted,
                       ),
@@ -574,8 +685,12 @@ class _KarteParentReportScreen extends StatelessWidget {
                           bottom: GameTokens.spaceSm,
                         ),
                         child: Text(
-                          '「${entry.misconception!.statement}」'
-                          '— 説明がまだ届ききっていません。',
+                          lang.t(
+                            '「${entry.misconception!.statement}」'
+                                '— 説明がまだ届ききっていません。',
+                            '"${entry.misconception!.statement}" '
+                                '— The explanation has not cleared this up yet.',
+                          ),
                           style: t.textTheme.bodySmall?.copyWith(
                             color: colors.ink,
                           ),
@@ -583,15 +698,24 @@ class _KarteParentReportScreen extends StatelessWidget {
                       ),
                   const SizedBox(height: GameTokens.spaceMd),
                   Text(
-                    '残り $_untouchedCount 件の思い込みは、これから一緒に確かめます。',
+                    lang.t(
+                      '残り $_untouchedCount 件の思い込みは、これから一緒に確かめます。',
+                      'The remaining $_untouchedCount misconceptions are still to explore together.',
+                    ),
                     style: t.textTheme.bodySmall?.copyWith(
                       color: colors.inkMuted,
                     ),
                   ),
                   const SizedBox(height: GameTokens.spaceLg),
                   Text(
-                    '※ お子さまの誤答の本文・音声・点数は記録されていません。'
-                    'このレポートはAIの思い込みの変化だけをまとめたものです。',
+                    lang.t(
+                          '※ お子さまの誤答の本文・音声・点数は記録されていません。',
+                          'Note: Wrong answers, audio, and scores are not recorded.',
+                        ) +
+                        lang.t(
+                          'このレポートはAIの思い込みの変化だけをまとめたものです。',
+                          ' This report only summarizes how the AI\'s misconceptions changed.',
+                        ),
                     style: t.textTheme.bodySmall?.copyWith(
                       color: colors.inkMuted,
                     ),
@@ -604,7 +728,7 @@ class _KarteParentReportScreen extends StatelessWidget {
               key: const ValueKey('science-karte-report-copy'),
               onPressed: () => unawaited(_copyReport(context)),
               icon: const Icon(Icons.copy),
-              label: const Text('レポートをコピー'),
+              label: Text(lang.t('レポートをコピー', 'Copy report')),
             ),
           ],
         ),
@@ -625,7 +749,10 @@ class _KarteNeedChip extends StatelessWidget {
     final colors = context.gamePalette;
     final foreground = resolved ? colors.pathComplete : colors.story;
     return Semantics(
-      label: '$label、${resolved ? '解消した' : 'まだ迷っている'}',
+      label: lang.t(
+        '$label、${resolved ? '解消した' : 'まだ迷っている'}',
+        '$label, ${resolved ? 'Resolved' : 'Still unsure'}',
+      ),
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.symmetric(

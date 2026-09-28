@@ -1,4 +1,5 @@
 import '../config/app_radius.dart';
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../models/review.dart';
 import '../services/session_store.dart';
@@ -57,7 +58,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       initial: _exam ?? now.add(const Duration(days: 14)),
       first: now,
       last: now.add(const Duration(days: 365)),
-      helpText: '次の定期考査はいつ？',
+      helpText: lang.t('次の定期考査はいつ？', 'When is your next exam?'),
     );
     if (picked == null) return;
     await widget.store.setExamDate(picked);
@@ -81,9 +82,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
       final section = unit?.sectionFor(item.conceptKey);
       if (unit == null || section == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('この教材をまだ読み込めていません。')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              lang.t('この教材をまだ読み込めていません。', 'This material is not loaded yet.'),
+            ),
+          ),
+        );
         return;
       }
       final reviewed = await Navigator.of(context).push<bool>(
@@ -119,7 +124,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         .toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('次の話')),
+      appBar: AppBar(title: Text(lang.t('次の話', 'Next conversation'))),
       body: items == null
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -134,12 +139,17 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     24 + MediaQuery.paddingOf(context).bottom,
                   ),
                   children: [
-                    const StudioPageIntro(
-                      eyebrow: 'NEXT TALK  ·  次の話',
-                      title: '次に話すことを、\nひとつずつ整える。',
-                      body:
-                          '戻るための復習ではなく、'
-                          'デキすぎ君にもう一度話すための準備です。',
+                    StudioPageIntro(
+                      eyebrow: lang.t('NEXT TALK  ·  次の話', 'NEXT TALK'),
+                      title: lang.t(
+                        '次に話すことを、\nひとつずつ整える。',
+                        'Get ready for your next\\nconversation, one step at a time.',
+                      ),
+                      body: lang.t(
+                        '戻るための復習ではなく、'
+                            'デキすぎ君にもう一度話すための準備です。',
+                        'This review prepares you to teach Dekisugi-kun again.',
+                      ),
                     ),
                     const SizedBox(height: 22),
                     _ExamPlan(exam: _exam, onTap: _pickExamDate),
@@ -148,9 +158,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
                       const _Empty()
                     else ...[
                       if (ready!.isNotEmpty) ...[
-                        const StudioSectionHeader(
-                          title: 'いま整える話',
-                          description: '上から1つ。読み直したら、次に話す準備が進みます。',
+                        StudioSectionHeader(
+                          title: lang.t('いま整える話', 'Prepare now'),
+                          description: lang.t(
+                            '上から1つ。読み直したら、次に話す準備が進みます。',
+                            'Start with the first topic. Reread it to prepare for your next conversation.',
+                          ),
                           leading: Icon(Icons.record_voice_over_outlined),
                         ),
                         const SizedBox(height: 14),
@@ -171,9 +184,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
                       ],
                       if (later!.isNotEmpty) ...[
                         if (ready.isNotEmpty) const SizedBox(height: 22),
-                        const StudioSectionHeader(
-                          title: 'この先に話すこと',
-                          description: '忘れる前に、もう一度話す日を残しています。',
+                        StudioSectionHeader(
+                          title: lang.t('この先に話すこと', 'Coming up'),
+                          description: lang.t(
+                            '忘れる前に、もう一度話す日を残しています。',
+                            'Your next review dates are saved so you can revisit these topics.',
+                          ),
                           leading: Icon(Icons.calendar_month_outlined),
                         ),
                         const SizedBox(height: 14),
@@ -223,17 +239,26 @@ class _ExamPlan extends StatelessWidget {
     return StudioActionTile(
       icon: Icons.event_outlined,
       title: exam == null
-          ? '考査日から、話す順番をつくる'
+          ? lang.t('考査日から、話す順番をつくる', 'Plan your talks around an exam')
           : days! < 0
-          ? '次の考査日を入れ直す'
+          ? lang.t('次の考査日を入れ直す', 'Update your next exam date')
           : days == 0
-          ? 'きょうが考査日'
-          : '考査まで あと$days日',
+          ? lang.t('きょうが考査日', 'Your exam is today')
+          : lang.t('考査まで あと$days日', '$days days until the exam'),
       description: exam == null
-          ? '日付を入れると、もう一度話す日を逆算します。'
+          ? lang.t(
+              '日付を入れると、もう一度話す日を逆算します。',
+              'Set a date to plan when to review.',
+            )
           : days! < 0
-          ? '前の考査日は${exam!.year}年${exam!.month}月${exam!.day}日でした。'
-          : '${exam!.year}年${exam!.month}月${exam!.day}日に向けた順番です。',
+          ? lang.t(
+              '前の考査日は${exam!.year}年${exam!.month}月${exam!.day}日でした。',
+              'Your previous exam was on ${exam!.year}/${exam!.month}/${exam!.day}.',
+            )
+          : lang.t(
+              '${exam!.year}年${exam!.month}月${exam!.day}日に向けた順番です。',
+              'Your plan for the exam on ${exam!.year}/${exam!.month}/${exam!.day}.',
+            ),
       onTap: onTap,
     );
   }
@@ -259,15 +284,18 @@ class _Empty extends StatelessWidget {
           Icon(Icons.forum_outlined, size: 28, color: c.onCoolSurface),
           const SizedBox(height: 16),
           Text(
-            'いま、整えておく話はありません。',
+            lang.t('いま、整えておく話はありません。', 'Nothing to prepare right now.'),
             style: t.textTheme.titleLarge
                 ?.copyWith(color: c.onCoolSurface)
                 .jaWeight(FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Text(
-            '次に教えたいテーマをホームから選ぶと、'
-            'デキすぎ君との次の話が始まります。',
+            lang.t('次に教えたいテーマをホームから選ぶと、', 'Choose a topic to teach from Home') +
+                lang.t(
+                  'デキすぎ君との次の話が始まります。',
+                  ' to start your next talk with Dekisugi-kun.',
+                ),
             style: t.textTheme.bodyMedium?.copyWith(color: c.onCoolSurface),
           ),
         ],
@@ -309,9 +337,10 @@ class _ForwardStep extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label:
-          '${item.label}。${item.reason.label}。'
-          '${ready ? 'いま準備するテーマ' : 'この先に準備するテーマ'}。',
+      label: lang.t(
+        '${item.label}。${item.reason.label}。${ready ? 'いま準備するテーマ' : 'この先に準備するテーマ'}。',
+        '${item.label}. ${item.reason.label}. ${ready ? 'Topic to prepare now' : 'Topic to prepare later'}.',
+      ),
       child: Container(
         padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
         decoration: BoxDecoration(
@@ -339,13 +368,21 @@ class _ForwardStep extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              ready ? '次に話す前に、ここだけ読み直します。' : '次に話す日のために、ここへ残しています。',
+              ready
+                  ? lang.t(
+                      '次に話す前に、ここだけ読み直します。',
+                      'Reread this before your next talk.',
+                    )
+                  : lang.t('次に話す日のために、ここへ残しています。', 'Saved for your next talk.'),
               style: t.textTheme.bodyMedium?.copyWith(color: foreground),
             ),
             const SizedBox(height: 18),
             if (!readAvailable)
               Text(
-                '教材を読み込むと、ここから準備できます。',
+                lang.t(
+                  '教材を読み込むと、ここから準備できます。',
+                  'Load the material to prepare here.',
+                ),
                 style: t.textTheme.bodySmall?.copyWith(color: foreground),
               )
             else
@@ -354,7 +391,9 @@ class _ForwardStep extends StatelessWidget {
                 child: FilledButton(
                   onPressed: onRead,
                   child: Text(
-                    reading ? '教材を開いています…' : '次に話す前に読む',
+                    reading
+                        ? lang.t('教材を開いています…', 'Opening material…')
+                        : lang.t('次に話す前に読む', 'Read before your next talk'),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -386,7 +425,9 @@ class _DueChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
-        ready ? 'いま整える' : 'あと${left + 1}日',
+        ready
+            ? lang.t('いま整える', 'Prepare now')
+            : lang.t('あと${left + 1}日', 'In ${left + 1} days'),
         style: t.textTheme.bodySmall?.copyWith(color: fg, height: 1.0),
       ),
     );
