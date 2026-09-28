@@ -6,7 +6,7 @@ import 'session_store.dart';
 ///
 /// 上げると、すでに同意した人にもう一度出る。
 /// 上げ忘れると、古い文面にしか同意していない人を「同意済み」として扱うことになる。
-const int kConsentVersion = 4;
+const int kConsentVersion = 5;
 
 /// どの利用経路で必要な手続を確認したか。
 ///
@@ -45,6 +45,13 @@ enum ConsentRoute {
 /// 匿名IDであっても送信対象になることを隠さない。
 const List<(String, String)> kExternalServiceDisclosure = [
   ('Google（AI との会話）', '声と、話したり入力したりした文字を、会話の処理のために送ります。'),
+  (
+    '生成AIサービス（デキすぎ君の返事の文面）',
+    '説明を聞き終えたあとの返事の前置きを作るため、入力した説明文と'
+        'そこから聞き取れた言葉、単元名を本アプリのサーバ経由で'
+        '生成AIサービス（OpenAI または同等の提供元）へ送ります。'
+        '送るのはその3点だけで、氏名・ID・声・選択肢や正解の文面は送りません。',
+  ),
   (
     'RevenueCat（Plus の購入管理）',
     'Plus 画面を開くなど SDK を使う場面で、端末ごとにアプリが作った匿名UUID、'

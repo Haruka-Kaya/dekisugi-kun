@@ -5,12 +5,16 @@ import '../config/game_tokens.dart';
 import '../learning/domain/explanation_coverage.dart';
 import '../learning/domain/learning_heart.dart';
 import '../learning/domain/learning_need.dart';
+import '../learning/services/local_companion_voice.dart';
 import '../models/game_path.dart';
 import '../models/unit.dart';
+import '../services/device_identity.dart';
 import '../services/local_narration.dart';
 import '../services/local_pronunciation_practice.dart';
 import '../services/local_voice_practice.dart';
+import '../services/remote_companion_engine.dart';
 import '../ui/_material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/game_activity_scaffold.dart';
 import '../widgets/learning_path.dart';
 import '../widgets/readable_width.dart';
@@ -19,8 +23,11 @@ import '../widgets/readable_width.dart';
 ///
 /// 自由発話・自由記述の正誤は採点しない。説明が進むには、その概念の
 /// 「大事な言葉」をデキすぎ君が聞き取れることが条件 —— 無関係な文では
-/// 「もう少し聞かせて」と返す。語彙の聞き取りも誤概念の確認も端末内だけで
-/// 行い、外部へ送信しない。音声は16kHz PCMとしてRAMに最大60秒だけ保持し、
+/// 「もう少し聞かせて」と返す。語彙の聞き取りと誤概念の確認は端末内だけで
+/// 行う。返事の前置きの生成（外部AI、同意文面の「生成AIサービス」項）が
+/// 有効なビルドでは、文字で書いた説明がサーバ経由で生成AIへ送られる —
+/// 送るのは説明文と聞き取れた言葉と単元名だけで、lure・正解・選択肢は
+/// 送らない。音声は16kHz PCMとしてRAMに最大60秒だけ保持し、
 /// 文字、選択内容、認識候補とともに保存しない。完了callbackへ渡すのは一般化
 /// needと固定課題位置だけで、回答そのものは含めない。
 class ScienceSpeakListenScreen extends StatefulWidget {
@@ -36,6 +43,7 @@ class ScienceSpeakListenScreen extends StatefulWidget {
     this.narration,
     this.voicePractice,
     this.speechRecognizer,
+    this.companionVoice,
   });
 
   final Section section;
@@ -64,6 +72,11 @@ class ScienceSpeakListenScreen extends StatefulWidget {
   /// 声の説明の「聞き取り確認」に使うオンデバイス認識。テスト用の差し替え口。
   @visibleForTesting
   final OnDeviceSpeechRecognizer? speechRecognizer;
+
+  /// 返事の前置きを生成する経路。null なら環境の既定を解決する
+  /// （外部AIが無効なら固定文へ退避）。テスト用の差し替え口。
+  @visibleForTesting
+  final CompanionVoice? companionVoice;
 
   @override
   State<ScienceSpeakListenScreen> createState() =>
@@ -114,6 +127,9 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
   bool _echoMissed = false;
   int _teachMisses = 0;
   bool _coverageBlocked = false;
+  late final CompanionVoice _companionVoice;
+  String? _generatedAck;
+  Future<String?>? _pendingAck;
 
   LocalPracticeVariant get _variant =>
       widget.section.practiceVariantForAttempt(widget.practiceAttempt);
@@ -130,9 +146,14 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
   ExplanationCoverage _assess(String explanation) =>
       assessExplanation(explanation, sources: _coverageSources);
 
-  String get _spokenQuestion =>
-      '教えてくれてありがとう。デキすぎ君から一問。${_checkpoint.lure} '
-      'この考えを科学的に直しているのはどれ？';
+  /// 問い返しの文面。生成AIの前置きが届いていれば先頭に置くが、
+  /// lureと問いは**必ずカタログの逐語** —— 教理は生成に委ねない。
+  String get _spokenQuestion {
+    final ack = _generatedAck;
+    final prefix =
+        ack != null ? '$ack ' : '教えてくれてありがとう。デキすぎ君から一問。';
+    return '$prefix${_checkpoint.lure} この考えを科学的に直しているのはどれ？';
+  }
 
   LocalCheckpointOption? get _wrongOption =>
       _wrongOptionId == null ? null : _checkpoint.optionFor(_wrongOptionId!);
@@ -186,12 +207,25 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
     _narration = widget.narration ?? PlatformLocalNarration();
     _speechRecognizer =
         widget.speechRecognizer ?? PlatformOnDeviceSpeechRecognizer();
+    _companionVoice = _resolveCompanionVoice();
     _voiceSnapshot = _voice.snapshot;
     _voiceSubscription = _voice.changes.listen((snapshot) {
       if (mounted) setState(() => _voiceSnapshot = snapshot);
     });
     _text.addListener(_onTextChanged);
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// 返事の前置きの生成経路。注入があればそれを使い、なければ
+  /// DeviceIdentity（無くても動く → 401 で黙って退避）を拾って環境既定へ。
+  CompanionVoice _resolveCompanionVoice() {
+    final injected = widget.companionVoice;
+    if (injected != null) return injected;
+    DeviceIdentity? identity;
+    try {
+      identity = context.read<DeviceIdentity>();
+    } catch (_) {}
+    return companionVoiceFromEnvironment(identity: identity);
   }
 
   void _onTextChanged() {
@@ -495,10 +529,34 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
       _questionUnavailable = false;
     });
     _toTop();
+    _requestCompanionAck();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _step == _ExplainStep.followUp) {
         unawaited(_speakQuestion());
       }
+    });
+  }
+
+  /// 生徒の説明を外部AIに送り、返事の前置きを生成してもらう。
+  /// 説明の文字が無い経路（声のみ）では送らない。結果は届き次第
+  /// 表示へ反映するが、問い自体はカタログのままなので遅れても壊れない。
+  void _requestCompanionAck() {
+    final explanation = _submittedText ?? _echoText.text.trim();
+    if (explanation.isEmpty) return;
+    final heardTerms = _echoCoverage?.matchedTerms ??
+        _assess(explanation).matchedTerms;
+    final future = _companionVoice.renderAck(
+      explanation: explanation,
+      heardTerms: heardTerms,
+      conceptLabel: widget.conceptLabel,
+      lure: _checkpoint.lure,
+    );
+    _pendingAck = future;
+    future.then((ack) {
+      if (!mounted || ack == null || _step != _ExplainStep.followUp) {
+        return;
+      }
+      setState(() => _generatedAck = ack);
     });
   }
 
@@ -509,6 +567,15 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
       _questionSpeaking = true;
       _questionUnavailable = false;
     });
+    // 生成中の前置きがあれば短い猶予で待つ —— 読み上げに乗る方が
+    // 「AIが説明を読んだ」実感が伝わる。来なければ固定文で読む。
+    final pending = _pendingAck;
+    if (pending != null) {
+      try {
+        await pending.timeout(const Duration(seconds: 3));
+      } catch (_) {}
+      if (!mounted || epoch != _narrationEpoch) return;
+    }
     final completed = await _narration.speak(_spokenQuestion);
     if (!mounted || epoch != _narrationEpoch) return;
     setState(() {
@@ -757,6 +824,7 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
     ),
     _ExplainStep.followUp => _FollowUp(
       spokenQuestion: _spokenQuestion,
+      aiComposedAck: _generatedAck != null,
       checkpoint: _checkpoint,
       selectedOptionId: _selectedOptionId,
       wrongOption: _wrongOption,
@@ -1237,6 +1305,7 @@ class _TextAnswer extends StatelessWidget {
 class _FollowUp extends StatelessWidget {
   const _FollowUp({
     required this.spokenQuestion,
+    required this.aiComposedAck,
     required this.checkpoint,
     required this.selectedOptionId,
     required this.wrongOption,
@@ -1251,6 +1320,7 @@ class _FollowUp extends StatelessWidget {
   });
 
   final String spokenQuestion;
+  final bool aiComposedAck;
   final LocalCheckpoint checkpoint;
   final String? selectedOptionId;
   final LocalCheckpointOption? wrongOption;
@@ -1307,6 +1377,16 @@ class _FollowUp extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: theme.textTheme.titleLarge?.jaWeight(FontWeight.w700),
                 ),
+                if (aiComposedAck) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    '返事の前置きは、生成AIがあなたの説明を読んで書きました。',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colors.inkMuted,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
                   key: const ValueKey('science-explain-read-question'),
