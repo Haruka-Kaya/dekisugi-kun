@@ -1,8 +1,10 @@
 # Shipaton demo 2026
 
-`shipaton-demo-v3.mp4` is the current submission candidate: **64s**, Android
+`shipaton-demo-v3.mp4` is the current submission candidate: **68s**, Android
 emulator footage at 1178x2416 portrait, English captions burned in, no audio.
-It shows the teach-back loop end to end on a real Android runtime: the quest
+It opens with a 3.5s hook card ("Every study app asks you to pick the right
+answer — this one asks you to teach it"), then shows the teach-back loop end
+to end on a real Android runtime: the quest
 map, a TEACH BACK node (mass conservation), a text explanation, the required
 re-read, Dekisugi-kun's fixed follow-up question, the 3-choice correction,
 the own-words-vs-textbook comparison, completion unlocking the next node,

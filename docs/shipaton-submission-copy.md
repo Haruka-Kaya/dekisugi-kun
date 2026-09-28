@@ -95,7 +95,8 @@ and the entire learning loop is free.
 
 ## Demo video notes
 
-The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v3.mp4`, 64s) shows
+The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v3.mp4`, 68s) opens
+with a short hook card, then shows
 the current build running on an Android emulator in portrait: the learning path,
 a TEACH BACK node (mass conservation), a text explanation, the required
 re-read, the companion's fixed follow-up question, the 3-choice correction,

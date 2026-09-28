@@ -1,47 +1,51 @@
 1
-00:00:00,300 --> 00:00:06,000
-Dekisugi-kun: middle-school science as a quest map — advance by teaching, not answering
+00:00:00,300 --> 00:00:03,400
+Hook card: every study app asks you to pick the right answer — this one asks you to teach it
 
 2
-00:00:06,100 --> 00:00:09,300
-TEACH BACK node: you explain to Dekisugi-kun — the textbook stays hidden
+00:00:03,800 --> 00:00:09,500
+Dekisugi-kun: middle-school science as a quest map — advance by teaching, not answering
 
 3
-00:00:09,300 --> 00:00:14,300
-Students teach in their own words — voice or text; never auto-graded or sent
+00:00:09,600 --> 00:00:12,800
+TEACH BACK node: you explain to Dekisugi-kun — the textbook stays hidden
 
 4
-00:00:14,300 --> 00:00:16,100
-Re-reading your own explanation is required first
+00:00:12,800 --> 00:00:17,800
+Students teach in their own words — voice or text; never auto-graded or sent
 
 5
-00:00:16,100 --> 00:00:28,000
-Dekisugi-kun returns one fixed follow-up question
+00:00:17,800 --> 00:00:19,600
+Re-reading your own explanation is required first
 
 6
-00:00:28,000 --> 00:00:34,500
-"Heating created new atoms" — pick the scientifically corrected idea
+00:00:19,600 --> 00:00:31,500
+Dekisugi-kun returns one fixed follow-up question
 
 7
-00:00:34,500 --> 00:00:40,500
-Then compare your explanation with the textbook's observation
+00:00:31,500 --> 00:00:38,000
+"Heating created new atoms" — pick the scientifically corrected idea
 
 8
-00:00:40,500 --> 00:00:47,500
-Your own words are replayed next to the model answer — you spot the gap
+00:00:38,000 --> 00:00:44,000
+Then compare your explanation with the textbook's observation
 
 9
-00:00:47,500 --> 00:00:50,500
-Complete: +10 XP, next node unlocks — fully on-device, no external AI calls
+00:00:44,000 --> 00:00:51,000
+Your own words are replayed next to the model answer — you spot the gap
 
 10
-00:00:50,500 --> 00:00:54,400
-Optional Plus supporter plan via RevenueCat — paywall: app/lib/screens/plus_screen.dart
+00:00:51,000 --> 00:00:54,000
+Complete: +10 XP, next node unlocks — fully on-device, no external AI calls
 
 11
-00:00:54,600 --> 00:00:59,500
-自分 tab — Dekisugi-kun's karte: the 29 misconceptions he believes
+00:00:54,000 --> 00:00:57,900
+Optional Plus supporter plan via RevenueCat — paywall: app/lib/screens/plus_screen.dart
 
 12
-00:00:59,600 --> 00:01:04,300
+00:00:58,100 --> 00:01:03,100
+自分 tab — Dekisugi-kun's karte: the 29 misconceptions he believes
+
+13
+00:01:03,200 --> 00:01:07,800
 Each teaching session corrects one — 訂正できた marks what you taught him
