@@ -1,0 +1,55 @@
+1
+00:00:00,300 --> 00:00:03,400
+Hook card: most study apps stop at the right answer — this one starts from what you can teach
+
+2
+00:00:03,800 --> 00:00:09,500
+Dekisugi-kun: middle-school science as a quest map — advance by teaching, not answering
+
+3
+00:00:09,600 --> 00:00:12,800
+TEACH BACK node: you explain to Dekisugi-kun — the textbook stays hidden
+
+4
+00:00:12,800 --> 00:00:17,800
+Students teach in their own words — voice or text; never auto-graded or sent
+
+5
+00:00:17,800 --> 00:00:22,600
+On-device check: did your explanation carry the key terms?
+
+6
+00:00:22,600 --> 00:00:26,600
+Miss the key terms and he asks for more — no points lost, just another try
+
+7
+00:00:26,600 --> 00:00:31,500
+Re-reading your own explanation is required first
+
+8
+00:00:31,500 --> 00:00:38,000
+Dekisugi-kun returns one fixed follow-up question from the lesson catalog
+
+9
+00:00:38,000 --> 00:00:44,000
+"Heating created new atoms" — pick the scientifically corrected idea
+
+10
+00:00:44,000 --> 00:00:51,000
+A miss costs a heart, records the misconception, and triggers a hint — never the answer
+
+11
+00:00:51,000 --> 00:00:54,000
+Complete: next node unlocks — fully on-device, no external AI calls
+
+12
+00:00:54,000 --> 00:00:58,500
+Optional Plus supporter plan via RevenueCat — paywall: app/lib/screens/plus_screen.dart
+
+13
+00:00:58,700 --> 00:01:04,000
+Profile tab — the karte: a canonical catalog of 29 misconceptions
+
+14
+00:01:04,000 --> 00:01:08,000
+A misconception your explanation corrected flips to 訂正できた — progress is what you taught him
