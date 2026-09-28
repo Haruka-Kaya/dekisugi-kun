@@ -411,6 +411,11 @@ class _OnlineServices extends StatelessWidget {
           lanSocialAllowed: true,
           legacyProgress: LocalPracticeStore(store),
           onOpenSettings: () => _openOnlineSettings(providerContext),
+          onOpenPlus:
+              allowIndividualPurchases &&
+                  providerContext.read<PurchaseService>().enabled
+              ? () => _Home._openPlus(providerContext)
+              : null,
         ),
       ),
     );
