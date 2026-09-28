@@ -52,7 +52,9 @@ the answers but is not allowed to reveal them, so the student has to teach it.
   (consent-disclosed, catalog-verbatim pedagogy, deterministic fallback), and
   a parent-facing karte report — with a server-side entitlement recheck
   (`server/lib/revenuecat.ts`, `/api/revenuecat-webhook`). No learning content
-  is behind payment.
+  is behind payment. The full purchase loop is exercise-able end-to-end with
+  RevenueCat's free Test Store — see
+  [docs/monetization-setup.md](docs/monetization-setup.md).
 
 ### Run the app
 
@@ -66,8 +68,8 @@ flutter run            # bundled-catalog mode works with no network
 ### Run the tests
 
 ```bash
-cd app && flutter test     # 1223 tests, no network
-cd server && npm install && npm test   # 386 tests, no network
+cd app && flutter test     # 1263 tests, no network
+cd server && npm install && npm test   # 394 tests, no network
 ```
 
 Optional Live-AI research endpoints are disabled in production by design
@@ -349,7 +351,7 @@ DEKISUGI_LIVE=1 npx tsx --test test/jailbreak.live.test.ts  # 役を降ろせる
 
 ```
 app    1215 件   flutter test
-server  386 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
+server  394 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
 ```
 
 **実機でしか出ない不具合を、実機なしで捕まえる**ようにしてある。

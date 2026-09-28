@@ -26,7 +26,7 @@
 | 安定ブランチ | `main` = `f7a599d` |
 | 作業ブランチ | `codex/full-game-ui-overhaul`（UIオーバーホール中） |
 | ゲームUIフェーズ | 実施中 |
-| テスト | `app` 1209件・`server` 373件（いずれも通信なし） |
+| テスト | `app` 1263件・`server` 394件（いずれも通信なし） |
 | 年齢規約問題 | **未解決** — 外部AI会話は学校・未成年に配布禁止（`docs/age-restriction.md` §3） |
 | アンケート n数 | 18件（目標40件。設計根拠がまだデータで支えられていない） |
 | iOS実機確認 | 未実施（シミュレータのみ）|
@@ -80,8 +80,8 @@ docs/
 
 ```bash
 # テスト
-cd app && flutter test                          # 1209件・約20秒
-cd server && npm test                           # 373件・2.6秒
+cd app && flutter test                          # 1263件・約20秒
+cd server && npm test                           # 394件・2.6秒
 DEKISUGI_LIVE=1 npx tsx --test test/grant.live.test.ts   # 本番接続・課金あり
 
 # 設問カタログ検査（項目を足したら必ず）
