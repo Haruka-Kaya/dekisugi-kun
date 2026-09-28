@@ -1,6 +1,6 @@
 # app — デキすぎ君 本体（Flutter）
 
-現行productionは6タブのゲーム型学習UIと、catalog schema v10の11単元32概念を使う。
+現行productionは6タブのゲーム型学習UIと、catalog schema v10の12単元35概念を使う。
 必修Pathは端末内で完結し、Teach-backの音声PCM・自由文・選択内容を保存／送信しない。
 旧Live/Talk実装は研究用に残るがproduction 6タブから到達不能で、外部生成AIを進行条件にしない。
 

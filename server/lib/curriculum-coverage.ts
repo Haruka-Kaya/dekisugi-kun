@@ -402,6 +402,43 @@ export const CURRICULUM_COVERAGE_MANIFEST: Readonly<
     difficulty: 4,
     safety: referenceOnly('化石・地層の資料と図鑑だけを使い、発掘や採取を伴う活動はしない。'),
   },
+  energyResources: {
+    unitId: 'energy-society',
+    conceptKey: 'energyResources',
+    field: 'energy',
+    grade: 3,
+    curriculumRefs: [
+      ref('第1分野 (7)(ア) エネルギーとエネルギー資源', 63, 65),
+    ],
+    prerequisites: ['electromagneticInduction'],
+    difficulty: 4,
+    safety: referenceOnly('発電方法・電源構成は学校配布の資料や電気料金の明細だけを使い、家庭用コンセントの分解や発電装置を触る活動はしない。'),
+  },
+  natureBalance: {
+    unitId: 'energy-society',
+    conceptKey: 'natureBalance',
+    field: 'life',
+    grade: 3,
+    curriculumRefs: [
+      ref('第2分野 (7)(ア) 自然界のつり合い', 109, 111),
+    ],
+    prerequisites: ['photosynthesisRespiration'],
+    difficulty: 4,
+    safety: referenceOnly('地域の生き物調査は学校配布の記録と観察ノートだけを使い、生き物の採取や持ち帰りはしない。'),
+  },
+  sustainableSociety: {
+    unitId: 'energy-society',
+    conceptKey: 'sustainableSociety',
+    field: 'earth',
+    grade: 3,
+    curriculumRefs: [
+      ref('第2分野 (7)(ア) 地域の自然災害', 110, 111),
+      ref('第2分野 (7)(イ) 自然環境の保全と科学技術の利用', 111, 112),
+    ],
+    prerequisites: ['natureBalance', 'volcanoEarthquakes'],
+    difficulty: 5,
+    safety: referenceOnly('ハザードマップ・災害記録・統計資料だけを使い、危険な地域の見学や発災を想定した現地調査はしない。'),
+  },
 }
 
 export function curriculumCoverageFor(
