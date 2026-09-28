@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../config/motion.dart';
@@ -51,7 +52,9 @@ class Stage extends StatelessWidget {
               // それが生徒の発話として記録される）ので、止める手段は操作で持つ
               Semantics(
                 button: speaking,
-                label: speaking ? 'デキすぎ君の話を止める' : 'デキすぎ君',
+                label: speaking
+                    ? lang.t('デキすぎ君の話を止める', 'Stop Dekisugi-kun')
+                    : lang.t('デキすぎ君', 'Dekisugi-kun'),
                 child: GestureDetector(
                   onTap: speaking ? live.silenceAi : null,
                   behavior: HitTestBehavior.opaque,
@@ -101,7 +104,10 @@ class Stage extends StatelessWidget {
                 switchInCurve: Motion.stateCurve,
                 child: speaking
                     ? Text(
-                        'キャラクターをタップすると止められます',
+                        lang.t(
+                          'キャラクターをタップすると止められます',
+                          'Tap the character to stop',
+                        ),
                         key: const ValueKey('silence-hint'),
                         style: t.textTheme.bodySmall?.copyWith(
                           color: c.heroMuted,
@@ -118,13 +124,13 @@ class Stage extends StatelessWidget {
   }
 
   static String _label(LiveState s) => switch (s) {
-    LiveState.idle => '声でも文字でも、準備できています',
-    LiveState.connecting => 'つないでいます',
-    LiveState.listening => '聞いています',
-    LiveState.thinking => '考えています',
-    LiveState.speaking => '話しています',
-    LiveState.done => 'ひととおり終わりました',
-    LiveState.outOfTime => 'きょうのぶんは終わりです',
-    LiveState.failed => '続けられませんでした',
+    LiveState.idle => lang.t('声でも文字でも、準備できています', 'Ready for voice or text'),
+    LiveState.connecting => lang.t('つないでいます', 'Connecting'),
+    LiveState.listening => lang.t('聞いています', 'Listening'),
+    LiveState.thinking => lang.t('考えています', 'Thinking'),
+    LiveState.speaking => lang.t('話しています', 'Speaking'),
+    LiveState.done => lang.t('ひととおり終わりました', 'All done'),
+    LiveState.outOfTime => lang.t('きょうのぶんは終わりです', "That's it for today"),
+    LiveState.failed => lang.t('続けられませんでした', 'Could not continue'),
   };
 }

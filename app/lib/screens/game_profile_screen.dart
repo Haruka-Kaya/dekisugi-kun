@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_economy.dart';
@@ -74,7 +75,7 @@ class GameProfileScreen extends StatelessWidget {
                   ),
                   onPressed: onOpenClassroom,
                   icon: const Icon(Icons.school_outlined),
-                  label: const Text('授業コードから始める'),
+                  label: Text(lang.t('授業コードから始める', 'Start with a class code')),
                 )
         : onOpenEconomy == null
         ? null
@@ -87,7 +88,7 @@ class GameProfileScreen extends StatelessWidget {
             ),
             onPressed: onOpenEconomy,
             icon: const Icon(Icons.diamond_outlined),
-            label: const Text('装備と結晶を確認'),
+            label: Text(lang.t('装備と結晶を確認', 'View gear and gems')),
           );
     return GamePageScaffold(
       scrollKey: const ValueKey('game-profile-screen'),
@@ -96,14 +97,28 @@ class GameProfileScreen extends StatelessWidget {
           surfaceKey: const ValueKey('game-profile-progress'),
           color: colors.pathActive,
           foregroundColor: colors.onPathActive,
-          eyebrow: schoolMode ? 'この端末の研究室' : '自分の研究室',
-          title: '${player.completedNodes} / ${player.totalNodes} ノード',
+          eyebrow: schoolMode
+              ? lang.t('この端末の研究室', 'This device\'s lab')
+              : lang.t('自分の研究室', 'My lab'),
+          title: lang.t(
+            '${player.completedNodes} / ${player.totalNodes} ノード',
+            '${player.completedNodes} / ${player.totalNodes} nodes',
+          ),
           body: schoolMode
-              ? 'この端末の到達だけを確認します。'
-              : 'デキすぎ君の装備と、説明・復習・挑戦の記録を同じ部屋で振り返ります。',
+              ? lang.t('この端末の到達だけを確認します。', 'See progress on this device.')
+              : lang.t(
+                  'デキすぎ君の装備と、説明・復習・挑戦の記録を同じ部屋で振り返ります。',
+                  'Review Dekisugi-kun\'s gear and your teaching, reviews, and challenges here.',
+                ),
           semanticSummary:
-              '${schoolMode ? 'この端末の' : '自分の'}研究室。'
-              '${player.completedNodes}/${player.totalNodes}ノード',
+              lang.t(
+                '${schoolMode ? 'この端末の' : '自分の'}研究室。',
+                '${schoolMode ? 'This device\'s' : 'My'} lab.',
+              ) +
+              lang.t(
+                '${player.completedNodes}/${player.totalNodes}ノード',
+                ' ${player.completedNodes}/${player.totalNodes} nodes',
+              ),
           leading: DecoratedBox(
             decoration: BoxDecoration(
               color: colors.surface,
@@ -125,7 +140,7 @@ class GameProfileScreen extends StatelessWidget {
               minimumSize: const Size.square(GameTokens.minTouchTarget),
             ),
             onPressed: onOpenSettings,
-            tooltip: '設定を開く',
+            tooltip: lang.t('設定を開く', 'Open settings'),
             icon: const Icon(Icons.settings_outlined),
           ),
           content: Column(
@@ -137,7 +152,7 @@ class GameProfileScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      '学習パスの到達',
+                      lang.t('学習パスの到達', 'Learning path progress'),
                       style: Theme.of(context).textTheme.labelLarge
                           ?.copyWith(color: colors.ink)
                           .jaWeight(FontWeight.w800),
@@ -164,34 +179,43 @@ class GameProfileScreen extends StatelessWidget {
                   if (!schoolMode) ...[
                     _Metric(
                       icon: Icons.electric_bolt_rounded,
-                      label: '連続学習',
-                      value: '${player.streakDays}日',
+                      label: lang.t('連続学習', 'Learning streak'),
+                      value: lang.t(
+                        '${player.streakDays}日',
+                        '${player.streakDays} days',
+                      ),
                       foregroundColor: colors.onPathActive,
                     ),
                     _Metric(
                       icon: Icons.ac_unit_rounded,
-                      label: '保護',
-                      value: '${player.freezeCount}個',
+                      label: lang.t('保護', 'Streak shields'),
+                      value: lang.t(
+                        '${player.freezeCount}個',
+                        '${player.freezeCount}',
+                      ),
                       foregroundColor: colors.onPathActive,
                     ),
                     _Metric(
                       icon: Icons.diamond_rounded,
-                      label: 'ひらめき結晶',
-                      value: '${player.gems}個',
+                      label: lang.t('ひらめき結晶', 'Insight gems'),
+                      value: lang.t('${player.gems}個', '${player.gems}'),
                       foregroundColor: colors.onPathActive,
                     ),
                   ],
                   _Metric(
                     icon: Icons.notes_rounded,
-                    label: '説明の見直し',
-                    value: '$explanationCount回',
+                    label: lang.t('説明の見直し', 'Explanation reviews'),
+                    value: lang.t(
+                      '$explanationCount回',
+                      '$explanationCount times',
+                    ),
                     foregroundColor: colors.onPathActive,
                   ),
                   if (plusSupporter && !schoolMode)
                     _Metric(
                       icon: Icons.workspace_premium_outlined,
-                      label: 'Plus サポーター',
-                      value: '応援中',
+                      label: lang.t('Plus サポーター', 'Plus supporter'),
+                      value: lang.t('応援中', 'Supporting'),
                       foregroundColor: colors.onPathActive,
                     ),
                 ],
@@ -214,10 +238,12 @@ class GameProfileScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const GameSectionHeader(
-                  title: 'デキすぎ君のカルテ',
-                  description:
-                      'デキすぎ君が持っている思い込みと、あなたの説明で訂正できたところの記録。',
+                GameSectionHeader(
+                  title: lang.t('デキすぎ君のカルテ', 'Dekisugi-kun\'s record'),
+                  description: lang.t(
+                    'デキすぎ君が持っている思い込みと、あなたの説明で訂正できたところの記録。',
+                    'A record of Dekisugi-kun\'s misconceptions and what your teaching helped correct.',
+                  ),
                 ),
                 const SizedBox(height: GameTokens.spaceMd),
                 FilledButton.icon(
@@ -231,7 +257,9 @@ class GameProfileScreen extends StatelessWidget {
                   ),
                   onPressed: onOpenKarte,
                   icon: const Icon(Icons.psychology_alt_outlined),
-                  label: const Text('思い込みの記録を見る'),
+                  label: Text(
+                    lang.t('思い込みの記録を見る', 'View misconception record'),
+                  ),
                 ),
               ],
             ),
@@ -241,9 +269,12 @@ class GameProfileScreen extends StatelessWidget {
             onStartLocalCoop != null &&
             onSelectCoopParticipant != null) ...[
           const SizedBox(height: GameTokens.spaceXl),
-          const GameSectionHeader(
-            title: '同じ端末で協力',
-            description: '実在する二人が端末を手渡しして進めます。',
+          GameSectionHeader(
+            title: lang.t('同じ端末で協力', 'Team up on one device'),
+            description: lang.t(
+              '実在する二人が端末を手渡しして進めます。',
+              'Two real players take turns on one device.',
+            ),
           ),
           const SizedBox(height: GameTokens.spaceMd),
           LocalCoopQuestPanel(
@@ -262,8 +293,14 @@ class GameProfileScreen extends StatelessWidget {
           raised: true,
           child: Text(
             schoolMode
-                ? '学校課題は個人XP・結晶・連続学習へ加算しません。回答本文と音声も保存しません。'
-                : '学習ハートは固定課題の誤答で1個減り、0では新しい通常学習を始めません。30分ごと、または専用の回復練習1件で1個回復し、結晶2個で全回復できます。到達済みの学習パスは失いません。',
+                ? lang.t(
+                    '学校課題は個人XP・結晶・連続学習へ加算しません。回答本文と音声も保存しません。',
+                    'Class work does not add personal XP, gems, or streak days. Answers and audio are not saved.',
+                  )
+                : lang.t(
+                    '学習ハートは固定課題の誤答で1個減り、0では新しい通常学習を始めません。30分ごと、または専用の回復練習1件で1個回復し、結晶2個で全回復できます。到達済みの学習パスは失いません。',
+                    'A wrong answer on a set task costs one heart. At zero hearts, you cannot start a new lesson. Restore one every 30 minutes or with a recovery exercise, or refill them all for two gems. Your path progress stays.',
+                  ),
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: colors.inkMuted),
@@ -293,13 +330,21 @@ class _MonthlyBadgeCollection extends StatelessWidget {
     return Semantics(
       key: const ValueKey('game-profile-monthly-badges'),
       container: true,
-      label: badges.isEmpty ? '月間バッジ。まだありません' : '月間バッジ、${badges.length}個',
+      label: badges.isEmpty
+          ? lang.t('月間バッジ。まだありません', 'Monthly badges. None yet')
+          : lang.t(
+              '月間バッジ、${badges.length}個',
+              'Monthly badges: ${badges.length}',
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const GameSectionHeader(
-            title: '月間バッジ',
-            description: '月の学習目標を達成した記録です。結晶では購入できません。',
+          GameSectionHeader(
+            title: lang.t('月間バッジ', 'Monthly badges'),
+            description: lang.t(
+              '月の学習目標を達成した記録です。結晶では購入できません。',
+              'Earn these by meeting monthly learning goals. Gems cannot buy them.',
+            ),
           ),
           const SizedBox(height: GameTokens.spaceMd),
           if (badges.isEmpty)
@@ -307,7 +352,10 @@ class _MonthlyBadgeCollection extends StatelessWidget {
               surfaceKey: const ValueKey('game-profile-monthly-badges-empty'),
               raised: true,
               child: Text(
-                '今月のクエストを達成すると、ここに最初の観測バッジが加わります。',
+                lang.t(
+                  '今月のクエストを達成すると、ここに最初の観測バッジが加わります。',
+                  'Complete this month\'s quest to earn your first observation badge.',
+                ),
                 style: t.textTheme.bodyMedium?.copyWith(color: colors.ink),
               ),
             )
@@ -355,7 +403,10 @@ class _MonthlyBadgeTile extends StatelessWidget {
       ),
     };
     return Semantics(
-      label: '${badge.title}。獲得済み。${badge.description}',
+      label: lang.t(
+        '${badge.title}。獲得済み。${badge.description}',
+        '${badge.title}. Earned. ${badge.description}',
+      ),
       child: ExcludeSemantics(
         child: Container(
           key: ValueKey<String>('monthly-badge-${badge.badgeId}'),
@@ -478,8 +529,8 @@ class _QuestRow extends StatelessWidget {
       container: true,
       label:
           '${quest.title}、${quest.progress}/${quest.target}'
-          '${quest.isComplete ? '、完了' : ''}'
-          '${showReward ? '、結晶${quest.gemReward}個' : ''}',
+          '${quest.isComplete ? lang.t('、完了', ', complete') : ''}'
+          '${showReward ? lang.t('、結晶${quest.gemReward}個', ', ${quest.gemReward} gems') : ''}',
       child: ExcludeSemantics(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: GameTokens.spaceSm),
@@ -552,13 +603,18 @@ class _QuestBoard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           GameSectionHeader(
-            title: schoolMode ? '今日の授業目標（この端末）' : '今日のクエスト',
-            description: 'アプリ滞在時間ではなく、学習パスを前へ進める行為だけを数えます。',
+            title: schoolMode
+                ? lang.t('今日の授業目標（この端末）', 'Today\'s class goal (this device)')
+                : lang.t('今日のクエスト', 'Today\'s quests'),
+            description: lang.t(
+              'アプリ滞在時間ではなく、学習パスを前へ進める行為だけを数えます。',
+              'Only actions that move your learning path forward count, not time in the app.',
+            ),
           ),
           const SizedBox(height: GameTokens.spaceMd),
           if (quests.isEmpty)
             Text(
-              '今日は新しいクエストがありません。',
+              lang.t('今日は新しいクエストがありません。', 'No new quests today.'),
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
@@ -589,9 +645,12 @@ class _ConnectionSettings extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const GameSectionHeader(
-          title: 'つながりと設定',
-          description: '通信モードは、学習記録と分けてここから確認します。',
+        GameSectionHeader(
+          title: lang.t('つながりと設定', 'Connections and settings'),
+          description: lang.t(
+            '通信モードは、学習記録と分けてここから確認します。',
+            'Check connection mode here, separate from your learning record.',
+          ),
         ),
         if (onOpenLanSocial != null) ...[
           const SizedBox(height: GameTokens.spaceMd),
@@ -599,7 +658,7 @@ class _ConnectionSettings extends StatelessWidget {
             key: const ValueKey('game-profile-open-lan-social'),
             onPressed: onOpenLanSocial,
             icon: const Icon(Icons.groups_2_outlined),
-            label: const Text('実参加者といっしょに学ぶ'),
+            label: Text(lang.t('実参加者といっしょに学ぶ', 'Learn with real players')),
           ),
         ],
         if (onExitLocalMode != null) ...[
@@ -608,7 +667,7 @@ class _ConnectionSettings extends StatelessWidget {
             key: const ValueKey('game-profile-exit-local-mode'),
             onPressed: onExitLocalMode,
             icon: const Icon(Icons.sync_alt_outlined),
-            label: const Text('通信モード確認へ戻る'),
+            label: Text(lang.t('通信モード確認へ戻る', 'Back to connection mode')),
           ),
         ],
       ],

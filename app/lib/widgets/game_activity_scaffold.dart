@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show ValueListenable, ValueNotifier;
 
+import '../config/app_language.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_economy.dart';
 import '../models/game_path.dart';
@@ -18,7 +19,7 @@ class GameActivityScaffold extends StatelessWidget {
     required this.schoolMode,
     required this.child,
     this.onExit,
-    this.exitTooltip = '前の画面へ戻る',
+    this.exitTooltip,
     this.mascotStyle = LearningPathMascotStyle.standard,
   });
 
@@ -26,7 +27,7 @@ class GameActivityScaffold extends StatelessWidget {
   final bool schoolMode;
   final Widget child;
   final VoidCallback? onExit;
-  final String exitTooltip;
+  final String? exitTooltip;
   final LearningPathMascotStyle mascotStyle;
 
   /// Homeのactivity route内かどうかを、各課題の公開APIを増やさず判定する。
@@ -50,6 +51,8 @@ class GameActivityScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
     final exit = onExit ?? () => Navigator.maybePop(context);
+    final exitTooltip =
+        this.exitTooltip ?? t('前の画面へ戻る', 'Back to the previous screen');
     return Scaffold(
       key: const ValueKey('game-activity-scaffold'),
       backgroundColor: colors.canvas,

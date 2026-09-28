@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../config/app_language.dart';
 import '../models/unit.dart';
 import 'session_store.dart';
 
@@ -24,9 +25,11 @@ class UnitsClient {
     required SessionStore store,
     Dio? dio,
     AssetBundle? assetBundle,
+    AppLanguage Function()? language,
   }) : // 公開constructorの`store:`名を保つ。
        // ignore: prefer_initializing_formals
        _store = store,
+       _language = language ?? (() => appLanguage),
        _assetBundle = assetBundle ?? rootBundle,
        _dio =
            dio ??
@@ -43,11 +46,18 @@ class UnitsClient {
   final Dio _dio;
   final AssetBundle _assetBundle;
 
+  /// 呼び出しごとの表示言語。
+  /// 設定で切り替えられた言語に追従するため、構築時ではなく都度読む。
+  final AppLanguage Function() _language;
+
   /// 同じアプリ内で端末内/オンライン用Clientを作り直しても、大きい同梱JSONを
   /// isolateへ何度も読み直さない。テストの差替えAssetBundleはidentityごとに分離する。
-  static final Expando<Future<_BundledCatalog?>> _sharedBundledCatalog =
-      Expando<Future<_BundledCatalog?>>('dekisugi bundled unit catalog');
-  Future<_BundledCatalog?>? _bundledCatalogFuture;
+  /// 言語ごとに別JSONを持つので、キャッシュも言語で分ける。
+  static final Expando<Map<String, Future<_BundledCatalog?>>>
+      _sharedBundledCatalogs =
+      Expando<Map<String, Future<_BundledCatalog?>>>(
+        'dekisugi bundled unit catalogs',
+      );
 
   /// `flutter test` のfake asyncでは実isolateの完了を待てないので、
   /// test/flutter_test_config.dart からtrueにして同期decodeへ切り替える。
@@ -58,24 +68,31 @@ class UnitsClient {
 
   // schemaを保存keyへ含め、coverageとtagged Notationの無いv9以前を
   // v10として推測せず同梱正本へ退避する。
-  static const _listKey = 'units.v10.list';
-  static const _bundledCatalogAsset = 'assets/catalog/units.ja.json';
-  String _detailKey(String unitId) => 'units.v10.detail.$unitId';
+  // 言語をkeyに含め、日本語の保存を英語表示へ流用しない。
+  static String _listKey(AppLanguage lang) => 'units.v10.${lang.name}.list';
+  String _detailKey(AppLanguage lang, String unitId) =>
+      'units.v10.${lang.name}.detail.$unitId';
+
+  // 言語をkeyに入れる前の日本語保存。読み取りだけ互換を残し、
+  // 書き込みは新しいkeyへ行く（日本語表示が失われない）。
+  static const _legacyListKey = 'units.v10.list';
+  String _legacyDetailKey(String unitId) => 'units.v10.detail.$unitId';
 
   /// 単元の一覧。新しいもの、保存したもの、同梱教材の順で返す。
   Future<List<UnitSummary>> list() async {
-    final fresh = await _fetchList();
+    final lang = _language();
+    final fresh = await _fetchList(lang);
     if (fresh != null && fresh.isNotEmpty) {
       await _store.setSetting(
-        _listKey,
+        _listKey(lang),
         jsonEncode([for (final u in fresh) u.toJson()]),
       );
       return fresh;
     }
-    final cached = await _cachedList();
+    final cached = await _cachedList(lang);
     if (cached.isNotEmpty) return cached;
 
-    final bundled = await _bundledCatalog();
+    final bundled = await _bundledCatalog(lang);
     return bundled?.summaries ?? const [];
   }
 
@@ -84,30 +101,39 @@ class UnitsClient {
   /// **どこにも無ければ null。** 教材が無いまま会話を始めると、
   /// 「教材を読んで説明する」という前提が崩れる。
   Future<UnitDetail?> detail(String unitId) async {
-    final fresh = await _fetchDetail(unitId);
+    final lang = _language();
+    final fresh = await _fetchDetail(lang, unitId);
     if (fresh != null) {
-      await _store.setSetting(_detailKey(unitId), jsonEncode(fresh.toJson()));
+      await _store.setSetting(
+        _detailKey(lang, unitId),
+        jsonEncode(fresh.toJson()),
+      );
       return fresh;
     }
-    final cached = await _cachedDetail(unitId);
+    final cached = await _cachedDetail(lang, unitId);
     if (cached != null) return cached;
 
-    return (await _bundledCatalog())?.details[unitId];
+    return (await _bundledCatalog(lang))?.details[unitId];
   }
 
   /// 端末内だけを見る。保存したもの、同梱教材の順で返し、**通信しない。**
   Future<UnitDetail?> cachedDetail(String unitId) async {
-    final cached = await _cachedDetail(unitId);
+    final lang = _language();
+    final cached = await _cachedDetail(lang, unitId);
     if (cached != null) return cached;
-    return (await _bundledCatalog())?.details[unitId];
+    return (await _bundledCatalog(lang))?.details[unitId];
   }
 
   // ── 通信 ──────────────────────────────────────────────────
 
-  Future<List<UnitSummary>?> _fetchList() async {
+  Future<List<UnitSummary>?> _fetchList(AppLanguage lang) async {
     if (!isConfigured) return null;
     try {
-      final res = await _dio.get<Object?>('$baseUrl/api/units');
+      final res = await _dio.get<Object?>(
+        '$baseUrl/api/units',
+        // 言語を必ず明記する — 省略するとサーバ環境変数の既定に依存する。
+        queryParameters: {'lang': lang.name},
+      );
       if (res.statusCode != 200) return null;
       final envelope = res.data;
       if (envelope is! Map ||
@@ -128,12 +154,12 @@ class UnitsClient {
     }
   }
 
-  Future<UnitDetail?> _fetchDetail(String unitId) async {
+  Future<UnitDetail?> _fetchDetail(AppLanguage lang, String unitId) async {
     if (!isConfigured) return null;
     try {
       final res = await _dio.get<Object?>(
         '$baseUrl/api/units',
-        queryParameters: {'id': unitId},
+        queryParameters: {'id': unitId, 'lang': lang.name},
       );
       if (res.statusCode != 200) return null;
       final envelope = res.data;
@@ -150,8 +176,12 @@ class UnitsClient {
 
   // ── 保存 ──────────────────────────────────────────────────
 
-  Future<List<UnitSummary>> _cachedList() async {
-    final raw = await _store.getSetting(_listKey);
+  Future<List<UnitSummary>> _cachedList(AppLanguage lang) async {
+    final raw =
+        await _store.getSetting(_listKey(lang)) ??
+        (lang == AppLanguage.ja
+            ? await _store.getSetting(_legacyListKey)
+            : null);
     if (raw == null) return const [];
     try {
       return _parseSummaryList(jsonDecode(raw)) ?? const [];
@@ -161,8 +191,12 @@ class UnitsClient {
     }
   }
 
-  Future<UnitDetail?> _cachedDetail(String unitId) async {
-    final raw = await _store.getSetting(_detailKey(unitId));
+  Future<UnitDetail?> _cachedDetail(AppLanguage lang, String unitId) async {
+    final raw =
+        await _store.getSetting(_detailKey(lang, unitId)) ??
+        (lang == AppLanguage.ja
+            ? await _store.getSetting(_legacyDetailKey(unitId))
+            : null);
     if (raw == null) return null;
     try {
       final json = jsonDecode(raw);
@@ -177,18 +211,24 @@ class UnitsClient {
 
   // ── アプリ同梱教材 ────────────────────────────────────────
 
-  Future<_BundledCatalog?> _bundledCatalog() => _bundledCatalogFuture ??=
-      _sharedBundledCatalog[_assetBundle] ??= _readBundledCatalog();
+  Future<_BundledCatalog?> _bundledCatalog(AppLanguage lang) {
+    final shared = _sharedBundledCatalogs[_assetBundle] ??=
+        <String, Future<_BundledCatalog?>>{};
+    return shared[lang.name] ??= _readBundledCatalog(lang);
+  }
 
-  Future<_BundledCatalog?> _readBundledCatalog() async {
+  Future<_BundledCatalog?> _readBundledCatalog(AppLanguage lang) async {
     try {
-      final raw = await _assetBundle.loadString(_bundledCatalogAsset);
+      final raw = await _assetBundle.loadString(lang.bundledCatalogAsset);
       // 700KB超の decode＋全単元のfromJsonをmain isolateですると起動中に
       // frameを落とすので、別isolateへ逃がす。
       if (debugSynchronousBundledCatalog) {
-        return _decodeBundledCatalog(raw);
+        return _decodeBundledCatalog((raw: raw, lang: lang.name));
       }
-      return await compute(_decodeBundledCatalog, raw);
+      return await compute(
+        _decodeBundledCatalog,
+        (raw: raw, lang: lang.name),
+      );
     } catch (e) {
       debugPrint('同梱した教材を読めなかった: $e');
       return null;
@@ -250,9 +290,9 @@ class _BundledCatalog {
 
 /// 同梱カタログJSONの decode → schema検証 → UnitDetail化。
 /// `compute` 経由で別isolateから呼ぶためトップレベルに置く。
-_BundledCatalog? _decodeBundledCatalog(String raw) {
+_BundledCatalog? _decodeBundledCatalog(({String raw, String lang}) args) {
   try {
-    final json = jsonDecode(raw);
+    final json = jsonDecode(args.raw);
     // v10からcoverageと概念固有のNotation task unionも必須。
     // 旧版や未知schemaから誤診対象を推測せず、catalog全体を拒否する。
     if (json is! Map ||
@@ -262,7 +302,7 @@ _BundledCatalog? _decodeBundledCatalog(String raw) {
               !const {'schemaVersion', 'language', 'units'}.contains(key),
         ) ||
         json['schemaVersion'] != 10 ||
-        json['language'] != 'ja') {
+        json['language'] != args.lang) {
       return null;
     }
 

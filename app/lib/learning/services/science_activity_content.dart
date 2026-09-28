@@ -1,4 +1,5 @@
 import '../../models/unit.dart';
+import '../../config/app_language.dart';
 import '../../screens/science_lightning_screen.dart';
 import '../../screens/science_match_lab_screen.dart';
 import '../../screens/science_notation_lab_screen.dart';
@@ -102,22 +103,22 @@ final class ScienceActivityContent {
         )) {
       throw StateError('catalog Match checkpoint is not canonical');
     }
-    const canonicalPairs = [
+    final canonicalPairs = [
       ScienceMatchPair(
         id: 'observation',
-        concept: '観察した結果',
+        concept: t('観察した結果', 'What you observed'),
         correctTargetId: 'outcome',
         needCode: '',
       ),
       ScienceMatchPair(
         id: 'reasoning',
-        concept: '結果を支える理由',
+        concept: t('結果を支える理由', 'The reason behind the result'),
         correctTargetId: 'reason',
         needCode: '',
       ),
       ScienceMatchPair(
         id: 'correction',
-        concept: '思い込みの訂正',
+        concept: t('思い込みの訂正', 'Fixing the misconception'),
         correctTargetId: 'correction',
         needCode: '',
       ),

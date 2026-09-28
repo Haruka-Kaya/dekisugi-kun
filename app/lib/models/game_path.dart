@@ -4,6 +4,8 @@
 /// 結果だけを受け取り、UIが架空の進捗を作らないための境界にする。
 library;
 
+import '../config/app_language.dart';
+
 enum GamePathNodeKind {
   lesson,
   story,
@@ -38,15 +40,27 @@ enum GameCharacterReaction {
 
 extension GameCharacterReactionPresentation on GameCharacterReaction {
   String get semanticsLabel => switch (this) {
-    GameCharacterReaction.none => 'そばにいます',
-    GameCharacterReaction.invite => '次の学習へ手招きしています',
-    GameCharacterReaction.listening => '話を聞いています',
-    GameCharacterReaction.thinking => '一緒に考えています',
-    GameCharacterReaction.encourage => '学習を応援しています',
-    GameCharacterReaction.speaking => '説明しています',
-    GameCharacterReaction.celebrate => '笑顔で成果を祝っています',
-    GameCharacterReaction.outOfTime => '時間になったことを落ち着いて伝えています',
-    GameCharacterReaction.retry => 'もう一度取り組めるよう案内しています',
+    GameCharacterReaction.none => t('そばにいます', 'Right here with you'),
+    GameCharacterReaction.invite => t(
+      '次の学習へ手招きしています',
+      'Inviting you to the next lesson',
+    ),
+    GameCharacterReaction.listening => t('話を聞いています', 'Listening to you'),
+    GameCharacterReaction.thinking => t('一緒に考えています', 'Thinking it through with you'),
+    GameCharacterReaction.encourage => t('学習を応援しています', 'Cheering you on'),
+    GameCharacterReaction.speaking => t('説明しています', 'Explaining'),
+    GameCharacterReaction.celebrate => t(
+      '笑顔で成果を祝っています',
+      'Smiling and celebrating your progress',
+    ),
+    GameCharacterReaction.outOfTime => t(
+      '時間になったことを落ち着いて伝えています',
+      'Calmly letting you know time is up',
+    ),
+    GameCharacterReaction.retry => t(
+      'もう一度取り組めるよう案内しています',
+      'Showing you how to try again',
+    ),
   };
 }
 
@@ -195,13 +209,14 @@ class GamePathViewData {
   const GamePathViewData({
     required this.status,
     required this.units,
-    this.title = '学習パス',
+    this._title,
     this.currentNodeId,
     this.quests = const <GameQuest>[],
     this.schoolMode = false,
   });
 
-  final String title;
+  final String? _title;
+  String get title => _title ?? t('学習パス', 'Learning Path');
   final GamePlayerStatus status;
   final List<GamePathUnit> units;
   final String? currentNodeId;

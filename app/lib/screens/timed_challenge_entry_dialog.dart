@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../ui/_material.dart';
 
 /// 任意Timedだけに結晶を使う前の、明示確認。
@@ -15,23 +16,29 @@ Future<bool> confirmTimedChallengeEntry(
     context: context,
     builder: (dialogContext) => AlertDialog(
       key: const ValueKey('timed-entry-confirmation'),
-      title: const Text('今日のタイム挑戦券'),
+      title: Text(lang.t('今日のタイム挑戦券', 'Today\'s timed challenge pass')),
       content: SingleChildScrollView(
         child: Text(
-          '結晶$gemCost個で、今日の学習日は何度でもタイムチャレンジへ参加できます。'
-          'Path・XP・正答は購入できません。Match / Lightningは無料です。',
+          lang.t(
+                '結晶$gemCost個で、今日の学習日は何度でもタイムチャレンジへ参加できます。',
+                'Spend $gemCost gems to join timed challenges as often as you like today.',
+              ) +
+              lang.t(
+                'Path・XP・正答は購入できません。Match / Lightningは無料です。',
+                ' You cannot buy Path progress, XP, or correct answers. Match and Lightning are free.',
+              ),
         ),
       ),
       actions: [
         TextButton(
           key: const ValueKey('timed-entry-cancel'),
           onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: const Text('やめる'),
+          child: Text(lang.t('やめる', 'Cancel')),
         ),
         FilledButton(
           key: const ValueKey('timed-entry-confirm'),
           onPressed: () => Navigator.of(dialogContext).pop(true),
-          child: Text('結晶$gemCost個で参加'),
+          child: Text(lang.t('結晶$gemCost個で参加', 'Join for $gemCost gems')),
         ),
       ],
     ),

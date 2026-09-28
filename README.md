@@ -46,6 +46,13 @@ the answers but is not allowed to reveal them, so the student has to teach it.
 - **Stack:** Flutter app (`app/`) + TypeScript server (`server/`, Vercel).
   The app's core learning loop runs fully offline against the bundled
   curriculum catalog — no server or credentials needed to run it.
+- **Bilingual:** the whole product runs in English too — every lesson,
+  practice stage, misconception follow-up, story, and notation task has a
+  canonical English build (`--dart-define=APP_LANG=en`, or the in-app
+  language toggle). The English catalog is machine-generated from the same
+  server source (`app/assets/catalog/units.en.json`), and `/api/units?lang=en`
+  serves it over the network; a coverage test fails the build on any
+  untranslated string.
 - **Monetization:** optional Plus *supporter plan* powered by the RevenueCat
   SDK (`purchases_flutter`): purchase/restore grants the Aurora Mantle
   companion skin, generated-AI reply prefaces via `/api/companion-line`

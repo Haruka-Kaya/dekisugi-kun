@@ -12,6 +12,7 @@ import '../domain/learning_progress.dart';
 import 'game_path_projection.dart';
 import 'learning_economy_catalog_projection.dart';
 import 'learning_monthly_badge_projection.dart';
+import '../../config/app_language.dart';
 
 class LearningGameProjectionResult {
   const LearningGameProjectionResult({
@@ -271,8 +272,8 @@ class LearningGameProjection {
           id: id,
           title: questTitles[id] ?? _questTitle(id),
           description: schoolMode
-              ? 'この端末で取り組む授業目標です。クラス全体の件数は集計しません。'
-              : '学習パスの中身を進めるクエストです。',
+              ? t('この端末で取り組む授業目標です。クラス全体の件数は集計しません。', 'A class goal for this device. Class-wide totals aren\'t counted.')
+              : t('学習パスの中身を進めるクエストです。', 'A quest that moves your learning path forward.'),
           kind: id.startsWith('monthly:')
               ? GameQuestKind.monthly
               : schoolMode
@@ -448,7 +449,7 @@ class LearningGameProjection {
       completedNodes: completedNodes,
       totalNodes: totalNodes,
       leagueName: schoolMode
-          ? '学校モード'
+          ? t('学校モード', 'School mode')
           : learningLeagueTierForXp(weeklyXp).label,
       weeklyLeagueXp: schoolMode ? 0 : weeklyXp,
       nextLeagueXp: schoolMode ? 0 : learningLeagueNextTarget(weeklyXp),
@@ -679,14 +680,14 @@ class LearningGameProjection {
   }
 
   static String? _questRewardLabel(int amount) =>
-      amount > 0 ? '結晶$amount個' : null;
+      amount > 0 ? t('結晶$amount個', '$amount gems') : null;
 
   static String _questTitle(String id) {
-    if (id.contains('transfer')) return '別の場面へ1回使う';
+    if (id.contains('transfer')) return t('別の場面へ1回使う', 'Use it once in a new situation');
     if (id.contains('retrieval') || id.contains('review')) {
-      return '期限の来た復習を進める';
+      return t('期限の来た復習を進める', 'Do a due review');
     }
-    return '学習パスを1件進める';
+    return t('学習パスを1件進める', 'Complete 1 learning path step');
   }
 
   static String _dayKey(DateTime date) =>

@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../ui/_material.dart';
@@ -25,7 +26,7 @@ class StudioWordmark extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: Text(
-            'デキすぎ君',
+            lang.t('デキすぎ君', 'Dekisugi-kun'),
             style: t.textTheme.titleLarge?.jaWeight(FontWeight.w700),
           ),
         ),

@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../config/motion.dart';
@@ -83,7 +84,12 @@ class _DossierBarState extends State<DossierBar> {
                 child: Semantics(
                   liveRegion: newlySaved,
                   child: Text(
-                    newlySaved ? '今の説明をノートに残しました' : 'いまの会話ノート',
+                    newlySaved
+                        ? lang.t(
+                            '今の説明をノートに残しました',
+                            'Saved your explanation to the notes',
+                          )
+                        : lang.t('いまの会話ノート', 'Notes from this chat'),
                     style: t.textTheme.titleSmall
                         ?.copyWith(color: c.onCoolSurface)
                         .jaWeight(FontWeight.w700),
@@ -151,7 +157,10 @@ class _NoteLine extends StatelessWidget {
     final status = statusOf(slot);
     final fg = c.fgFor(status);
     return Semantics(
-      label: '${slot.label} は ${statusLabel(status)}',
+      label: lang.t(
+        '${slot.label} は ${statusLabel(status)}',
+        '${slot.label}: ${statusLabel(status)}',
+      ),
       excludeSemantics: true,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

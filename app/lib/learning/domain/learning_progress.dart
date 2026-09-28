@@ -1,6 +1,7 @@
 import 'learning_event.dart';
 import 'learning_economy.dart';
 import '../../models/league_ladder.dart';
+import '../../config/app_language.dart';
 
 enum LearningNodeState {
   inProgress,
@@ -495,10 +496,10 @@ enum LearningLeagueTier {
   String get wire => name;
 
   String get label => switch (this) {
-    LearningLeagueTier.observer => '観察者',
-    LearningLeagueTier.experimenter => '実験者',
-    LearningLeagueTier.investigator => '探究者',
-    LearningLeagueTier.researchLead => '研究主任',
+    LearningLeagueTier.observer => t('観察者', 'Observer'),
+    LearningLeagueTier.experimenter => t('実験者', 'Experimenter'),
+    LearningLeagueTier.investigator => t('探究者', 'Investigator'),
+    LearningLeagueTier.researchLead => t('研究主任', 'Lead Researcher'),
   };
 
   static LearningLeagueTier? parse(Object? value) {

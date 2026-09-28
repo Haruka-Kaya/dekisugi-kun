@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../models/streak.dart';
 import '../ui/_material.dart';
@@ -53,10 +54,22 @@ class StreakLine extends StatelessWidget {
     // **数字を煽らない。** 0 のときに「0日」と出すと、
     // 始める前から失点しているように見える
     final text = switch ((streak.days, streak.restDay)) {
-      (_, true) => 'きょうは考査の前。休んでいい日です',
-      (0, _) => 'きょう1件やると、ここに日数が出ます',
-      (final n, _) when streak.doneToday => '$n日つづけて説明できています',
-      (final n, _) => '$n日つづいています。きょうはこれから',
+      (_, true) => lang.t(
+        'きょうは考査の前。休んでいい日です',
+        'Exams are coming up. Today is a rest day',
+      ),
+      (0, _) => lang.t(
+        'きょう1件やると、ここに日数が出ます',
+        'Do 1 today and your day count shows up here',
+      ),
+      (final n, _) when streak.doneToday => lang.t(
+        '$n日つづけて説明できています',
+        'Explained $n days in a row',
+      ),
+      (final n, _) => lang.t(
+        '$n日つづいています。きょうはこれから',
+        '$n days in a row. Today is still ahead',
+      ),
     };
     return Text(
       text,
@@ -80,8 +93,8 @@ class _Grace extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Semantics(
-      label: '今週の猶予',
-      value: '$total日中 $left日のこり',
+      label: lang.t('今週の猶予', 'Grace days this week'),
+      value: lang.t('$total日中 $left日のこり', '$left of $total days left'),
       excludeSemantics: true,
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -89,7 +102,7 @@ class _Grace extends StatelessWidget {
           Icon(Icons.event_available, size: 15, color: scheme.onSurfaceVariant),
           const SizedBox(width: 5),
           Text(
-            '今週の猶予 あと$left日',
+            lang.t('今週の猶予 あと$left日', 'Grace days this week: $left left'),
             style: t.textTheme.labelSmall?.copyWith(
               color: scheme.onSurfaceVariant,
             ),

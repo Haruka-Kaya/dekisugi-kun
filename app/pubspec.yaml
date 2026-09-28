@@ -55,6 +55,7 @@ flutter:
     # 初回起動がオフラインでも、一覧と教材本文を読めるようにする。
     # 手編集禁止。server で `npm run catalog:generate` して作る。
     - assets/catalog/units.ja.json
+    - assets/catalog/units.en.json
     # 人が収録したListening教材だけを置く。音源が無い教材は端末TTSへ退避し、
     # 人の録音とは表示しない。命名規則は同ディレクトリのREADMEを参照。
     - assets/audio/listening/
