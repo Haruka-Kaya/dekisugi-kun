@@ -196,6 +196,9 @@ abstract class SessionStore {
     LearningScope scope,
   );
 
+  /// 理解カルテ用のneed状態。activeと解消済みtombstoneの両方を返す。
+  Future<List<LearningNeedStateView>> learningNeedStates(LearningScope scope);
+
   Future<LearningRun> beginLearningRun(LearningRun run);
 
   Future<LearningRun> checkpointLearningRun(
@@ -1916,6 +1919,30 @@ class SqfliteSessionStore implements SessionStore {
   Future<LearningProgressSnapshot> learningProgressSnapshot(
     LearningScope scope,
   ) async => _learningSnapshot(_db, scope);
+
+  @override
+  Future<List<LearningNeedStateView>> learningNeedStates(
+    LearningScope scope,
+  ) async {
+    final rows = await _db.query(
+      'learning_need_state',
+      where: 'scope = ?',
+      whereArgs: [scope.wire],
+      orderBy: 'skill_id ASC, need_code ASC',
+    );
+    return List.unmodifiable(
+      rows.map(_learningNeedStateFromRow).map(
+        (state) => LearningNeedStateView(
+          scope: state.scope,
+          skillId: state.skillId,
+          needCode: state.needCode,
+          firstObservedDay: state.firstObservedDay,
+          lastObservedDay: state.lastObservedDay,
+          resolvedDay: state.resolvedDay,
+        ),
+      ),
+    );
+  }
 
   @override
   Future<LearningLanFriendsRewardResult> grantLearningLanFriendsReward({
@@ -6333,6 +6360,29 @@ class MemorySessionStore implements SessionStore {
     localLeagueHistory: _learningLocalLeagueHistory,
     needStates: _learningNeedStates,
   );
+
+  @override
+  Future<List<LearningNeedStateView>> learningNeedStates(
+    LearningScope scope,
+  ) async {
+    final states =
+        _learningNeedStates.values.where((state) => state.scope == scope).map(
+          (state) => LearningNeedStateView(
+            scope: state.scope,
+            skillId: state.skillId,
+            needCode: state.needCode,
+            firstObservedDay: state.firstObservedDay,
+            lastObservedDay: state.lastObservedDay,
+            resolvedDay: state.resolvedDay,
+          ),
+        )
+        .toList()
+      ..sort((a, b) {
+        final bySkill = a.skillId.compareTo(b.skillId);
+        return bySkill != 0 ? bySkill : a.needCode.compareTo(b.needCode);
+      });
+    return List.unmodifiable(states);
+  }
 
   @override
   Future<LearningLanFriendsRewardResult> grantLearningLanFriendsReward({

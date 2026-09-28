@@ -11,6 +11,11 @@
           "key": "fall",
           "label": "落下の速さ",
           "storyTitle": "紙ひこうき部、落下レース中止事件",
+          "misconception": {
+            "id": "M01",
+            "statement": "重い物体ほど速く落ちる。",
+            "correct": "空気の抵抗が無視できるとき、落下の速さは物体の重さによらない。同じ高さから同時に落とせば同時に着く。"
+          },
           "field": "energy",
           "grade": 3,
           "curriculumRefs": [
@@ -35,6 +40,11 @@
           "key": "inertia",
           "label": "慣性",
           "storyTitle": "逃走コインと消えた押し手",
+          "misconception": {
+            "id": "M02",
+            "statement": "動いている物体には、動く向きに力がはたらき続けている。",
+            "correct": "力がはたらいていなくても、動いている物体はそのまま等速で動き続ける（慣性の法則）。"
+          },
           "field": "energy",
           "grade": 3,
           "curriculumRefs": [
@@ -59,6 +69,11 @@
           "key": "friction",
           "label": "止まる理由",
           "storyTitle": "タオル沼のコイン救出作戦",
+          "misconception": {
+            "id": "M03",
+            "statement": "物体はほうっておけば自然に止まる。止まるのが本来の状態である。",
+            "correct": "物体が止まるのは摩擦や空気抵抗などの力がはたらくから。何もはたらかなければ止まらない。"
+          },
           "field": "energy",
           "grade": 3,
           "curriculumRefs": [
@@ -85,6 +100,11 @@
           "key": "throwUp",
           "label": "投げ上げた物体にはたらく力",
           "storyTitle": "最高点ゼロ秒カメラの謎",
+          "misconception": {
+            "id": "M08",
+            "statement": "投げ上げた物体には、上昇中は上向きの力がはたらいている。最高点では力がゼロになる。",
+            "correct": "投げ上げた物体には、上昇中も最高点でも下降中も、常に下向きの重力がはたらいている。"
+          },
           "field": "energy",
           "grade": 3,
           "curriculumRefs": [
@@ -2488,6 +2508,11 @@
           "key": "actionReaction",
           "label": "作用・反作用",
           "storyTitle": "しゃべらない壁のハイタッチ",
+          "misconception": {
+            "id": "M04",
+            "statement": "重い物体（強い方）の方が大きい力を出している。",
+            "correct": "作用と反作用は、重さや大きさによらず必ず同じ大きさで、向きが反対。"
+          },
           "field": "energy",
           "grade": 3,
           "curriculumRefs": [
@@ -2511,6 +2536,11 @@
           "key": "balance",
           "label": "つり合いと運動",
           "storyTitle": "上昇エレベーターのアリバイ",
+          "misconception": {
+            "id": "M05",
+            "statement": "力がつり合っている物体は必ず静止している。",
+            "correct": "力がつり合っているとき、物体は静止し続けるか等速直線運動を続ける。静止しているとは限らない。"
+          },
           "field": "energy",
           "grade": 3,
           "curriculumRefs": [
@@ -3736,6 +3766,11 @@
           "key": "pressure",
           "label": "圧力と面積",
           "storyTitle": "消しゴム足あと鑑定団",
+          "misconception": {
+            "id": "M06",
+            "statement": "押す力が同じなら圧力も同じ。面積は関係ない。",
+            "correct": "圧力は面を垂直に押す力を面積で割ったもの。同じ力でも面積が小さいほど圧力は大きい。"
+          },
           "field": "energy",
           "grade": 2,
           "curriculumRefs": [
@@ -3760,6 +3795,11 @@
           "key": "buoyancy",
           "label": "浮力の大きさ",
           "storyTitle": "油粘土船、沈没からの大逆転",
+          "misconception": {
+            "id": "M07",
+            "statement": "重い物体ほど大きな浮力を受ける。",
+            "correct": "浮力の大きさは物体が押しのけた液体の重さに等しく、物体の重さそのものではなく水中の体積で決まる。"
+          },
           "field": "energy",
           "grade": 3,
           "curriculumRefs": [
@@ -4991,6 +5031,11 @@
           "key": "currentMagneticField",
           "label": "電流がつくる磁界",
           "storyTitle": "方位磁針が聞いた電流のひそひそ話",
+          "misconception": {
+            "id": "M09",
+            "statement": "電流の影響は導線やコイルの内側だけにあり、外側には磁界ができない。",
+            "correct": "電流が流れる導線やコイルの周囲には磁界ができる。電流の向きを逆にすると、その磁界の向きも逆になる。"
+          },
           "field": "energy",
           "grade": 2,
           "curriculumRefs": [
@@ -5015,6 +5060,11 @@
           "key": "magneticForce",
           "label": "磁界中の電流が受ける力",
           "storyTitle": "電気ブランコ反転裁判",
+          "misconception": {
+            "id": "M10",
+            "statement": "磁界中の導線は電流の向きによらず、いつも磁石へ同じ向きに引かれる。",
+            "correct": "磁界中の電流が受ける力の向きは、電流と磁界の両方の向きで決まり、どちらか一方を逆にすると力も逆向きになる。"
+          },
           "field": "energy",
           "grade": 2,
           "curriculumRefs": [
@@ -5041,6 +5091,11 @@
           "key": "electromagneticInduction",
           "label": "電磁誘導と発電",
           "storyTitle": "眠る磁石と無言の検流計",
+          "misconception": {
+            "id": "M11",
+            "statement": "磁石がコイルの中にあるだけで、止まっていても誘導電流が流れ続ける。",
+            "correct": "コイルを貫く磁束が変化すると誘導電圧が生じ、閉回路なら誘導電流が流れる。磁束が一定なら流れ続けない。"
+          },
           "field": "energy",
           "grade": 2,
           "curriculumRefs": [
@@ -6880,6 +6935,11 @@
           "key": "density",
           "label": "密度",
           "storyTitle": "そっくりボトルの重さ交換事件",
+          "misconception": {
+            "id": "M12",
+            "statement": "物体が大きいほど、または重いほど、その物体の密度も必ず大きい。",
+            "correct": "密度は単位体積当たりの質量で、同じ条件の同じ物質なら、量や形を変えても質量と体積が同じ割合で変わるため基本的に同じ値になる。"
+          },
           "field": "matter",
           "grade": 1,
           "curriculumRefs": [
@@ -6905,6 +6965,11 @@
           "key": "gasProperties",
           "label": "気体の発生と性質",
           "storyTitle": "透明気体の捕集法取り違え事件",
+          "misconception": {
+            "id": "M16",
+            "statement": "目に見えない気体はどれも同じ性質で、同じ方法で集められる。",
+            "correct": "気体は種類ごとに水への溶けやすさ、空気との密度差、他の物質との反応が異なるため、性質に合わせて捕集・識別する。"
+          },
           "field": "matter",
           "grade": 1,
           "curriculumRefs": [
@@ -6929,6 +6994,11 @@
           "key": "stateChangeMass",
           "label": "状態変化と質量",
           "storyTitle": "消えた液体1.5グラムの行方",
+          "misconception": {
+            "id": "M17",
+            "statement": "液体が気体になると粒子が消え、閉じた容器でも質量が減る。",
+            "correct": "状態変化では粒子の間隔や運動が変わり体積は変化し得るが、閉じた系で物質の出入りがなければ全体の質量は変わらない。"
+          },
           "field": "matter",
           "grade": 1,
           "curriculumRefs": [
@@ -8244,6 +8314,11 @@
           "key": "cells",
           "label": "生物と細胞",
           "storyTitle": "消えた葉緑体と根っこの証言",
+          "misconception": {
+            "id": "M13",
+            "statement": "植物の細胞には例外なく葉緑体があり、葉緑体が見えない細胞は動物細胞である。",
+            "correct": "生物の体は細胞からでき、植物と動物の細胞には共通する基本構造と相違点がある。葉緑体をもたない植物細胞もあるため、一つの特徴だけで決めない。"
+          },
           "field": "life",
           "grade": 2,
           "curriculumRefs": [
@@ -8268,6 +8343,11 @@
           "key": "photosynthesisRespiration",
           "label": "光合成と呼吸",
           "storyTitle": "植物工場の夜勤呼吸員",
+          "misconception": {
+            "id": "M18",
+            "statement": "植物は光合成だけを行い、呼吸を行わない。",
+            "correct": "植物は光があるとき葉緑体で光合成を行う一方、細胞の呼吸は昼夜を問わず行う。外見上の気体収支は両方の大きさで決まる。"
+          },
           "field": "life",
           "grade": 2,
           "curriculumRefs": [
@@ -8294,6 +8374,11 @@
           "key": "digestionAbsorption",
           "label": "消化と吸収",
           "storyTitle": "栄養分の小腸入国審査",
+          "misconception": {
+            "id": "M19",
+            "statement": "食物は胃で消化された瞬間に、その場ですべて血液へ吸収される。",
+            "correct": "消化は食物中の物質を吸収できる小さな物質へ分解する過程で、吸収はそれらが主に小腸の壁を通って体内へ入る過程である。"
+          },
           "field": "life",
           "grade": 2,
           "curriculumRefs": [
@@ -9604,6 +9689,11 @@
           "key": "humidityClouds",
           "label": "湿度と雲のでき方",
           "storyTitle": "コップの外だけ局地雨",
+          "misconception": {
+            "id": "M14",
+            "statement": "雲は、白く見える水蒸気という気体が集まったものである。",
+            "correct": "水蒸気は見えない気体で、雲は冷却などによって水蒸気が凝結した小さな水滴や氷の粒からできている。"
+          },
           "field": "earth",
           "grade": 2,
           "curriculumRefs": [
@@ -9628,6 +9718,11 @@
           "key": "fronts",
           "label": "前線と天気",
           "storyTitle": "天気図に残った暖気の足あと",
+          "misconception": {
+            "id": "M20",
+            "statement": "前線は雨雲そのものを示す線で、どの種類でも通過時の変化は同じである。",
+            "correct": "前線は性質の異なる気団の境界が地表と交わる付近で、暖気と寒気の動きに応じて雲・降水・気温・風が変化する。"
+          },
           "field": "earth",
           "grade": 2,
           "curriculumRefs": [
@@ -9654,6 +9749,11 @@
           "key": "pressurePatternsWind",
           "label": "気圧配置と風",
           "storyTitle": "等圧線ぎゅうぎゅう区画の強風予告",
+          "misconception": {
+            "id": "M21",
+            "statement": "天気図上の風は、どこでも高気圧の中心から低気圧の中心へまっすぐ吹く。",
+            "correct": "気圧差は風を動かす要因だが、実際の風向は地球の自転や地表面の摩擦の影響も受け、北半球では高気圧・低気圧の周りで異なる回り方を示す。"
+          },
           "field": "earth",
           "grade": 2,
           "curriculumRefs": [
@@ -10975,6 +11075,11 @@
           "key": "strataRelativeAge",
           "label": "地層と相対年代",
           "storyTitle": "紙の崖に残った斜め線のアリバイ",
+          "misconception": {
+            "id": "M15",
+            "statement": "地表に近い上の地層ほど先に見つかるので古く、下の地層ほど新しい。",
+            "correct": "大きく逆転していない地層では下の層ほど先に堆積して古く、地層を切る断層などは切られた層より後にできた。"
+          },
           "field": "earth",
           "grade": 1,
           "curriculumRefs": [
@@ -10999,6 +11104,11 @@
           "key": "volcanoEarthquakes",
           "label": "火山と地震",
           "storyTitle": "火山マークと震央マークの別行動",
+          "misconception": {
+            "id": "M22",
+            "statement": "火山と地震は同じ仕組みの一つの現象で、プレート境界なら必ず同じ場所・同じ時刻に起こる。",
+            "correct": "火山と地震はどちらも地球内部とプレート運動に関係し、分布に共通の傾向がある。一方、火山はマグマの上昇と噴出、地震は岩盤の急なずれによる別の現象で、必ず同時に起こるわけではない。"
+          },
           "field": "earth",
           "grade": 1,
           "curriculumRefs": [
@@ -11026,6 +11136,11 @@
           "key": "dailyMotionSeasons",
           "label": "日周運動と季節",
           "storyTitle": "星空カレンダー一日と一年の混線",
+          "misconception": {
+            "id": "M23",
+            "statement": "夏は地球が太陽に近づき、冬は遠ざかるため季節ができる。",
+            "correct": "天体の日周運動は主に地球の自転による相対運動で、季節による昼の長さや南中高度の変化は地軸が傾いたまま公転することで生じる。"
+          },
           "field": "earth",
           "grade": 3,
           "curriculumRefs": [
@@ -12341,6 +12456,11 @@
           "key": "combinationDecomposition",
           "label": "化合と分解",
           "storyTitle": "混ぜただけ粉チームの冤罪事件",
+          "misconception": {
+            "id": "M24",
+            "statement": "物質をよく混ぜただけで、新しい物質（化合物）ができる。",
+            "correct": "鉄粉と硫黄を混ぜただけでは、それぞれの粒が性質を保った混合物のまま。加熱などで化学変化が起きて、性質の違う硫化鉄が生成して初めて化合したと言える。"
+          },
           "field": "matter",
           "grade": 2,
           "curriculumRefs": [
@@ -12369,6 +12489,11 @@
           "key": "oxidationReduction",
           "label": "酸化と還元",
           "storyTitle": "赤い汚れの正体を追え",
+          "misconception": {
+            "id": "M25",
+            "statement": "さびは表面に付いた汚れで、鉄が酸素と結びついたわけではない。",
+            "correct": "さびは鉄が酸素などとゆっくり反応してできる酸化物で、鉄とは性質の異なる別の物質。酸化には燃焼だけでなく、さびや呼吸のようなゆっくりした酸素との結びつきも含まれる。"
+          },
           "field": "matter",
           "grade": 2,
           "curriculumRefs": [
@@ -12396,6 +12521,11 @@
           "key": "massConservation",
           "label": "質量保存",
           "storyTitle": "消えた1.1グラムの密室",
+          "misconception": {
+            "id": "M26",
+            "statement": "気体は質量をもたないので、気体が発生したり燃えたりする反応では質量は保存されない。",
+            "correct": "気体にも質量があり、発生して逃げた気体や外から結びついた気体の質量まで測定に含めれば、化学変化の前後で質量の総和は等しい。"
+          },
           "field": "matter",
           "grade": 2,
           "curriculumRefs": [
@@ -13694,6 +13824,11 @@
           "key": "electrolyte",
           "label": "電解質とイオン",
           "storyTitle": "消えた豆電球の容疑者たち",
+          "misconception": {
+            "id": "M27",
+            "statement": "水に溶ける物質の液はすべて電気を通す。",
+            "correct": "水に溶けても、砂糖やエタノールのようにイオンに分かれない物質の液は電気を通さない。電気を通すのは、溶けてイオンに分かれた電解質の液だけで、固い食塩はイオンが動けないので通さない。"
+          },
           "field": "matter",
           "grade": 2,
           "curriculumRefs": [
@@ -13721,6 +13856,11 @@
           "key": "acidAlkali",
           "label": "酸とアルカリ",
           "storyTitle": "三色に分かれた液の身元",
+          "misconception": {
+            "id": "M28",
+            "statement": "酸はすべて何でも溶かす危険な液体で、家庭の食品に酸は含まれない。",
+            "correct": "酸の強さには幅があり、食酢やレモン汁など身の回りの液も酸。危険かどうかは種類と強さ（pH）で決まり、アルカリにも強さがある。"
+          },
           "field": "matter",
           "grade": 2,
           "curriculumRefs": [
@@ -13747,6 +13887,11 @@
           "key": "neutralizationBattery",
           "label": "中和と電池",
           "storyTitle": "果物電池に宿った電気の行方",
+          "misconception": {
+            "id": "M29",
+            "statement": "酸とアルカリを混ぜれば必ず中性の液になり、中性にならなければ中和は起きていない。",
+            "correct": "中和反応は混ざった分だけ必ず起きる。量が合わなければ中性にならなくても、水と塩はできている。"
+          },
           "field": "matter",
           "grade": 2,
           "curriculumRefs": [

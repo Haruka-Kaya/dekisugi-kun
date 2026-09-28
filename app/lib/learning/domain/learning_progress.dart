@@ -101,6 +101,31 @@ final class LearningActiveNeed {
   final DateTime lastObservedAt;
 }
 
+/// 理解カルテが表示するneed状態。activeと解消済みtombstoneの両方を含む。
+///
+/// 誤答本文・選択肢ID・音声は持たない。`resolvedDay`が非nullなら
+/// 構造練習で解消済みとして扱う。
+final class LearningNeedStateView {
+  const LearningNeedStateView({
+    required this.scope,
+    required this.skillId,
+    required this.needCode,
+    required this.firstObservedDay,
+    required this.lastObservedDay,
+    required this.resolvedDay,
+  });
+
+  final LearningScope scope;
+  final String skillId;
+  final String needCode;
+  final String? firstObservedDay;
+  final String? lastObservedDay;
+  final String? resolvedDay;
+
+  bool get resolved => resolvedDay != null;
+  bool get active => !resolved && lastObservedDay != null;
+}
+
 final class LearningDay {
   const LearningDay({
     required this.scope,

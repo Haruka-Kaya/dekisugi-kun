@@ -119,12 +119,55 @@ class UnitSafety {
   Map<String, Object?> toJson() => {'level': level.wire, 'guidance': guidance};
 }
 
+/// 概念につながれた定番の誤概念。
+///
+/// `statement`は誤った理解（記録と復習の表示用）、`correct`は訂正後の
+/// 正しい考え。AIが口にする逐語の誘発文（lure）は同梱しない。
+class UnitConceptMisconception {
+  const UnitConceptMisconception({
+    required this.id,
+    required this.statement,
+    required this.correct,
+  });
+
+  final String id;
+  final String statement;
+  final String correct;
+
+  static UnitConceptMisconception? fromJson(Map<String, Object?> json) {
+    if (!_hasExactKeys(json, const {'id', 'statement', 'correct'})) {
+      return null;
+    }
+    final id = _notationText(json['id'], maxLength: 16);
+    final statement = _notationText(json['statement'], maxLength: 300);
+    final correct = _notationText(json['correct'], maxLength: 600);
+    if (id == null ||
+        !RegExp(r'^M\d{2}$').hasMatch(id) ||
+        statement == null ||
+        correct == null) {
+      return null;
+    }
+    return UnitConceptMisconception(
+      id: id,
+      statement: statement,
+      correct: correct,
+    );
+  }
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'statement': statement,
+    'correct': correct,
+  };
+}
+
 /// 一覧に公開する1概念。Storyの事件名と学習指導要領対応も正本から受け取る。
 class UnitConcept {
   const UnitConcept({
     required this.key,
     required this.label,
     required this.storyTitle,
+    this.misconception,
     this.field = UnitCurriculumField.energy,
     this.grade = 1,
     this.curriculumRefs = const [],
@@ -139,6 +182,9 @@ class UnitConcept {
   final String key;
   final String label;
   final String storyTitle;
+
+  /// カタログJSONでは必須。直接構築するfixtureだけnullを許す。
+  final UnitConceptMisconception? misconception;
   final UnitCurriculumField field;
   final int grade;
   final List<UnitCurriculumReference> curriculumRefs;
@@ -147,22 +193,41 @@ class UnitConcept {
   final UnitSafety safety;
 
   static UnitConcept? fromJson(Map<String, Object?> json) {
+    // misconceptionはv10同梱・新APIだけが持つ。旧キャッシュとfixtureを
+    // 拒否しないため、キーが無い形も受理する（あれば有効な形を要求）。
     if (!_hasExactKeys(json, const {
-      'key',
-      'label',
-      'storyTitle',
-      'field',
-      'grade',
-      'curriculumRefs',
-      'prerequisites',
-      'difficulty',
-      'safety',
-    })) {
+          'key',
+          'label',
+          'storyTitle',
+          'field',
+          'grade',
+          'curriculumRefs',
+          'prerequisites',
+          'difficulty',
+          'safety',
+        }) &&
+        !_hasExactKeys(json, const {
+          'key',
+          'label',
+          'storyTitle',
+          'misconception',
+          'field',
+          'grade',
+          'curriculumRefs',
+          'prerequisites',
+          'difficulty',
+          'safety',
+        })) {
       return null;
     }
     final key = _notationText(json['key'], maxLength: 128);
     final label = _notationText(json['label'], maxLength: 300);
     final storyTitle = _notationText(json['storyTitle'], maxLength: 300);
+    final rawMisconception = json['misconception'];
+    final misconceptionJson = rawMisconception == null
+        ? null
+        : _stringKeyedMap(rawMisconception);
+    if (rawMisconception != null && misconceptionJson == null) return null;
     final field = UnitCurriculumField.parse(json['field']);
     final grade = json['grade'];
     final difficulty = json['difficulty'];
@@ -202,7 +267,13 @@ class UnitConcept {
       references.add(reference);
     }
     final prerequisites = rawPrerequisites.cast<String>();
+    final misconception = misconceptionJson == null
+        ? null
+        : UnitConceptMisconception.fromJson(misconceptionJson);
     final safety = UnitSafety.fromJson(safetyJson);
+    if (misconceptionJson != null && misconception == null) {
+      return null;
+    }
     if (prerequisites.toSet().length != prerequisites.length ||
         references.map((reference) => reference.section).toSet().length !=
             references.length ||
@@ -213,6 +284,7 @@ class UnitConcept {
       key: key,
       label: label,
       storyTitle: storyTitle,
+      misconception: misconception,
       field: field,
       grade: grade.toInt(),
       curriculumRefs: List.unmodifiable(references),
@@ -226,6 +298,7 @@ class UnitConcept {
     'key': key,
     'label': label,
     'storyTitle': storyTitle,
+    if (misconception != null) 'misconception': misconception!.toJson(),
     'field': field.wire,
     'grade': grade,
     'curriculumRefs': [

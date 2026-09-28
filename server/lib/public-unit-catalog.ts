@@ -1,13 +1,16 @@
 import type { Unit } from './units.js'
 import { curriculumCoverageFor } from './curriculum-coverage.js'
 import { localPracticeVariantsFor } from './local-practice-variants.js'
+import { MISCONCEPTIONS } from './misconceptions.js'
 import { notationLabFor, publicNotationLab } from './notation-labs.js'
 import { scienceStoryFor, scienceStoryTitleFor } from './science-stories.js'
 
 /**
  * 生徒の端末へ公開してよい単元情報。
  *
- * 判定基準の `intent` と、AI が口にする逐語の誤概念文は含めない。
+ * 判定基準の `intent` と、AI が口にする逐語の誘発文（lure）は含めない。
+ * 誤概念の一般表現と正しい理解は「記録と復習の表示に使う」情報なので、
+ * 理解カルテが端末内表示できるよう concept ごとに同梱する。
  * `localCheckpoint` は旧クライアント用の1周目。新クライアントは
  * `localPracticeVariants` の3周を使う。どちらもAIとは別文で、詳細だけに含める。
  * API とアプリ同梱カタログが同じ変換を通ることで、公開形の二重管理を防ぐ。
@@ -26,10 +29,19 @@ export function publicUnitSummary(unit: Unit) {
       if (coverage == null || coverage.unitId !== unit.id) {
         throw new Error(`curriculum coverageが無いconcept: ${concept.key}`)
       }
+      const misconception = MISCONCEPTIONS.find((m) => m.conceptKey === concept.key)
+      if (misconception == null) {
+        throw new Error(`誤概念が無いconcept: ${concept.key}`)
+      }
       return {
         key: concept.key,
         label: concept.label,
         storyTitle,
+        misconception: {
+          id: misconception.id,
+          statement: misconception.misconception,
+          correct: misconception.correct,
+        },
         field: coverage.field,
         grade: coverage.grade,
         curriculumRefs: coverage.curriculumRefs.map((entry) => ({

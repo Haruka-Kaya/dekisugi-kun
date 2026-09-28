@@ -35,9 +35,18 @@ Story missions let the learner catch cataloged misconceptions the companion
 voices in context; notation labs train formula and diagram reasoning; spaced
 review and an exam-date countdown bring completed ideas back as new cases.
 
+The signature screen is the **カルテ (misconception map)** on the profile tab:
+a canonical catalog of 29 misconceptions, one per concept, shown as beliefs
+the companion holds. Each misconception a student's explanation corrects
+flips to "corrected by your explanation" and reveals the canonical correct
+idea — progress rendered as what the learner changed in the AI, not a score.
+Only cataloged need codes persist there; answer text and voice are never
+stored.
+
 The core loop is entirely on-device: no account, no free-text upload, no LLM
-grading of student writing. Voice audio and free text stay in RAM; the device
-stores only lesson IDs, canonical misconception flags, hearts, and progress.
+grading of student writing. In the current build, voice audio and free text
+stay in RAM; the device stores only lesson IDs, canonical misconception flags,
+hearts, and progress.
 Optional Plus, powered by the RevenueCat SDK, is a supporter plan: it grants an
 exclusive Aurora Mantle look for the study companion immediately, and lifts the
 daily limit on guided live-conversation sessions once that feature resumes —
@@ -54,6 +63,9 @@ nothing a student needs to learn is behind payment.
   curriculum guidelines, including the stage-2 chemistry units added this period.
 - Misconception story missions, notation labs, spaced retrieval, hearts with
   timed recovery, daily XP caps that prevent grinding.
+- The カルテ (misconception map): the 29-entry canonical misconception catalog
+  surfaced as the companion's record, with observed vs. resolved needs drawn
+  from durable on-device need state — the protégé effect made visible.
 - A RevenueCat-powered optional Plus supporter plan: purchase and restore
   grant an exclusive Aurora Mantle companion skin on-device, with a server-side
   entitlement recheck via `/api/revenuecat-webhook`.
@@ -83,18 +95,20 @@ and the entire learning loop is free.
 
 ## Demo video notes
 
-The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v2.mp4`, 54s) shows
+The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v3.mp4`, 68s) opens
+with a short hook card, then shows
 the current build running on an Android emulator in portrait: the learning path,
 a TEACH BACK node (mass conservation), a text explanation, the required
 re-read, the companion's fixed follow-up question, the 3-choice correction,
-the own-words-vs-textbook comparison, and completion unlocking the next node.
+the own-words-vs-textbook comparison, completion unlocking the next node, and
+the カルテ (misconception record) screen reached from the profile tab.
 English captions overlay the Japanese UI; there is no audio track.
 
 The video does not include a purchase: the RevenueCat Test Store key is not in
 the repository (it is a personal credential). Judges can exercise the full
 paywall themselves with the `--dart-define` command in "Testing instructions".
 
-The earlier web-build capture is kept as `docs/shipaton-demo-2026/shipaton-demo-v1.mp4`
+The earlier web-build capture is archived at `docs/attic/shipaton-demo-v1.mp4`
 for reference; the submitted video is the emulator capture.
 
 ## Testing instructions (for judges)
@@ -105,7 +119,9 @@ for reference; the submitted video is the emulator capture.
 3. On the learning path, open any lesson node, read the material, hide it, type
    an explanation, re-read it, and answer the checkpoint.
 4. Deliberately answer one checkpoint wrong to see the hint + re-explain flow.
-5. Optional: with a RevenueCat Test Store key, run with
+5. Open the profile tab → 「思い込みの記録を見る」 to see the カルテ: the
+   companion's misconception map with observed/corrected need states.
+6. Optional: with a RevenueCat Test Store key, run with
    `--dart-define=REVENUECAT_USE_TEST_STORE=true --dart-define=REVENUECAT_TEST_PUBLIC_SDK_KEY=<test key>`
    to see the Plus paywall and a simulated purchase that grants the Aurora
    Mantle companion skin in the cosmetic picker.

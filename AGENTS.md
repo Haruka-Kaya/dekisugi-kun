@@ -1,5 +1,14 @@
 # AGENTS.md — dekisugi-kun
 
+> **English abstract (for judges):** This file is the product constitution.
+> Dekisugi-kun is a middle/high-school science app (Flutter + Vercel) where
+> students *teach* an AI companion — the AI never answers first (learning by
+> teaching). C1–C9 pin evidence-based invariants: hide the textbook while the
+> student explains (C2), never make points the main motivator (C5), text input
+> is a first-class peer of voice (C8), and never declare a "weakness" — gaps
+> are elicited and observed (C9). See `docs/product-overview-en.md` for the
+> full English overview.
+
 **セッション開始時の行動**: このファイルを全部読めば全体像は分かる。`git log -1` で現在地を確認し、`CLAUDE.md` の「現況」セクションを読む。**「全体像を把握して」でコードをスキャンし直さない。**
 
 ---
