@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../config/app_language.dart' as l10n;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../models/purchase.dart';
@@ -90,10 +91,10 @@ class _PlusScreenState extends State<PlusScreen> {
       _notice = !shouldSync
           ? null
           : synced
-          ? const _Notice('Plusと会話枠の状態を確認しました。', _NoticeTone.confirmation)
-          : const _Notice(
-              'Plusの購入情報は確認できましたが、会話枠への反映を確認できませんでした。'
-              '通信を確認して再試行してください。購入をやり直す必要はありません。',
+          ? _Notice(l10n.t('Plusと会話枠の状態を確認しました。', 'Plus and your conversation allowance are confirmed.'), _NoticeTone.confirmation)
+          : _Notice(
+              l10n.t('Plusの購入情報は確認できましたが、会話枠への反映を確認できませんでした。'
+              '通信を確認して再試行してください。購入をやり直す必要はありません。', 'Your Plus purchase was confirmed, but we couldn\'t confirm your conversation allowance was updated. ' 'Check your connection and retry. You don\'t need to buy again.'),
               _NoticeTone.problem,
             );
     });
@@ -152,8 +153,8 @@ class _PlusScreenState extends State<PlusScreen> {
         setState(() {
           _busy = false;
           _busyPackageId = null;
-          _notice = const _Notice(
-            '購入は完了していません。料金は発生していません。',
+          _notice = _Notice(
+            l10n.t('購入は完了していません。料金は発生していません。', 'The purchase was not completed. You have not been charged.'),
             _NoticeTone.information,
           );
         });
@@ -164,8 +165,8 @@ class _PlusScreenState extends State<PlusScreen> {
           _busyPackageId = null;
           _notice = _Notice(
             restored
-                ? '購入情報を復元できませんでした。通信を確認して、もう一度お試しください。'
-                : '購入を完了できませんでした。ストアの状態を確認して、もう一度お試しください。',
+                ? l10n.t('購入情報を復元できませんでした。通信を確認して、もう一度お試しください。', 'Couldn\'t restore your purchase. Check your connection and try again.')
+                : l10n.t('購入を完了できませんでした。ストアの状態を確認して、もう一度お試しください。', 'Couldn\'t complete the purchase. Check the store status and try again.'),
             _NoticeTone.problem,
           );
         });
@@ -187,8 +188,8 @@ class _PlusScreenState extends State<PlusScreen> {
       setState(() {
         _busy = false;
         _busyPackageId = null;
-        _notice = const _Notice(
-          'ストアの確認結果を受け取れませんでした。もう一度お試しください。',
+        _notice = _Notice(
+          l10n.t('ストアの確認結果を受け取れませんでした。もう一度お試しください。', 'Didn\'t get a response from the store. Please try again.'),
           _NoticeTone.problem,
         );
       });
@@ -202,8 +203,8 @@ class _PlusScreenState extends State<PlusScreen> {
         _busyPackageId = null;
         _notice = _Notice(
           restored
-              ? 'このストアアカウントで、有効なPlusは見つかりませんでした。新しい購入は行っていません。'
-              : '購入情報を確認しましたが、Plusは有効になっていません。料金や契約の状態はストアで確認できます。',
+              ? l10n.t('このストアアカウントで、有効なPlusは見つかりませんでした。新しい購入は行っていません。', 'No active Plus was found for this store account. No new purchase was made.')
+              : l10n.t('購入情報を確認しましたが、Plusは有効になっていません。料金や契約の状態はストアで確認できます。', 'We checked your purchase, but Plus is not active. You can check charges and subscription status in the store.'),
           _NoticeTone.information,
         );
       });
@@ -220,13 +221,13 @@ class _PlusScreenState extends State<PlusScreen> {
       _notice = synced
           ? _Notice(
               restored
-                  ? 'Plusを復元し、限定マスコットと会話枠への反映を確認しました。'
-                  : 'Plusが有効になり、限定マスコットを受け取りました。',
+                  ? l10n.t('Plusを復元し、限定マスコットと会話枠への反映を確認しました。', 'Plus restored. Your exclusive mascot and conversation allowance are confirmed.')
+                  : l10n.t('Plusが有効になり、限定マスコットを受け取りました。', 'Plus is active, and you got the exclusive mascot.'),
               _NoticeTone.confirmation,
             )
-          : const _Notice(
-              '購入情報は確認できましたが、会話枠への反映を確認できませんでした。'
-              '通信を確認して再試行してください。購入をやり直す必要はありません。',
+          : _Notice(
+              l10n.t('購入情報は確認できましたが、会話枠への反映を確認できませんでした。'
+              '通信を確認して再試行してください。購入をやり直す必要はありません。', 'Your Plus purchase was confirmed, but we couldn\'t confirm your conversation allowance was updated. ' 'Check your connection and retry. You don\'t need to buy again.'),
               _NoticeTone.problem,
             );
     });
@@ -262,10 +263,10 @@ class _PlusScreenState extends State<PlusScreen> {
       _busy = false;
       _syncPending = !synced;
       _notice = synced
-          ? const _Notice('会話枠への反映を確認しました。', _NoticeTone.confirmation)
-          : const _Notice(
-              '購入情報は確認できましたが、会話枠への反映を確認できませんでした。'
-              '通信を確認して再試行してください。購入をやり直す必要はありません。',
+          ? _Notice(l10n.t('会話枠への反映を確認しました。', 'Your conversation allowance is confirmed.'), _NoticeTone.confirmation)
+          : _Notice(
+              l10n.t('購入情報は確認できましたが、会話枠への反映を確認できませんでした。'
+              '通信を確認して再試行してください。購入をやり直す必要はありません。', 'Your Plus purchase was confirmed, but we couldn\'t confirm your conversation allowance was updated. ' 'Check your connection and retry. You don\'t need to buy again.'),
               _NoticeTone.problem,
             );
     });
@@ -288,8 +289,8 @@ class _PlusScreenState extends State<PlusScreen> {
     setState(() {
       _linkBusy = false;
       if (!opened) {
-        _notice = const _Notice(
-          'ページを開けませんでした。通信とブラウザの設定を確認して、もう一度お試しください。',
+        _notice = _Notice(
+          l10n.t('ページを開けませんでした。通信とブラウザの設定を確認して、もう一度お試しください。', 'Couldn\'t open the page. Check your connection and browser settings, then try again.'),
           _NoticeTone.problem,
         );
       }
@@ -320,11 +321,11 @@ class _PlusScreenState extends State<PlusScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          tooltip: 'Plusを閉じる',
+          tooltip: l10n.t('Plusを閉じる', 'Close Plus'),
           onPressed: _close,
           icon: const Icon(Icons.close),
         ),
-        title: const Text('デキすぎ君 Plus'),
+        title: Text(l10n.t('デキすぎ君 Plus', 'Dekisugi-kun Plus')),
       ),
       body: SafeArea(
         top: false,
@@ -337,10 +338,10 @@ class _PlusScreenState extends State<PlusScreen> {
               24 + MediaQuery.paddingOf(context).bottom,
             ),
             children: [
-              const StudioPageIntro(
-                eyebrow: 'PLUS  ·  サポータープラン',
-                title: '応援プラン。\n特典はすぐ届く。',
-                body: '開発を応援しながら、限定の見た目と生成AIの返事を受け取るプランです。',
+              StudioPageIntro(
+                eyebrow: l10n.t('PLUS  ·  サポータープラン', 'PLUS  ·  Supporter plan'),
+                title: l10n.t('応援プラン。\n特典はすぐ届く。', 'A supporter plan.\nPerks arrive right away.'),
+                body: l10n.t('開発を応援しながら、限定の見た目と生成AIの返事を受け取るプランです。', 'Support development and get exclusive looks plus generative-AI replies.'),
               ),
               const SizedBox(height: 22),
               const _PlanDifference(),
@@ -415,7 +416,7 @@ class _PlanDifference extends StatelessWidget {
     return Semantics(
       container: true,
       label:
-          '無料は教材とミッションが全部使えます。Plusは限定マスコット、説明を読んだデキすぎ君の返事（生成AI）、保護者向けレポート、Live会話再開時の会話回数上限なし。',
+          l10n.t('無料は教材とミッションが全部使えます。Plusは限定マスコット、説明を読んだデキすぎ君の返事（生成AI）、保護者向けレポート、Live会話再開時の会話回数上限なし。', 'Free includes every lesson and mission. Plus adds an exclusive mascot, Dekisugi-kun replies that read your explanation (generative AI), a parent report, and unlimited conversations once Live conversations return.'),
       child: ExcludeSemantics(
         child: Container(
           width: double.infinity,
@@ -428,9 +429,9 @@ class _PlanDifference extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _PlanLine(
-                label: '無料',
-                value: '教材とミッションは全部無料',
-                detail: 'AI会話は現在すべてのプランで休止中です',
+                label: l10n.t('無料', 'Free'),
+                value: l10n.t('教材とミッションは全部無料', 'All lessons and missions are free'),
+                detail: l10n.t('AI会話は現在すべてのプランで休止中です', 'AI conversations are currently paused on all plans'),
                 foreground: c.onHeroSurface,
                 muted: c.heroMuted,
               ),
@@ -440,15 +441,15 @@ class _PlanDifference extends StatelessWidget {
               ),
               _PlanLine(
                 label: 'Plus',
-                value: '限定マスコット・生成AIの返事・保護者レポート',
+                value: l10n.t('限定マスコット・生成AIの返事・保護者レポート', 'Exclusive mascot, generative-AI replies, parent report'),
                 detail:
-                    'オーロラマントのデキすぎ君、あなたの説明を読んだ返事（生成AIの前置き）、保護者へ渡せるカルテレポート。AI会話の回数上限なしはLive会話の提供再開時に有効になります。',
+                    l10n.t('オーロラマントのデキすぎ君、あなたの説明を読んだ返事（生成AIの前置き）、保護者へ渡せるカルテレポート。AI会話の回数上限なしはLive会話の提供再開時に有効になります。', 'Aurora-cape Dekisugi-kun, replies that read your explanation (a generative-AI intro), and a record report to share with parents. Unlimited AI conversations start when Live conversations return.'),
                 foreground: c.onHeroSurface,
                 muted: c.heroMuted,
               ),
               const SizedBox(height: 12),
               Text(
-                '1回の会話時間は、Plusでもおよそ10分です。Live会話は現在提供を止めています。',
+                l10n.t('1回の会話時間は、Plusでもおよそ10分です。Live会話は現在提供を止めています。', 'Each conversation lasts about 10 minutes, even with Plus. Live conversations are currently paused.'),
                 style: t.textTheme.bodySmall?.copyWith(color: c.heroMuted),
               ),
             ],
@@ -524,7 +525,7 @@ class _AlwaysFree extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '学ぶための土台は、課金で閉じません',
+                  l10n.t('学ぶための土台は、課金で閉じません', 'The basics of learning are never behind a paywall'),
                   style: t.textTheme.titleSmall
                       ?.copyWith(color: c.onCoolSurface)
                       .jaWeight(FontWeight.w700),
@@ -534,8 +535,8 @@ class _AlwaysFree extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '本人のノート、文字入力、アクセシビリティ機能、REPAIRは無料のままです。'
-            'Plusは応援プランで、変わるのは限定の見た目とAI会話の回数枠だけです。',
+            l10n.t('本人のノート、文字入力、アクセシビリティ機能、REPAIRは無料のままです。'
+            'Plusは応援プランで、変わるのは限定の見た目とAI会話の回数枠だけです。', 'Your notes, text input, accessibility features, and REPAIR stay free. ' 'Plus is a supporter plan: only exclusive looks and the AI conversation allowance change.'),
             style: t.textTheme.bodySmall?.copyWith(color: c.onCoolSurface),
           ),
         ],
@@ -552,7 +553,7 @@ class _LoadingStore extends StatelessWidget {
     return Semantics(
       container: true,
       liveRegion: true,
-      label: 'ストアのプランを読み込んでいます',
+      label: l10n.t('ストアのプランを読み込んでいます', 'Loading store plans'),
       child: const ExcludeSemantics(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 30),
@@ -642,20 +643,20 @@ class _AvailablePackages extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (packages.isEmpty) ...[
-          const _StoreExplanation(
+          _StoreExplanation(
             icon: Icons.receipt_long_outlined,
-            title: '現在選べるプランがありません',
-            body: 'ストアから価格と期間を確認できないため、推測した料金は表示しません。',
+            title: l10n.t('現在選べるプランがありません', 'No plans are available right now'),
+            body: l10n.t('ストアから価格と期間を確認できないため、推測した料金は表示しません。', 'We couldn\'t get the price and period from the store, so we won\'t show a guessed price.'),
           ),
           const SizedBox(height: 12),
           OutlinedButton(
             onPressed: busy ? null : onReload,
-            child: const Text('プランをもう一度確認'),
+            child: Text(l10n.t('プランをもう一度確認', 'Check plans again')),
           ),
         ] else ...[
-          const StudioSectionHeader(
-            title: 'ストアのプラン',
-            description: '料金・請求期間・更新条件は、いまストアから届いた内容です。',
+          StudioSectionHeader(
+            title: l10n.t('ストアのプラン', 'Store plans'),
+            description: l10n.t('料金・請求期間・更新条件は、いまストアから届いた内容です。', 'Price, billing period, and renewal terms are exactly what the store just sent.'),
             leading: Icon(Icons.storefront_outlined),
           ),
           const SizedBox(height: 12),
@@ -669,8 +670,8 @@ class _AvailablePackages extends StatelessWidget {
             const SizedBox(height: 12),
           ],
           Text(
-            'Plusに申し込まなくても無料機能は使えます。請求と解約は端末のストアで管理され、'
-            '購入前にストアの確認画面でも最終条件を確認できます。',
+            l10n.t('Plusに申し込まなくても無料機能は使えます。請求と解約は端末のストアで管理され、'
+            '購入前にストアの確認画面でも最終条件を確認できます。', 'Free features work without Plus. Billing and cancellation are managed in your device\'s store, ' 'and you can review the final terms on the store\'s confirmation screen before buying.'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
@@ -679,7 +680,7 @@ class _AvailablePackages extends StatelessWidget {
         const SizedBox(height: 10),
         TextButton(
           onPressed: busy ? null : onRestore,
-          child: const Text('以前の購入を復元'),
+          child: Text(l10n.t('以前の購入を復元', 'Restore previous purchase')),
         ),
       ],
     );
@@ -708,7 +709,7 @@ class _PackagePanel extends StatelessWidget {
     final disclosure = _PackageDisclosure.from(package);
     final price = package.price.trim();
     final canPurchase = disclosure != null;
-    final buttonLabel = canPurchase ? '$priceで申し込む' : 'このプランは購入できません';
+    final buttonLabel = canPurchase ? l10n.t('$priceで申し込む', 'Subscribe for $price') : l10n.t('このプランは購入できません', 'This plan can\'t be purchased');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -736,7 +737,7 @@ class _PackagePanel extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             disclosure?.priceAndPeriod ??
-                (price.isEmpty ? '価格をストアから取得できませんでした' : price),
+                (price.isEmpty ? l10n.t('価格をストアから取得できませんでした', 'Couldn\'t get the price from the store') : price),
             style: t.textTheme.titleLarge?.jaWeight(FontWeight.w700),
           ),
           const SizedBox(height: 6),
@@ -751,13 +752,13 @@ class _PackagePanel extends StatelessWidget {
             button: true,
             enabled: !busy && canPurchase,
             label: disclosure == null
-                ? '$title、$buttonLabel'
-                : '$title、${disclosure.semanticTerms}、$buttonLabel',
+                ? l10n.t('$title、$buttonLabel', '$title, $buttonLabel')
+                : l10n.t('$title、${disclosure.semanticTerms}、$buttonLabel', '$title, ${disclosure.semanticTerms}, $buttonLabel'),
             child: ExcludeSemantics(
               child: FilledButton(
                 onPressed: busy || !canPurchase ? null : onPurchase,
                 child: Text(
-                  isCurrentAction ? 'ストアに確認しています…' : buttonLabel,
+                  isCurrentAction ? l10n.t('ストアに確認しています…', 'Checking with the store…') : buttonLabel,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -770,15 +771,15 @@ class _PackagePanel extends StatelessWidget {
 
   static String _unavailableTerms(PlusPackage package) {
     if (package.hasIntroductoryOffer) {
-      return '無料体験または割引後の請求条件を正確に表示できないため、この画面では購入を止めています。';
+      return l10n.t('無料体験または割引後の請求条件を正確に表示できないため、この画面では購入を止めています。', 'Purchases are paused here because we can\'t accurately show billing after the free trial or discount.');
     }
     if (package.hasInstallments) {
-      return '分割回数と総支払条件を正確に表示できないため、この画面では購入を止めています。';
+      return l10n.t('分割回数と総支払条件を正確に表示できないため、この画面では購入を止めています。', 'Purchases are paused here because we can\'t accurately show the installments and total cost.');
     }
     if (package.price.trim().isEmpty) {
-      return 'ストアから実際の価格を確認できないため、この画面では購入を止めています。';
+      return l10n.t('ストアから実際の価格を確認できないため、この画面では購入を止めています。', 'Purchases are paused here because we can\'t confirm the actual price from the store.');
     }
-    return 'ストアから請求期間と更新条件を確認できないため、この画面では購入を止めています。';
+    return l10n.t('ストアから請求期間と更新条件を確認できないため、この画面では購入を止めています。', 'Purchases are paused here because we can\'t confirm the billing period and renewal terms from the store.');
   }
 }
 
@@ -808,23 +809,23 @@ class _PackageDisclosure {
         return _PackageDisclosure(
           priceAndPeriod: '$price / $period',
           renewalTerms:
-              '解約するまで、$periodごとに$priceで自動更新されます。'
-              '更新日の確認と解約は端末のストアで行えます。',
-          semanticTerms: '$price、$periodごとの自動更新',
+              l10n.t('解約するまで、$periodごとに$priceで自動更新されます。'
+              '更新日の確認と解約は端末のストアで行えます。', 'Renews automatically at $price every $period until you cancel. ' 'Check renewal dates and cancel in your device\'s store.'),
+          semanticTerms: l10n.t('$price、$periodごとの自動更新', '$price, renews every $period'),
         );
       case PlusBillingModel.prepaidSubscription:
         final period = _localizedPeriod(package.subscriptionPeriod);
         if (period == null) return null;
         return _PackageDisclosure(
           priceAndPeriod: '$price / $period',
-          renewalTerms: '$period分の前払いです。期間終了時に自動更新されません。',
-          semanticTerms: '$price、$period分の前払い、自動更新なし',
+          renewalTerms: l10n.t('$period分の前払いです。期間終了時に自動更新されません。', 'Prepaid for $period. Does not renew automatically when it ends.'),
+          semanticTerms: l10n.t('$price、$period分の前払い、自動更新なし', '$price, prepaid for $period, no auto-renewal'),
         );
       case PlusBillingModel.oneTimePurchase:
         return _PackageDisclosure(
-          priceAndPeriod: '$price（1回限り）',
-          renewalTerms: '1回限りの支払いです。自動更新されません。',
-          semanticTerms: '$price、1回限りの支払い、自動更新なし',
+          priceAndPeriod: l10n.t('$price（1回限り）', '$price (one-time)'),
+          renewalTerms: l10n.t('1回限りの支払いです。自動更新されません。', 'One-time payment. Does not renew automatically.'),
+          semanticTerms: l10n.t('$price、1回限りの支払い、自動更新なし', '$price, one-time payment, no auto-renewal'),
         );
       case PlusBillingModel.unsupported:
         return null;
@@ -839,10 +840,10 @@ class _PackageDisclosure {
     final count = int.tryParse(match.group(1)!);
     if (count == null) return null;
     return switch (match.group(2)) {
-      'D' => '$count日',
-      'W' => '$count週間',
-      'M' => '$countか月',
-      'Y' => '$count年',
+      'D' => l10n.t('$count日', '$count ${count == 1 ? 'day' : 'days'}'),
+      'W' => l10n.t('$count週間', '$count ${count == 1 ? 'week' : 'weeks'}'),
+      'M' => l10n.t('$countか月', '$count ${count == 1 ? 'month' : 'months'}'),
+      'Y' => l10n.t('$count年', '$count ${count == 1 ? 'year' : 'years'}'),
       _ => null,
     };
   }
@@ -883,14 +884,14 @@ class _ActivePlus extends StatelessWidget {
                 Icon(Icons.check_circle_outline, color: c.onCoolSurface),
                 const SizedBox(height: 10),
                 Text(
-                  'Plusは有効です',
+                  l10n.t('Plusは有効です', 'Plus is active'),
                   style: t.textTheme.titleLarge
                       ?.copyWith(color: c.onCoolSurface)
                       .jaWeight(FontWeight.w700),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'AIとの会話回数に上限はありません。1回はおよそ10分です。',
+                  l10n.t('AIとの会話回数に上限はありません。1回はおよそ10分です。', 'No limit on AI conversations. Each lasts about 10 minutes.'),
                   style: t.textTheme.bodyMedium?.copyWith(
                     color: c.onCoolSurface,
                   ),
@@ -898,12 +899,12 @@ class _ActivePlus extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   access.isTrial
-                      ? 'ストアでは無料体験として確認されています。更新条件は「購読を管理・解約」で確認できます。'
+                      ? l10n.t('ストアでは無料体験として確認されています。更新条件は「購読を管理・解約」で確認できます。', 'The store shows this as a free trial. See renewal terms under "Manage or cancel subscription."')
                       : access.willRenew
-                      ? 'ストアでは自動更新中です。更新日と料金は「購読を管理・解約」で確認できます。'
+                      ? l10n.t('ストアでは自動更新中です。更新日と料金は「購読を管理・解約」で確認できます。', 'Auto-renewal is on in the store. See the renewal date and price under "Manage or cancel subscription."')
                       : access.expiresAt != null
-                      ? '自動更新は停止されています。表示された利用期限まではPlusを使えます。'
-                      : '自動更新は設定されていません。契約状態は「購読を管理・解約」で確認できます。',
+                      ? l10n.t('自動更新は停止されています。表示された利用期限まではPlusを使えます。', 'Auto-renewal is off. You can use Plus until the end date shown.')
+                      : l10n.t('自動更新は設定されていません。契約状態は「購読を管理・解約」で確認できます。', 'Auto-renewal is not set. See your subscription status under "Manage or cancel subscription."'),
                   style: t.textTheme.bodySmall?.copyWith(
                     color: c.onCoolSurface,
                   ),
@@ -911,7 +912,7 @@ class _ActivePlus extends StatelessWidget {
                 if (access.expiresAt case final expires?) ...[
                   const SizedBox(height: 8),
                   Text(
-                    'ストアで確認した利用期限: ${_date(expires.toLocal())}',
+                    l10n.t('ストアで確認した利用期限: ${_date(expires.toLocal())}', 'Active until (per the store): ${_date(expires.toLocal())}'),
                     style: t.textTheme.bodySmall?.copyWith(
                       color: c.onCoolSurface,
                     ),
@@ -923,12 +924,12 @@ class _ActivePlus extends StatelessWidget {
           const SizedBox(height: 14),
           FilledButton(
             onPressed: busy ? null : onClose,
-            child: const Text('閉じる'),
+            child: Text(l10n.t('閉じる', 'Close')),
           ),
           const SizedBox(height: 6),
           TextButton(
             onPressed: busy ? null : onRestore,
-            child: Text(busy ? '購入情報を確認しています…' : '購入情報をもう一度確認'),
+            child: Text(busy ? l10n.t('購入情報を確認しています…', 'Checking your purchase…') : l10n.t('購入情報をもう一度確認', 'Check purchase again')),
           ),
         ],
       ),
@@ -936,7 +937,7 @@ class _ActivePlus extends StatelessWidget {
   }
 
   static String _date(DateTime value) =>
-      '${value.year}年${value.month}月${value.day}日';
+      l10n.t('${value.year}年${value.month}月${value.day}日', '${value.year}/${value.month}/${value.day}');
 }
 
 class _SyncRetry extends StatelessWidget {
@@ -957,10 +958,10 @@ class _SyncRetry extends StatelessWidget {
       children: [
         FilledButton(
           onPressed: busy ? null : onRetry,
-          child: Text(busy ? '会話枠を確認しています…' : '会話枠への反映を再試行'),
+          child: Text(busy ? l10n.t('会話枠を確認しています…', 'Checking conversation allowance…') : l10n.t('会話枠への反映を再試行', 'Retry updating conversation allowance')),
         ),
         const SizedBox(height: 6),
-        TextButton(onPressed: busy ? null : onClose, child: const Text('閉じる')),
+        TextButton(onPressed: busy ? null : onClose, child: Text(l10n.t('閉じる', 'Close'))),
       ],
     );
   }
@@ -976,13 +977,13 @@ class _DisabledPlus extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _StoreExplanation(
+        _StoreExplanation(
           icon: Icons.info_outline,
-          title: 'このアプリではPlusを購入できません',
-          body: 'このビルドではストア購入が設定されていません。教材とミッションは無料でそのまま使えます。',
+          title: l10n.t('このアプリではPlusを購入できません', 'Plus can\'t be purchased in this app'),
+          body: l10n.t('このビルドではストア購入が設定されていません。教材とミッションは無料でそのまま使えます。', 'Store purchases aren\'t set up in this build. Lessons and missions are still free to use.'),
         ),
         const SizedBox(height: 14),
-        FilledButton(onPressed: onClose, child: const Text('閉じる')),
+        FilledButton(onPressed: onClose, child: Text(l10n.t('閉じる', 'Close'))),
       ],
     );
   }
@@ -1004,20 +1005,20 @@ class _UnavailableStore extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _StoreExplanation(
+        _StoreExplanation(
           icon: Icons.cloud_off_outlined,
-          title: 'ストアの情報を確認できません',
-          body: '料金を推測せず、確認できるまで購入操作を止めています。無料の機能は引き続き使えます。',
+          title: l10n.t('ストアの情報を確認できません', 'Can\'t check store information'),
+          body: l10n.t('料金を推測せず、確認できるまで購入操作を止めています。無料の機能は引き続き使えます。', 'We won\'t guess prices, so purchases are paused until we can confirm. Free features still work.'),
         ),
         const SizedBox(height: 14),
         FilledButton(
           onPressed: busy ? null : onReload,
-          child: const Text('ストアへ再接続'),
+          child: Text(l10n.t('ストアへ再接続', 'Reconnect to store')),
         ),
         const SizedBox(height: 6),
         TextButton(
           onPressed: busy ? null : onRestore,
-          child: const Text('以前の購入を復元'),
+          child: Text(l10n.t('以前の購入を復元', 'Restore previous purchase')),
         ),
       ],
     );
@@ -1098,19 +1099,19 @@ class _SubscriptionLinks extends StatelessWidget {
           Divider(color: scheme.outlineVariant),
           const SizedBox(height: 10),
           Text(
-            '購読の確認・解約',
+            l10n.t('購読の確認・解約', 'Check or cancel subscription'),
             style: t.textTheme.titleSmall?.jaWeight(FontWeight.w700),
           ),
           const SizedBox(height: 4),
           Text(
-            '更新日、自動更新、解約の状態は、購入に使ったストアのアカウントで管理できます。',
+            l10n.t('更新日、自動更新、解約の状態は、購入に使ったストアのアカウントで管理できます。', 'Manage renewal dates, auto-renewal, and cancellation in the store account you used to buy.'),
             style: t.textTheme.bodySmall?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 10),
           _ExternalLinkButton(
-            label: 'ストアで購読を管理・解約',
+            label: l10n.t('ストアで購読を管理・解約', 'Manage or cancel subscription in store'),
             icon: Icons.open_in_new,
             busy: busy,
             filled: true,
@@ -1118,14 +1119,14 @@ class _SubscriptionLinks extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           _ExternalLinkButton(
-            label: 'ストア利用規約',
+            label: l10n.t('ストア利用規約', 'Store terms of use'),
             icon: Icons.description_outlined,
             busy: busy,
             onPressed: () => onOpen(termsUri),
           ),
           const SizedBox(height: 2),
           _ExternalLinkButton(
-            label: 'プライバシーポリシー',
+            label: l10n.t('プライバシーポリシー', 'Privacy policy'),
             icon: Icons.privacy_tip_outlined,
             busy: busy,
             onPressed: () => onOpen(_privacyUri),
@@ -1157,7 +1158,7 @@ class _ExternalLinkButton extends StatelessWidget {
     return Semantics(
       link: true,
       enabled: !busy,
-      label: '$label、外部ページを開く',
+      label: l10n.t('$label、外部ページを開く', '$label, opens external page'),
       child: ExcludeSemantics(
         child: filled
             ? OutlinedButton.icon(

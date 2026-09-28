@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../config/app_language.dart' as l10n;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
@@ -92,23 +93,30 @@ class _LocalClassroomEntryCardState extends State<LocalClassroomEntryCard> {
     final hasRun = run != null && assignment != null;
     final completed = hasRun && run.stage == LocalClassroomStage.completed;
     final title = completed
-        ? '最後に終えた授業'
+        ? l10n.t('最後に終えた授業', 'Last finished lesson')
         : hasRun
-        ? '途中の授業を再開'
-        : '先生の教材番号で始める';
+        ? l10n.t('途中の授業を再開', 'Resume lesson in progress')
+        : l10n.t('先生の教材番号で始める', 'Start with your teacher\'s lesson code');
     final description = completed
-        ? '${assignment.classroomCode}  ${assignment.mission.conceptLabel}\n'
-              '比較フローの操作完了。内容・理解は未確認です。'
+        ? l10n.t(
+            '${assignment.classroomCode}  ${assignment.mission.conceptLabel}\n'
+                '比較フローの操作完了。内容・理解は未確認です。',
+            '${assignment.classroomCode}  ${assignment.mission.conceptLabel}\n'
+                'Comparison steps done. Content and understanding not checked.',
+          )
         : hasRun
         ? '${assignment.classroomCode}  ${assignment.mission.conceptLabel}\n'
-              '${run.stage == LocalClassroomStage.material ? '教材の最初から再開します。' : '説明の最初から再開します。入力内容は保存していません。'}'
-        : '黒板の「01-02-A」のような番号から、同じ概念と同じ問いをすぐ開けます。';
+              '${run.stage == LocalClassroomStage.material ? l10n.t('教材の最初から再開します。', 'You\'ll restart from the beginning of the lesson.') : l10n.t('説明の最初から再開します。入力内容は保存していません。', 'You\'ll restart from the beginning of your explanation. What you typed was not saved.')}'
+        : l10n.t(
+            '黒板の「01-02-A」のような番号から、同じ概念と同じ問いをすぐ開けます。',
+            'Use a code from the board like "01-02-A" to open the same concept and question right away.',
+          );
 
     return Semantics(
       key: const ValueKey('local-classroom-entry-card'),
       button: true,
       enabled: !_loading,
-      label: '$title。$description',
+      label: l10n.t('$title。$description', '$title. $description'),
       onTap: _loading ? null : widget.onOpen,
       child: ExcludeSemantics(
         child: Material(
@@ -138,14 +146,24 @@ class _LocalClassroomEntryCardState extends State<LocalClassroomEntryCard> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _loading ? '授業の教材を確認しています' : title,
+                            _loading
+                                ? l10n.t(
+                                    '授業の教材を確認しています',
+                                    'Checking lesson materials',
+                                  )
+                                : title,
                             style: t.textTheme.titleSmall
                                 ?.copyWith(color: colors.onWarmSurface)
                                 .jaWeight(FontWeight.w700),
                           ),
                           const SizedBox(height: 5),
                           Text(
-                            _loading ? '端末内の情報だけを読み込みます。' : description,
+                            _loading
+                                ? l10n.t(
+                                    '端末内の情報だけを読み込みます。',
+                                    'Only data on this device is loaded.',
+                                  )
+                                : description,
                             style: t.textTheme.bodySmall?.copyWith(
                               color: colors.onWarmSurface,
                             ),
@@ -271,7 +289,10 @@ class _LocalClassroomScreenState extends State<LocalClassroomScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _loadError = '端末内の教材を読み込めませんでした。';
+        _loadError = l10n.t(
+          '端末内の教材を読み込めませんでした。',
+          'Couldn\'t load the lessons on this device.',
+        );
       });
     }
   }
@@ -312,7 +333,10 @@ class _LocalClassroomScreenState extends State<LocalClassroomScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _loadError = '完了した授業を、この端末の学習記録へ反映できませんでした。もう一度お試しください。';
+        _loadError = l10n.t(
+          '完了した授業を、この端末の学習記録へ反映できませんでした。もう一度お試しください。',
+          'Couldn\'t add the finished lesson to this device\'s learning record. Please try again.',
+        );
       });
     }
   }
@@ -337,7 +361,10 @@ class _LocalClassroomScreenState extends State<LocalClassroomScreen> {
     if (detail == null || detail.sectionFor(mission.conceptKey) == null) {
       if (mounted) {
         setState(() {
-          _loadError = '「${mission.conceptLabel}」の教材を開けませんでした。';
+          _loadError = l10n.t(
+            '「${mission.conceptLabel}」の教材を開けませんでした。',
+            'Couldn\'t open the lesson "${mission.conceptLabel}".',
+          );
         });
       }
       return null;
@@ -354,23 +381,43 @@ class _LocalClassroomScreenState extends State<LocalClassroomScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         scrollable: true,
-        title: Text(completed ? '最後の完了表示を入れ替えますか？' : '途中の教材を切り替えますか？'),
+        title: Text(
+          completed
+              ? l10n.t('最後の完了表示を入れ替えますか？', 'Replace the last completed lesson?')
+              : l10n.t('途中の教材を切り替えますか？', 'Switch from the lesson in progress?'),
+        ),
         content: Text(
           completed
-              ? '${current?.classroomCode ?? '直近'}  ${current?.mission.conceptLabel ?? '以前の教材'}の完了表示は、'
-                    '新しい教材の再開位置に入れ替わります。回答本文は保存していません。'
-              : '${current?.classroomCode ?? '途中'}  ${current?.mission.conceptLabel ?? '以前の教材'}の再開位置は消えます。'
-                    '入力した説明は保存していません。',
+              ? l10n.t(
+                  '${current?.classroomCode ?? l10n.t('直近', 'Recent')}  ${current?.mission.conceptLabel ?? l10n.t('以前の教材', 'Previous lesson')}の完了表示は、'
+                      '新しい教材の再開位置に入れ替わります。回答本文は保存していません。',
+                  'The completion for ${current?.classroomCode ?? l10n.t('直近', 'Recent')}  ${current?.mission.conceptLabel ?? l10n.t('以前の教材', 'Previous lesson')} '
+                      'will be replaced by the new lesson\'s resume point. Your answers were not saved.',
+                )
+              : l10n.t(
+                  '${current?.classroomCode ?? l10n.t('途中', 'In progress')}  ${current?.mission.conceptLabel ?? l10n.t('以前の教材', 'Previous lesson')}の再開位置は消えます。'
+                      '入力した説明は保存していません。',
+                  'The resume point for ${current?.classroomCode ?? l10n.t('途中', 'In progress')}  ${current?.mission.conceptLabel ?? l10n.t('以前の教材', 'Previous lesson')} will be deleted. '
+                      'Your explanation was not saved.',
+                ),
         ),
         actions: [
           TextButton(
             autofocus: true,
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(completed ? '完了表示を残す' : '途中の教材を残す'),
+            child: Text(
+              completed
+                  ? l10n.t('完了表示を残す', 'Keep completion')
+                  : l10n.t('途中の教材を残す', 'Keep current lesson'),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(completed ? '新しい教材を始める' : '切り替える'),
+            child: Text(
+              completed
+                  ? l10n.t('新しい教材を始める', 'Start new lesson')
+                  : l10n.t('切り替える', 'Switch'),
+            ),
           ),
         ],
       ),
@@ -401,7 +448,10 @@ class _LocalClassroomScreenState extends State<LocalClassroomScreen> {
         ClassroomAssignment.findByClassroomCode(_missions, code) == null) {
       setState(() {
         _submittedInvalid = true;
-        _loadError = 'このQRは現在の同梱教材の授業コードではありません。先生の教材QRを読み取ってください。';
+        _loadError = l10n.t(
+          'このQRは現在の同梱教材の授業コードではありません。先生の教材QRを読み取ってください。',
+          'This QR isn\'t a lesson code for the current built-in lessons. Scan your teacher\'s lesson QR.',
+        );
       });
       return;
     }
@@ -459,7 +509,12 @@ class _LocalClassroomScreenState extends State<LocalClassroomScreen> {
       await _openMaterial(got, assignment);
     } catch (_) {
       if (mounted) {
-        setState(() => _loadError = '再開位置を端末に保存できませんでした。もう一度お試しください。');
+        setState(
+          () => _loadError = l10n.t(
+            '再開位置を端末に保存できませんでした。もう一度お試しください。',
+            'Couldn\'t save the resume point on this device. Please try again.',
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -492,7 +547,12 @@ class _LocalClassroomScreenState extends State<LocalClassroomScreen> {
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _loadError = '途中の教材を開けませんでした。もう一度お試しください。');
+        setState(
+          () => _loadError = l10n.t(
+            '途中の教材を開けませんでした。もう一度お試しください。',
+            'Couldn\'t open the lesson in progress. Please try again.',
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -586,23 +646,43 @@ class _LocalClassroomScreenState extends State<LocalClassroomScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         scrollable: true,
-        title: Text(completed ? '最後の完了表示を消しますか？' : '途中の再開位置を消しますか？'),
+        title: Text(
+          completed
+              ? l10n.t('最後の完了表示を消しますか？', 'Delete the last completed lesson?')
+              : l10n.t('途中の再開位置を消しますか？', 'Delete the resume point?'),
+        ),
         content: Text(
           completed
-              ? '${assignment?.classroomCode ?? ''} ${assignment?.mission.conceptLabel ?? '最後に終えた教材'}の完了表示を、'
-                    'この端末から消します。回答本文はもともと保存していません。'
-              : '${assignment?.classroomCode ?? ''} ${assignment?.mission.conceptLabel ?? '途中の教材'}の再開位置だけを消します。'
-                    '回答本文はもともと保存していません。',
+              ? l10n.t(
+                  '${assignment?.classroomCode ?? ''} ${assignment?.mission.conceptLabel ?? l10n.t('最後に終えた教材', 'Last finished lesson')}の完了表示を、'
+                      'この端末から消します。回答本文はもともと保存していません。',
+                  'This deletes the completion for ${assignment?.classroomCode ?? ''} ${assignment?.mission.conceptLabel ?? l10n.t('最後に終えた教材', 'Last finished lesson')} '
+                      'from this device. Your answers were never saved.',
+                )
+              : l10n.t(
+                  '${assignment?.classroomCode ?? ''} ${assignment?.mission.conceptLabel ?? l10n.t('途中の教材', 'Lesson in progress')}の再開位置だけを消します。'
+                      '回答本文はもともと保存していません。',
+                  'This deletes only the resume point for ${assignment?.classroomCode ?? ''} ${assignment?.mission.conceptLabel ?? l10n.t('途中の教材', 'Lesson in progress')}. '
+                      'Your answers were never saved.',
+                ),
         ),
         actions: [
           TextButton(
             autofocus: true,
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(completed ? '完了表示を残す' : '再開位置を残す'),
+            child: Text(
+              completed
+                  ? l10n.t('完了表示を残す', 'Keep completion')
+                  : l10n.t('再開位置を残す', 'Keep resume point'),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(completed ? '完了表示を消す' : '再開位置を消す'),
+            child: Text(
+              completed
+                  ? l10n.t('完了表示を消す', 'Delete completion')
+                  : l10n.t('再開位置を消す', 'Delete resume point'),
+            ),
           ),
         ],
       ),
@@ -623,7 +703,7 @@ class _LocalClassroomScreenState extends State<LocalClassroomScreen> {
     final run = _run;
     final resume = _resumeAssignment;
     return Scaffold(
-      appBar: AppBar(title: const Text('授業の教材を開く')),
+      appBar: AppBar(title: Text(l10n.t('授業の教材を開く', 'Open a class lesson'))),
       body: SafeArea(
         top: false,
         child: ReadableWidth(
@@ -636,10 +716,16 @@ class _LocalClassroomScreenState extends State<LocalClassroomScreen> {
               32 + MediaQuery.paddingOf(context).bottom,
             ),
             children: [
-              const StudioPageIntro(
+              StudioPageIntro(
                 eyebrow: 'CLASSROOM  /  DEVICE ONLY',
-                title: '同じ教材に、すぐそろう。',
-                body: '先生が示したA/B/C付きの教材番号で、同じ概念と同じ問いを開きます。',
+                title: l10n.t(
+                  '同じ教材に、すぐそろう。',
+                  'Everyone on the same lesson, fast.',
+                ),
+                body: l10n.t(
+                  '先生が示したA/B/C付きの教材番号で、同じ概念と同じ問いを開きます。',
+                  'Use the lesson code with A/B/C from your teacher to open the same concept and question.',
+                ),
               ),
               const SizedBox(height: 18),
               const _ClassroomPrivacyNote(),
@@ -687,14 +773,21 @@ class _LocalClassroomScreenState extends State<LocalClassroomScreen> {
                   key: const ValueKey('local-classroom-teacher-preparation'),
                   onPressed: _busy ? null : _openTeacherPreparation,
                   icon: const Icon(Icons.qr_code_2_outlined),
-                  label: const Text('先生が教材QRを準備する'),
+                  label: Text(
+                    l10n.t('先生が教材QRを準備する', 'Teacher: prepare a lesson QR'),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
                   key: const ValueKey('local-classroom-browse'),
                   onPressed: _busy ? null : _browse,
                   icon: const Icon(Icons.auto_stories_outlined),
-                  label: const Text('教材番号が分からないときは一覧を見る'),
+                  label: Text(
+                    l10n.t(
+                      '教材番号が分からないときは一覧を見る',
+                      'Don\'t know the code? See the list',
+                    ),
+                  ),
                 ),
               ],
               if (_loadError case final message?) ...[
@@ -712,10 +805,14 @@ class _LocalClassroomScreenState extends State<LocalClassroomScreen> {
 class _ClassroomPrivacyNote extends StatelessWidget {
   const _ClassroomPrivacyNote();
 
-  static const label =
-      '外部送信なし。アカウント、生徒名、学校・学級、回答本文は保存しません。'
-      '途中または最後に終えた教材と概念、A/B/Cのラウンド、段階、更新日時だけをこの端末に保存します。'
-      '学校で終えた授業は個人練習のローテーションに加えません';
+  static String get label => l10n.t(
+    '外部送信なし。アカウント、生徒名、学校・学級、回答本文は保存しません。'
+        '途中または最後に終えた教材と概念、A/B/Cのラウンド、段階、更新日時だけをこの端末に保存します。'
+        '学校で終えた授業は個人練習のローテーションに加えません',
+    'Nothing is sent out. No accounts, student names, school or class, or answers are saved. '
+        'Only the in-progress or last finished lesson and concept, the A/B/C round, the stage, and the update time are saved on this device. '
+        'Lessons finished at school are not added to your personal practice rotation',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -739,9 +836,14 @@ class _ClassroomPrivacyNote extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '外部へ送りません。アカウント、生徒名、学校・学級、回答本文は保存しません。'
-                  '途中または最後に終えた教材・概念・A/B/Cのラウンド・段階・更新日時だけを、'
-                  'この端末に1件残します。学校で終えた授業は、個人練習のローテーションには加えません。',
+                  l10n.t(
+                    '外部へ送りません。アカウント、生徒名、学校・学級、回答本文は保存しません。'
+                        '途中または最後に終えた教材・概念・A/B/Cのラウンド・段階・更新日時だけを、'
+                        'この端末に1件残します。学校で終えた授業は、個人練習のローテーションには加えません。',
+                    'Nothing is sent out. No accounts, student names, school or class, or answers are saved. '
+                        'Only one entry (the in-progress or last finished lesson, concept, A/B/C round, stage, and update time) '
+                        'is kept on this device. Lessons finished at school are not added to your personal practice rotation.',
+                  ),
                   style: t.textTheme.bodySmall?.copyWith(
                     color: colors.onCoolSurface,
                   ),
@@ -765,7 +867,10 @@ class _CatalogVersionNote extends StatelessWidget {
     return Semantics(
       key: const ValueKey('local-classroom-catalog-version'),
       container: true,
-      label: '先生と生徒は同じアプリ版を使ってください。教材版が違うと番号の対応が異なる場合があります',
+      label: l10n.t(
+        '先生と生徒は同じアプリ版を使ってください。教材版が違うと番号の対応が異なる場合があります',
+        'Teachers and students should use the same app version. Different lesson versions may map codes differently',
+      ),
       child: ExcludeSemantics(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -778,8 +883,12 @@ class _CatalogVersionNote extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                '先生と生徒は同じアプリ版を使ってください。'
-                '教材版が違うと、番号の対応が異なる場合があります。',
+                l10n.t(
+                  '先生と生徒は同じアプリ版を使ってください。'
+                      '教材版が違うと、番号の対応が異なる場合があります。',
+                  'Teachers and students should use the same app version. '
+                      'Different lesson versions may map codes differently.',
+                ),
                 style: t.textTheme.bodySmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -813,14 +922,26 @@ class _ResumeCard extends StatelessWidget {
     final colors = context.appColors;
     final found = assignment != null;
     final restart = run.stage == LocalClassroomStage.material
-        ? '教材の最初から再開します。'
-        : '入力内容は保存していないため、説明の最初から再開します。';
+        ? l10n.t(
+            '教材の最初から再開します。',
+            'You\'ll restart from the beginning of the lesson.',
+          )
+        : l10n.t(
+            '入力内容は保存していないため、説明の最初から再開します。',
+            'What you typed was not saved, so you\'ll restart from the beginning of your explanation.',
+          );
     return Semantics(
       key: const ValueKey('local-classroom-resume-card'),
       container: true,
       label: found
-          ? '途中の授業。教材番号${assignment!.classroomCode}、${assignment!.mission.conceptLabel}、${assignment!.round.label}。$restart'
-          : '途中の教材は現在の同梱教材にありません。再開位置を消せます',
+          ? l10n.t(
+              '途中の授業。教材番号${assignment!.classroomCode}、${assignment!.mission.conceptLabel}、${assignment!.round.label}。$restart',
+              'Lesson in progress. Code ${assignment!.classroomCode}, ${assignment!.mission.conceptLabel}, ${assignment!.round.label}. $restart',
+            )
+          : l10n.t(
+              '途中の教材は現在の同梱教材にありません。再開位置を消せます',
+              'The lesson in progress isn\'t in the current built-in lessons. You can delete the resume point',
+            ),
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 15, 16, 14),
         decoration: BoxDecoration(
@@ -835,7 +956,7 @@ class _ResumeCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '途中の授業',
+                    l10n.t('途中の授業', 'Lesson in progress'),
                     style: t.textTheme.labelLarge
                         ?.copyWith(color: colors.onWarmSurface)
                         .jaWeight(FontWeight.w700),
@@ -844,7 +965,10 @@ class _ResumeCard extends StatelessWidget {
                   Text(
                     found
                         ? '${assignment!.classroomCode}  ${assignment!.mission.conceptLabel}'
-                        : 'この教材は現在のカタログにありません',
+                        : l10n.t(
+                            'この教材は現在のカタログにありません',
+                            'This lesson isn\'t in the current catalog',
+                          ),
                     style: t.textTheme.titleMedium
                         ?.copyWith(color: colors.onWarmSurface)
                         .jaWeight(FontWeight.w700),
@@ -852,8 +976,14 @@ class _ResumeCard extends StatelessWidget {
                   const SizedBox(height: 7),
                   Text(
                     found
-                        ? '${assignment!.round.label}。$restart'
-                        : '教材の更新後に見つからないため、再開はできません。',
+                        ? l10n.t(
+                            '${assignment!.round.label}。$restart',
+                            '${assignment!.round.label}. $restart',
+                          )
+                        : l10n.t(
+                            '教材の更新後に見つからないため、再開はできません。',
+                            'It can\'t be found after the lesson update, so it can\'t be resumed.',
+                          ),
                     style: t.textTheme.bodySmall?.copyWith(
                       color: colors.onWarmSurface,
                     ),
@@ -867,14 +997,18 @@ class _ResumeCard extends StatelessWidget {
                 key: const ValueKey('local-classroom-resume'),
                 onPressed: busy ? null : onResume,
                 icon: const Icon(Icons.play_arrow),
-                label: Text(busy ? '開いています…' : 'この教材を再開'),
+                label: Text(
+                  busy
+                      ? l10n.t('開いています…', 'Opening…')
+                      : l10n.t('この教材を再開', 'Resume this lesson'),
+                ),
               ),
             ],
             const SizedBox(height: 4),
             TextButton(
               key: const ValueKey('local-classroom-discard'),
               onPressed: busy ? null : onDiscard,
-              child: const Text('途中の再開位置を消す'),
+              child: Text(l10n.t('途中の再開位置を消す', 'Delete resume point')),
             ),
           ],
         ),
@@ -905,15 +1039,25 @@ class _CompletedCard extends StatelessWidget {
     final found = assignment != null;
     final completedAt = _formatLocalClassroomDateTime(run.updatedAt);
     final reference = found
-        ? '教材番号${assignment!.classroomCode}、${assignment!.mission.conceptLabel}、${assignment!.round.label}'
-        : '最後に終えた教材は現在の同梱教材にありません';
+        ? l10n.t(
+            '教材番号${assignment!.classroomCode}、${assignment!.mission.conceptLabel}、${assignment!.round.label}',
+            'Code ${assignment!.classroomCode}, ${assignment!.mission.conceptLabel}, ${assignment!.round.label}',
+          )
+        : l10n.t(
+            '最後に終えた教材は現在の同梱教材にありません',
+            'The last finished lesson isn\'t in the current built-in lessons',
+          );
     return Semantics(
       key: const ValueKey('local-classroom-completed-card'),
       container: true,
-      label:
-          '最後に終えた授業。$reference。完了日時$completedAt。'
-          '比較フローの操作完了。内容と理解は未確認です。回答本文は保存していません。'
-          '個人練習のローテーションには加えていません',
+      label: l10n.t(
+        '最後に終えた授業。$reference。完了日時$completedAt。'
+            '比較フローの操作完了。内容と理解は未確認です。回答本文は保存していません。'
+            '個人練習のローテーションには加えていません',
+        'Last finished lesson. $reference. Completed $completedAt. '
+            'Comparison steps done. Content and understanding not checked. Your answers were not saved. '
+            'Not added to your personal practice rotation',
+      ),
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 15, 16, 14),
         decoration: BoxDecoration(
@@ -937,7 +1081,7 @@ class _CompletedCard extends StatelessWidget {
                       const SizedBox(width: 9),
                       Expanded(
                         child: Text(
-                          '最後に終えた授業',
+                          l10n.t('最後に終えた授業', 'Last finished lesson'),
                           style: t.textTheme.labelLarge
                               ?.copyWith(color: colors.onCoolSurface)
                               .jaWeight(FontWeight.w700),
@@ -949,7 +1093,10 @@ class _CompletedCard extends StatelessWidget {
                   Text(
                     found
                         ? '${assignment!.classroomCode}  ${assignment!.mission.conceptLabel}'
-                        : 'この教材は現在のカタログにありません',
+                        : l10n.t(
+                            'この教材は現在のカタログにありません',
+                            'This lesson isn\'t in the current catalog',
+                          ),
                     style: t.textTheme.titleMedium
                         ?.copyWith(color: colors.onCoolSurface)
                         .jaWeight(FontWeight.w700),
@@ -957,22 +1104,31 @@ class _CompletedCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     found
-                        ? '${assignment!.round.label} · 完了日時 $completedAt'
-                        : '完了日時 $completedAt',
+                        ? l10n.t(
+                            '${assignment!.round.label} · 完了日時 $completedAt',
+                            '${assignment!.round.label} · Completed $completedAt',
+                          )
+                        : l10n.t('完了日時 $completedAt', 'Completed $completedAt'),
                     style: t.textTheme.bodySmall?.copyWith(
                       color: colors.onCoolSurface,
                     ),
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    '比較フローの操作完了。内容・理解は未確認です。',
+                    l10n.t(
+                      '比較フローの操作完了。内容・理解は未確認です。',
+                      'Comparison steps done. Content and understanding not checked.',
+                    ),
                     style: t.textTheme.bodyMedium
                         ?.copyWith(color: colors.onCoolSurface)
                         .jaWeight(FontWeight.w700),
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    '回答本文は保存していません。学校で終えた授業は、個人練習のローテーションには加えていません。',
+                    l10n.t(
+                      '回答本文は保存していません。学校で終えた授業は、個人練習のローテーションには加えていません。',
+                      'Your answers were not saved. Lessons finished at school are not added to your personal practice rotation.',
+                    ),
                     style: t.textTheme.bodySmall?.copyWith(
                       color: colors.onCoolSurface,
                     ),
@@ -986,14 +1142,18 @@ class _CompletedCard extends StatelessWidget {
                 key: const ValueKey('local-classroom-repeat-completed'),
                 onPressed: busy ? null : onRepeat,
                 icon: const Icon(Icons.replay_outlined),
-                label: Text(busy ? '開いています…' : '同じ教材をもう一度'),
+                label: Text(
+                  busy
+                      ? l10n.t('開いています…', 'Opening…')
+                      : l10n.t('同じ教材をもう一度', 'Do the same lesson again'),
+                ),
               ),
             ],
             const SizedBox(height: 4),
             TextButton(
               key: const ValueKey('local-classroom-discard-completed'),
               onPressed: busy ? null : onDiscard,
-              child: const Text('完了表示を消す'),
+              child: Text(l10n.t('完了表示を消す', 'Delete completion')),
             ),
           ],
         ),
@@ -1043,19 +1203,25 @@ class _MaterialNumberForm extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            '黒板の教材番号',
+            l10n.t('黒板の教材番号', 'Lesson code on the board'),
             style: t.textTheme.titleMedium?.jaWeight(FontWeight.w700),
           ),
           const SizedBox(height: 5),
           Text(
-            '例：01-02-A（概念01-02の、ラウンドA）',
+            l10n.t(
+              '例：01-02-A（概念01-02の、ラウンドA）',
+              'Example: 01-02-A (concept 01-02, round A)',
+            ),
             style: t.textTheme.bodySmall?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            'A：原理　B：条件　C：別の場面。A/B/Cまで黒板どおり入力します。',
+            l10n.t(
+              'A：原理　B：条件　C：別の場面。A/B/Cまで黒板どおり入力します。',
+              'A: principle  B: conditions  C: new situation. Type it exactly as on the board, including A/B/C.',
+            ),
             style: t.textTheme.bodySmall?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
@@ -1070,9 +1236,14 @@ class _MaterialNumberForm extends StatelessWidget {
             autocorrect: false,
             enableSuggestions: false,
             decoration: InputDecoration(
-              labelText: '教材番号',
+              labelText: l10n.t('教材番号', 'Lesson code'),
               hintText: '01-02-A',
-              errorText: submittedInvalid ? 'A/B/Cまで含む、一覧の教材番号を入力してください' : null,
+              errorText: submittedInvalid
+                  ? l10n.t(
+                      'A/B/Cまで含む、一覧の教材番号を入力してください',
+                      'Enter a lesson code from the list, including A/B/C',
+                    )
+                  : null,
             ),
             onChanged: onChanged,
             onSubmitted: (_) => onSubmit(),
@@ -1082,8 +1253,10 @@ class _MaterialNumberForm extends StatelessWidget {
             Semantics(
               key: const ValueKey('local-classroom-number-match'),
               container: true,
-              label:
-                  '教材番号${assignment!.classroomCode}、${assignment!.mission.conceptLabel}、${assignment!.mission.unit.title}、${assignment!.round.label}',
+              label: l10n.t(
+                '教材番号${assignment!.classroomCode}、${assignment!.mission.conceptLabel}、${assignment!.mission.unit.title}、${assignment!.round.label}',
+                'Code ${assignment!.classroomCode}, ${assignment!.mission.conceptLabel}, ${assignment!.mission.unit.title}, ${assignment!.round.label}',
+              ),
               child: ExcludeSemantics(
                 child: Container(
                   padding: const EdgeInsets.fromLTRB(13, 11, 13, 12),
@@ -1120,7 +1293,7 @@ class _MaterialNumberForm extends StatelessWidget {
               key: const ValueKey('local-classroom-scan-code'),
               onPressed: busy ? null : onScan,
               icon: const Icon(Icons.qr_code_scanner_outlined),
-              label: const Text('教材QRを読み取る'),
+              label: Text(l10n.t('教材QRを読み取る', 'Scan lesson QR')),
             ),
           ),
           const SizedBox(height: 10),
@@ -1128,7 +1301,11 @@ class _MaterialNumberForm extends StatelessWidget {
             key: const ValueKey('local-classroom-start'),
             onPressed: busy ? null : onSubmit,
             icon: const Icon(Icons.arrow_forward),
-            label: Text(busy ? '教材を開いています…' : 'この教材を開く'),
+            label: Text(
+              busy
+                  ? l10n.t('教材を開いています…', 'Opening lesson…')
+                  : l10n.t('この教材を開く', 'Open this lesson'),
+            ),
           ),
         ],
       ),
@@ -1175,7 +1352,12 @@ class _TeacherLocalClassroomScreenState
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = '端末内の教材を読み込めませんでした。');
+      setState(
+        () => _error = l10n.t(
+          '端末内の教材を読み込めませんでした。',
+          'Couldn\'t load the lessons on this device.',
+        ),
+      );
     }
   }
 
@@ -1196,7 +1378,7 @@ class _TeacherLocalClassroomScreenState
     final assignment = _selected;
     return Scaffold(
       backgroundColor: colors.canvas,
-      appBar: AppBar(title: const Text('先生の授業準備')),
+      appBar: AppBar(title: Text(l10n.t('先生の授業準備', 'Teacher lesson prep'))),
       body: SafeArea(
         top: false,
         child: ReadableWidth(
@@ -1207,7 +1389,7 @@ class _TeacherLocalClassroomScreenState
               Semantics(
                 header: true,
                 child: Text(
-                  '教材QRを準備する',
+                  l10n.t('教材QRを準備する', 'Prepare a lesson QR'),
                   style: theme.textTheme.headlineSmall
                       ?.copyWith(color: colors.ink)
                       .jaWeight(FontWeight.w900),
@@ -1215,7 +1397,10 @@ class _TeacherLocalClassroomScreenState
               ),
               const SizedBox(height: 8),
               Text(
-                'このQRには同梱教材の番号だけが入ります。生徒名、学級、回答、成績、端末ID、LANの管理キーは扱いません。生徒は読み取った後に教材名を確認してから開始します。',
+                l10n.t(
+                  'このQRには同梱教材の番号だけが入ります。生徒名、学級、回答、成績、端末ID、LANの管理キーは扱いません。生徒は読み取った後に教材名を確認してから開始します。',
+                  'This QR contains only a built-in lesson code. No student names, classes, answers, grades, device IDs, or LAN admin keys. Students check the lesson name after scanning, then start.',
+                ),
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: colors.inkMuted,
                 ),
@@ -1244,7 +1429,10 @@ class _TeacherLocalClassroomScreenState
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        '${assignment.mission.unit.title}・${assignment.round.label}',
+                        l10n.t(
+                          '${assignment.mission.unit.title}・${assignment.round.label}',
+                          '${assignment.mission.unit.title} · ${assignment.round.label}',
+                        ),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colors.inkMuted,
                         ),
@@ -1253,8 +1441,10 @@ class _TeacherLocalClassroomScreenState
                       Center(
                         child: ParticipantQrCode(
                           data: assignment.classroomQrPayload,
-                          semanticLabel:
-                              '教材QR。教材番号${assignment.classroomCode}。個人情報やLANの参加情報は含まれていません。',
+                          semanticLabel: l10n.t(
+                            '教材QR。教材番号${assignment.classroomCode}。個人情報やLANの参加情報は含まれていません。',
+                            'Lesson QR. Code ${assignment.classroomCode}. Contains no personal info or LAN join info.',
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -1264,7 +1454,9 @@ class _TeacherLocalClassroomScreenState
                           key: const ValueKey('teacher-local-classroom-select'),
                           onPressed: _chooseAssignment,
                           icon: const Icon(Icons.edit_note_outlined),
-                          label: const Text('教材とラウンドを選ぶ'),
+                          label: Text(
+                            l10n.t('教材とラウンドを選ぶ', 'Choose lesson and round'),
+                          ),
                         ),
                       ),
                     ],
@@ -1272,7 +1464,10 @@ class _TeacherLocalClassroomScreenState
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'この端末内モードは、認証付きの先生管理画面や成績集計ではありません。学校サーバーへ接続せず、QRの利用記録も保存しません。',
+                  l10n.t(
+                    'この端末内モードは、認証付きの先生管理画面や成績集計ではありません。学校サーバーへ接続せず、QRの利用記録も保存しません。',
+                    'This on-device mode is not a signed-in teacher dashboard or gradebook. It never connects to a school server and does not log QR use.',
+                  ),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colors.inkMuted,
                   ),
@@ -1304,7 +1499,7 @@ class ClassroomAssignmentListScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('教材番号の一覧')),
+      appBar: AppBar(title: Text(l10n.t('教材番号の一覧', 'Lesson code list'))),
       body: SafeArea(
         top: false,
         child: ReadableWidth(
@@ -1319,10 +1514,16 @@ class ClassroomAssignmentListScreen extends StatelessWidget {
             separatorBuilder: (_, _) => const SizedBox(height: 14),
             itemBuilder: (context, index) {
               if (index == 0) {
-                return const StudioPageIntro(
-                  eyebrow: 'CODE LIST  /  A・B・C',
-                  title: '問いまで同じにする。',
-                  body: '先生が示すのは「01-02-A」のようなA/B/C付きの番号です。文字まで同じ番号を選びます。',
+                return StudioPageIntro(
+                  eyebrow: l10n.t(
+                    'CODE LIST  /  A・B・C',
+                    'CODE LIST  /  A · B · C',
+                  ),
+                  title: l10n.t('問いまで同じにする。', 'Match down to the question.'),
+                  body: l10n.t(
+                    '先生が示すのは「01-02-A」のようなA/B/C付きの番号です。文字まで同じ番号を選びます。',
+                    'Your teacher shows a code with A/B/C, like "01-02-A". Pick the exact same code, letter included.',
+                  ),
                 );
               }
               final mission = missions[index - 1];
@@ -1375,8 +1576,10 @@ class _AssignmentListCard extends StatelessWidget {
             Semantics(
               button: true,
               onTap: () => Navigator.of(context).pop(assignments[index]),
-              label:
-                  '教材番号${assignments[index].classroomCode}、${mission.conceptLabel}、${assignments[index].round.label}',
+              label: l10n.t(
+                '教材番号${assignments[index].classroomCode}、${mission.conceptLabel}、${assignments[index].round.label}',
+                'Code ${assignments[index].classroomCode}, ${mission.conceptLabel}, ${assignments[index].round.label}',
+              ),
               child: ExcludeSemantics(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(minHeight: 48),
@@ -1451,14 +1654,17 @@ class _PracticePreparingScreenState extends State<_PracticePreparingScreen> {
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _error = '練習の再開位置を保存できませんでした。';
+        _error = l10n.t(
+          '練習の再開位置を保存できませんでした。',
+          'Couldn\'t save your practice resume point.',
+        );
       });
     }
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('練習を準備')),
+    appBar: AppBar(title: Text(l10n.t('練習を準備', 'Preparing practice'))),
     body: SafeArea(
       child: Center(
         child: Padding(
@@ -1470,14 +1676,22 @@ class _PracticePreparingScreenState extends State<_PracticePreparingScreen> {
               if (_error == null) ...[
                 const Center(child: CircularProgressIndicator()),
                 const SizedBox(height: 16),
-                const Text('端末内に再開位置を残しています', textAlign: TextAlign.center),
+                Text(
+                  l10n.t(
+                    '端末内に再開位置を残しています',
+                    'Your resume point is kept on this device',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ] else ...[
                 Text(_error!, textAlign: TextAlign.center),
                 const SizedBox(height: 14),
                 FilledButton(
                   key: const ValueKey('local-classroom-practice-retry'),
                   onPressed: _saveAndOpen,
-                  child: const Text('もう一度保存して練習へ'),
+                  child: Text(
+                    l10n.t('もう一度保存して練習へ', 'Save again and go to practice'),
+                  ),
                 ),
               ],
             ],
@@ -1510,7 +1724,10 @@ class _InlineError extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(message),
-            TextButton(onPressed: onRetry, child: const Text('もう一度読み込む')),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(l10n.t('もう一度読み込む', 'Reload')),
+            ),
           ],
         ),
       ),
