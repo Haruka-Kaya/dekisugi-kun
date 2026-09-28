@@ -4392,12 +4392,14 @@ LearningCosmeticState _learningCosmeticStateFromLedger(
     final equipped =
         equippedProductId ?? SafeLearningEconomyCatalogV1.standardMascotId;
     catalog.cosmetic(equipped);
-    if (!owned.contains(equipped)) {
-      throw StateError('unowned cosmetic cannot be equipped');
-    }
+    // 付与の巻き戻し（返金・台帳の手修）で装備だけが残ることがある。
+    // 不整合を起動不能にするより、標準マスコットへ戻して読める状態にする。
+    final resolved = owned.contains(equipped)
+        ? equipped
+        : SafeLearningEconomyCatalogV1.standardMascotId;
     return LearningCosmeticState(
       ownedProductIds: Set.unmodifiable(owned),
-      equippedPathMascotId: equipped,
+      equippedPathMascotId: resolved,
     );
   } on ArgumentError catch (error) {
     throw StateError(

@@ -18,7 +18,7 @@
 | 公開済みでない新規アプリ | ✅ | ストア未公開 |
 | リポジトリ public + OSS ライセンス（About 検出） | 🟡 | `LICENSE`（MIT）追加済み。**GitHub で private → public への変更はユーザー操作** |
 | ソース・素材・実行手順がリポジトリに全てある | ✅ | README に英語 quick start 追加済み（同梱 catalog でオフライン動作） |
-| <2 分のデモ動画（実機動作、YouTube/Vimeo 公開） | 🟡 | `docs/shipaton-demo-2026/shipaton-demo-v4.mp4`（〜70秒・Androidエミュレータ実画面・teach-backループ＋coverageゲート＋カルテ収録・英語字幕焼き込み・音声なし）。v3 は `shipaton-demo-v3.mp4` に退避 — ユーザー操作: YouTube/Vimeo へ公開 |
+| <2 分のデモ動画（実機動作、YouTube/Vimeo 公開） | 🟡 | `docs/shipaton-demo-2026/shipaton-demo-v4.mp4`（〜110秒・Androidエミュレータ実画面・teach-backループ＋coverageゲート＋カルテ＋保護者レポート＋paywall失敗閉止まで収録・英語字幕焼き込み・音声なし）。v3 は `shipaton-demo-v3.mp4` に退避 — ユーザー操作: YouTube/Vimeo へ公開 |
 | テキスト説明（英語） | ✅ | `docs/shipaton-submission-copy.md` 更新済み |
 | 1024×1024 アイコン | ✅ | `docs/store/icon-1024.png` |
 | ≥1枚のスクリーンショット 1179×2556・端末フレームなし | ✅ | `docs/store-shots-2026/devpost/shot-1179x2556.png` |

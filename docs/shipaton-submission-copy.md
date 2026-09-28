@@ -110,18 +110,27 @@ and the entire learning loop is free.
 
 ## Demo video notes
 
-The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v4.mp4`, ~70s) opens
+The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v4.mp4`, ~110s) opens
 with a short hook card, then shows
 the current build running on an Android emulator in portrait: the learning path,
 a TEACH BACK node, an explanation, the on-device key-term coverage check, the
 required re-read, the companion's fixed follow-up question, the 3-choice
 correction, the own-words-vs-textbook comparison, completion unlocking the
-next node, the Plus paywall, and the カルテ (misconception record) screen
-reached from the profile tab.
+next node, then the カルテ (misconception record) screen where the miss just
+recorded appears, the shareable parent report, and the Plus paywall.
 English captions overlay the Japanese UI; there is no audio track.
 
+The on-device coverage check is a vocabulary floor, not a grader: it verifies
+that the key terms from the expected explanation appear in the student's own
+words (stem-matched, normalization applied) before the follow-up question
+proceeds. Correctness is still decided by the fixed 3-choice correction, so a
+missed term asks for more detail instead of wrongly blocking a right answer.
+
 The video does not include a purchase: the RevenueCat Test Store key is not in
-the repository (it is a personal credential). Judges can exercise the full
+the repository (it is a personal credential). The final segment shows the
+paywall's fail-closed branch instead — with no reachable store, the app refuses
+to guess a price and blocks the purchase operation (「ストアの情報を確認できません」),
+while free features keep working. Judges can exercise the full
 paywall themselves with the `--dart-define` command in "Testing instructions".
 
 The earlier web-build capture is archived at `docs/attic/shipaton-demo-v1.mp4`

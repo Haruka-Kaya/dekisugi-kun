@@ -62,6 +62,14 @@ ThemeMode get _themeMode => switch (_kForceBrightness) {
   _ => ThemeMode.system,
 };
 
+/// 生成AI会話（Talk/Live経路）の運用スイッチ。
+///
+/// 学校・未成年への提供を止めるため既定値は常に false（サーバ側も全入口を
+/// 503 に閉じている）。`--dart-define=DEKISUGI_LIVE=true` を付けた内部
+/// 検証ビルドでのみ Talk 画面へ進む。既定ビルドでは Talk 経路は到達不能に
+/// なり、教材のあとは端末内4段階練習へ直行する。
+const bool kGenerativeAiLiveEnabled = bool.fromEnvironment('DEKISUGI_LIVE');
+
 /// 会話の入れ物は**単元ごとに作る。**
 ///
 /// 逐語も理解カルテも1つの単元の話なので、使い回すと前の単元の説明が
@@ -1092,7 +1100,7 @@ class _Home extends StatelessWidget {
     String? focusConceptKey,
     MissionKind missionKind = MissionKind.teach,
     required bool allowIndividualPurchases,
-  }) {
+  }) async {
     final plusAvailable = context.read<PurchaseService>().enabled;
     final focusedSection = focusConceptKey == null
         ? null
@@ -1112,9 +1120,19 @@ class _Home extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('このミッションの教材を読み込めませんでした。もう一度お試しください。')),
       );
-      return Future.value();
+      return;
     }
-    return Navigator.of(context).push(
+    // 生成AI会話は運用停止中のため、既定ビルドでは Talk へ進まず端末内4段階へ。
+    final store = context.read<SessionStore>();
+    final progress = LocalPracticeStore(store);
+    final record = focusConceptKey == null
+        ? null
+        : (await progress.records())
+            .where((r) => r.id == '${unit.id}/$focusConceptKey')
+            .firstOrNull;
+    final practiceAttempt = record?.completedCount ?? 0;
+    if (!context.mounted) return;
+    await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => MaterialScreen(
           unit: unit,
@@ -1124,24 +1142,39 @@ class _Home extends StatelessWidget {
             // **教材の画面を残さない**（C2）。戻れると音読になる
             Navigator.of(context).pushReplacement(
               MaterialPageRoute<void>(
-                builder: (ctx2) => ChangeNotifierProvider(
-                  create: (ctx) => _controllerFor(
-                    ctx,
-                    unit.summary.id,
-                    focusConceptKey: focusConceptKey,
-                    tactic: tactic,
-                    missionKind: missionKind,
-                  ),
-                  child: TalkScreen(
-                    unitTitle: unit.summary.title,
-                    offlineSection: focusedSection,
-                    offlineMissionKind: missionKind,
-                    onOpenPlus: allowIndividualPurchases && plusAvailable
-                        ? () => _openPlus(ctx2)
-                        : null,
-                    conceptLabel: focusedConceptLabel,
-                  ),
-                ),
+                builder: (ctx2) => !kGenerativeAiLiveEnabled &&
+                        focusedSection != null &&
+                        focusConceptKey != null &&
+                        focusedConceptLabel != null
+                    ? OfflinePracticeScreen(
+                        section: focusedSection,
+                        conceptLabel: focusedConceptLabel,
+                        missionKind: missionKind,
+                        practiceAttempt: practiceAttempt,
+                        onCheckpointCompleted: () =>
+                            progress.recordCompletion(
+                          unitId: unit.id,
+                          conceptKey: focusConceptKey,
+                        ),
+                      )
+                    : ChangeNotifierProvider(
+                        create: (ctx) => _controllerFor(
+                          ctx,
+                          unit.summary.id,
+                          focusConceptKey: focusConceptKey,
+                          tactic: tactic,
+                          missionKind: missionKind,
+                        ),
+                        child: TalkScreen(
+                          unitTitle: unit.summary.title,
+                          offlineSection: focusedSection,
+                          offlineMissionKind: missionKind,
+                          onOpenPlus: allowIndividualPurchases && plusAvailable
+                              ? () => _openPlus(ctx2)
+                              : null,
+                          conceptLabel: focusedConceptLabel,
+                        ),
+                      ),
               ),
             );
           },

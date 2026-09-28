@@ -12,19 +12,19 @@ Your turn to teach — the textbook is hidden while you explain.
 
 4
 00:00:12,000 --> 00:00:20,000
-On-device check: did the key ideas make it into your explanation?
+{\an8}On-device check: did the key ideas make it into your explanation?
 
 5
 00:00:20,000 --> 00:00:30,000
-Miss them and he asks for more — no points lost, just another try.
+{\an8}Miss them and he asks for more — no points lost, just another try.
 
 6
 00:00:30,000 --> 00:00:37,000
-The key terms he caught, chip by chip.
+{\an8}The key terms he caught, chip by chip.
 
 7
 00:00:37,000 --> 00:00:43,000
-Then he asks a cataloged follow-up — never a free-form chat.
+{\an8}Then he asks a cataloged follow-up — never a free-form chat.
 
 8
 00:00:43,000 --> 00:00:47,500
@@ -43,17 +43,17 @@ Re-explain with the hint — same method, second try.
 Then compare your version against the textbook yourself.
 
 12
-00:00:70,000 --> 00:00:79,000
+00:00:70,000 --> 00:00:78,700
 Only progress is recorded — the explanation itself is never stored.
 
 13
-00:00:79,000 --> 00:00:88,000
-The karte: 29 canonical misconceptions, corrected one by one — progress is what you taught him.
+00:00:78,700 --> 00:00:88,800
+{\an8}The karte: 29 canonical misconceptions — the miss you just saw is already recorded.
 
 14
-00:00:88,000 --> 00:00:97,000
-Plus perk: a parent-ready report of what your teaching fixed.
+00:00:88,800 --> 00:00:97,800
+{\an8}Plus perk: a parent-ready report of what your teaching fixed.
 
 15
-00:00:97,000 --> 00:00:105,000
-Optional Plus supporter plan via RevenueCat — paywall: app/lib/screens/plus_screen.dart
+00:00:97,800 --> 00:00:109,800
+{\an8}Optional Plus via RevenueCat — store unreachable, so purchases stay safely blocked.
