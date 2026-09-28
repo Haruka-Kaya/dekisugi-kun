@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../models/mission.dart';
@@ -181,13 +182,19 @@ class _MaterialScreenState extends State<MaterialScreen> {
                           ),
                           const SizedBox(height: 14),
                           Text(
-                            'このミッションの教材を読み込めませんでした',
+                            lang.t(
+                              'このミッションの教材を読み込めませんでした',
+                              'Couldn\'t load the material for this mission',
+                            ),
                             style: Theme.of(context).textTheme.titleMedium,
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 7),
                           Text(
-                            'もどって、もう一度ミッションを選んでください。',
+                            lang.t(
+                              'もどって、もう一度ミッションを選んでください。',
+                              'Go back and choose a mission again.',
+                            ),
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
                                   color: Theme.of(
@@ -283,17 +290,20 @@ class _ReadingNavigation extends StatelessWidget {
         IconButton(
           onPressed: () => Navigator.of(context).maybePop(),
           icon: const Icon(Icons.arrow_back),
-          tooltip: 'もどる',
+          tooltip: lang.t('もどる', 'Back'),
         ),
         const SizedBox(width: 4),
         Expanded(
           child: Text(
             review
-                ? '教材を読み直す'
+                ? lang.t('教材を読み直す', 'Reread the material')
                 : switch (missionKind) {
-                    MissionKind.teach => '作戦を準備する',
-                    MissionKind.repair => '説明を組み直す',
-                    MissionKind.caseRetry => 'ケースを読む',
+                    MissionKind.teach => lang.t('作戦を準備する', 'Prepare your plan'),
+                    MissionKind.repair => lang.t(
+                      '説明を組み直す',
+                      'Rebuild your explanation',
+                    ),
+                    MissionKind.caseRetry => lang.t('ケースを読む', 'Read the case'),
                   },
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -337,15 +347,27 @@ class _ReadingIntro extends StatelessWidget {
           container: true,
           child: StudioPageIntro(
             eyebrow: review
-                ? 'READ AGAIN  /  読み直し'
+                ? lang.t('READ AGAIN  /  読み直し', 'READ AGAIN')
                 : switch (missionKind) {
-                    MissionKind.teach => 'MISSION 1/3  /  作戦準備',
-                    MissionKind.repair => 'REPAIR 1/3  /  組み直す',
-                    MissionKind.caseRetry => 'CASE 1/3  /  別の場面',
+                    MissionKind.teach => lang.t(
+                      'MISSION 1/3  /  作戦準備',
+                      'MISSION 1/3  /  Plan',
+                    ),
+                    MissionKind.repair => lang.t(
+                      'REPAIR 1/3  /  組み直す',
+                      'REPAIR 1/3  /  Rebuild',
+                    ),
+                    MissionKind.caseRetry => lang.t(
+                      'CASE 1/3  /  別の場面',
+                      'CASE 1/3  /  New scenario',
+                    ),
                   },
             title: unit.title,
             body: missionKind == MissionKind.caseRetry && !review
-                ? '前に説明した考えを、答えの見えない別の場面で使います。'
+                ? lang.t(
+                    '前に説明した考えを、答えの見えない別の場面で使います。',
+                    'Apply an idea you explained before to a new scenario, without seeing the answer.',
+                  )
                 : unit.summary.brief,
           ),
         ),
@@ -357,16 +379,19 @@ class _ReadingIntro extends StatelessWidget {
             _ReadingMeta(
               icon: Icons.schedule,
               label: missionKind == MissionKind.caseRetry && !review
-                  ? '考えるのに およそ1分'
-                  : '読むのに およそ$mins分',
+                  ? lang.t('考えるのに およそ1分', 'About 1 min to think')
+                  : lang.t('読むのに およそ$mins分', 'About $mins min to read'),
             ),
             _ReadingMeta(
               icon: missionKind == MissionKind.caseRetry && !review
                   ? Icons.travel_explore_outlined
                   : Icons.menu_book_outlined,
               label: missionKind == MissionKind.caseRetry && !review
-                  ? '1ケース'
-                  : '${sections.length}章',
+                  ? lang.t('1ケース', '1 case')
+                  : lang.t(
+                      '${sections.length}章',
+                      '${sections.length} chapters',
+                    ),
             ),
           ],
         ),
@@ -424,9 +449,9 @@ class _TeachingPromise extends StatelessWidget {
         children: [
           Text(
             switch (missionKind) {
-              MissionKind.teach => 'このミッションのゴール',
-              MissionKind.repair => 'このリペアのゴール',
-              MissionKind.caseRetry => 'このケースのゴール',
+              MissionKind.teach => lang.t('このミッションのゴール', 'Mission goal'),
+              MissionKind.repair => lang.t('このリペアのゴール', 'Repair goal'),
+              MissionKind.caseRetry => lang.t('このケースのゴール', 'Case goal'),
             },
             style: t.textTheme.labelMedium
                 ?.copyWith(color: scheme.primary)
@@ -434,9 +459,18 @@ class _TeachingPromise extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(switch (missionKind) {
-            MissionKind.teach => '自分の言葉で教えたあと、デキすぎ君の思い込みを見破ります。',
-            MissionKind.repair => '前に曖昧だった説明を組み直し、思い込みに決着をつけます。',
-            MissionKind.caseRetry => '場面の結果を予想し、なぜそうなるかまで説明します。',
+            MissionKind.teach => lang.t(
+              '自分の言葉で教えたあと、デキすぎ君の思い込みを見破ります。',
+              'Teach it in your own words, then catch Dekisugi-kun\'s misconception.',
+            ),
+            MissionKind.repair => lang.t(
+              '前に曖昧だった説明を組み直し、思い込みに決着をつけます。',
+              'Rebuild an explanation that was vague before and settle the misconception.',
+            ),
+            MissionKind.caseRetry => lang.t(
+              '場面の結果を予想し、なぜそうなるかまで説明します。',
+              'Predict what happens in the scenario and explain why.',
+            ),
           }, style: t.textTheme.bodyMedium?.jaWeight(FontWeight.w700)),
           const SizedBox(height: 6),
           Row(
@@ -454,8 +488,14 @@ class _TeachingPromise extends StatelessWidget {
               Expanded(
                 child: Text(
                   missionKind == MissionKind.caseRetry
-                      ? '話しているあいだ、このケースは見られません。'
-                      : '話しているあいだ、教材は見られません。',
+                      ? lang.t(
+                          '話しているあいだ、このケースは見られません。',
+                          'You can\'t view this case while you\'re talking.',
+                        )
+                      : lang.t(
+                          '話しているあいだ、教材は見られません。',
+                          'You can\'t view the material while you\'re talking.',
+                        ),
                   style: t.textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
@@ -486,7 +526,7 @@ class _CaseSheet extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: 'ケース問題。$prompt',
+      label: lang.t('ケース問題。$prompt', 'Case question. $prompt'),
       child: ExcludeSemantics(
         child: Container(
           width: double.infinity,
@@ -510,7 +550,10 @@ class _CaseSheet extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'CASE FILE 01  /  結果を予想せよ',
+                      lang.t(
+                        'CASE FILE 01  /  結果を予想せよ',
+                        'CASE FILE 01  /  Predict the result',
+                      ),
                       style: t.textTheme.labelLarge
                           ?.copyWith(color: c.onWarmSurface)
                           .jaWeight(FontWeight.w700),
@@ -541,7 +584,10 @@ class _CaseSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 child: Text(
-                  '答えはまだ表示しません。何が起きるかと、その理由を考えてください。',
+                  lang.t(
+                    '答えはまだ表示しません。何が起きるかと、その理由を考えてください。',
+                    'The answer stays hidden for now. Think about what will happen and why.',
+                  ),
                   style: t.textTheme.bodySmall?.copyWith(
                     color: c.onWarmSurface,
                   ),
@@ -578,14 +624,17 @@ class _TacticPicker extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'どの作戦で教える？',
+            lang.t('どの作戦で教える？', 'How will you teach it?'),
             style: t.textTheme.titleLarge
                 ?.copyWith(color: c.onCoolSurface)
                 .jaWeight(FontWeight.w700),
           ),
           const SizedBox(height: 5),
           Text(
-            '正解を選ぶ問題ではありません。話しやすい入口をひとつ選びます。',
+            lang.t(
+              '正解を選ぶ問題ではありません。話しやすい入口をひとつ選びます。',
+              'There\'s no right answer here. Pick the starting point that\'s easiest for you to talk about.',
+            ),
             style: t.textTheme.bodySmall?.copyWith(
               color: c.onCoolSurface.withValues(alpha: 0.82),
             ),
@@ -759,7 +808,7 @@ class _SectionView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '第$number章  /  全$total章',
+          lang.t('第$number章  /  全$total章', 'Chapter $number  /  $total'),
           style: t.textTheme.labelMedium
               ?.copyWith(color: scheme.primary)
               .jaWeight(FontWeight.w700),
@@ -791,7 +840,7 @@ class _SectionView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'やってみる',
+                  lang.t('やってみる', 'Try it'),
                   style: t.textTheme.labelLarge
                       ?.copyWith(color: c.onWarmSurface)
                       .jaWeight(FontWeight.w700),
@@ -831,27 +880,53 @@ class _ReadingActionBar extends StatelessWidget {
 
   String get _statusText {
     if (missionKind == MissionKind.caseRetry) {
-      return reachedEnd ? 'ここからはケースを見ずに、予想と理由を話します。' : 'ケースを最後まで読むと、予想を話せます。';
+      return reachedEnd
+          ? lang.t(
+              'ここからはケースを見ずに、予想と理由を話します。',
+              'From here, you\'ll share your prediction and reason without the case.',
+            )
+          : lang.t(
+              'ケースを最後まで読むと、予想を話せます。',
+              'Read the case to the end to share your prediction.',
+            );
     }
     if (!reachedEnd) {
       return missionKind == MissionKind.repair
-          ? '最後まで読み直して、組み直し方を選ぶと挑戦できます。'
-          : '最後まで読んで、教え方を選ぶと挑戦できます。';
+          ? lang.t(
+              '最後まで読み直して、組み直し方を選ぶと挑戦できます。',
+              'Reread to the end and choose how to rebuild to start.',
+            )
+          : lang.t(
+              '最後まで読んで、教え方を選ぶと挑戦できます。',
+              'Read to the end and choose how to teach to start.',
+            );
     }
     if (!tacticSelected) {
       return missionKind == MissionKind.repair
-          ? '組み直し方をひとつ選ぶと、リペアを始められます。'
-          : '教え方をひとつ選ぶと、ミッションを始められます。';
+          ? lang.t(
+              '組み直し方をひとつ選ぶと、リペアを始められます。',
+              'Choose one way to rebuild to start the repair.',
+            )
+          : lang.t(
+              '教え方をひとつ選ぶと、ミッションを始められます。',
+              'Choose one way to teach to start the mission.',
+            );
     }
     return missionKind == MissionKind.repair
-        ? 'ここからは教材を見ずに、選んだ作戦で組み直します。'
-        : 'ここからは教材を見ずに、選んだ作戦で挑みます。';
+        ? lang.t(
+            'ここからは教材を見ずに、選んだ作戦で組み直します。',
+            'From here, you\'ll rebuild with your chosen plan, without the material.',
+          )
+        : lang.t(
+            'ここからは教材を見ずに、選んだ作戦で挑みます。',
+            'From here, you\'ll take on the mission with your chosen plan, without the material.',
+          );
   }
 
   String get _buttonLabel => switch (missionKind) {
-    MissionKind.teach => 'この作戦で挑む',
-    MissionKind.repair => 'この作戦で組み直す',
-    MissionKind.caseRetry => '予想と理由を話す',
+    MissionKind.teach => lang.t('この作戦で挑む', 'Go with this plan'),
+    MissionKind.repair => lang.t('この作戦で組み直す', 'Rebuild with this plan'),
+    MissionKind.caseRetry => lang.t('予想と理由を話す', 'Share prediction and reason'),
   };
 
   @override
@@ -878,8 +953,14 @@ class _ReadingActionBar extends StatelessWidget {
                         liveRegion: true,
                         child: Text(
                           reachedEnd
-                              ? '読み直した記録を残せます。'
-                              : '最後まで読むと、読み直した記録を残せます。',
+                              ? lang.t(
+                                  '読み直した記録を残せます。',
+                                  'You can log that you reread this.',
+                                )
+                              : lang.t(
+                                  '最後まで読むと、読み直した記録を残せます。',
+                                  'Read to the end to log that you reread this.',
+                                ),
                           style: t.textTheme.bodySmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),
@@ -891,7 +972,7 @@ class _ReadingActionBar extends StatelessWidget {
                         width: double.infinity,
                         child: FilledButton(
                           onPressed: reachedEnd && !completing ? onDone : null,
-                          child: const Text('読み終えた'),
+                          child: Text(lang.t('読み終えた', 'Done reading')),
                         ),
                       ),
                     ],
