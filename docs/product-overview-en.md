@@ -87,3 +87,9 @@ These rules, not growth-hack metrics, are the design contract.
   for catalog sync and entitlement re-verification.
 - ~1,200 client tests and ~390 server tests; the misconception catalog is
   linted by `tools/misconception-survey/check_items.py`.
+- The misconception items come from an elicitation survey administered to
+  real middle/high-school students (delivery UI in `server/public/survey`,
+  analysis in `tools/misconception-survey/analyze.py`, n=18 responses so
+  far) — the karte's "29 beliefs" are what actual students actually
+  misbelieve, not invented distractors. The karte screen states this
+  provenance to its users.

@@ -139,7 +139,8 @@ class _ScienceKarteScreenState extends State<ScienceKarteScreen> {
                   raised: true,
                   child: Text(
                     'ここにあるのは答え合わせではなく、デキすぎ君が持っている思い込みと、'
-                    'あなたの説明で変わったところの記録です。誤答の本文や音声は残りません。',
+                    'あなたの説明で変わったところの記録です。誤答の本文や音声は残りません。'
+                    '思い込みは、実際の中高生へのアンケート回答をもとに作られました。',
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: colors.inkMuted),
