@@ -4,6 +4,7 @@ import { chemicalChangeContent } from './chemical-change.js'
 import { chemicalChangeIonsContent } from './chemical-change-ions.js'
 import { currentMagnetismContent } from './current-magnetism.js'
 import { earthHistoryContent } from './earth-history.js'
+import { energySocietyContent } from './energy-society.js'
 import { forceBalanceContent } from './force-balance.js'
 import { forceMotionContent } from './force-motion.js'
 import { lifeContinuityContent } from './life-continuity.js'
@@ -24,6 +25,7 @@ export const EN_CONTENT: Record<string, UnitContentText | undefined> = {
   'chemical-change-ions': chemicalChangeIonsContent,
   'current-magnetism': currentMagnetismContent,
   'earth-history': earthHistoryContent,
+  'energy-society': energySocietyContent,
   'force-balance': forceBalanceContent,
   'force-motion': forceMotionContent,
   'life-continuity': lifeContinuityContent,
