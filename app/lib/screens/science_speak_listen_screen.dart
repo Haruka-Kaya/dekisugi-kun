@@ -24,10 +24,10 @@ import '../widgets/readable_width.dart';
 /// 自由発話・自由記述の正誤は採点しない。説明が進むには、その概念の
 /// 「大事な言葉」をデキすぎ君が聞き取れることが条件 —— 無関係な文では
 /// 「もう少し聞かせて」と返す。語彙の聞き取りと誤概念の確認は端末内だけで
-/// 行う。返事の前置きの生成（外部AI、同意文面の「生成AIサービス」項）が
-/// 有効なビルドでは、文字で書いた説明がサーバ経由で生成AIへ送られる —
-/// 送るのは説明文と聞き取れた言葉と単元名だけで、lure・正解・選択肢は
-/// 送らない。音声は16kHz PCMとしてRAMに最大60秒だけ保持し、
+/// 行う。返事の前置きの生成（外部AI、同意文面の「生成AIサービス」項）は
+/// Plusサポーター特典 —— personal scope でauroraを確認できた端末だけが
+/// 文字で書いた説明をサーバ経由で生成AIへ送る。送るのは説明文と
+/// 聞き取れた言葉と単元名だけで、lure・正解・選択肢は送らない。音声は16kHz PCMとしてRAMに最大60秒だけ保持し、
 /// 文字、選択内容、認識候補とともに保存しない。完了callbackへ渡すのは一般化
 /// needと固定課題位置だけで、回答そのものは含めない。
 class ScienceSpeakListenScreen extends StatefulWidget {
@@ -44,6 +44,7 @@ class ScienceSpeakListenScreen extends StatefulWidget {
     this.voicePractice,
     this.speechRecognizer,
     this.companionVoice,
+    this.supporterCheck,
   });
 
   final Section section;
@@ -77,6 +78,10 @@ class ScienceSpeakListenScreen extends StatefulWidget {
   /// （外部AIが無効なら固定文へ退避）。テスト用の差し替え口。
   @visibleForTesting
   final CompanionVoice? companionVoice;
+
+  /// Plusサポーター特典の所有確認。呼び出し側が端末内のaurora所有を
+  /// 解決して渡す。null（経路の無い画面・テスト）は false → 固定文へ退避。
+  final Future<bool> Function()? supporterCheck;
 
   @override
   State<ScienceSpeakListenScreen> createState() =>
@@ -130,6 +135,7 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
   late final CompanionVoice _companionVoice;
   String? _generatedAck;
   Future<String?>? _pendingAck;
+  Future<bool>? _supporter;
 
   LocalPracticeVariant get _variant =>
       widget.section.practiceVariantForAttempt(widget.practiceAttempt);
@@ -538,19 +544,16 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
   }
 
   /// 生徒の説明を外部AIに送り、返事の前置きを生成してもらう。
-  /// 説明の文字が無い経路（声のみ）では送らない。結果は届き次第
-  /// 表示へ反映するが、問い自体はカタログのままなので遅れても壊れない。
+  /// 説明の文字が無い経路（声のみ）では送らない。Plusサポーター特典
+  /// なので、呼び出し側の所有確認を先に確かめる（未指定は false）。
+  /// 結果は届き次第表示へ反映するが、問い自体はカタログのままなので
+  /// 遅れても壊れない。
   void _requestCompanionAck() {
     final explanation = _submittedText ?? _echoText.text.trim();
     if (explanation.isEmpty) return;
     final heardTerms = _echoCoverage?.matchedTerms ??
         _assess(explanation).matchedTerms;
-    final future = _companionVoice.renderAck(
-      explanation: explanation,
-      heardTerms: heardTerms,
-      conceptLabel: widget.conceptLabel,
-      lure: _checkpoint.lure,
-    );
+    final future = _renderCompanionAck(explanation, heardTerms);
     _pendingAck = future;
     future.then((ack) {
       if (!mounted || ack == null || _step != _ExplainStep.followUp) {
@@ -558,6 +561,21 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
       }
       setState(() => _generatedAck = ack);
     });
+  }
+
+  Future<String?> _renderCompanionAck(
+    String explanation,
+    List<String> heardTerms,
+  ) async {
+    final check = widget.supporterCheck ?? () async => false;
+    final supporter = await (_supporter ??= check());
+    if (!supporter) return null;
+    return _companionVoice.renderAck(
+      explanation: explanation,
+      heardTerms: heardTerms,
+      conceptLabel: widget.conceptLabel,
+      lure: _checkpoint.lure,
+    );
   }
 
   Future<void> _speakQuestion() async {
