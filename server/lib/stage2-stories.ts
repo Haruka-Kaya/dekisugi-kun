@@ -171,4 +171,64 @@ export const STAGE2_STORY_SOURCES: Readonly<Record<string, StorySource>> = {
     ],
     line('neutralizationBattery.punchline', 'dekisugi', '電気は果汁に宿ってたんじゃなくて、金属たちの「なりたさ」の差で流れてました。レモンさん、疑ってごめん！'),
   ),
+  reproduction: story(
+    'reproduction.potato-mystery',
+    '親そっくり署のジャガイモ偽装事件',
+    '理科準備室の棚。発芽したジャガイモと、受精して育つカエルの観察記録が並んでいる。',
+    [
+      line('reproduction.open.1', 'mio', 'ジャガイモの芽、親の表面から直接出てる。受粉や受精の記録はどこにもないね。'),
+      line('reproduction.open.2', 'ren', 'カエルの方は確かに精子と卵の受精の記録がある。殖え方がぜんぜん違う。'),
+      line('reproduction.open.3', 'dekisugi', 'すべての生物は恋をして受精するんだ！ジャガイモにも秘密のロマンスがあるはず！'),
+    ],
+    [
+      response('reproduction', 'fertilization-always', 'dekisugi', 'ほらね！ジャガイモにも見えない愛の物語が……え、ないの！？'),
+      response('reproduction', 'asexual-same-chromosomes', 'mio', '親の体の一部から親と同じ染色体の個体ができるのが無性生殖だね。ロマンス不要。'),
+      response('reproduction', 'sexual-identical', 'ren', '受精する子は両親の染色体が組み合わさるから、むしろ親と違う組合せになるよ。'),
+    ],
+    [
+      line('reproduction.resolve.1', 'mio', '細胞は分裂で増えて、体は細胞の増加と成長で大きくなるんだ。'),
+      line('reproduction.resolve.2', 'ren', '有性生殖は減数分裂と受精で両親の染色体を受け継ぐ。無性生殖は親と同じ染色体の子ができる。'),
+    ],
+    line('reproduction.punchline', 'dekisugi', 'ジャガイモは恋しなくても増えるってことか！親そっくり署、無性生殖の線で結論です！'),
+  ),
+  heredity: story(
+    'heredity.wrinkled-seed',
+    'しわしわ種子の突然復帰事件',
+    '理科準備室の実験台。エンドウの交配記録カードが広げられ、丸の親からしわの子が出た一行が強調されている。',
+    [
+      line('heredity.open.1', 'mio', '丸の純系としわの純系の子は全部丸。でもその子同士の孫にしわが出てるね。'),
+      line('heredity.open.2', 'ren', 'しわは消えたんじゃなくて、子の中に残ってたんだ。3：1の割合できれいに出てる。'),
+      line('heredity.open.3', 'dekisugi', '丸い親からしわの子は絶対出ない！記録係さん、書き間違いだよ！'),
+    ],
+    [
+      response('heredity', 'dominant-only', 'dekisugi', 'やっぱり書き間違い！優性の親から劣性の子は出ないんだよ！'),
+      response('heredity', 'recessive-reappears', 'mio', '丸い親がAa同士なら、aaの子ができてしわが現れるよ。書き間違いじゃないね。'),
+      response('heredity', 'half-blend', 'ren', '形質は半分ずつ混ざるんじゃなくて、組合せでどちらかが現れるんだ。'),
+    ],
+    [
+      line('heredity.resolve.1', 'ren', '丸を決める遺伝子Aと、しわのa。優性形質の親がAaを持てば、aaの子が出るんだ。'),
+      line('heredity.resolve.2', 'mio', '遺伝子は染色体にのって、減数分裂と受精で伝わる。DNAがその本体だね。'),
+    ],
+    line('heredity.punchline', 'dekisugi', 'しわは消えてなかった！親の中にかくれて、孫でカムバック。記録係さんごめん、君は正しかった！'),
+  ),
+  evolution: story(
+    'evolution.fossil-lineup',
+    '化石ラインナップの順番入れ替え事件',
+    '放課後の理科室。地層ごとの化石写真が時代順に並べられ、古い層と新しい層で姿が違うことが確認されている。',
+    [
+      line('evolution.open.1', 'mio', '古い層から新しい層へ順に見ると、生物の姿が少しずつ変わってるね。'),
+      line('evolution.open.2', 'ren', '地層は下ほど古いから、化石はその時代の姿の記録だね。'),
+      line('evolution.open.3', 'dekisugi', 'キリンの首は、高い葉を食べたくて毎日頑張って伸ばしたんだ！努力は実るよ！'),
+    ],
+    [
+      response('evolution', 'effort-inherited', 'dekisugi', '頑張って伸ばした首が子に伝わる！努力の結晶だよ！'),
+      response('evolution', 'selection-variation', 'ren', '個体が伸ばしたんじゃなくて、もともとのばらつきの中で長い個体が多く残ったんだ。'),
+      response('evolution', 'species-fixed', 'mio', '種がずっと同じなら、層ごとに姿が変わる記録は説明できないね。'),
+    ],
+    [
+      line('evolution.resolve.1', 'mio', 'ばらつきの中で環境に合った形質が残される自然選択。それが積み重なって進化になるんだ。'),
+      line('evolution.resolve.2', 'ren', '化石が層の順に姿を変えてる記録が、生物が変わってきた証拠だね。'),
+    ],
+    line('evolution.punchline', 'dekisugi', '努力で首が伸びたんじゃなくて、長い首の仲間が多く残ったのか！キリンさん、頑張り屋さんでごめん！'),
+  ),
 }

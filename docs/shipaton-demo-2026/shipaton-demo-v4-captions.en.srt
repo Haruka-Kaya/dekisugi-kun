@@ -60,7 +60,7 @@ Only progress is recorded — the explanation itself is never stored.
 
 16
 00:01:31,000 --> 00:01:36,770
-{\an8}All 29 — cataloged from real classroom surveys.
+{\an8}All 32 — cataloged from real classroom surveys.
 
 17
 00:01:36,770 --> 00:01:45,770

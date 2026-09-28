@@ -366,6 +366,42 @@ export const CURRICULUM_COVERAGE_MANIFEST: Readonly<
     difficulty: 5,
     safety: referenceOnly('中和・電池の製作は学校配布の記録と図だけを使い、家庭で薬品の混合・乾電池の分解・液への電極投入をしない。'),
   },
+  reproduction: {
+    unitId: 'life-continuity',
+    conceptKey: 'reproduction',
+    field: 'life',
+    grade: 3,
+    curriculumRefs: [
+      ref('第2分野 (5)(ア) 生物の成長と殖え方', 99, 100),
+    ],
+    prerequisites: ['cells'],
+    difficulty: 4,
+    safety: homeSafe('発芽したジャガイモやイチゴのランナーなど身の回りの植物を観察する。食べたり切り分けたりせず、触ったあとは手を洗う。'),
+  },
+  heredity: {
+    unitId: 'life-continuity',
+    conceptKey: 'heredity',
+    field: 'life',
+    grade: 3,
+    curriculumRefs: [
+      ref('第2分野 (5)(イ) 遺伝の規則性と遺伝子', 100, 101),
+    ],
+    prerequisites: ['reproduction'],
+    difficulty: 5,
+    safety: referenceOnly('エンドウや動物の交配は学校配布の記録と図だけを使い、家庭で生き物を交配させたり薬品を使ったりしない。'),
+  },
+  evolution: {
+    unitId: 'life-continuity',
+    conceptKey: 'evolution',
+    field: 'life',
+    grade: 3,
+    curriculumRefs: [
+      ref('第2分野 (5)(ウ) 生物の変遷と進化', 101, 102),
+    ],
+    prerequisites: ['heredity'],
+    difficulty: 4,
+    safety: referenceOnly('化石・地層の資料と図鑑だけを使い、発掘や採取を伴う活動はしない。'),
+  },
 }
 
 export function curriculumCoverageFor(

@@ -18,7 +18,7 @@ catalog schema v10では、従来の力学・圧力／浮力・電流／磁界4�
 各概念は同じ正本から、Learn、Diagram、固有Story、Listening、Teach-back、Boss、
 foundation / conditions / transfer、Notation、canonical Repairを生成する。これは第1段階の
 領域横断を完了したという意味であり、中学理科の全単元を網羅したという意味ではない。
-化学変化、イオン、生命の連続性、科学技術と自然環境は次段階に残る。
+科学技術と自然環境は次段階に残る（化学変化・イオン・生命の連続性は段階2として実装済み）。
 
 ## 拡張順
 

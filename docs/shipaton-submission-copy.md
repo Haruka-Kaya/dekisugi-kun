@@ -38,7 +38,7 @@ voices in context; notation labs train formula and diagram reasoning; spaced
 review and an exam-date countdown bring completed ideas back as new cases.
 
 The signature screen is the **カルテ (misconception map)** on the profile tab:
-a canonical catalog of 29 misconceptions, one per concept, shown as beliefs
+a canonical catalog of 32 misconceptions, one per concept, shown as beliefs
 the companion holds. Each misconception a student's explanation corrects
 flips to "corrected by your explanation" and reveals the canonical correct
 idea — progress rendered as what the learner changed in the AI, not a score.
@@ -61,11 +61,11 @@ nothing a student needs to learn is behind payment.
   notation / compete / profile.
 - The signature teach-back loop: read → hide → explain by voice or text →
   replay/re-read → fixed catalog checkpoint → hint-and-retry on miss.
-- 10 curriculum units (29 concepts) aligned to Japan's national science
+- 11 curriculum units (32 concepts) aligned to Japan's national science
   curriculum guidelines, including the stage-2 chemistry units added this period.
 - Misconception story missions, notation labs, spaced retrieval, hearts with
   timed recovery, daily XP caps that prevent grinding.
-- The カルテ (misconception map): the 29-entry canonical misconception catalog
+- The カルテ (misconception map): the 32-entry canonical misconception catalog
   surfaced as the companion's record, with observed vs. resolved needs drawn
   from durable on-device need state — the protégé effect made visible.
 - A RevenueCat-powered optional Plus supporter plan: purchase and restore
