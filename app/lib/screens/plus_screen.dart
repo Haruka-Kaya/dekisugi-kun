@@ -9,7 +9,7 @@ import '../ui/_material.dart';
 import '../widgets/readable_width.dart';
 import '../widgets/studio_ui.dart';
 
-/// 限定マスコットと会話回数枠を届ける、自前の Plus 購入画面。
+/// 限定マスコット・生成AIの返事・保護者レポートを届ける、自前の Plus 購入画面。
 ///
 /// 価格・商品名・説明・請求期間は RevenueCat が返した Current Offering だけを表示する。
 /// 画面側で無料体験や割引を推測せず、全条件を表示できない商品は購入を止める。
@@ -340,7 +340,7 @@ class _PlusScreenState extends State<PlusScreen> {
               const StudioPageIntro(
                 eyebrow: 'PLUS  ·  サポータープラン',
                 title: '応援プラン。\n特典はすぐ届く。',
-                body: '開発を応援しながら、限定の見た目と会話枠を受け取るプランです。',
+                body: '開発を応援しながら、限定の見た目と生成AIの返事を受け取るプランです。',
               ),
               const SizedBox(height: 22),
               const _PlanDifference(),
@@ -415,7 +415,7 @@ class _PlanDifference extends StatelessWidget {
     return Semantics(
       container: true,
       label:
-          '無料は教材とミッションが全部使えます。Plusは限定マスコットと、Live会話再開時の会話回数上限なし。',
+          '無料は教材とミッションが全部使えます。Plusは限定マスコット、説明を読んだデキすぎ君の返事（生成AI）、保護者向けレポート、Live会話再開時の会話回数上限なし。',
       child: ExcludeSemantics(
         child: Container(
           width: double.infinity,
@@ -440,9 +440,9 @@ class _PlanDifference extends StatelessWidget {
               ),
               _PlanLine(
                 label: 'Plus',
-                value: '限定マスコットと、会話回数の上限なし',
+                value: '限定マスコット・生成AIの返事・保護者レポート',
                 detail:
-                    'オーロラマントのデキすぎ君を受け取れます。AI会話の回数上限は、Live会話の提供再開時に有効になります。',
+                    'オーロラマントのデキすぎ君、あなたの説明を読んだ返事（生成AIの前置き）、保護者へ渡せるカルテレポート。AI会話の回数上限なしはLive会話の提供再開時に有効になります。',
                 foreground: c.onHeroSurface,
                 muted: c.heroMuted,
               ),

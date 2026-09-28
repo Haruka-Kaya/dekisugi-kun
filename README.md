@@ -47,8 +47,10 @@ the answers but is not allowed to reveal them, so the student has to teach it.
   The app's core learning loop runs fully offline against the bundled
   curriculum catalog — no server or credentials needed to run it.
 - **Monetization:** optional Plus *supporter plan* powered by the RevenueCat
-  SDK (`purchases_flutter`): purchase/restore grants an exclusive Aurora Mantle
-  companion skin on-device, with a server-side entitlement recheck
+  SDK (`purchases_flutter`): purchase/restore grants the Aurora Mantle
+  companion skin, generated-AI reply prefaces via `/api/companion-line`
+  (consent-disclosed, catalog-verbatim pedagogy, deterministic fallback), and
+  a parent-facing karte report — with a server-side entitlement recheck
   (`server/lib/revenuecat.ts`, `/api/revenuecat-webhook`). No learning content
   is behind payment.
 

@@ -256,6 +256,24 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
   SessionLearningProgressStore get _baseProgressStore =>
       SessionLearningProgressStore(widget.sessionStore);
 
+  /// teach-back の生成AI前置き（Plusサポーター特典）の所有確認。
+  /// personal scope でauroraマスコットを持つ端末だけ true。
+  /// 学校scope・台帳を読めない経路は false として固定文へ退避する。
+  Future<bool> _companionSupporter() async {
+    if (widget.scope != LearningScope.personal) return false;
+    try {
+      final snapshot = await widget.sessionStore.learningProgressSnapshot(
+        widget.scope,
+      );
+      return snapshot.cosmetics?.owns(
+            SafeLearningEconomyCatalogV1.auroraMascotId,
+          ) ??
+          false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   LearningQuestAudience get _questAudience {
     if (widget.schoolMode || widget.scope == LearningScope.schoolLocal) {
       return LearningQuestAudience.schoolLocal;
@@ -1453,6 +1471,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
             onNeedEvidence: recordNeedEvidence,
             onHeartLoss: reportHeartLoss,
             onReturnToPath: () => returnToPath(routeContext),
+            supporterCheck: _companionSupporter,
           ),
           GamePathNodeKind.challenge => OfflinePracticeScreen(
             section: section,
@@ -3156,6 +3175,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
                   onNeedEvidence: recordNeedEvidence,
                   onHeartLoss: reportHeartLoss,
                   onReturnToPath: () => returnToPractice(routeContext),
+                  supporterCheck: _companionSupporter,
                 ),
               };
               return _activityFrame(

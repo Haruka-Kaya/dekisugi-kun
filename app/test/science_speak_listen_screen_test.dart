@@ -6,6 +6,7 @@ import 'package:dekisugi/config/app_theme.dart';
 import 'package:dekisugi/config/motion.dart';
 import 'package:dekisugi/learning/domain/learning_heart.dart';
 import 'package:dekisugi/learning/domain/learning_need.dart';
+import 'package:dekisugi/learning/services/local_companion_voice.dart';
 import 'package:dekisugi/models/unit.dart';
 import 'package:dekisugi/screens/science_speak_listen_screen.dart';
 import 'package:dekisugi/services/local_narration.dart';
@@ -187,6 +188,23 @@ class _FakeSink implements PcmSink {
   Future<void> release() async => released = true;
 }
 
+class _FixedEngine implements CompanionVoiceEngine {
+  _FixedEngine(this.ack);
+
+  final String ack;
+  int calls = 0;
+
+  @override
+  Future<String?> generateAck({
+    required String explanation,
+    required List<String> heardTerms,
+    required String conceptLabel,
+  }) async {
+    calls++;
+    return ack;
+  }
+}
+
 /// デフォルトは「落下と重力」が届く認識成功を返す。
 class _FakeEchoRecognizer implements OnDeviceSpeechRecognizer {
   _FakeEchoRecognizer({
@@ -291,6 +309,8 @@ Widget _wrap({
   double textScale = 1,
   bool disableAnimations = false,
   Brightness brightness = Brightness.light,
+  CompanionVoice? companionVoice,
+  Future<bool> Function()? supporterCheck,
 }) => MaterialApp(
   theme: buildAppTheme(brightness),
   builder: (context, child) => MediaQuery(
@@ -311,6 +331,8 @@ Widget _wrap({
     narration: narration ?? FakeLocalNarration(),
     voicePractice: voice,
     speechRecognizer: speechRecognizer ?? _FakeEchoRecognizer(),
+    companionVoice: companionVoice,
+    supporterCheck: supporterCheck,
   ),
 );
 
@@ -1306,6 +1328,64 @@ void main() {
       find.byKey(const ValueKey('science-explain-follow-up')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('Plusサポーターは説明を読んだ生成前置きが問い返しに乗る', (
+    tester,
+  ) async {
+    final audio = _voice();
+    final engine = _FixedEngine('「ふむ、空気抵抗まで見てるのか」');
+    await tester.pumpWidget(
+      _wrap(
+        voice: audio.practice,
+        companionVoice: CompanionVoice(engine: engine),
+        supporterCheck: () async => true,
+      ),
+    );
+
+    await _teachByText(tester, '空気抵抗を無視すると落下は重さによらない。');
+    expect(
+      find.byKey(const ValueKey('science-explain-follow-up')),
+      findsOneWidget,
+    );
+    await _flush(tester);
+
+    final question = tester
+        .widget<Text>(
+          find.byKey(const ValueKey('science-explain-spoken-question')),
+        )
+        .data!;
+    expect(question, startsWith('ふむ、空気抵抗まで見てるのか'));
+    expect(question, contains(_section.localPracticeVariants[0].checkpoint.lure));
+  });
+
+  testWidgets('サポーターでなければ生成経路を呼ばず固定文へ退避する', (
+    tester,
+  ) async {
+    final audio = _voice();
+    final engine = _FixedEngine('「ふむ、空気抵抗まで見てるのか」');
+    await tester.pumpWidget(
+      _wrap(
+        voice: audio.practice,
+        companionVoice: CompanionVoice(engine: engine),
+        supporterCheck: () async => false,
+      ),
+    );
+
+    await _teachByText(tester, '空気抵抗を無視すると落下は重さによらない。');
+    expect(
+      find.byKey(const ValueKey('science-explain-follow-up')),
+      findsOneWidget,
+    );
+    await _flush(tester);
+
+    expect(engine.calls, 0);
+    final question = tester
+        .widget<Text>(
+          find.byKey(const ValueKey('science-explain-spoken-question')),
+        )
+        .data!;
+    expect(question, startsWith('教えてくれてありがとう。'));
   });
 
   test('StoryとSpeakingは旧AppColors・ColorSchemeへ戻らない', () {
