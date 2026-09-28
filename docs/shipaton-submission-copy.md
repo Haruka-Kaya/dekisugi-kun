@@ -146,7 +146,12 @@ for reference; the submitted video is the emulator capture.
 
 1. Clone the public repository.
 2. `cd app && flutter pub get && flutter run` — the bundled-catalog mode needs
-   no network, server, or credentials.
+   no network, server, or credentials. The app also ships a full English build:
+   `flutter run --dart-define=APP_LANG=en`, or toggle 表示言語 → English in
+   Settings at runtime. Every lesson, practice stage, misconception follow-up,
+   story, and notation task renders in English; the English catalog is
+   machine-generated from the same server source (`assets/catalog/units.en.json`)
+   and served over the network at `/api/units?lang=en`.
 3. On the learning path, open any lesson node, read the material, hide it, type
    an explanation, re-read it, and answer the checkpoint.
 4. Deliberately answer one checkpoint wrong to see the hint + re-explain flow.

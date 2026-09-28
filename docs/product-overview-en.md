@@ -88,6 +88,19 @@ These rules, not growth-hack metrics, are the design contract.
   Aurora Mantle companion skin, the generated-AI reply preface above, and a
   parent-facing karte report; no learning content is ever gated.
 
+## Language
+
+The product is fully bilingual — Japanese and English. Every user-facing
+string has a canonical English build: the catalog content (lesson material,
+practice prompts, checkpoint lures and options, stories, notation tasks) is
+localized in `server/lib/i18n.ts` + `server/lib/en/` and machine-generated
+into `app/assets/catalog/units.en.json`; UI chrome strings are bilingual via
+`app/lib/config/app_language.dart`. `flutter run --dart-define=APP_LANG=en`
+or the in-app language toggle runs the whole product in English, and
+`/api/units?lang=en` serves the English catalog. Coverage tests
+(`missingContentTranslations`, `missingTranslations`) fail the build on any
+untranslated key — a partial-English build cannot ship.
+
 ## Content & platform
 
 - 11 units / 32 concepts aligned to Japan's MEXT national science curriculum,

@@ -2,6 +2,7 @@ import type { UnitContentText } from '../i18n-content.js'
 
 import { chemicalChangeContent } from './chemical-change.js'
 import { chemicalChangeIonsContent } from './chemical-change-ions.js'
+import { currentMagnetismContent } from './current-magnetism.js'
 import { earthHistoryContent } from './earth-history.js'
 import { forceBalanceContent } from './force-balance.js'
 import { lifeContinuityContent } from './life-continuity.js'
@@ -20,6 +21,7 @@ import { weatherChangeContent } from './weather-change.js'
 export const EN_CONTENT: Record<string, UnitContentText | undefined> = {
   'chemical-change': chemicalChangeContent,
   'chemical-change-ions': chemicalChangeIonsContent,
+  'current-magnetism': currentMagnetismContent,
   'earth-history': earthHistoryContent,
   'force-balance': forceBalanceContent,
   'life-continuity': lifeContinuityContent,
