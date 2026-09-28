@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as l10n;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../services/team_client.dart';
@@ -58,7 +59,7 @@ class _TeamJoinScreenState extends State<TeamJoinScreen> {
     final scheme = t.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('クラスに入る')),
+      appBar: AppBar(title: Text(l10n.t('クラスに入る', 'Join a class'))),
       body: ReadableWidth(
         child: ListView(
           padding: EdgeInsets.fromLTRB(
@@ -68,17 +69,26 @@ class _TeamJoinScreenState extends State<TeamJoinScreen> {
             28 + MediaQuery.paddingOf(context).bottom,
           ),
           children: [
-            const StudioPageIntro(
-              eyebrow: 'クラスと学ぶ',
-              title: 'ひとりの説明を、\nみんなの積み重ねへ。',
-              body: '比べるのは個人ではなく、クラス全体で集まった説明の数だけです。',
+            StudioPageIntro(
+              eyebrow: l10n.t('クラスと学ぶ', 'Learn with your class'),
+              title: l10n.t(
+                'ひとりの説明を、\nみんなの積み重ねへ。',
+                'Your explanations\nadd up for everyone.',
+              ),
+              body: l10n.t(
+                '比べるのは個人ではなく、クラス全体で集まった説明の数だけです。',
+                'No one is compared. We only count the explanations the whole class has shared.',
+              ),
             ),
             const SizedBox(height: 20),
             const _ClassPromise(),
             const SizedBox(height: 26),
-            const StudioSectionHeader(
-              title: '先生からのコードを入力',
-              description: '黒板やプリントにある英数字を、そのまま入れてください。',
+            StudioSectionHeader(
+              title: l10n.t('先生からのコードを入力', 'Enter your teacher\'s code'),
+              description: l10n.t(
+                '黒板やプリントにある英数字を、そのまま入れてください。',
+                'Type the letters and numbers from the board or handout exactly as shown.',
+              ),
             ),
             const SizedBox(height: 12),
             Container(
@@ -92,7 +102,10 @@ class _TeamJoinScreenState extends State<TeamJoinScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    '先生からもらったクラスコードを入れてください。',
+                    l10n.t(
+                      '先生からもらったクラスコードを入れてください。',
+                      'Enter the class code from your teacher.',
+                    ),
                     style: t.textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 12),
@@ -110,9 +123,9 @@ class _TeamJoinScreenState extends State<TeamJoinScreen> {
                       fontFamily: 'monospace',
                       letterSpacing: 2,
                     ),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       constraints: BoxConstraints(minHeight: 56),
-                      labelText: 'クラスコード',
+                      labelText: l10n.t('クラスコード', 'Class code'),
                       hintText: 'ABCD-EFGH',
                     ),
                   ),
@@ -121,7 +134,10 @@ class _TeamJoinScreenState extends State<TeamJoinScreen> {
                     Semantics(
                       container: true,
                       liveRegion: true,
-                      label: 'クラスコードを確認できません。$e',
+                      label: l10n.t(
+                        'クラスコードを確認できません。$e',
+                        'Can\'t verify the class code. $e',
+                      ),
                       child: ExcludeSemantics(
                         child: Container(
                           padding: const EdgeInsets.all(12),
@@ -162,7 +178,11 @@ class _TeamJoinScreenState extends State<TeamJoinScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.group_add_outlined),
-                    label: Text(_sending ? '確かめています…' : '入る'),
+                    label: Text(
+                      _sending
+                          ? l10n.t('確かめています…', 'Checking…')
+                          : l10n.t('入る', 'Join'),
+                    ),
                   ),
                 ],
               ),
@@ -208,14 +228,20 @@ class _ClassPromise extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '教えた数が、クラスの合計に。',
+                  l10n.t(
+                    '教えた数が、クラスの合計に。',
+                    'What you teach adds to the class total.',
+                  ),
                   style: t.textTheme.titleMedium
                       ?.copyWith(color: c.onWarmSurface)
                       .jaWeight(FontWeight.w700),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '名前も順位も使いません。みんなが説明した合計だけが、同じクラスに見えます。',
+                  l10n.t(
+                    '名前も順位も使いません。みんなが説明した合計だけが、同じクラスに見えます。',
+                    'No names, no rankings. Your class only sees the total number of explanations.',
+                  ),
                   style: t.textTheme.bodySmall?.copyWith(
                     color: c.onWarmSurface.withValues(alpha: 0.84),
                   ),
@@ -252,15 +278,19 @@ class _PrivacyNote extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '個人の活動は表示しません',
+                  l10n.t('個人の活動は表示しません', 'Individual activity is never shown'),
                   style: t.textTheme.titleSmall
                       ?.copyWith(color: c.onCoolSurface)
                       .jaWeight(FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'クラスに入ると、クラス全体で集まった説明の数が見られます。'
-                  '誰が何をしたかは出ません。',
+                  l10n.t(
+                    'クラスに入ると、クラス全体で集まった説明の数が見られます。'
+                        '誰が何をしたかは出ません。',
+                    'After joining, you can see how many explanations the whole class has shared. '
+                        'It never shows who did what.',
+                  ),
                   style: t.textTheme.bodySmall?.copyWith(
                     color: c.onCoolSurface.withValues(alpha: 0.82),
                   ),

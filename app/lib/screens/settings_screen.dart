@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import '../config/app_language.dart' as l10n;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../models/reminder.dart';
 import '../services/reminders.dart';
 import '../ui/_material.dart';
 import '../ui/adaptive.dart';
+import '../widgets/app_language_tile.dart';
 import '../widgets/readable_width.dart';
 import '../widgets/studio_ui.dart';
 
@@ -53,7 +55,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('端末の設定で通知が切られています。')));
+          ).showSnackBar(SnackBar(content: Text(l10n.t('端末の設定で通知が切られています。', 'Notifications are turned off in your device settings.'))));
         }
         return;
       }
@@ -66,7 +68,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final picked = await pickHour(
       context,
       initial: _hour,
-      helpText: '何時に知らせますか',
+      helpText: l10n.t('何時に知らせますか', 'What time should we remind you?'),
     );
     if (picked == null) return;
     await widget.reminders.setHour(picked);
@@ -79,11 +81,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final scheme = t.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('設定')),
+      appBar: AppBar(title: Text(l10n.t('設定', 'Settings'))),
       body: _loading
           ? Center(
               child: Semantics(
-                label: '設定を読み込んでいます',
+                label: l10n.t('設定を読み込んでいます', 'Loading settings'),
                 child: const CircularProgressIndicator(),
               ),
             )
@@ -96,12 +98,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   28 + MediaQuery.paddingOf(context).bottom,
                 ),
                 children: [
-                  const StudioPageIntro(
-                    eyebrow: '毎日のペース',
-                    title: '思い出すきっかけを、\nそっと一つだけ。',
+                  StudioPageIntro(
+                    eyebrow: l10n.t('毎日のペース', 'Daily pace'),
+                    title: l10n.t('思い出すきっかけを、\nそっと一つだけ。', 'Just one gentle\nreminder.'),
                     body:
-                        'デキすぎ君は、何度も呼び戻しません。'
-                        '続きがある日に、1日1回だけ端末から知らせます。',
+                        l10n.t('デキすぎ君は、何度も呼び戻しません。'
+                        '続きがある日に、1日1回だけ端末から知らせます。', 'Dekisugi-kun won\'t keep calling you back. ' 'On days you have something left, your device reminds you just once.'),
                   ),
                   const SizedBox(height: 22),
                   _ReminderStudio(
@@ -110,17 +112,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onToggle: _toggle,
                     onPickHour: _pickHour,
                   ),
+                  const SizedBox(height: 14),
+                  const AppLanguageTile(),
                   if (widget.onOpenPlus case final openPlus?) ...[
                     const SizedBox(height: 24),
-                    const StudioSectionHeader(
-                      title: 'Plus（応援プラン）',
-                      description: '無料の学び方は変えません。Plusは限定の見た目を受け取る応援プランです。',
+                    StudioSectionHeader(
+                      title: l10n.t('Plus（応援プラン）', 'Plus (supporter plan)'),
+                      description: l10n.t('無料の学び方は変えません。Plusは限定の見た目を受け取る応援プランです。', 'Learning stays free. Plus is a supporter plan that unlocks exclusive looks.'),
                     ),
                     const SizedBox(height: 12),
                     StudioActionTile(
                       icon: Icons.forum_outlined,
-                      title: 'デキすぎ君 Plus',
-                      description: '無料で全部学べます。Plusは限定マスコットの応援プラン',
+                      title: l10n.t('デキすぎ君 Plus', 'Dekisugi-kun Plus'),
+                      description: l10n.t('無料で全部学べます。Plusは限定マスコットの応援プラン', 'Everything is free to learn. Plus is a supporter plan with an exclusive mascot'),
                       onTap: () => unawaited(openPlus()),
                       warm: true,
                     ),
@@ -146,7 +150,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                '静かにしておく日',
+                                l10n.t('静かにしておく日', 'Quiet days'),
                                 style: t.textTheme.titleSmall?.jaWeight(
                                   FontWeight.w700,
                                 ),
@@ -156,8 +160,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'お知らせは1日1回までです。考査が近づいても増えません。\n'
-                          '終わった日と、考査の前日・当日には送りません。',
+                          l10n.t('お知らせは1日1回までです。考査が近づいても増えません。\n'
+                          '終わった日と、考査の前日・当日には送りません。', 'At most one reminder a day, even as exams get closer.\n' 'None on days you\'ve finished, or the day before or of an exam.'),
                           style: t.textTheme.bodySmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),
@@ -219,14 +223,14 @@ class _ReminderStudio extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '続きの場所を、忘れない。',
+                        l10n.t('続きの場所を、忘れない。', 'Never lose your place.'),
                         style: t.textTheme.titleMedium
                             ?.copyWith(color: c.onCoolSurface)
                             .jaWeight(FontWeight.w700),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '通知の主語は「やり残しがある」という事実だけです。',
+                        l10n.t('通知の主語は「やり残しがある」という事実だけです。', 'Reminders only say one thing: "there\'s something left to do."'),
                         style: t.textTheme.bodySmall?.copyWith(
                           color: c.onCoolSurface.withValues(alpha: 0.82),
                         ),
@@ -243,13 +247,13 @@ class _ReminderStudio extends StatelessWidget {
               onChanged: onToggle,
               contentPadding: EdgeInsets.zero,
               title: Text(
-                'まいにち知らせる',
+                l10n.t('まいにち知らせる', 'Daily reminder'),
                 style: t.textTheme.titleSmall
                     ?.copyWith(color: c.onCoolSurface)
                     .jaWeight(FontWeight.w700),
               ),
               subtitle: Text(
-                '1日1回だけ。残っているところをお知らせします。',
+                l10n.t('1日1回だけ。残っているところをお知らせします。', 'Once a day. We\'ll tell you what\'s left.'),
                 style: t.textTheme.bodySmall?.copyWith(
                   color: c.onCoolSurface.withValues(alpha: 0.82),
                 ),
@@ -287,7 +291,7 @@ class _TimeNote extends StatelessWidget {
       container: true,
       button: true,
       enabled: enabled,
-      label: '知らせる時刻、$hour時',
+      label: l10n.t('知らせる時刻、$hour時', 'Reminder time, $hour:00'),
       onTap: enabled ? onTap : null,
       excludeSemantics: true,
       child: Material(
@@ -304,7 +308,7 @@ class _TimeNote extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    '知らせる時刻',
+                    l10n.t('知らせる時刻', 'Reminder time'),
                     style: t.textTheme.bodyMedium?.copyWith(color: foreground),
                   ),
                 ),

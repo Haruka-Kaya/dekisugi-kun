@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_economy.dart';
@@ -197,7 +198,10 @@ class _GameHeroMascot extends StatelessWidget {
     return Semantics(
       key: const ValueKey('game-hero-mascot'),
       image: true,
-      label: '${style.label}が${reaction.semanticsLabel}',
+      label: lang.t(
+        '${style.label}が${reaction.semanticsLabel}',
+        '${style.label}: ${reaction.semanticsLabel}',
+      ),
       child: ExcludeSemantics(
         child: DecoratedBox(
           decoration: BoxDecoration(

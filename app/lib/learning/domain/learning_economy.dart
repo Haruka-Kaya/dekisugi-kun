@@ -4,6 +4,8 @@
 /// 正本として再照合し、学習の完了・XP・正答を商品へ追加できない構造にする。
 library;
 
+import '../../config/app_language.dart';
+
 enum LearningCosmeticSlot {
   pathMascot;
 
@@ -32,10 +34,10 @@ enum LearningPathMascotStyle {
   };
 
   String get label => switch (this) {
-    LearningPathMascotStyle.standard => 'いつものデキすぎ君',
-    LearningPathMascotStyle.orbit => '軌道リングのデキすぎ君',
-    LearningPathMascotStyle.nova => '星雲スーツのデキすぎ君',
-    LearningPathMascotStyle.aurora => 'オーロラマントのデキすぎ君',
+    LearningPathMascotStyle.standard => t('いつものデキすぎ君', 'Classic Dekisugi-kun'),
+    LearningPathMascotStyle.orbit => t('軌道リングのデキすぎ君', 'Orbit Ring Dekisugi-kun'),
+    LearningPathMascotStyle.nova => t('星雲スーツのデキすぎ君', 'Nebula Suit Dekisugi-kun'),
+    LearningPathMascotStyle.aurora => t('オーロラマントのデキすぎ君', 'Aurora Cape Dekisugi-kun'),
   };
 }
 
@@ -43,7 +45,9 @@ final class LearningCosmeticProduct {
   const LearningCosmeticProduct({
     required this.productId,
     required this.title,
+    required this.titleEn,
     required this.description,
+    required this.descriptionEn,
     required this.slot,
     required this.mascotStyle,
     required this.gemCost,
@@ -52,7 +56,9 @@ final class LearningCosmeticProduct {
 
   final String productId;
   final String title;
+  final String titleEn;
   final String description;
+  final String descriptionEn;
   final LearningCosmeticSlot slot;
   final LearningPathMascotStyle mascotStyle;
   final int gemCost;
@@ -151,7 +157,9 @@ final class SafeLearningEconomyCatalogV1 {
   static const LearningCosmeticProduct standardMascot = LearningCosmeticProduct(
     productId: standardMascotId,
     title: 'いつものデキすぎ君',
+    titleEn: 'Everyday Dekisugi-kun',
     description: '標準のPathマスコットです。いつでも選べます。',
+    descriptionEn: 'The standard Path mascot. Always available.',
     slot: LearningCosmeticSlot.pathMascot,
     mascotStyle: LearningPathMascotStyle.standard,
     gemCost: 0,
@@ -160,7 +168,9 @@ final class SafeLearningEconomyCatalogV1 {
   static const LearningCosmeticProduct orbitMascot = LearningCosmeticProduct(
     productId: orbitMascotId,
     title: '軌道リング',
+    titleEn: 'Orbit Ring',
     description: 'デキすぎ君の周りを、小さな観測衛星が回る見た目です。',
+    descriptionEn: 'A look with a tiny observation satellite orbiting Dekisugi-kun.',
     slot: LearningCosmeticSlot.pathMascot,
     mascotStyle: LearningPathMascotStyle.orbit,
     gemCost: 4,
@@ -169,7 +179,9 @@ final class SafeLearningEconomyCatalogV1 {
   static const LearningCosmeticProduct novaMascot = LearningCosmeticProduct(
     productId: novaMascotId,
     title: '星雲スーツ',
+    titleEn: 'Nebula Suit',
     description: '星の合図が付いた、紫の研究スーツの見た目です。',
+    descriptionEn: 'A purple research suit marked with star signs.',
     slot: LearningCosmeticSlot.pathMascot,
     mascotStyle: LearningPathMascotStyle.nova,
     gemCost: 6,
@@ -187,8 +199,11 @@ final class SafeLearningEconomyCatalogV1 {
       LearningCosmeticProduct(
         productId: auroraMascotId,
         title: 'オーロラマント',
+        titleEn: 'Aurora Cape',
         description:
             'Plusサポーターへの印。オーロラの光をまとった、夜空色のマントの見た目です。',
+        descriptionEn:
+            'A badge for Plus supporters: a night-sky cape wrapped in aurora light.',
         slot: LearningCosmeticSlot.pathMascot,
         mascotStyle: LearningPathMascotStyle.aurora,
         gemCost: 0,

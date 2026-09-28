@@ -11,6 +11,7 @@ library;
 import 'dart:math' as math;
 
 import '../services/transcript_text.dart';
+import '../config/app_language.dart';
 
 enum UnitCurriculumField {
   matter,
@@ -913,9 +914,9 @@ enum LocalPracticeStage {
   String get wire => name;
 
   String get label => switch (this) {
-    LocalPracticeStage.foundation => '原理を思い出す',
-    LocalPracticeStage.conditions => '条件を見分ける',
-    LocalPracticeStage.transfer => '別の場面へ使う',
+    LocalPracticeStage.foundation => t('原理を思い出す', 'Recall the principle'),
+    LocalPracticeStage.conditions => t('条件を見分ける', 'Tell the conditions apart'),
+    LocalPracticeStage.transfer => t('別の場面へ使う', 'Apply it to a new situation'),
   };
 
   static LocalPracticeStage? parse(Object? value) => switch (value) {
@@ -1845,11 +1846,14 @@ class LocalNotationLab {
           kind: LocalNotationTaskKind.symbolMatch,
           id: '${_notationConceptFromNeed(symbol.needCode)}.symbol',
           needCode: symbol.needCode,
-          title: '単位記号を意味と結ぶ',
+          title: t('単位記号を意味と結ぶ', 'Match unit symbols to their meaning'),
           prompt: symbol.prompt,
           solutionSummary: symbol.solutionSummary,
           representation: const [],
-          representationSemanticsLabel: '選択肢の記号と意味を対応させます。',
+          representationSemanticsLabel: t(
+            '選択肢の記号と意味を対応させます。',
+            'Match each symbol to its meaning.',
+          ),
           choices: symbol.choices,
           correctChoiceId: symbol.correctChoiceId,
         ),
@@ -1858,7 +1862,7 @@ class LocalNotationLab {
           kind: LocalNotationTaskKind.graphRead,
           id: '${_notationConceptFromNeed(graph.needCode)}.graph',
           needCode: graph.needCode,
-          title: 'グラフを読む',
+          title: t('グラフを読む', 'Read the graph'),
           prompt: graph.prompt,
           solutionSummary: graph.solutionSummary,
           representation: graph.graphNotation,
@@ -2419,13 +2423,28 @@ class Section {
     if (variants.isEmpty) {
       return LocalPracticeVariant(
         stage: LocalPracticeStage.foundation,
-        recallPrompt: '教材を見ずに、この概念の中心となる考えを自分の言葉で説明してください。',
-        reasoningPrompt: 'その説明が成り立つ条件か、そうなる理由を一つ足してください。',
+        recallPrompt: t(
+          '教材を見ずに、この概念の中心となる考えを自分の言葉で説明してください。',
+          'Without looking at the material, explain the main idea of this concept in your own words.',
+        ),
+        reasoningPrompt: t(
+          'その説明が成り立つ条件か、そうなる理由を一つ足してください。',
+          'Add one condition where your explanation holds, or one reason why it happens.',
+        ),
         transferPrompt: tryIt.trim().isEmpty
-            ? 'この考えを使える具体的な場面を一つ考え、起きることを予想してください。'
+            ? t(
+                'この考えを使える具体的な場面を一つ考え、起きることを予想してください。',
+                'Think of one real situation where this idea applies, and predict what will happen.',
+              )
             : tryIt,
-        expectedOutcome: 'この旧形式の教材には、場面へ直接対応する比較結果がありません。',
-        expectedReason: 'チェックポイントの正答を場面の答えとして流用せず、教材を読み直してください。',
+        expectedOutcome: t(
+          'この旧形式の教材には、場面へ直接対応する比較結果がありません。',
+          "This older-format material doesn't have a result to compare with this situation.",
+        ),
+        expectedReason: t(
+          'チェックポイントの正答を場面の答えとして流用せず、教材を読み直してください。',
+          "Don't reuse the checkpoint answer for this situation. Reread the material instead.",
+        ),
         cognitiveTask: LocalCognitiveTask.safeLegacyFallback,
         checkpoint: localCheckpoint,
       );

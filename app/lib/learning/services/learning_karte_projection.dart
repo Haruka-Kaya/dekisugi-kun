@@ -1,5 +1,6 @@
 import '../domain/learning_progress.dart';
 import '../../models/unit.dart';
+import '../../config/app_language.dart';
 
 /// 理解カルテの概念カード。誤答本文ではなく、カタログの誤概念と
 /// 一般化need状態だけを画面へ渡す。
@@ -49,20 +50,20 @@ String learningKarteNeedKindLabel(String needCode) {
   return _needKindLabels[suffix] ?? suffix;
 }
 
-const Map<String, String> _needKindLabels = {
-  'foundation': '仕組みの土台',
-  'conditions': '条件の整理',
-  'transfer': '別の場面への応用',
-  'notation.tableRead': '表の読み取り',
-  'notation.sequence': '手順と順番',
-  'notation.symbol': '記号の書き分け',
-  'notation.arrow': '矢印と向き',
-  'notation.equation': '式の表現',
-  'notation.graph': 'グラフ',
-  'notation.graphRead': 'グラフの読み取り',
-  'notation.modelBuild': 'モデル化',
-  'notation.labelDiagram': '図へのラベル付け',
-  'notation.symbolMatch': '記号の対応づけ',
+Map<String, String> get _needKindLabels => {
+  'foundation': t('仕組みの土台', 'Basic mechanism'),
+  'conditions': t('条件の整理', 'Sorting out conditions'),
+  'transfer': t('別の場面への応用', 'Applying to new situations'),
+  'notation.tableRead': t('表の読み取り', 'Reading tables'),
+  'notation.sequence': t('手順と順番', 'Steps and order'),
+  'notation.symbol': t('記号の書き分け', 'Writing symbols correctly'),
+  'notation.arrow': t('矢印と向き', 'Arrows and direction'),
+  'notation.equation': t('式の表現', 'Writing equations'),
+  'notation.graph': t('グラフ', 'Graphs'),
+  'notation.graphRead': t('グラフの読み取り', 'Reading graphs'),
+  'notation.modelBuild': t('モデル化', 'Modeling'),
+  'notation.labelDiagram': t('図へのラベル付け', 'Labeling diagrams'),
+  'notation.symbolMatch': t('記号の対応づけ', 'Matching symbols'),
 };
 
 /// カルテ全体の見出し数字。

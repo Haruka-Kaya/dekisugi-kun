@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_heart.dart';
@@ -358,8 +359,10 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
         ScienceChallengeHeader(
           eyebrow: 'OPTIONAL  /  LIGHTNING',
           title: widget.conceptLabel,
-          body:
-              '${widget.content.questions.length}問の固定列を$_initialSeconds秒で解きます。',
+          body: t(
+            '${widget.content.questions.length}問の固定列を$_initialSeconds秒で解きます。',
+            'Answer a fixed set of ${widget.content.questions.length} questions in $_initialSeconds seconds.',
+          ),
           icon: Icons.bolt_rounded,
           accent: colors.legendary,
           onAccent: colors.onLegendary,
@@ -367,23 +370,26 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
-          label: '速さより、根拠',
+          label: t('速さより、根拠', 'Reasons over speed'),
           icon: Icons.shield_outlined,
-          child: const Text(
-            '誤答か時間切れでそのrunは終了します。時間切れでは学習ハートは減らず、固定問題の誤答だけ、'
-            '個人モードでは1つ減ります。Path・連続学習・報酬は変わらず、学校モードはハート無制限です。',
+          child: Text(
+            t(
+              '誤答か時間切れでそのrunは終了します。時間切れでは学習ハートは減らず、固定問題の誤答だけ、'
+                  '個人モードでは1つ減ります。Path・連続学習・報酬は変わらず、学校モードはハート無制限です。',
+              'A wrong answer or running out of time ends the run. Running out of time doesn\'t cost learning hearts; only wrong answers on fixed questions cost 1 in personal mode. Path, streak, and rewards don\'t change, and school mode has unlimited hearts.',
+            ),
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
-          label: '学習する場面',
+          label: t('学習する場面', 'Learning scenario'),
           icon: Icons.science_outlined,
           child: Text(_variant.transferPrompt),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('lightning-start'),
-          label: 'Lightningを始める',
+          label: t('Lightningを始める', 'Start Lightning'),
           icon: Icons.play_arrow_rounded,
           onPressed: _start,
           backgroundColor: colors.legendary,
@@ -404,12 +410,14 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
         ScienceMiniGameCountdown(
           remainingSeconds: _remainingSeconds,
           totalSeconds: _initialSeconds,
-          stepLabel:
-              '${_questionIndex + 1}/${widget.content.questions.length}問目',
+          stepLabel: t(
+            '${_questionIndex + 1}/${widget.content.questions.length}問目',
+            'Question ${_questionIndex + 1}/${widget.content.questions.length}',
+          ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
-          label: '短く判断する',
+          label: t('短く判断する', 'Decide quickly'),
           icon: Icons.bolt_outlined,
           child: Text(
             question.prompt,
@@ -435,7 +443,7 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('lightning-submit'),
-          label: 'この答えで決定',
+          label: t('この答えで決定', 'Lock in this answer'),
           icon: Icons.arrow_forward_rounded,
           onPressed: _selectedOptionId == null ? null : _submit,
           backgroundColor: colors.legendary,
@@ -451,14 +459,26 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
     final colors = context.gamePalette;
     final cleared = _outcome == _LightningOutcome.cleared;
     final title = switch (_outcome!) {
-      _LightningOutcome.cleared => '固定問題列を完走',
-      _LightningOutcome.needsReview => '今回はここまで',
-      _LightningOutcome.timeUp => '時間になりました',
+      _LightningOutcome.cleared => t('固定問題列を完走', 'Finished all questions'),
+      _LightningOutcome.needsReview => t(
+        '今回はここまで',
+        'That\'s it for this round',
+      ),
+      _LightningOutcome.timeUp => t('時間になりました', 'Time\'s up'),
     };
     final body = switch (_outcome!) {
-      _LightningOutcome.cleared => '全問を順番に判断できました。',
-      _LightningOutcome.needsReview => '誤答後は別の選択肢や後続問題を開きません。通常練習で根拠を確かめられます。',
-      _LightningOutcome.timeUp => '未回答の正解は表示しません。時間は学習成果として保存されません。',
+      _LightningOutcome.cleared => t(
+        '全問を順番に判断できました。',
+        'You answered every question in order.',
+      ),
+      _LightningOutcome.needsReview => t(
+        '誤答後は別の選択肢や後続問題を開きません。通常練習で根拠を確かめられます。',
+        'After a wrong answer, other choices and later questions stay locked. You can check the reasoning in regular practice.',
+      ),
+      _LightningOutcome.timeUp => t(
+        '未回答の正解は表示しません。時間は学習成果として保存されません。',
+        'Answers to unanswered questions aren\'t shown. Time isn\'t saved as a learning result.',
+      ),
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -478,15 +498,20 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
-          label: '学習記録への影響',
+          label: t('学習記録への影響', 'Effect on your record'),
           icon: Icons.shield_outlined,
-          child: const Text('この結果だけではPath・連続学習・報酬は変わりません。回答・正誤・残り時間も保存しません。'),
+          child: Text(
+            t(
+              'この結果だけではPath・連続学習・報酬は変わりません。回答・正誤・残り時間も保存しません。',
+              'This result alone doesn\'t change your Path, streak, or rewards. Answers, correctness, and remaining time aren\'t saved.',
+            ),
+          ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         if (cleared)
           ScienceChallengePrimaryButton(
             key: const ValueKey('lightning-complete'),
-            label: 'Lightningを完了する',
+            label: t('Lightningを完了する', 'Finish Lightning'),
             icon: Icons.check_rounded,
             onPressed: _completionCalled ? null : _complete,
             backgroundColor: colors.pathComplete,
@@ -501,7 +526,11 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
               foregroundColor: colors.ink,
             ),
             icon: const Icon(Icons.refresh_rounded),
-            label: Text(_retryChecking ? 'ハートを確認中…' : '最初からもう一度'),
+            label: Text(
+              _retryChecking
+                  ? t('ハートを確認中…', 'Checking hearts…')
+                  : t('最初からもう一度', 'Start over'),
+            ),
           ),
         const SizedBox(height: GameTokens.spaceLg),
         const ScienceChallengePrivacyNote(),

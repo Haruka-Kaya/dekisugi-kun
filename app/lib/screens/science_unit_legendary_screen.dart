@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../config/motion.dart';
@@ -333,17 +334,25 @@ class _ScienceUnitLegendaryScreenState
         ScienceChallengeHeader(
           eyebrow: 'UNIT LEGENDARY  /  LOCKED',
           title: widget.unitTitle,
-          body: 'この単元の全章ボスを終えた、次の学習日から開きます。',
+          body: lang.t(
+            'この単元の全章ボスを終えた、次の学習日から開きます。',
+            'Unlocks on the learning day after you finish all chapter bosses in this unit.',
+          ),
           icon: Icons.lock_clock_outlined,
           accent: colors.pathLocked,
           onAccent: colors.onPathLocked,
           mascotReaction: GameCharacterReaction.thinking,
         ),
         const SizedBox(height: GameTokens.spaceXl),
-        const ScienceChallengeSurface(
-          label: '通常Pathは止まりません',
+        ScienceChallengeSurface(
+          label: lang.t('通常Pathは止まりません', 'Your regular Path continues'),
           icon: Icons.route_outlined,
-          child: Text('Unit Legendaryは任意です。待っている間も、次の単元・復習・学校課題へ進めます。'),
+          child: Text(
+            lang.t(
+              'Unit Legendaryは任意です。待っている間も、次の単元・復習・学校課題へ進めます。',
+              'Unit Legendary is optional. Keep learning in the next unit, review, or do class work while you wait.',
+            ),
+          ),
         ),
       ],
     );
@@ -358,7 +367,10 @@ class _ScienceUnitLegendaryScreenState
         ScienceChallengeHeader(
           eyebrow: 'UNIT LEGENDARY  /  $_questionNumber OF $_questionCount',
           title: _challenge.conceptLabel,
-          body: '単元内${widget.challenges.length}概念を横断します。全問を確定するまで正本は開きません。',
+          body: lang.t(
+            '単元内${widget.challenges.length}概念を横断します。全問を確定するまで正本は開きません。',
+            'Connect ${widget.challenges.length} ideas in this unit. The model answers stay hidden until you finish every question.',
+          ),
           icon: Icons.workspace_premium_outlined,
           accent: colors.legendary,
           onAccent: colors.onLegendary,
@@ -366,7 +378,7 @@ class _ScienceUnitLegendaryScreenState
         ),
         const SizedBox(height: GameTokens.spaceXl),
         ScienceChallengeSurface(
-          label: '別の場面へ使う',
+          label: lang.t('別の場面へ使う', 'Apply it in a new situation'),
           icon: Icons.science_outlined,
           child: Text(_variant.transferPrompt),
         ),
@@ -380,7 +392,7 @@ class _ScienceUnitLegendaryScreenState
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('unit-legendary-task-submit'),
-          label: 'この答えで確定する',
+          label: lang.t('この答えで確定する', 'Submit this answer'),
           icon: Icons.lock_outline,
           onPressed: _taskComplete ? _submitTask : null,
           backgroundColor: colors.legendary,
@@ -403,8 +415,14 @@ class _ScienceUnitLegendaryScreenState
       children: [
         ScienceChallengeHeader(
           eyebrow: 'UNIT LEGENDARY  /  $_questionNumber OF $_questionCount',
-          title: '${_challenge.conceptLabel}の思い込み',
-          body: 'ヒントなしで最初の判断を確定します。まだ正本は表示しません。',
+          title: lang.t(
+            '${_challenge.conceptLabel}の思い込み',
+            'Misconception about ${_challenge.conceptLabel}',
+          ),
+          body: lang.t(
+            'ヒントなしで最初の判断を確定します。まだ正本は表示しません。',
+            'Choose your first answer without hints. The model answer stays hidden.',
+          ),
           icon: Icons.fact_check_outlined,
           accent: colors.legendary,
           onAccent: colors.onLegendary,
@@ -412,7 +430,7 @@ class _ScienceUnitLegendaryScreenState
         ),
         const SizedBox(height: GameTokens.spaceXl),
         ScienceChallengeSurface(
-          label: 'デキすぎ君の説明',
+          label: lang.t('デキすぎ君の説明', 'Dekisugi-kun\'s explanation'),
           icon: Icons.psychology_alt_outlined,
           child: Text(checkpoint.lure),
         ),
@@ -440,7 +458,7 @@ class _ScienceUnitLegendaryScreenState
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('unit-legendary-checkpoint-submit'),
-          label: '最初の判断を確定する',
+          label: lang.t('最初の判断を確定する', 'Submit your first choice'),
           icon: Icons.lock_outline,
           onPressed: _checkpointOptionIds[_challengeIndex] == null
               ? null
@@ -460,10 +478,19 @@ class _ScienceUnitLegendaryScreenState
       children: [
         ScienceChallengeHeader(
           eyebrow: 'UNIT LEGENDARY  /  REVIEW',
-          title: '単元全体を正本と比べる',
+          title: lang.t(
+            '単元全体を正本と比べる',
+            'Compare the whole unit with model answers',
+          ),
           body: _cleared
-              ? '全${widget.challenges.length}概念の固定問題を、最初の回答で通過しました。'
-              : '全回答は確定済みです。違いを見つけ、通常練習へつなげます。',
+              ? lang.t(
+                  '全${widget.challenges.length}概念の固定問題を、最初の回答で通過しました。',
+                  'You passed set questions for all ${widget.challenges.length} ideas on your first try.',
+                )
+              : lang.t(
+                  '全回答は確定済みです。違いを見つけ、通常練習へつなげます。',
+                  'All answers are final. Find the differences and use them in regular practice.',
+                ),
           icon: _cleared
               ? Icons.workspace_premium_outlined
               : Icons.compare_arrows_rounded,
@@ -499,7 +526,10 @@ class _ScienceUnitLegendaryScreenState
         const SizedBox(height: GameTokens.spaceLg),
         Semantics(
           textField: true,
-          label: '単元の自己比較。概念同士のつながりを一文で書く',
+          label: lang.t(
+            '単元の自己比較。概念同士のつながりを一文で書く',
+            'Unit self-check. Describe how the ideas connect in one sentence.',
+          ),
           child: TextField(
             key: const ValueKey('unit-legendary-reflection'),
             controller: _reflection,
@@ -508,9 +538,15 @@ class _ScienceUnitLegendaryScreenState
             maxLength: 300,
             textInputAction: TextInputAction.done,
             onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(
-              labelText: '概念をつないで見つけたこと（1文）',
-              hintText: '例：条件が変わると、同じ力でも結果の見方が変わる。',
+            decoration: InputDecoration(
+              labelText: lang.t(
+                '概念をつないで見つけたこと（1文）',
+                'What you noticed about the ideas (one sentence)',
+              ),
+              hintText: lang.t(
+                '例：条件が変わると、同じ力でも結果の見方が変わる。',
+                'Example: Changing the conditions can change how the same force affects the result.',
+              ),
               alignLabelWithHint: true,
             ),
           ),
@@ -518,7 +554,9 @@ class _ScienceUnitLegendaryScreenState
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('unit-legendary-finish'),
-          label: _cleared ? 'Unit Legendaryをクリア' : '通常練習へ戻る',
+          label: _cleared
+              ? lang.t('Unit Legendaryをクリア', 'Unit Legendary cleared')
+              : lang.t('通常練習へ戻る', 'Back to regular practice'),
           icon: _cleared ? Icons.verified_outlined : Icons.refresh_rounded,
           onPressed: _canFinish ? _finishComparison : null,
           backgroundColor: _cleared ? colors.legendary : colors.pathReview,
@@ -539,15 +577,24 @@ class _ScienceUnitLegendaryScreenState
         ScienceChallengeHeader(
           eyebrow: 'UNIT LEGENDARY  /  COMPLETE',
           title: _cleared
-              ? 'Unit高難度課題クリア'
+              ? lang.t('Unit高難度課題クリア', 'Unit advanced challenge cleared')
               : _stoppedAfterWrong
-              ? '今回はここまで'
-              : '自己比較を完了',
+              ? lang.t('今回はここまで', 'That\'s it for now')
+              : lang.t('自己比較を完了', 'Self-check complete'),
           body: _cleared
-              ? '単元内の複数概念を、別場面の固定問題で横断しました。'
+              ? lang.t(
+                  '単元内の複数概念を、別場面の固定問題で横断しました。',
+                  'You connected several ideas in this unit through set questions in new situations.',
+                )
               : _stoppedAfterWrong
-              ? '最初の誤答でこの挑戦を終了しました。ハートが0なら、回復練習の後で別の固定問題に挑戦できます。'
-              : 'Unit Legendaryは未クリアです。通常練習で確かめ、また挑戦できます。',
+              ? lang.t(
+                  '最初の誤答でこの挑戦を終了しました。ハートが0なら、回復練習の後で別の固定問題に挑戦できます。',
+                  'This challenge ended after the first wrong answer. If you have zero hearts, do a recovery exercise before trying a different set question.',
+                )
+              : lang.t(
+                  'Unit Legendaryは未クリアです。通常練習で確かめ、また挑戦できます。',
+                  'Unit Legendary is not cleared yet. Review in regular practice, then try again.',
+                ),
           icon: _cleared
               ? Icons.workspace_premium_outlined
               : Icons.psychology_alt_outlined,
@@ -559,21 +606,34 @@ class _ScienceUnitLegendaryScreenState
         ),
         const SizedBox(height: GameTokens.spaceXl),
         ScienceChallengeSurface(
-          label: _cleared ? '習得の断定ではありません' : '通常Pathは失いません',
+          label: _cleared
+              ? lang.t('習得の断定ではありません', 'This does not prove mastery')
+              : lang.t('通常Pathは失いません', 'Your regular Path stays'),
           icon: Icons.info_outline,
           child: Text(
             _cleared
-                ? '表示するのは「Unit高難度課題クリア」です。単元全体の理解を自動判定しません。'
+                ? lang.t(
+                    '表示するのは「Unit高難度課題クリア」です。単元全体の理解を自動判定しません。',
+                    'This shows "Unit advanced challenge cleared." It does not judge your understanding of the whole unit.',
+                  )
                 : _stoppedAfterWrong
-                ? '次の固定問題と正解は開いていません。回答内容も保存しません。'
-                : '通常Path・連続学習・学校課題の利用条件は変わりません。',
+                ? lang.t(
+                    '次の固定問題と正解は開いていません。回答内容も保存しません。',
+                    'The next set question and its answer stay hidden. Your answers are not saved.',
+                  )
+                : lang.t(
+                    '通常Path・連続学習・学校課題の利用条件は変わりません。',
+                    'Your regular Path, streak, and class work remain available.',
+                  ),
           ),
         ),
         if (widget.onReturnToPath != null) ...[
           const SizedBox(height: GameTokens.spaceLg),
           ScienceChallengePrimaryButton(
             key: const ValueKey('unit-legendary-return-to-path'),
-            label: _cleared ? '学習パスへ戻る' : '通常練習へ戻る',
+            label: _cleared
+                ? lang.t('学習パスへ戻る', 'Back to learning path')
+                : lang.t('通常練習へ戻る', 'Back to regular practice'),
             icon: Icons.route_outlined,
             onPressed: _returnCalled ? null : _returnToPath,
             backgroundColor: colors.pathActive,
@@ -607,7 +667,10 @@ class _UnitLegendaryChoice extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: '選択肢$position、全$count件中。$text${selected ? '。選択中' : ''}',
+      label: lang.t(
+        '選択肢$position、全$count件中。$text${selected ? '。選択中' : ''}',
+        "Option $position of $count. $text${selected ? '. Selected' : ''}",
+      ),
       child: ExcludeSemantics(
         child: Material(
           color: selected

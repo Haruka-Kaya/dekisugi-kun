@@ -1,3 +1,14 @@
+import {
+  localizeMisconception,
+  localizeUnit,
+  type Lang,
+} from './i18n.js'
+import {
+  localizeNotationTask,
+  localizePracticeVariant,
+  localizeStory,
+  type UnitContentText,
+} from './i18n-content.js'
 import type { Unit } from './units.js'
 import { curriculumCoverageFor } from './curriculum-coverage.js'
 import { localPracticeVariantsFor } from './local-practice-variants.js'
@@ -15,13 +26,23 @@ import { scienceStoryFor, scienceStoryTitleFor } from './science-stories.js'
  * `localPracticeVariants` の3周を使う。どちらもAIとは別文で、詳細だけに含める。
  * API とアプリ同梱カタログが同じ変換を通ることで、公開形の二重管理を防ぐ。
  */
-export function publicUnitSummary(unit: Unit) {
+export function publicUnitSummary(
+  unit: Unit,
+  lang: Lang = 'ja',
+  content?: UnitContentText,
+) {
+  const localized = lang === 'en' ? localizeUnit(unit, lang) : unit
   return {
-    id: unit.id,
-    title: unit.title,
-    brief: unit.brief,
-    concepts: unit.concepts.map((concept) => {
-      const storyTitle = scienceStoryTitleFor(concept.key)
+    id: localized.id,
+    title: localized.title,
+    brief: localized.brief,
+    concepts: localized.concepts.map((concept) => {
+      // アプリは concept.storyTitle == section.scienceStory.title を同一性の根拠にする。
+      // 英語では差し替え表の Story 題名を使い、正本の日本語題名とずれないようにする。
+      const storyTitle =
+        (lang === 'en'
+          ? content?.concepts[concept.key]?.story.title
+          : undefined) ?? scienceStoryTitleFor(concept.key)
       const coverage = curriculumCoverageFor(concept.key)
       if (storyTitle == null) {
         throw new Error(`Science Storyが無いconcept: ${concept.key}`)
@@ -29,10 +50,12 @@ export function publicUnitSummary(unit: Unit) {
       if (coverage == null || coverage.unitId !== unit.id) {
         throw new Error(`curriculum coverageが無いconcept: ${concept.key}`)
       }
-      const misconception = MISCONCEPTIONS.find((m) => m.conceptKey === concept.key)
-      if (misconception == null) {
+      const found = MISCONCEPTIONS.find((m) => m.conceptKey === concept.key)
+      if (found == null) {
         throw new Error(`誤概念が無いconcept: ${concept.key}`)
       }
+      const misconception =
+        lang === 'en' ? localizeMisconception(found, lang) : found
       return {
         key: concept.key,
         label: concept.label,
@@ -58,22 +81,46 @@ export function publicUnitSummary(unit: Unit) {
 }
 
 /** 教材本文を含む公開形。配列もコピーし、正カタログを変更できないようにする。 */
-export function publicUnitDetail(unit: Unit) {
+export function publicUnitDetail(
+  unit: Unit,
+  lang: Lang = 'ja',
+  content?: UnitContentText,
+) {
+  const localized = lang === 'en' ? localizeUnit(unit, lang) : unit
   return {
-    ...publicUnitSummary(unit),
-    sections: unit.sections.map((section) => {
-      const localPracticeVariants = localPracticeVariantsFor(section)
+    ...publicUnitSummary(unit, lang, content),
+    sections: localized.sections.map((section) => {
+      const conceptText = content?.concepts[section.conceptKey]
+      const localPracticeVariants = localPracticeVariantsFor(section).map(
+        (variant) =>
+          localizePracticeVariant(
+            variant,
+            lang === 'en' ? conceptText?.practice[variant.stage] : undefined,
+          ),
+      )
       const notationLab = notationLabFor(section.conceptKey)
       if (notationLab == null) {
         throw new Error(`Notation Labが無いconcept: ${section.conceptKey}`)
       }
       const foundation = localPracticeVariants[0]
-      const scienceStory = foundation == null
+      const rawStory = foundation == null
         ? undefined
         : scienceStoryFor(section.conceptKey, foundation)
+      const scienceStory = rawStory == null
+        ? undefined
+        : localizeStory(
+            rawStory,
+            lang === 'en' ? conceptText?.story : undefined,
+          )
       if (scienceStory == null) {
         throw new Error(`Science Storyが無いconcept: ${section.conceptKey}`)
       }
+      const notationTasks = publicNotationLab(notationLab).tasks.map((task) =>
+        localizeNotationTask(
+          task,
+          lang === 'en' ? conceptText?.notation.tasks[task.id] : undefined,
+        ),
+      )
       return {
         conceptKey: section.conceptKey,
         title: section.title,
@@ -86,7 +133,7 @@ export function publicUnitDetail(unit: Unit) {
           ],
         },
         localPracticeVariants,
-        notationLab: publicNotationLab(notationLab),
+        notationLab: { tasks: notationTasks },
         scienceStory,
         // 旧クライアントが同じ1周目を続けられるよう公開形だけ残す。
         localCheckpoint: localPracticeVariants[0]?.checkpoint,
@@ -103,10 +150,14 @@ export const BUNDLED_UNIT_CATALOG_SCHEMA_VERSION = 10 as const
  * アプリに同梱する日本語教材カタログを組み立てる。
  * 科学内容の正は `UNITS` と `NOTATION_LABS`。戻り値は機械生成物に過ぎない。
  */
-export function buildBundledUnitCatalog(units: readonly Unit[]) {
+export function buildBundledUnitCatalog(
+  units: readonly Unit[],
+  lang: Lang = 'ja',
+  content: Readonly<Record<string, UnitContentText | undefined>> = {},
+) {
   return {
     schemaVersion: BUNDLED_UNIT_CATALOG_SCHEMA_VERSION,
-    language: 'ja' as const,
-    units: units.map(publicUnitDetail),
+    language: lang,
+    units: units.map((unit) => publicUnitDetail(unit, lang, content[unit.id])),
   }
 }

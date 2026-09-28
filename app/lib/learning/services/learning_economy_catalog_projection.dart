@@ -1,3 +1,4 @@
+import '../../config/app_language.dart';
 import '../../models/game_economy.dart';
 import '../domain/learning_economy.dart';
 
@@ -22,8 +23,8 @@ final class LearningEconomyCatalogProjection {
       result.add(
         GameCosmeticItemView(
           productId: product.productId,
-          title: product.title,
-          description: product.description,
+          title: t(product.title, product.titleEn),
+          description: t(product.description, product.descriptionEn),
           gemCost: product.gemCost,
           mascotStyle: product.mascotStyle,
           owned: owned,

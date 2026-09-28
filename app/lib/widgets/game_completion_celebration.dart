@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../config/motion.dart';
@@ -142,7 +143,9 @@ class GameCompletionCelebration extends StatelessWidget {
                         key: const ValueKey('completion-xp'),
                         icon: Icons.bolt_rounded,
                         value: '+${summary.xpAwarded}',
-                        label: summary.xpAwarded == 0 ? 'XP（今回は加算なし）' : 'XP',
+                        label: summary.xpAwarded == 0
+                            ? t('XP（今回は加算なし）', 'XP (none added this time)')
+                            : 'XP',
                         color: colors.streak,
                       ),
                     if (summary.showPersonalRewards && summary.gemsAwarded > 0)
@@ -150,21 +153,24 @@ class GameCompletionCelebration extends StatelessWidget {
                         key: const ValueKey('completion-gems'),
                         icon: Icons.diamond_rounded,
                         value: '+${summary.gemsAwarded}',
-                        label: '結晶',
+                        label: t('結晶', 'Gems'),
                         color: colors.gem,
                       ),
                     _CompletionMetric(
                       key: const ValueKey('completion-time'),
                       icon: Icons.timer_outlined,
                       value: _formatElapsed(summary.elapsed),
-                      label: '今回の時間',
+                      label: t('今回の時間', 'Time this round'),
                       color: colors.pathReview,
                     ),
                   ],
                 ),
                 const SizedBox(height: GameTokens.spaceSm),
                 Text(
-                  '時間はこの完了画面だけに表示し、端末へ保存しません。',
+                  t(
+                    '時間はこの完了画面だけに表示し、端末へ保存しません。',
+                    'Time is shown only on this screen and is not saved on the device.',
+                  ),
                   textAlign: TextAlign.center,
                   style: Theme.of(
                     context,
@@ -176,7 +182,7 @@ class GameCompletionCelebration extends StatelessWidget {
                   onPressed: () =>
                       Navigator.of(context).pop(GameCompletionAction.nextStep),
                   icon: const Icon(Icons.route_rounded),
-                  label: const Text('次の一歩をマップで見る'),
+                  label: Text(t('次の一歩をマップで見る', 'See the next step on the map')),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(56),
                     backgroundColor: colors.pathComplete,
@@ -193,7 +199,7 @@ class GameCompletionCelebration extends StatelessWidget {
                     context,
                   ).pop(GameCompletionAction.reviewResult),
                   icon: const Icon(Icons.visibility_outlined),
-                  label: const Text('学習結果を見直す'),
+                  label: Text(t('学習結果を見直す', 'Review your results')),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                     shape: RoundedRectangleBorder(
@@ -235,7 +241,10 @@ class _CelebrationHero extends StatelessWidget {
             ),
           ),
           Semantics(
-            label: '${mascotStyle.label}が笑顔で学習完了を祝っています',
+            label: t(
+              '${mascotStyle.label}が笑顔で学習完了を祝っています',
+              '${mascotStyle.label} smiles and celebrates your finished lesson',
+            ),
             child: ExcludeSemantics(
               child: PathMascotPreview(
                 reaction: GameCharacterReaction.celebrate,
@@ -364,7 +373,7 @@ String _formatElapsed(Duration elapsed) {
   final seconds = math.max(1, elapsed.inSeconds);
   final minutes = seconds ~/ 60;
   final rest = seconds % 60;
-  if (minutes == 0) return '$seconds秒';
+  if (minutes == 0) return t('$seconds秒', '${seconds}s');
   if (minutes < 60) return '$minutes:${rest.toString().padLeft(2, '0')}';
   final hours = minutes ~/ 60;
   return '$hours:${(minutes % 60).toString().padLeft(2, '0')}:${rest.toString().padLeft(2, '0')}';

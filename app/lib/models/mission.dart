@@ -1,4 +1,5 @@
 import 'dossier.dart';
+import '../config/app_language.dart';
 
 /// 教材を読んだあと、どこから説明を組み立てるか。
 ///
@@ -13,15 +14,24 @@ enum TeachingTactic {
   String get wire => name;
 
   String get label => switch (this) {
-    TeachingTactic.example => '身近な例から',
-    TeachingTactic.reason => 'しくみ・理由から',
-    TeachingTactic.experiment => '試したことから',
+    TeachingTactic.example => t('身近な例から', 'Start from an everyday example'),
+    TeachingTactic.reason => t('しくみ・理由から', 'Start from how and why'),
+    TeachingTactic.experiment => t('試したことから', 'Start from something you tried'),
   };
 
   String get hint => switch (this) {
-    TeachingTactic.example => '「たとえば…」から、身近な場面で説明する',
-    TeachingTactic.reason => '結論のあとに「なぜなら…」を続ける',
-    TeachingTactic.experiment => 'やってみたことと、その結果から説明する',
+    TeachingTactic.example => t(
+      '「たとえば…」から、身近な場面で説明する',
+      'Start with "For example…" and explain with an everyday scene',
+    ),
+    TeachingTactic.reason => t(
+      '結論のあとに「なぜなら…」を続ける',
+      'Give your conclusion, then add "because…"',
+    ),
+    TeachingTactic.experiment => t(
+      'やってみたことと、その結果から説明する',
+      'Explain using what you tried and what happened',
+    ),
   };
 }
 
