@@ -27,11 +27,6 @@ import { useFakeKv, type FakeKv } from './support/fake_kv.js'
 let seq = 0
 const device = () => `dev-${++seq}`
 
-// 日付境界を検証するsuiteなので、実行日が進んでもfixtureを古くしない。
-// 2026-08-06 12:00 JST（木曜）に固定し、同じ週・未来・期限外を再現する。
-const TEST_NOW = Date.parse('2026-08-06T03:00:00.000Z')
-const realDateNow = Date.now
-
 function fakeRes() {
   const out: { code?: number; body?: any; headers: Record<string, string> } = { headers: {} }
   const res = {
@@ -55,7 +50,6 @@ let fake: FakeKv
 let restore: () => void
 
 beforeEach(() => {
-  Date.now = () => TEST_NOW
   process.env.AUTH_SECRET = 'x'.repeat(48)
   process.env.TEAM_ADMIN_TOKEN = ADMIN
   delete process.env.NODE_ENV
@@ -66,7 +60,6 @@ beforeEach(() => {
   restore = f.restore
 })
 afterEach(() => {
-  Date.now = realDateNow
   restore()
   delete process.env.TEAM_ADMIN_TOKEN
   delete process.env.DEKISUGI_INTERNAL_SCHOOL_TESTING
