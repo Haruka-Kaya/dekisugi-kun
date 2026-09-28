@@ -810,6 +810,291 @@ export const STAGE2_PRACTICE_PLANS: Readonly<
       },
     },
   },
+  energyResources: {
+    foundation: {
+      recallPrompt:
+        '電気が別のエネルギーを変換してつくられることを、水力発電と火力発電の例で説明してください。',
+      reasoningPrompt:
+        '「発電所が電気を作る」だけでは不十分な理由として、発電機が何を運ぶかを足してください。',
+      expectedOutcome:
+        '水力発電では水の位置エネルギーが水車の運動エネルギーを経て電気に、'
+        + '火力発電では燃料の化学エネルギーが熱と運動エネルギーを経て電気に変換されます。',
+      expectedReason:
+        '発電機は運動エネルギーを電気エネルギーへ変換する装置で、'
+        + 'もとのエネルギーなしに電気は生まれません。エネルギーは姿を変えるだけです。',
+    },
+    conditions: {
+      recallPrompt:
+        '枯渇性資源と再生可能エネルギーの違いを、化石燃料と太陽光・風力の例で説明してください。',
+      reasoningPrompt:
+        '「いつか尽きる」かどうかの違いに加え、二酸化炭素を出す量や自給の視点を一つ足してください。',
+      transferPrompt:
+        'ある国の発電割合で、火力（化石燃料）が多くを占め、'
+        + '太陽光と風力が少しずつ増えています。'
+        + '資源の性質の違いとして何が起きているかを説明してください。',
+      expectedOutcome:
+        '化石燃料は使うほど減る枯渇性資源で、'
+        + '太陽光・風力は繰り返し利用できる再生可能エネルギーなので、'
+        + '割合の変化は資源の有限性を意識した選択です。',
+      expectedReason:
+        '枯渇性資源は埋蔵量に限りがあり将来使えなくなりますが、'
+        + '再生可能エネルギーは自然の流れから繰り返し得られます。'
+        + '二酸化炭素の排出量も違います。',
+      checkpoint: {
+        lure: '再生可能エネルギーは枯れないから、どんなに使っても発電量は増やし続けられる。',
+        options: [
+          {
+            id: 'renewable-output-limited',
+            text: '再生可能エネルギーでも、自然条件と設備の規模が発電量を決めるので上限がある。',
+          },
+          {
+            id: 'unlimited-solar',
+            text: '太陽光は無限に来るので、パネルを置けば必要な分だけ発電できる。',
+            hint: '発電量を決めるのは自然条件と設備の規模か、エネルギー資源の量だけかを考えます。',
+          },
+          {
+            id: 'fossil-better',
+            text: '化石燃料のほうが安定して発電できるので、再生可能エネルギーへ切り替える意味はない。',
+            hint: '切り替えの理由が発電の安定性だけか、資源の有限性や排出量も含むかを考えます。',
+          },
+        ],
+        correctOptionId: 'renewable-output-limited',
+        explanation:
+          '再生可能エネルギーは繰り返し利用できますが、'
+          + '日照や風などの自然条件と設備の規模で発電量が決まり、'
+          + '欲しい分だけ無制限には作れません。',
+      },
+    },
+    transfer: {
+      recallPrompt:
+        'エネルギーの変換に損失が伴うことを、'
+        + '火力発電で燃料の化学エネルギーがすべて電気にならないことで説明してください。',
+      reasoningPrompt:
+        '省エネルギーが「作る側」だけでなく「使う側」の工夫でもある点を足してください。',
+      transferPrompt:
+        '同じ発電量でも、効率の悪い発電方法では多くの燃料が必要で、'
+        + '効率のよい方法では少ない燃料で済みます。'
+        + 'この差が資源と環境負荷に与える影響を説明してください。',
+      expectedOutcome:
+        '変換効率が高いほど同じ発電量に必要な燃料は少なくなり、'
+        + '資源の消費と二酸化炭素などの環境負荷が減ります。',
+      expectedReason:
+        '変換では一部が利用できない熱に変わるため、'
+        + '効率の低い変換ほど損失が大きく、より多くの資源を消費します。',
+      checkpoint: {
+        lure: '効率のよい発電装置なら、使った燃料のエネルギーを100%電気に変えられる。',
+        options: [
+          {
+            id: 'all-energy-electric',
+            text: '高性能の発電機なら燃料の化学エネルギーがすべて電気になる。',
+            hint: '変換で利用できない形に変わるエネルギーがあるかを考えます。',
+          },
+          {
+            id: 'loss-becomes-nothing',
+            text: '変換で失われるエネルギーは消えて無くなるので、効率は関係ない。',
+            hint: 'エネルギーが消えるのか、使えない形に変わるのかを区別します。',
+          },
+          {
+            id: 'less-fuel-same-output',
+            text: '同じ発電量なら効率のよい方法ほど必要な燃料が少なく、資源と排出を減らせる。',
+          },
+        ],
+        correctOptionId: 'less-fuel-same-output',
+        explanation:
+          '変換ではエネルギーの一部が利用できない熱に変わります。'
+          + '効率が高いほど損失が小さく、同じ電気をより少ない資源で得られます。',
+      },
+    },
+  },
+  natureBalance: {
+    foundation: {
+      recallPrompt:
+        '食べる・食べられる関係と分解者の役割を、生産者・消費者・分解者の言葉で説明してください。',
+      reasoningPrompt:
+        '物質が生物と無機の環境の間を循環する点として、炭素の出入りを一つ足してください。',
+      expectedOutcome:
+        '植物が光合成で有機物を作り消費者が食べ、'
+        + '死がいやふんを分解者が無機物に戻すので、'
+        + '物質は生物と環境の間を循環します。',
+      expectedReason:
+        '生産者・消費者・分解者のつながりで物質が循環し、'
+        + '炭素は光合成で生物へ入り、呼吸や分解で二酸化炭素として環境へ戻るためです。',
+    },
+    conditions: {
+      recallPrompt:
+        '自然界のつり合いが、食べる側と食べられる側の相互の影響で保たれることを説明してください。',
+      reasoningPrompt:
+        '一つの種が急増・急減したときの影響が食物網を通じて伝わる例を足してください。',
+      transferPrompt:
+        'ある湖で水草を食べる魚が増えて水草が減り、'
+        + '翌年その魚が減った記録があります。'
+        + 'この変化をつり合いの言葉で説明してください。',
+      expectedOutcome:
+        '魚が増えて水草が減り、餌が足りなくなった魚が減ることで、'
+        + '食べる側と食べられる側の数が相互に影響して一定に保たれます。',
+      expectedReason:
+        '食べられる側の増加は食べる側の餌を増やし、'
+        + '食べられる側が減れば食べる側も減ります。'
+        + 'この相互の影響が自然界のつり合いです。',
+      checkpoint: {
+        lure: '食べられる側の数が減っても、食べる側は別の餌をすぐ見つけるので影響しない。',
+        options: [
+          {
+            id: 'mutual-numbers',
+            text: '食べられる側が減れば食べる側も減り、食べる側が減れば食べられる側が増える相互の影響がある。',
+          },
+          {
+            id: 'switch-prey-instant',
+            text: '食べる側はすぐ別の餌を見つけられるので、数は変わらない。',
+            hint: '餌の選択肢が十分あるか、数の変化が伝わるつながりがあるかを考えます。',
+          },
+          {
+            id: 'plants-unlimited',
+            text: '生産者はいくらでも増えるので、食べられる側が減ることはない。',
+            hint: '生産者が無限に増えない条件を、光や養分で考えます。',
+          },
+        ],
+        correctOptionId: 'mutual-numbers',
+        explanation:
+          '食べる側と食べられる側は数の上で互いに影響し合います。'
+          + '片方の増減は食物網を通じて相手の増減を引き起こし、つり合いを保ちます。',
+      },
+    },
+    transfer: {
+      recallPrompt:
+        '人間の活動が自然界のつり合いを変える例を、開発・汚染・外来生物のどれかで説明してください。',
+      reasoningPrompt:
+        'つり合いの回復力に限界があることを、「元に戻る」と言い切れない例で足してください。',
+      transferPrompt:
+        'ある森で開発が進み、まず鳥が減り、その後で虫が増えた記録があります。'
+        + 'この変化を食物網とつり合いの限界で説明してください。',
+      expectedOutcome:
+        '開発で鳥のすみかが減り、鳥に食べられていた虫が増えたので、'
+        + 'つながりを通じた影響が連鎖しています。回復が難しい変化です。',
+      expectedReason:
+        '食物網のつながりの上の一つの変化が他の生物の数を連鎖的に変えます。'
+        + 'すみかの喪失は大きな変化で、つり合いの回復力を超えることがあります。',
+      checkpoint: {
+        lure: '人間の影響でなくなった生物も、自然は元に戻る力をもつので必ず戻ってくる。',
+        options: [
+          {
+            id: 'balance-no-limit',
+            text: '自然界の回復力は限りないので、絶滅した種もやがて戻る。',
+            hint: '絶滅した種が自然界の力で戻れるかを考えます。',
+          },
+          {
+            id: 'cascade-impact',
+            text: '大きな変化は回復力を超え、失われた種や環境は元に戻らないことがある。',
+          },
+          {
+            id: 'humans-only-threat',
+            text: 'つり合いを壊すのは人間だけなので、人間さえ立ち入らなければ自然は変わらない。',
+            hint: '人間以外に自然の変化を起こす要因があるかを考えます。',
+          },
+        ],
+        correctOptionId: 'cascade-impact',
+        explanation:
+          'つり合いには回復力がありますが限界があります。'
+          + '絶滅した種や大きく変化した環境は、自然の力だけでは元に戻りません。',
+      },
+    },
+  },
+  sustainableSociety: {
+    foundation: {
+      recallPrompt:
+        '自然災害の発生を止められない理由と、科学的な備えで被害を小さくできることを説明してください。',
+      reasoningPrompt:
+        '「発生を止める」ではなく「起きる場所と被害を予測して備える」という点を足してください。',
+      expectedOutcome:
+        '地震や台風は地球内部や大気の自然な活動で起きるので発生は止められませんが、'
+        + '観測と予測、構造物や計画で被害を小さくできます。',
+      expectedReason:
+        '災害のエネルギーは人間が止められる規模を超えますが、'
+        + '過去の記録と観測データから危険な場所と起き方を予測し、'
+        + '耐震構造や避難計画で備えることはできます。',
+    },
+    conditions: {
+      recallPrompt:
+        'ハザードマップがどんな情報を示し、どう作られているかを、'
+        + '過去の災害記録と観測データから説明してください。',
+      reasoningPrompt:
+        '避難経路や避難場所の決め方が、科学的なデータに基づく点を足してください。',
+      transferPrompt:
+        'ある町のハザードマップで、川沿いの地域だけ浸水のおそれが高く、'
+        + '高台の住宅地は低いと示されました。'
+        + 'この違いの根拠となるデータを説明してください。',
+      expectedOutcome:
+        '過去の洪水の記録、地形と標高、降水量の観測データから、'
+        + '川沿いは浸水しやすい高リスク地域、高台はリスクが低いと予測されています。',
+      expectedReason:
+        'ハザードマップは過去の災害の記録と地形・気象の観測データをもとに、'
+        + 'どこでどんな被害が起きやすいかを予測して作られます。',
+      checkpoint: {
+        lure: 'ハザードマップは将来の災害を正確に予言する地図なので、危険区域とされた場所では必ず災害が起きる。',
+        options: [
+          {
+            id: 'prophecy-map',
+            text: 'ハザードマップの危険区域は必ず災害が起きる場所を示している。',
+            hint: '予測と予言の違い、不確実な予測に基づく備えかを考えます。',
+          },
+          {
+            id: 'safe-zone-guaranteed',
+            text: '低リスクと示された場所は絶対に安全なので、備えは不要である。',
+            hint: 'リスクが低いことと、被害が起きないことの違いを考えます。',
+          },
+          {
+            id: 'data-based-risk',
+            text: 'ハザードマップは過去の記録と観測データに基づく予測で、起きやすい場所を示す備えのための地図である。',
+          },
+        ],
+        correctOptionId: 'data-based-risk',
+        explanation:
+          'ハザードマップは過去の災害記録と観測データから予測した危険な場所を示します。'
+          + '必ず起きる予言ではなく、備えを決めるための科学的な目安です。',
+      },
+    },
+    transfer: {
+      recallPrompt:
+        '持続可能な社会とは何かを、'
+        + '将来の世代も資源を使い続けられる環境負荷の少ない社会として説明してください。',
+      reasoningPrompt:
+        '再生可能エネルギーや省エネルギーなど、環境負荷を減らす具体的な選択を一つ足してください。',
+      transferPrompt:
+        'ある地域が、化石燃料から太陽光・風力への転換と省エネを進めています。'
+        + 'これが持続可能な社会に向かう理由を、資源と環境負荷の両面で説明してください。',
+      expectedOutcome:
+        '再生可能エネルギーへの転換は枯渇性資源の消費を減らし、'
+        + '排出される二酸化炭素も減らすので、'
+        + '資源と環境負荷の両面で持続可能に近づきます。',
+      expectedReason:
+        '化石燃料は有限で排出量も多いのに対し、'
+        + '再生可能エネルギーは繰り返し使え排出量が少なく、'
+        + '省エネは必要な量自体を減らします。',
+      checkpoint: {
+        lure: '持続可能な社会は、科学技術だけが進めば自動的に実現するので、個人の選択は関係ない。',
+        options: [
+          {
+            id: 'tech-only-solution',
+            text: '持続可能な社会は技術の問題だけなので、人々の選択を考える必要はない。',
+            hint: '技術の進歩だけで資源の使い方や選択が決まるかを考えます。',
+          },
+          {
+            id: 'choices-and-tech',
+            text: '技術の進歩と一人ひとり・社会の選択の両方が環境負荷を減らし、持続可能に近づける。',
+          },
+          {
+            id: 'return-to-nature',
+            text: '持続可能な社会とは、すべての技術を捨てて自然に戻ることである。',
+            hint: '便利さと環境負荷の両方を考える持続可能性の意味を確認します。',
+          },
+        ],
+        correctOptionId: 'choices-and-tech',
+        explanation:
+          '持続可能な社会は、再生可能エネルギーや効率化などの技術と、'
+          + '資源の使い方を選ぶ社会・個人の決断がそろって実現します。',
+      },
+    },
+  },
 }
 
 /** Stage 2 3概念×3周の構造化課題。項目は全員が同じ画面を共有する著者順。 */
@@ -1237,6 +1522,155 @@ export const STAGE2_COGNITIVE_TASKS: Readonly<
           'giraffe-variation': 'natural-selection',
           'moth-selection': 'natural-selection',
           'whale-effort': 'use-disuse',
+        },
+      },
+    },
+  },
+  energyResources: {
+    foundation: {
+      kind: 'sequence',
+      operation: 'causalOrder',
+      items: [
+        { id: 'heat-steam', text: '熱エネルギーが水を蒸気に変える' },
+        { id: 'fuel-chemical', text: '燃料の化学エネルギーが燃焼で放出される' },
+        { id: 'generator-electric', text: '発電機が運動エネルギーを電気エネルギーに変換する' },
+        { id: 'turbine-motion', text: '蒸気がタービンを回して運動エネルギーになる' },
+      ],
+      solution: {
+        orderedItemIds: [
+          'fuel-chemical',
+          'heat-steam',
+          'turbine-motion',
+          'generator-electric',
+        ],
+      },
+    },
+    conditions: {
+      kind: 'singleSelect',
+      operation: 'prediction',
+      items: [
+        { id: 'renewable-limited', text: '再生可能エネルギーは枯れないので、設備を増やせば無制限に発電できる。' },
+        { id: 'output-conditions', text: '発電量は自然条件と設備の規模で決まり、資源が枯れなくても上限がある。' },
+        { id: 'fossil-replenish', text: '化石燃料は地中で作られ続けるので、実質は再生可能エネルギーである。' },
+      ],
+      solution: { selectedItemId: 'output-conditions' },
+    },
+    transfer: {
+      kind: 'classify',
+      operation: 'conditionClassify',
+      items: [
+        { id: 'oil', text: '石油' },
+        { id: 'natural-gas', text: '天然ガス' },
+        { id: 'solar', text: '太陽光' },
+        { id: 'geothermal', text: '地熱' },
+      ],
+      targets: [
+        { id: 'exhaustible', label: '枯渇性資源' },
+        { id: 'renewable', label: '再生可能エネルギー' },
+      ],
+      solution: {
+        targetByItemId: {
+          'oil': 'exhaustible',
+          'solar': 'renewable',
+          'natural-gas': 'exhaustible',
+          'geothermal': 'renewable',
+        },
+      },
+    },
+  },
+  natureBalance: {
+    foundation: {
+      kind: 'singleSelect',
+      operation: 'prediction',
+      items: [
+        { id: 'cascade-effect', text: '水草が減ると水草を食べる魚も減り、その魚を食べる肉食魚も変わる。' },
+        { id: 'quick-other-food', text: '水草が減っても魚は別の餌をすぐ見つけるので、他の生物に影響はない。' },
+        { id: 'only-producer', text: '生産者だけが影響を受け、消費者の数は変わらない。' },
+      ],
+      solution: { selectedItemId: 'cascade-effect' },
+    },
+    conditions: {
+      kind: 'classify',
+      operation: 'conditionClassify',
+      items: [
+        { id: 'green-plant', text: '光合成をする植物' },
+        { id: 'rabbit', text: '草を食べるウサギ' },
+        { id: 'fungi', text: '死がいを分解する菌類' },
+        { id: 'hawk', text: 'ウサギを食べるタカ' },
+      ],
+      targets: [
+        { id: 'producer', label: '生産者' },
+        { id: 'consumer', label: '消費者' },
+        { id: 'decomposer', label: '分解者' },
+      ],
+      solution: {
+        targetByItemId: {
+          'green-plant': 'producer',
+          'rabbit': 'consumer',
+          'fungi': 'decomposer',
+          'hawk': 'consumer',
+        },
+      },
+    },
+    transfer: {
+      kind: 'singleSelect',
+      operation: 'prediction',
+      items: [
+        { id: 'birds-gone-insects-same', text: '鳥が減っても虫の数は変わらない。' },
+        { id: 'balance-instant', text: '鳥が減れば自然がすぐ元に戻すので、虫の数は一定に保たれる。' },
+        { id: 'insects-increase', text: '食べる側の鳥が減ったので、食べられる側の虫が増える。' },
+      ],
+      solution: { selectedItemId: 'insects-increase' },
+    },
+  },
+  sustainableSociety: {
+    foundation: {
+      kind: 'sequence',
+      operation: 'causalOrder',
+      items: [
+        { id: 'identify-risk', text: '危険な場所と起きやすい被害を予測する' },
+        { id: 'prepare', text: '構造物や避難計画で備える' },
+        { id: 'collect-records', text: '過去の災害記録と観測データを集める' },
+        { id: 'make-map', text: 'ハザードマップに示して共有する' },
+      ],
+      solution: {
+        orderedItemIds: [
+          'collect-records',
+          'identify-risk',
+          'make-map',
+          'prepare',
+        ],
+      },
+    },
+    conditions: {
+      kind: 'singleSelect',
+      operation: 'prediction',
+      items: [
+        { id: 'risk-estimate', text: '過去の記録とデータに基づく予測で、起きやすさを示す。' },
+        { id: 'exact-prophecy', text: '危険区域では必ず災害が起き、安全区域では絶対に起きない。' },
+        { id: 'guessing-map', text: '住民の感覚で色分けした地図で、科学的な根拠はない。' },
+      ],
+      solution: { selectedItemId: 'risk-estimate' },
+    },
+    transfer: {
+      kind: 'classify',
+      operation: 'conditionClassify',
+      items: [
+        { id: 'renewable-switch', text: '化石燃料から再生可能エネルギーへの切り替え' },
+        { id: 'efficiency-up', text: '省エネと変換効率の向上' },
+        { id: 'mass-fossil', text: '化石燃料を将来も同じ割合で使い続ける' },
+        { id: 'unchanged-use', text: '現在の使い方を変えない' },
+      ],
+      targets: [
+        { id: 'sustainable-choice', label: '持続可能な選択' },
+        { id: 'unsustainable-choice', label: '持続可能でない選択' },
+      ],
+      solution: {
+        targetByItemId: {
+          'renewable-switch': 'sustainable-choice',
+          'mass-fossil': 'unsustainable-choice',
+          'efficiency-up': 'sustainable-choice',
+          'unchanged-use': 'unsustainable-choice',
         },
       },
     },

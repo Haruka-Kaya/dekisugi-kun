@@ -61,7 +61,7 @@ nothing a student needs to learn is behind payment.
   notation / compete / profile.
 - The signature teach-back loop: read → hide → explain by voice or text →
   replay/re-read → fixed catalog checkpoint → hint-and-retry on miss.
-- 11 curriculum units (32 concepts) aligned to Japan's national science
+- 12 curriculum units (35 concepts) aligned to Japan's national science
   curriculum guidelines, including the stage-2 chemistry units added this period.
 - Misconception story missions, notation labs, spaced retrieval, hearts with
   timed recovery, daily XP caps that prevent grinding.

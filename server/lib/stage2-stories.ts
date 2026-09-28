@@ -231,4 +231,64 @@ export const STAGE2_STORY_SOURCES: Readonly<Record<string, StorySource>> = {
     ],
     line('evolution.punchline', 'dekisugi', '努力で首が伸びたんじゃなくて、長い首の仲間が多く残ったのか！キリンさん、頑張り屋さんでごめん！'),
   ),
+  energyResources: story(
+    'energyResources.meter-mystery',
+    '電気製造工場の原材料不明事件',
+    '理科室の資料棚。「発電方法別の割合」の円グラフと、ある月の電気料金明細が開かれている。',
+    [
+      line('energyResources.open.1', 'mio', '料金明細の電源構成を見ると、火力が半分以上。発電のもとになるエネルギー資源が書いてあるよ。'),
+      line('energyResources.open.2', 'ren', '火力は燃料の化学エネルギーを、水力は水の位置エネルギーを変換してる。変換経路を記録するね。'),
+      line('energyResources.open.3', 'dekisugi', '発電所は電気を製造する工場！注文すれば作り放題だよ！'),
+    ],
+    [
+      response('energyResources', 'manufacture-unlimited', 'dekisugi', '製造量は無限！……でも材料がないと工場は動けない。あれ？'),
+      response('energyResources', 'conversion-limited', 'ren', '変換の言葉が合ってる。資源の量と効率が、作れる量を決めるんだ。'),
+      response('energyResources', 'thermal-only-source', 'mio', '太陽光パネルや風車からの電気も記録にあるね。火力だけじゃないよ。'),
+    ],
+    [
+      line('energyResources.resolve.1', 'ren', '発電はエネルギーの変換。燃料・水・風・光が電気に姿を変えるんだ。'),
+      line('energyResources.resolve.2', 'mio', '枯れない再生可能エネルギーと、使えば尽きる枯渇性資源では、選び方が違ってくるね。'),
+    ],
+    line('energyResources.punchline', 'dekisugi', '電気の原材料は「エネルギー」でした！工場長、材料発注は地球頼みだ！'),
+  ),
+  natureBalance: story(
+    'natureBalance.pond-investigation',
+    '池の数表、連鎖反応事件',
+    '学校近くの池の生き物調査記録。水草・草食魚・肉食魚の数が3年分並んでいる。',
+    [
+      line('natureBalance.open.1', 'mio', '2年目、草食魚が増えて水草が減ってる。3年目は草食魚が減って水草が戻ったね。'),
+      line('natureBalance.open.2', 'ren', '食べる側と食べられる側の数が、互いに影響し合って変動した記録だ。'),
+      line('natureBalance.open.3', 'dekisugi', '自然は自動で元に戻るんだから、水草がゼロになっても大丈夫だったんだよ！'),
+    ],
+    [
+      response('natureBalance', 'recover-anyway', 'dekisugi', '回復力無限説、採用！……でも絶滅した種は帰ってこないか。'),
+      response('natureBalance', 'only-humans-change', 'mio', '人間がいなくても、台風や気候の変化でつり合いは動くよ。'),
+      response('natureBalance', 'linked-balance', 'ren', 'つながりの上のつり合い、そして回復には限界がある。それがこの記録の読み方だ。'),
+    ],
+    [
+      line('natureBalance.resolve.1', 'mio', '食物網と分解者が物質を循環させて、つり合いを保ってるんだ。'),
+      line('natureBalance.resolve.2', 'ren', 'だから一つの変化が連鎖する。環境調査はその変化を早く見つける手段だね。'),
+    ],
+    line('natureBalance.punchline', 'dekisugi', '池の数表は「連鎖のお知らせ」だった！水草さん、見放してごめん！'),
+  ),
+  sustainableSociety: story(
+    'sustainableSociety.hazard-map',
+    '台風を消す装置の設計図事件',
+    '防災学習室。地域のハザードマップと過去の浸水記録が開かれている。',
+    [
+      line('sustainableSociety.open.1', 'ren', '川沿いは浸水リスクが高くて、高台は低い。過去の記録と地形データから作られた予測だね。'),
+      line('sustainableSociety.open.2', 'mio', '避難経路も書いてある。予測できれば、構造物と計画で備えられるね。'),
+      line('sustainableSociety.open.3', 'dekisugi', '科学力で台風を消す装置を作れば、ハザードマップはいらないよ！設計図はここに！'),
+    ],
+    [
+      response('sustainableSociety', 'mitigate-not-prevent', 'mio', '発生を止めるんじゃなくて、観測と予測で被害を小さくする発想だね。'),
+      response('sustainableSociety', 'stop-disasters', 'ren', '地震や台風のエネルギーは、人間が止められる規模じゃないよ。装置の電源は？'),
+      response('sustainableSociety', 'technology-fixes-all', 'dekisugi', '全部技術が解決するから人は何もしなくていい！……って、資源が先に尽きる？'),
+    ],
+    [
+      line('sustainableSociety.resolve.1', 'ren', '止めるんじゃなくて備える。観測・警報・構造物・計画で被害を小さくするのが減災だ。'),
+      line('sustainableSociety.resolve.2', 'mio', '持続可能な社会も、技術と私たちの選択の両方で環境負荷を減らしていくんだ。'),
+    ],
+    line('sustainableSociety.punchline', 'dekisugi', '台風消去装置は開発中止！ハザードマップと避難計画、ぼくの名案は「備え」だった！'),
+  ),
 }

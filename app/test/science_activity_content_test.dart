@@ -87,7 +87,7 @@ void main() {
       }
     }
 
-    expect(conceptCount, 32);
+    expect(conceptCount, 35);
     expect(
       presentationSignatures.length,
       3,
@@ -223,8 +223,8 @@ void main() {
       }
     }
 
-    expect(count, 32);
-    expect(taskCount, 107);
+    expect(count, 35);
+    expect(taskCount, 116);
     expect(traceCount, 22);
     expect(taskKinds, LocalNotationTaskKind.values.toSet());
   });

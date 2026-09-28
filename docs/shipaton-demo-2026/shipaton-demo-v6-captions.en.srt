@@ -1,6 +1,6 @@
 1
 00:00:05,200 --> 00:00:12,800
-Your learning path — 11 science units, 32 concepts
+Your learning path — 12 science units, 35 concepts
 
 2
 00:00:13,200 --> 00:00:23,800

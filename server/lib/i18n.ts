@@ -2237,6 +2237,201 @@ const EN_UNITS: Record<string, UnitText> = {
       },
     },
   },
+  'energy-society': {
+    title: 'Science, Nature, and Humanity',
+    brief:
+      'Understand power generation as energy conversion, see the balance of nature in food webs '
+      + 'and material cycles, and use records and choices to think about disasters and a sustainable society.',
+    concepts: {
+      energyResources: {
+        label: 'Energy Conversion and Resources',
+        intent:
+          'That electricity is not manufactured but converted from another form of energy, that resources '
+          + 'include exhaustible energy resources and renewable energy, and that the amount generated is '
+          + 'limited by the amount of resource and by efficiency. Complete only when the learner can explain '
+          + 'that even energy that never runs out has a limit set by conditions and equipment scale.',
+      },
+      natureBalance: {
+        label: 'The Balance of Nature',
+        intent:
+          'That the balance of nature is kept by food-web links and material cycles, so a change in one '
+          + 'species propagates to other species, and that the power to recover has limits. Complete only '
+          + 'when the learner can explain records of mutually fluctuating numbers and that an extinct '
+          + 'species never returns.',
+      },
+      sustainableSociety: {
+        label: 'Disasters and a Sustainable Society',
+        intent:
+          'That disasters cannot be prevented but their damage can be reduced by observation, forecasting, '
+          + 'structures, and evacuation planning, and that a sustainable society is brought about by '
+          + 'technology plus the choices of society and individuals. Complete only when the learner can '
+          + 'explain that technology alone does not automatically make society sustainable.',
+      },
+    },
+    sections: {
+      energyResources: {
+        title: 'Where does the electricity come from before it reaches the outlet?',
+        localSpeakingPractice: {
+          targetPhrase: 'Generation is conversion to electricity, and the source and its limits differ',
+          acceptedTranscripts: [
+            'Generation is conversion to electricity, and the source and its limits differ',
+          ],
+        },
+        body: [
+          'The electricity in an outlet is not made inside the power station. Generation is a change '
+          + 'of form: the **chemical energy** of fuel becomes thermal energy in combustion, turns a '
+          + 'turbine, and the generator converts **motion energy** into **electrical energy**. In '
+          + 'hydropower, the water’s potential energy becomes motion energy before becoming electricity.',
+          'The resources behind generation are of two kinds. **Exhaustible energy resources** — coal, '
+          + 'oil, and natural gas — are used up. **Renewable energy** — sunlight, wind, water, and '
+          + 'geothermal heat — is supplied again and again and does not run out. Many countries still '
+          + 'generate most of their electricity by thermal generation that burns exhaustible resources.',
+          'Resources that never run out do not mean unlimited generation. Even sunlight and wind are '
+          + 'limited by natural conditions and the scale of the facilities. And each conversion passes '
+          + 'part of the energy into heat and other forms we cannot use, so raising **conversion '
+          + 'efficiency** decides how far a resource can be used.',
+        ],
+        tryIt:
+          'Read the breakdown of power sources in your home electricity bill or a school-distributed '
+          + 'chart of generation methods, and divide the sources into exhaustible resources and '
+          + 'renewable energy. Which type does your country or region rely on most?',
+        localCheckpoint: {
+          lure:
+            'A power station is a factory that makes electricity, so with enough effort we could make as much electricity as we like.',
+          options: [
+            {
+              id: 'manufacture-unlimited',
+              text: 'A power station manufactures electricity, so the amount made can be increased as much as we want.',
+              hint: 'Think about what “material” electricity is made from.',
+            },
+            {
+              id: 'conversion-limited',
+              text: 'Generation is a conversion of energy, and the amount generated is limited by the resource amount and efficiency.',
+            },
+            {
+              id: 'thermal-only-source',
+              text: 'Electricity exists only where thermal generation runs, so natural power cannot make electricity.',
+              hint: 'Remember that solar panels and windmills also produce electricity.',
+            },
+          ],
+          correctOptionId: 'conversion-limited',
+          explanation:
+            'Generation is a conversion that turns another form of energy into electrical energy. '
+            + 'Because the amount that can be generated is set by the resource amount and by '
+            + 'efficiency, electricity cannot be made without limit.',
+        },
+      },
+      natureBalance: {
+        title: 'How are the pond’s living things connected?',
+        localSpeakingPractice: {
+          targetPhrase: 'Nature’s balance rests on the links of the food web',
+          acceptedTranscripts: [
+            'Nature’s balance rests on the links of the food web',
+          ],
+        },
+        body: [
+          'In a pond ecosystem, plants photosynthesize, herbivorous fish eat the plants, and carnivorous '
+          + 'fish eat them — this eat-and-be-eaten chain of links is called a **food chain**. When several '
+          + 'chains overlap, the whole is called a **food web**.',
+          'Carbon and other materials circulate between the organisms and the environment: carbon taken in '
+          + 'by photosynthesis is passed on by eating, **decomposers** such as bacteria and fungi break the '
+          + 'remains and droppings into inorganic matter, and it returns to the environment as carbon '
+          + 'dioxide and nutrients. This circulation is called **material cycling**.',
+          'The numbers of the eaters and the eaten influence each other and fluctuate, so the whole is '
+          + 'kept roughly in **balance**. If water plants increase, the fish that eat them increase too; '
+          + 'when the fish increase, the plants decrease. But this power to recover has a **limit**: when '
+          + 'one species declines sharply or disappears, the connected species are affected, and a species '
+          + 'that becomes extinct never returns.',
+          'Natural changes such as typhoons and climate shift the balance without any human involvement, '
+          + 'and human activity — development and introductions of outside species — also moves it. '
+          + 'Observing the environment and recording the numbers of living things helps us notice '
+          + 'those changes early.',
+        ],
+        tryIt:
+          'Take a school-distributed field survey record of one pond, list one food chain such as '
+          + '“water plants → herbivorous fish → carnivorous fish”, and write down which species is '
+          + 'affected when the numbers in between change.',
+        localCheckpoint: {
+          lure:
+            'Nature always returns to normal on its own after any change, so there is no need to care about the balance.',
+          options: [
+            {
+              id: 'recover-anyway',
+              text: 'Whatever change happens, nature automatically returns to its original balance after enough time.',
+              hint: 'Think about whether an extinct species can come back.',
+            },
+            {
+              id: 'only-humans-change',
+              text: 'The balance of nature changes only through human activity.',
+              hint: 'Remember that natural events such as typhoons and climate also move the balance.',
+            },
+            {
+              id: 'linked-balance',
+              text: 'The balance is kept by links, and when one species changes, connected species are affected.',
+            },
+          ],
+          correctOptionId: 'linked-balance',
+          explanation:
+            'The balance of nature is kept by food-web links and material cycling, so a change in '
+            + 'one species propagates to connected species. Because the power to recover has '
+            + 'limits, some changes never return to the original state.',
+        },
+      },
+      sustainableSociety: {
+        title: 'How do we live with disasters and shrinking resources?',
+        localSpeakingPractice: {
+          targetPhrase: 'We cannot stop disasters, but we can reduce the damage through observation',
+          acceptedTranscripts: [
+            'We cannot stop disasters, but we can reduce the damage through observation',
+          ],
+        },
+        body: [
+          'Earthquakes and typhoons are natural events that we cannot stop from happening. What science '
+          + 'can do is reduce the damage: observe and measure to forecast, communicate risk with '
+          + '**hazard maps** and warnings, and prepare with structures and evacuation plans. This way of '
+          + 'thinking is called **disaster mitigation**.',
+          'Behind disasters and environmental problems lie the burden we place on the environment. '
+          + 'The carbon dioxide emitted when we use energy accumulates in the atmosphere and is linked '
+          + 'to climate change, and the load on the environment from resource use and waste has limits. '
+          + 'Whether the environment can keep supporting the life of living things is shown by its '
+          + '**environmental capacity**.',
+          'The idea of a **sustainable society** — one that keeps using the environment’s support for a '
+          + 'long time — is built both by technology, such as shifting to renewable energy and saving '
+          + 'energy, and by the choices of society and individuals, such as how we use resources. '
+          + 'Advancing technology alone does not automatically make society sustainable.',
+        ],
+        tryIt:
+          'Using a disaster-prevention study book distributed at school or your region’s hazard map, '
+          + 'find one hazard that could affect your home or school and write down where to check and '
+          + 'what to prepare.',
+        localCheckpoint: {
+          lure:
+            'Once science and technology advance far enough, we will be able to stop earthquakes and typhoons from happening at all.',
+          options: [
+            {
+              id: 'mitigate-not-prevent',
+              text: 'We cannot stop disasters from occurring; reducing the damage through forecasting and planning is the scientific response.',
+            },
+            {
+              id: 'stop-disasters',
+              text: 'As technology advances, we will be able to stop earthquakes and typhoons from occurring.',
+              hint: 'Think about whether we can change natural phenomena themselves.',
+            },
+            {
+              id: 'technology-fixes-all',
+              text: 'Advancing technology solves every environmental problem, so individual choices do not matter.',
+              hint: 'Think about whether changing technology alone can reduce the load on the environment.',
+            },
+          ],
+          correctOptionId: 'mitigate-not-prevent',
+          explanation:
+            'We cannot change the occurrence of natural phenomena themselves. The scientific '
+            + 'response is to reduce the damage by observing, forecasting, building structures, '
+            + 'and planning evacuations.',
+        },
+      },
+    },
+  },
 }
 
 // ── 誤概念 ──────────────────────────────────────────────────
@@ -2507,6 +2702,29 @@ const EN_MISCONCEPTIONS: Record<string, MisconceptionText> = {
       + 'passed on.',
     misconception: 'Living things change their own bodies to fit the environment, and the changed form passes to their children.',
     lure: 'Giraffes’ necks got long because they worked hard to reach high leaves, so their children also have long necks, right?',
+  },
+  M33: {
+    correct:
+      'Generation converts another form of energy into electrical energy. Because resources are '
+      + 'limited and part of the energy becomes unusable heat in the conversion, electricity '
+      + 'cannot be made without limit.',
+    misconception: 'Generation creates energy itself, so with enough effort we could make as much electricity as we like.',
+    lure: 'The power station makes electricity, so we could make unlimited amounts depending on how we run it — right?',
+  },
+  M34: {
+    correct:
+      'The balance of nature is kept by food-web links and material cycling, but the power to '
+      + 'recover has limits. An extinct species or a greatly changed environment may never '
+      + 'return to its original state.',
+    misconception: 'Whatever change happens, nature automatically returns to its original balance after enough time.',
+    lure: 'Nature returns to normal on its own, so changing it a bit is no problem — right?',
+  },
+  M35: {
+    correct:
+      'We cannot stop disasters from occurring. Observing and forecasting, warning, adapting '
+      + 'structures, and planning evacuations reduce the damage — that is the scientific response.',
+    misconception: 'As science and technology advance far enough, we will be able to stop earthquakes and typhoons from occurring at all.',
+    lure: 'Once science advances, we’ll be able to stop earthquakes and typhoons themselves — right?',
   },
 }
 

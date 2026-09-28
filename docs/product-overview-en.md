@@ -103,7 +103,7 @@ untranslated key — a partial-English build cannot ship.
 
 ## Content & platform
 
-- 11 units / 32 concepts aligned to Japan's MEXT national science curriculum,
+- 12 units / 35 concepts aligned to Japan's MEXT national science curriculum,
   each with curriculum page references.
 - Flutter app (Android/iOS/desktop/web) + a small TypeScript server on Vercel
   for catalog sync and entitlement re-verification.
