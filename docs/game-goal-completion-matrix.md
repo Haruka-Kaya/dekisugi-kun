@@ -43,7 +43,7 @@
 
 ## 全体gate
 
-- 自動: Flutter 1263/1263・analyze 0、server 394/394・typecheck・catalog check・依存脆弱性0、Memory / SQLite同一contract
+- 自動: Flutter 1264/1264・analyze 0、server 399/399・typecheck・catalog check・依存脆弱性0、Memory / SQLite同一contract
 - 自動UI: 6タブroute、320×568・文字200%・light/dark・Reduce Motion・Semantics、700dp以上の可読幅とgrid
 - build: Android release APKはupload key `CN=Haruka Kaya`のv2署名・zipalignを検証済み（SHA-256 `1e1f3f53b979f67984f768b18b2fd087cfe621fda50e800c39b3115b09dfe236`）。iOS Simulator debug buildも成功。APKのローカル署名はPlay受理、iOS実機署名、Store公開の証拠には数えない
 - Git成果物: 必要な新規production / test / asset / workflowを意図的に追跡し、clean checkout CIが通るまで未完

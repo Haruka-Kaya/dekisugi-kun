@@ -26,7 +26,7 @@
 | 安定ブランチ | `main` = `f7a599d` |
 | 作業ブランチ | `codex/full-game-ui-overhaul`（UIオーバーホール中） |
 | ゲームUIフェーズ | 実施中 |
-| テスト | `app` 1263件・`server` 394件（いずれも通信なし） |
+| テスト | `app` 1264件・`server` 399件（いずれも通信なし） |
 | 年齢規約問題 | **未解決** — 外部AI会話は学校・未成年に配布禁止（`docs/age-restriction.md` §3） |
 | アンケート n数 | 18件（目標40件。設計根拠がまだデータで支えられていない） |
 | iOS実機確認 | 未実施（シミュレータのみ）|
@@ -80,8 +80,8 @@ docs/
 
 ```bash
 # テスト
-cd app && flutter test                          # 1263件・約20秒
-cd server && npm test                           # 394件・2.6秒
+cd app && flutter test                          # 1264件・約20秒
+cd server && npm test                           # 399件・2.6秒
 DEKISUGI_LIVE=1 npx tsx --test test/grant.live.test.ts   # 本番接続・課金あり
 
 # 設問カタログ検査（項目を足したら必ず）
@@ -117,6 +117,6 @@ cd app && flutter build ios --release --no-codesign   # 署名なし確認
 ## 未解決のブロッカー
 
 1. **年齢規約** — Google Cloud TOS §20(d) で中高生向け生成AI禁止（Vertex系の旧経路は閉じたまま）。返事の前置きだけの別経路 `/api/companion-line` は OpenAI 互換プロバイダ想定（`COMPANION_AI_API_KEY`/`BASE_URL`/`MODEL`、鍵はサーバのみ）で設計済み。クライアントは `DEKISUGI_COMPANION_REMOTE=1` のビルドでだけ有効化し、同意文面 v5 に送信内容を開示済み。送るのは説明文・聞き取り語・単元名の3点のみ
-2. **外部AI配布停止差分が本番未反映**（2026-08-10 時点）— 学校配布前に `/api/live-token` を本番で 503 にする
+2. **外部AI配布はコードレベルで停止済み** — `/api/live-token`・`/api/director` は `generativeAiEnabled()` が production で常に false を返すため、環境変数では解除できない。再開にはコード変更＋レビューが必須
 3. **iOS 実機未確認** — 録音・実再生・権限拒否・background 停止は未確認
 4. **アンケート n=18** — 誘発効果の根拠がまだデータで支えられていない
