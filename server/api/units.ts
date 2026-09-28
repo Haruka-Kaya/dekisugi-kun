@@ -87,6 +87,6 @@ export default function handler(req: Req, res: Res) {
   res.setHeader('Vary', 'Accept-Language')
   res.status(200).json({
     schemaVersion: BUNDLED_UNIT_CATALOG_SCHEMA_VERSION,
-    units: UNITS.map((unit) => publicUnitSummary(unit, lang)),
+    units: UNITS.map((unit) => publicUnitSummary(unit, lang, EN_CONTENT[unit.id])),
   })
 }

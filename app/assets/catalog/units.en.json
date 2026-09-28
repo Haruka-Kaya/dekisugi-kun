@@ -10,7 +10,7 @@
         {
           "key": "fall",
           "label": "How fast things fall",
-          "storyTitle": "紙ひこうき部、落下レース中止事件",
+          "storyTitle": "The Case of the Canceled Paper Drop Race",
           "misconception": {
             "id": "M01",
             "statement": "Heavier objects fall faster.",
@@ -39,7 +39,7 @@
         {
           "key": "inertia",
           "label": "Inertia",
-          "storyTitle": "逃走コインと消えた押し手",
+          "storyTitle": "The Runaway Coin and the Missing Pusher",
           "misconception": {
             "id": "M02",
             "statement": "A moving object has a force acting on it in the direction of motion.",
@@ -68,7 +68,7 @@
         {
           "key": "friction",
           "label": "Why things stop",
-          "storyTitle": "タオル沼のコイン救出作戦",
+          "storyTitle": "Operation: Rescue the Coin from Towel Swamp",
           "misconception": {
             "id": "M03",
             "statement": "Objects naturally come to rest if left alone; being at rest is their natural state.",
@@ -99,7 +99,7 @@
         {
           "key": "throwUp",
           "label": "Force on a thrown ball",
-          "storyTitle": "最高点ゼロ秒カメラの謎",
+          "storyTitle": "The Mystery of the Zero-Second Camera at the Top",
           "misconception": {
             "id": "M08",
             "statement": "A ball thrown upward has an upward force while rising, and zero force at the highest point.",
@@ -2504,7 +2504,7 @@
         {
           "key": "actionReaction",
           "label": "Action and reaction",
-          "storyTitle": "しゃべらない壁のハイタッチ",
+          "storyTitle": "The Silent Wall’s High Five",
           "misconception": {
             "id": "M04",
             "statement": "The heavier (stronger) object exerts the bigger force.",
@@ -2532,7 +2532,7 @@
         {
           "key": "balance",
           "label": "Balance and motion",
-          "storyTitle": "上昇エレベーターのアリバイ",
+          "storyTitle": "The Rising Elevator’s Alibi",
           "misconception": {
             "id": "M05",
             "statement": "An object with balanced forces must be stationary.",
@@ -3760,7 +3760,7 @@
         {
           "key": "pressure",
           "label": "Pressure and area",
-          "storyTitle": "消しゴム足あと鑑定団",
+          "storyTitle": "The Eraser Footprint Investigators",
           "misconception": {
             "id": "M06",
             "statement": "The same pushing force gives the same pressure; area is irrelevant.",
@@ -3789,7 +3789,7 @@
         {
           "key": "buoyancy",
           "label": "How big the buoyant force is",
-          "storyTitle": "油粘土船、沈没からの大逆転",
+          "storyTitle": "The Clay Ship’s Big Comeback from the Deep",
           "misconception": {
             "id": "M07",
             "statement": "Heavier objects get a bigger buoyant force.",
@@ -5025,7 +5025,7 @@
         {
           "key": "currentMagneticField",
           "label": "The magnetic field made by current",
-          "storyTitle": "方位磁針が聞いた電流のひそひそ話",
+          "storyTitle": "The Compass Overhears the Current",
           "misconception": {
             "id": "M09",
             "statement": "The effects of current stay inside the wire or coil, so there is no magnetic field outside.",
@@ -5054,7 +5054,7 @@
         {
           "key": "magneticForce",
           "label": "Force on a current in a magnetic field",
-          "storyTitle": "電気ブランコ反転裁判",
+          "storyTitle": "The Trial of the Reversing Electric Swing",
           "misconception": {
             "id": "M10",
             "statement": "A wire in a magnetic field is always pulled toward the magnet in the same direction, regardless of current direction.",
@@ -5085,7 +5085,7 @@
         {
           "key": "electromagneticInduction",
           "label": "Electromagnetic induction and generation",
-          "storyTitle": "眠る磁石と無言の検流計",
+          "storyTitle": "The Sleeping Magnet and the Silent Galvanometer",
           "misconception": {
             "id": "M11",
             "statement": "A magnet inside a coil makes induced current keep flowing even while the magnet is stationary.",
@@ -6929,7 +6929,7 @@
         {
           "key": "density",
           "label": "Density",
-          "storyTitle": "そっくりボトルの重さ交換事件",
+          "storyTitle": "The Case of the Twin Bottles",
           "misconception": {
             "id": "M12",
             "statement": "A larger or heavier object must always have a greater density.",
@@ -6959,7 +6959,7 @@
         {
           "key": "gasProperties",
           "label": "Producing and Identifying Gases",
-          "storyTitle": "透明気体の捕集法取り違え事件",
+          "storyTitle": "The Case of the Mixed-Up Collection Cards",
           "misconception": {
             "id": "M16",
             "statement": "All invisible gases have the same properties and can be collected in the same way.",
@@ -6988,7 +6988,7 @@
         {
           "key": "stateChangeMass",
           "label": "Changes of State and Mass",
-          "storyTitle": "消えた液体1.5グラムの行方",
+          "storyTitle": "Where Did the Missing 1.5 Grams of Liquid Go?",
           "misconception": {
             "id": "M17",
             "statement": "When a liquid becomes a gas, its particles disappear and mass decreases even in a sealed container.",
@@ -8305,7 +8305,7 @@
         {
           "key": "cells",
           "label": "Living Things and Cells",
-          "storyTitle": "消えた葉緑体と根っこの証言",
+          "storyTitle": "The Missing Chloroplasts and the Root’s Testimony",
           "misconception": {
             "id": "M13",
             "statement": "Every plant cell has chloroplasts, and any cell with no visible chloroplast is an animal cell.",
@@ -8334,7 +8334,7 @@
         {
           "key": "photosynthesisRespiration",
           "label": "Photosynthesis and Respiration",
-          "storyTitle": "植物工場の夜勤呼吸員",
+          "storyTitle": "The Plant Factory’s Night-Shift Breathing Crew",
           "misconception": {
             "id": "M18",
             "statement": "Plants perform photosynthesis but do not respire.",
@@ -8365,7 +8365,7 @@
         {
           "key": "digestionAbsorption",
           "label": "Digestion and Absorption",
-          "storyTitle": "栄養分の小腸入国審査",
+          "storyTitle": "Nutrients at Small-Intestine Immigration",
           "misconception": {
             "id": "M19",
             "statement": "The moment food is digested in the stomach, all of it is absorbed into the blood there.",
@@ -9677,7 +9677,7 @@
         {
           "key": "humidityClouds",
           "label": "Humidity and Cloud Formation",
-          "storyTitle": "コップの外だけ局地雨",
+          "storyTitle": "Local Rain—Outside the Cup Only",
           "misconception": {
             "id": "M14",
             "statement": "A cloud is a collection of white, visible water vapor gas.",
@@ -9706,7 +9706,7 @@
         {
           "key": "fronts",
           "label": "Fronts and Weather",
-          "storyTitle": "天気図に残った暖気の足あと",
+          "storyTitle": "Warm Air’s Footprints on the Weather Map",
           "misconception": {
             "id": "M20",
             "statement": "A front is simply a line tracing rain clouds, and every type produces the same changes when it passes.",
@@ -9737,7 +9737,7 @@
         {
           "key": "pressurePatternsWind",
           "label": "Pressure Patterns and Wind",
-          "storyTitle": "等圧線ぎゅうぎゅう区画の強風予告",
+          "storyTitle": "Strong-Wind Warning for the Packed-Isobar Zone",
           "misconception": {
             "id": "M21",
             "statement": "Everywhere on a weather map, wind blows in a straight line from the center of high pressure to the center of low pressure.",
@@ -11060,7 +11060,7 @@
         {
           "key": "strataRelativeAge",
           "label": "Rock Strata and Relative Age",
-          "storyTitle": "紙の崖に残った斜め線のアリバイ",
+          "storyTitle": "The Alibi of the Slanted Line on the Paper Cliff",
           "misconception": {
             "id": "M15",
             "statement": "Upper strata are older because they are found first near the surface, and lower strata are younger.",
@@ -11089,7 +11089,7 @@
         {
           "key": "volcanoEarthquakes",
           "label": "Volcanoes and Earthquakes",
-          "storyTitle": "火山マークと震央マークの別行動",
+          "storyTitle": "The Volcano Marks and the Epicenter Marks Go Their Separate Ways",
           "misconception": {
             "id": "M22",
             "statement": "Volcanoes and earthquakes are one phenomenon with the same mechanism and always occur at the same place and time on a plate boundary.",
@@ -11121,7 +11121,7 @@
         {
           "key": "dailyMotionSeasons",
           "label": "Daily Motion and Seasons",
-          "storyTitle": "星空カレンダー一日と一年の混線",
+          "storyTitle": "The Star Calendar’s Day-and-Year Mix-Up",
           "misconception": {
             "id": "M23",
             "statement": "Seasons occur because Earth moves closer to the Sun in summer and farther away in winter.",
@@ -12438,7 +12438,7 @@
         {
           "key": "combinationDecomposition",
           "label": "Combination and decomposition",
-          "storyTitle": "混ぜただけ粉チームの冤罪事件",
+          "storyTitle": "The Case of the Wrongly Accused Just-Mixed Powder",
           "misconception": {
             "id": "M24",
             "statement": "Mixing substances thoroughly creates a new substance (a compound).",
@@ -12471,7 +12471,7 @@
         {
           "key": "oxidationReduction",
           "label": "Oxidation and reduction",
-          "storyTitle": "赤い汚れの正体を追え",
+          "storyTitle": "Track Down the Red Stain",
           "misconception": {
             "id": "M25",
             "statement": "Rust is dirt stuck to the surface; the iron has not combined with oxygen.",
@@ -12503,7 +12503,7 @@
         {
           "key": "massConservation",
           "label": "Conservation of mass",
-          "storyTitle": "消えた1.1グラムの密室",
+          "storyTitle": "The Locked-Room Case of the Missing 1.1 Grams",
           "misconception": {
             "id": "M26",
             "statement": "Gases have no mass, so in reactions that emit gas or burn, mass is not conserved.",
@@ -13803,7 +13803,7 @@
         {
           "key": "electrolyte",
           "label": "Electrolytes and ions",
-          "storyTitle": "消えた豆電球の容疑者たち",
+          "storyTitle": "The Suspects Behind the Dark Bulb",
           "misconception": {
             "id": "M27",
             "statement": "Every solution of a substance that dissolves in water conducts electricity.",
@@ -13835,7 +13835,7 @@
         {
           "key": "acidAlkali",
           "label": "Acids and alkalis",
-          "storyTitle": "三色に分かれた液の身元",
+          "storyTitle": "The Mystery of the Three-Color Cups",
           "misconception": {
             "id": "M28",
             "statement": "Every acid is a dangerous liquid that dissolves anything, and no household food contains an acid.",
@@ -13866,7 +13866,7 @@
         {
           "key": "neutralizationBattery",
           "label": "Neutralization and batteries",
-          "storyTitle": "果物電池に宿った電気の行方",
+          "storyTitle": "Where Did the Fruit Battery's Power Come From?",
           "misconception": {
             "id": "M29",
             "statement": "Mixing an acid and an alkali always yields a neutral liquid, and if it does not turn neutral no reaction happened.",
@@ -15162,7 +15162,7 @@
         {
           "key": "reproduction",
           "label": "Cell division and reproduction",
-          "storyTitle": "親そっくり署のジャガイモ偽装事件",
+          "storyTitle": "The Case of the Fake Potato at Lookalike Precinct",
           "misconception": {
             "id": "M30",
             "statement": "Whenever living things make offspring, male and female reproductive cells always fertilize.",
@@ -15193,7 +15193,7 @@
         {
           "key": "heredity",
           "label": "The rules of heredity",
-          "storyTitle": "しわしわ種子の突然復帰事件",
+          "storyTitle": "The Case of the Wrinkled Seed’s Surprise Comeback",
           "misconception": {
             "id": "M31",
             "statement": "If parents who both show the dominant trait are crossed, the recessive trait can never appear in the children.",
@@ -15224,7 +15224,7 @@
         {
           "key": "evolution",
           "label": "Change and evolution of living things",
-          "storyTitle": "化石ラインナップの順番入れ替え事件",
+          "storyTitle": "The Case of the Shuffled Fossil Lineup",
           "misconception": {
             "id": "M32",
             "statement": "Living things change their own bodies to fit the environment, and the changed form passes to their children.",

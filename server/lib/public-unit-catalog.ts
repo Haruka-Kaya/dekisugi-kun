@@ -26,14 +26,23 @@ import { scienceStoryFor, scienceStoryTitleFor } from './science-stories.js'
  * `localPracticeVariants` の3周を使う。どちらもAIとは別文で、詳細だけに含める。
  * API とアプリ同梱カタログが同じ変換を通ることで、公開形の二重管理を防ぐ。
  */
-export function publicUnitSummary(unit: Unit, lang: Lang = 'ja') {
+export function publicUnitSummary(
+  unit: Unit,
+  lang: Lang = 'ja',
+  content?: UnitContentText,
+) {
   const localized = lang === 'en' ? localizeUnit(unit, lang) : unit
   return {
     id: localized.id,
     title: localized.title,
     brief: localized.brief,
     concepts: localized.concepts.map((concept) => {
-      const storyTitle = scienceStoryTitleFor(concept.key)
+      // アプリは concept.storyTitle == section.scienceStory.title を同一性の根拠にする。
+      // 英語では差し替え表の Story 題名を使い、正本の日本語題名とずれないようにする。
+      const storyTitle =
+        (lang === 'en'
+          ? content?.concepts[concept.key]?.story.title
+          : undefined) ?? scienceStoryTitleFor(concept.key)
       const coverage = curriculumCoverageFor(concept.key)
       if (storyTitle == null) {
         throw new Error(`Science Storyが無いconcept: ${concept.key}`)
@@ -79,7 +88,7 @@ export function publicUnitDetail(
 ) {
   const localized = lang === 'en' ? localizeUnit(unit, lang) : unit
   return {
-    ...publicUnitSummary(unit, lang),
+    ...publicUnitSummary(unit, lang, content),
     sections: localized.sections.map((section) => {
       const conceptText = content?.concepts[section.conceptKey]
       const localPracticeVariants = localPracticeVariantsFor(section).map(

@@ -148,10 +148,14 @@ class DekisugiApp extends StatelessWidget {
       ],
       child: Consumer<AppLanguageController?>(
         builder: (context, language, _) {
-          // 言語が未確定の1瞬は既定で描く — 画面文言は appLanguage の
-          // 既定値に従い、確定し次第 Consumer が全画面を組み直す。
-          final lang = language?.language ?? appLanguage;
-          return MaterialApp(
+          // 言語が未確定の1瞬は既定で描く。Providerの値はControllerの
+          // 実体で変わらないので、切替通知は ListenableBuilder が拾う。
+          final listenable = language;
+          return ListenableBuilder(
+            listenable: listenable ?? const _NeverNotify(),
+            builder: (context, _) {
+              final lang = language?.language ?? appLanguage;
+              return MaterialApp(
             title: l10n.t('デキすぎ君', 'Dekisugi-kun'),
             debugShowCheckedModeBanner: false,
             locale: lang.locale,
@@ -176,15 +180,26 @@ class DekisugiApp extends StatelessWidget {
                 child: child ?? const SizedBox.shrink(),
               ),
             ),
-            home: _Gate(
-              serverUrl: serverUrl,
-              localCatalogAssets: localCatalogAssets,
-            ),
+                home: _Gate(
+                  serverUrl: serverUrl,
+                  localCatalogAssets: localCatalogAssets,
+                ),
+              );
+            },
           );
         },
       ),
     );
   }
+}
+
+/// 言語Controller未確定の間だけ使う、一度も通知しないListenable。
+final class _NeverNotify implements Listenable {
+  const _NeverNotify();
+  @override
+  void addListener(VoidCallback listener) {}
+  @override
+  void removeListener(VoidCallback listener) {}
 }
 
 /// 同意を確かめてから会話画面へ入れる。

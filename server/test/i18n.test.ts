@@ -594,4 +594,23 @@ describe('英語コンテンツ差し替え（練習・Story・Notation）', () 
       '英語カタログを日本語として配っている',
     )
   })
+
+  it('concept.storyTitle が section.scienceStory.title と全概念で一致する', () => {
+    // アプリはこの一致を詳細デコードの同一性根拠にする。ずれると
+    // 同梱英語カタログごと読めず学習パスが「読み込めません」になる。
+    for (const lang of ['ja', 'en'] as const) {
+      for (const u of UNITS) {
+        const detail = publicUnitDetail(u, lang, EN_CONTENT[u.id])
+        const sectionTitles = new Set(
+          detail.sections.map((s) => s.scienceStory.title),
+        )
+        for (const concept of detail.concepts) {
+          assert.ok(
+            sectionTitles.has(concept.storyTitle),
+            `${lang} ${u.id}/${concept.key}: storyTitle が対応するStory題名と一致しない`,
+          )
+        }
+      }
+    }
+  })
 })
