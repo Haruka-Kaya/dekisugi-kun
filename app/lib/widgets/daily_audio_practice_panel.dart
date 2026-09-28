@@ -1,3 +1,4 @@
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/services/daily_audio_practice_plan.dart';
@@ -38,14 +39,17 @@ class DailyAudioPracticePanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '今日の音声ミッション',
+                      t('今日の音声ミッション', "Today's audio missions"),
                       style: theme.textTheme.titleLarge
                           ?.copyWith(color: colors.ink)
                           .jaWeight(FontWeight.w900),
                     ),
                     const SizedBox(height: GameTokens.spaceXs),
                     Text(
-                      '聞く課題と話す課題は別々です。どちらも回答・録音を保存しません。',
+                      t(
+                        '聞く課題と話す課題は別々です。どちらも回答・録音を保存しません。',
+                        'Listening and speaking are separate tasks. Neither saves your answers or recordings.',
+                      ),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colors.inkMuted,
                       ),
@@ -90,18 +94,30 @@ class _AudioMissionButton extends StatelessWidget {
     final theme = Theme.of(context);
     final available = mission != null;
     final title = switch (kind) {
-      DailyAudioMissionKind.listening => '今日の「聞く」',
-      DailyAudioMissionKind.speaking => '今日の「話す」',
+      DailyAudioMissionKind.listening => t('今日の「聞く」', "Today's Listening"),
+      DailyAudioMissionKind.speaking => t('今日の「話す」', "Today's Speaking"),
     };
     final description = switch (kind) {
       DailyAudioMissionKind.listening =>
         available
-            ? '${mission!.conceptLabel}の固定説明を聞き、条件を判断します。'
-            : 'PathでListeningまで進むと開きます。',
+            ? t(
+                '${mission!.conceptLabel}の固定説明を聞き、条件を判断します。',
+                'Listen to a set explanation of ${mission!.conceptLabel} and judge the conditions.',
+              )
+            : t(
+                'PathでListeningまで進むと開きます。',
+                'Unlocks when you reach Listening on the Path.',
+              ),
       DailyAudioMissionKind.speaking =>
         available
-            ? '${mission!.conceptLabel}を説明し、自分で再生・再読して比べます。'
-            : 'PathでSpeakingまで進むと開きます。',
+            ? t(
+                '${mission!.conceptLabel}を説明し、自分で再生・再読して比べます。',
+                'Explain ${mission!.conceptLabel}, then play it back or reread it to compare.',
+              )
+            : t(
+                'PathでSpeakingまで進むと開きます。',
+                'Unlocks when you reach Speaking on the Path.',
+              ),
     };
     final icon = switch (kind) {
       DailyAudioMissionKind.listening => Icons.headphones_rounded,
@@ -112,11 +128,11 @@ class _AudioMissionButton extends StatelessWidget {
       button: available,
       enabled: available,
       label:
-          '$title。$description。${!available
-              ? '未解放'
+          '$title${t('。', '. ')}$description${t('。', ' ')}${!available
+              ? t('未解放', 'Locked')
               : completedToday
-              ? '今日完了。もう一度練習できます'
-              : '今日の1件、利用できます'}',
+              ? t('今日完了。もう一度練習できます', 'Done today. You can practice again')
+              : t('今日の1件、利用できます', "Today's mission is available")}',
       onTap: available ? () => onOpen(mission!) : null,
       child: ExcludeSemantics(
         child: Material(
@@ -182,7 +198,10 @@ class _AudioMissionButton extends StatelessWidget {
                                 const SizedBox(width: GameTokens.spaceXs),
                                 Expanded(
                                   child: Text(
-                                    '今日完了／もう一度練習',
+                                    t(
+                                      '今日完了／もう一度練習',
+                                      'Done today / Practice again',
+                                    ),
                                     key: ValueKey(
                                       'daily-audio-${kind.name}-replay',
                                     ),

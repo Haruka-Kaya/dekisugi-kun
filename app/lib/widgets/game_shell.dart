@@ -1,3 +1,4 @@
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../config/motion.dart';
@@ -12,21 +13,21 @@ typedef GameQuestTabResolver = GameTab Function(GameQuest quest);
 
 extension on GameTab {
   String get shortLabel => switch (this) {
-    GameTab.path => '学ぶ',
-    GameTab.stories => '物語',
-    GameTab.practice => '練習',
-    GameTab.notation => '記号',
-    GameTab.league => '競う',
-    GameTab.profile => '自分',
+    GameTab.path => t('学ぶ', 'Learn'),
+    GameTab.stories => t('物語', 'Stories'),
+    GameTab.practice => t('練習', 'Practice'),
+    GameTab.notation => t('記号', 'Symbols'),
+    GameTab.league => t('競う', 'Compete'),
+    GameTab.profile => t('自分', 'Me'),
   };
 
   String get semanticsLabel => switch (this) {
-    GameTab.path => '学習パス',
-    GameTab.stories => '理科の物語',
-    GameTab.practice => '個別練習',
-    GameTab.notation => '理科の記号ラボ',
-    GameTab.league => '探究リーグ',
-    GameTab.profile => '自分の学習記録',
+    GameTab.path => t('学習パス', 'Learning path'),
+    GameTab.stories => t('理科の物語', 'Science stories'),
+    GameTab.practice => t('個別練習', 'Personal practice'),
+    GameTab.notation => t('理科の記号ラボ', 'Science symbols lab'),
+    GameTab.league => t('探究リーグ', 'Inquiry league'),
+    GameTab.profile => t('自分の学習記録', 'My learning record'),
   };
 
   IconData get icon => switch (this) {
@@ -423,10 +424,12 @@ class _GameTabRail extends StatelessWidget {
 }
 
 String _semanticLabel(GameTab tab, {required bool schoolMode}) =>
-    schoolMode && tab == GameTab.league ? 'この端末の授業目標' : tab.semanticsLabel;
+    schoolMode && tab == GameTab.league
+    ? t('この端末の授業目標', "This device's class goal")
+    : tab.semanticsLabel;
 
 String _shortLabel(GameTab tab, {required bool schoolMode}) =>
-    schoolMode && tab == GameTab.league ? '協力' : tab.shortLabel;
+    schoolMode && tab == GameTab.league ? t('協力', 'Team up') : tab.shortLabel;
 
 IconData _iconFor(
   GameTab tab, {
