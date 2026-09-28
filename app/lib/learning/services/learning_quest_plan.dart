@@ -3,6 +3,7 @@ import '../domain/learning_event.dart';
 import '../domain/learning_monthly_badge.dart';
 import '../domain/learning_policy.dart';
 import '../domain/learning_progress.dart';
+import '../../config/app_language.dart';
 
 /// Homeが保存rulesと表示projectionへ同じquest定義を渡すためのpure DTO。
 ///
@@ -54,9 +55,9 @@ final class LearningQuestPlannerV1 {
   static const int personalDailyRewardGems = 1;
   static const int personalMonthlyRewardGems = 8;
 
-  static const String schoolDailyTitle = '今日の学習を1件終える';
-  static const String personalOneActionTitle = '今日、意味のある学習を1件終える';
-  static const String personalTwoActionsTitle = '今日、意味のある学習を2件終える';
+  static String get schoolDailyTitle => t('今日の学習を1件終える', 'Finish 1 learning activity today');
+  static String get personalOneActionTitle => t('今日、意味のある学習を1件終える', 'Finish 1 meaningful learning activity today');
+  static String get personalTwoActionsTitle => t('今日、意味のある学習を2件終える', 'Finish 2 meaningful learning activities today');
 
   LearningQuestPlan build({
     required DateTime now,
@@ -91,7 +92,7 @@ final class LearningQuestPlannerV1 {
           : personalTwoActionsTitle,
       if (!schoolMode)
         'monthly:$learningMonth:${LearningMonthlyBadgeCatalogV1.questKey}':
-            '今月、意味のある学習を${LearningMonthlyBadgeCatalogV1.target}件終える',
+            t('今月、意味のある学習を${LearningMonthlyBadgeCatalogV1.target}件終える', 'Finish ${LearningMonthlyBadgeCatalogV1.target} meaningful learning activities this month'),
     };
     return LearningQuestPlan(
       learningDay: learningDay,
