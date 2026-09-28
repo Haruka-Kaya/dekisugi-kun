@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_economy.dart';
@@ -81,9 +82,12 @@ class LeagueScreen extends StatelessWidget {
             !lanSocialOnline &&
             (localWeeklyLeague?.history.isNotEmpty ?? false)) ...[
           const SizedBox(height: GameTokens.spaceXl),
-          const GameSectionHeader(
-            title: 'これまでの週',
-            description: 'この端末の学習者の実順位から、週終了後に一度だけ確定した履歴です。',
+          GameSectionHeader(
+            title: lang.t('これまでの週', 'Past weeks'),
+            description: lang.t(
+              'この端末の学習者の実順位から、週終了後に一度だけ確定した履歴です。',
+              'Final results from real player rankings on this device, set once after each week ends.',
+            ),
           ),
           const SizedBox(height: GameTokens.spaceMd),
           GameResponsiveGrid(
@@ -103,7 +107,7 @@ class LeagueScreen extends StatelessWidget {
             hasLocalParticipants: localWeeklyLeague != null,
           ),
           icon: const Icon(Icons.policy_outlined),
-          label: const Text('ルールとプライバシー'),
+          label: Text(lang.t('ルールとプライバシー', 'Rules and privacy')),
         ),
       ],
     );
@@ -121,31 +125,37 @@ class _LocalLeagueHistoryRow extends StatelessWidget {
     final colors = context.gamePalette;
     final movement = switch (week.movement) {
       LanSocialLeagueMovement.promoted => (
-        label: '昇格',
+        label: lang.t('昇格', 'Promoted'),
         icon: Icons.arrow_upward_rounded,
         color: colors.pathComplete,
       ),
       LanSocialLeagueMovement.stayed => (
-        label: '維持',
+        label: lang.t('維持', 'Stayed'),
         icon: Icons.horizontal_rule_rounded,
         color: colors.pathActive,
       ),
       LanSocialLeagueMovement.demoted => (
-        label: '降格',
+        label: lang.t('降格', 'Demoted'),
         icon: Icons.arrow_downward_rounded,
         color: colors.heart,
       ),
     };
     final rankLabel = week.rank == null
-        ? '順位なし'
+        ? lang.t('順位なし', 'No rank')
         : week.tied
-        ? '同率${week.rank}位'
-        : '${week.rank}位';
+        ? lang.t('同率${week.rank}位', 'Tied for ${week.rank}')
+        : lang.t('${week.rank}位', 'Rank ${week.rank}');
     return Semantics(
       container: true,
       label:
-          '${week.weekKey}の週、${week.tier.label}、$rankLabel、'
-          '${week.meaningfulEventCount}件、${movement.label}',
+          lang.t(
+            '${week.weekKey}の週、${week.tier.label}、$rankLabel、',
+            'Week ${week.weekKey}, ${week.tier.label}, $rankLabel,',
+          ) +
+          lang.t(
+            '${week.meaningfulEventCount}件、${movement.label}',
+            ' ${week.meaningfulEventCount} activities, ${movement.label}',
+          ),
       child: ExcludeSemantics(
         child: Container(
           key: ValueKey('local-league-history-${week.weekKey}'),
@@ -170,8 +180,10 @@ class _LocalLeagueHistoryRow extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${week.tier.label} ・ $rankLabel ・ '
-                      '${week.meaningfulEventCount}件',
+                      lang.t(
+                        '${week.tier.label} ・ $rankLabel ・ ${week.meaningfulEventCount}件',
+                        '${week.tier.label} · $rankLabel · ${week.meaningfulEventCount} activities',
+                      ),
                       style: t.textTheme.titleSmall
                           ?.copyWith(color: colors.ink)
                           .jaWeight(FontWeight.w800),
@@ -216,14 +228,28 @@ class _SchoolArena extends StatelessWidget {
       ),
       color: colors.story,
       foregroundColor: colors.onStory,
-      eyebrow: '授業の探究',
-      title: hasMission ? 'この端末の授業ミッション' : '同じ課題に、並んで挑む',
+      eyebrow: lang.t('授業の探究', 'Class exploration'),
+      title: hasMission
+          ? lang.t('この端末の授業ミッション', 'Class mission on this device')
+          : lang.t('同じ課題に、並んで挑む', 'Take on the same task together'),
       body: hasMission
-          ? 'この端末の完了だけを表示します。クラス全体の件数と個人順位は作りません。'
-          : '先生の教材コードで同じ課題を開けます。この端末は個人順位やクラス全体の件数を集計しません。',
+          ? lang.t(
+              'この端末の完了だけを表示します。クラス全体の件数と個人順位は作りません。',
+              'Only completions on this device are shown. No class totals or individual rankings are created.',
+            )
+          : lang.t(
+              '先生の教材コードで同じ課題を開けます。この端末は個人順位やクラス全体の件数を集計しません。',
+              'Use your teacher\'s material code to open the same task. This device does not count individual ranks or class totals.',
+            ),
       semanticSummary: hasMission
-          ? 'この端末の授業目標、$current、目標$target。クラス全体の件数は集計しません'
-          : '端末内の協力モード。同じ課題に並んで挑む。個人順位とクラス全体の件数は集計しません',
+          ? lang.t(
+              'この端末の授業目標、$current、目標$target。クラス全体の件数は集計しません',
+              'Class goal on this device: $current of $target. Class totals are not collected.',
+            )
+          : lang.t(
+              '端末内の協力モード。同じ課題に並んで挑む。個人順位とクラス全体の件数は集計しません',
+              'Co-op mode on this device. Take on the same task together. No individual ranks or class totals are collected.',
+            ),
       mascotReaction: GameCharacterReaction.encourage,
       mascotStyle: mascotStyle,
       content: Column(
@@ -238,9 +264,9 @@ class _SchoolArena extends StatelessWidget {
             ),
             const SizedBox(height: GameTokens.spaceMd),
           ],
-          const _ArenaInsetFact(
+          _ArenaInsetFact(
             icon: Icons.visibility_off_outlined,
-            text: '生徒の個人順位は表示しない',
+            text: lang.t('生徒の個人順位は表示しない', 'No individual student ranks'),
           ),
         ],
       ),
@@ -261,28 +287,43 @@ class _OnlineArena extends StatelessWidget {
       surfaceKey: const ValueKey('league-lan-social-summary'),
       color: colors.story,
       foregroundColor: colors.onStory,
-      eyebrow: '実参加者リーグ',
-      title: '同じWi‑Fiの仲間と、今週を競う',
-      body: '実在5〜8人が接続したときだけ開きます。5人未満では順位も人数も表示しません。',
-      semanticSummary: '実参加者リーグ。実在5人から8人。5人未満では順位と人数を表示しません',
+      eyebrow: lang.t('実参加者リーグ', 'Real-player league'),
+      title: lang.t(
+        '同じWi‑Fiの仲間と、今週を競う',
+        'Compete this week with friends on the same Wi-Fi',
+      ),
+      body: lang.t(
+        '実在5〜8人が接続したときだけ開きます。5人未満では順位も人数も表示しません。',
+        'Opens only when 5–8 real players connect. Ranks and player counts are hidden below 5.',
+      ),
+      semanticSummary: lang.t(
+        '実参加者リーグ。実在5人から8人。5人未満では順位と人数を表示しません',
+        'Real-player league. 5 to 8 real players. Ranks and player counts stay hidden below 5.',
+      ),
       mascotReaction: GameCharacterReaction.invite,
       mascotStyle: mascotStyle,
-      content: const Column(
+      content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _ArenaInsetFact(
             icon: Icons.wifi_find_rounded,
-            text: '接続前・現在の人数と順位は非表示',
+            text: lang.t(
+              '接続前・現在の人数と順位は非表示',
+              'Hide player count and ranks before connection',
+            ),
           ),
           SizedBox(height: GameTokens.spaceSm),
           _ArenaInsetFact(
             icon: Icons.verified_user_outlined,
-            text: '実参加者だけを匿名表示',
+            text: lang.t('実参加者だけを匿名表示', 'Show real players anonymously'),
           ),
           SizedBox(height: GameTokens.spaceSm),
           _ArenaInsetFact(
             icon: Icons.workspace_premium_outlined,
-            text: 'ブロンズからダイヤモンドまでの10段',
+            text: lang.t(
+              'ブロンズからダイヤモンドまでの10段',
+              '10 tiers from Bronze to Diamond',
+            ),
           ),
         ],
       ),
@@ -295,7 +336,7 @@ class _OnlineArena extends StatelessWidget {
         ),
         onPressed: onOpen,
         icon: const Icon(Icons.radar_rounded),
-        label: const Text('仲間とつながる'),
+        label: Text(lang.t('仲間とつながる', 'Connect with friends')),
       ),
     );
   }
@@ -330,24 +371,36 @@ class _LocalArena extends StatelessWidget {
       surfaceKey: const ValueKey('league-progress'),
       color: colors.pathActive,
       foregroundColor: colors.onPathActive,
-      eyebrow: '実参加者・端末手渡し',
-      title: '${tier.label}リーグ',
-      body: 'slot 1の「この端末の学習者」を、実在する仲間との週次順位だけでブロンズからダイヤモンドへ進めます。',
-      semanticSummary: '${tier.label}リーグ。この端末の学習者を実在5人から8人の順位で週終了後に確定',
+      eyebrow: lang.t('実参加者・端末手渡し', 'Real players · shared device'),
+      title: lang.t('${tier.label}リーグ', '${tier.label} league'),
+      body: lang.t(
+        'slot 1の「この端末の学習者」を、実在する仲間との週次順位だけでブロンズからダイヤモンドへ進めます。',
+        'Player in slot 1 advances from Bronze to Diamond through weekly rankings with real friends only.',
+      ),
+      semanticSummary: lang.t(
+        '${tier.label}リーグ。この端末の学習者を実在5人から8人の順位で週終了後に確定',
+        '${tier.label} league. The player on this device is ranked with 5 to 8 real players after the week ends.',
+      ),
       mascotReaction: GameCharacterReaction.celebrate,
       mascotStyle: mascotStyle,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _ArenaInsetFact(
+          _ArenaInsetFact(
             key: ValueKey('league-local-tier-rule'),
             icon: Icons.workspace_premium_outlined,
-            text: '10段tierは週終了後に一度だけ確定し、1週で最大±1段',
+            text: lang.t(
+              '10段tierは週終了後に一度だけ確定し、1週で最大±1段',
+              'The 10-tier ranking is finalized once after the week ends, moving at most one tier per week.',
+            ),
           ),
           const SizedBox(height: GameTokens.spaceSm),
-          const _ArenaInsetFact(
+          _ArenaInsetFact(
             icon: Icons.groups_2_outlined,
-            text: '2〜4人は途中順位だけ。tier確定は実在5〜8人の週だけ',
+            text: lang.t(
+              '2〜4人は途中順位だけ。tier確定は実在5〜8人の週だけ',
+              'With 2–4 players, ranks are provisional. Tiers are finalized only for weeks with 5–8 real players.',
+            ),
           ),
           const SizedBox(height: GameTokens.spaceLg),
           if (localWeeklyLeague case final league?)
@@ -362,9 +415,12 @@ class _LocalArena extends StatelessWidget {
               embedded: true,
             )
           else
-            const _ArenaInsetFact(
+            _ArenaInsetFact(
               icon: Icons.shield_outlined,
-              text: '架空の対戦相手や旧4段XP tierは主表示に使いません',
+              text: lang.t(
+                '架空の対戦相手や旧4段XP tierは主表示に使いません',
+                'No fictional rivals or old four-tier XP rankings in the main view',
+              ),
             ),
         ],
       ),
@@ -452,50 +508,80 @@ Future<void> _showLeagueRules(
   required bool hasLocalParticipants,
 }) => showGamePageSheet<void>(
   context: context,
-  title: 'リーグのルールと保存範囲',
+  title: lang.t('リーグのルールと保存範囲', 'League rules and stored data'),
   child: Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const _LeagueRule(
+      _LeagueRule(
         icon: Icons.replay_outlined,
-        title: '同じ学習の周回は数えない',
-        body: '同じ学習の繰り返しは0件で、別の人やラウンドへ使い回せません。',
+        title: lang.t(
+          '同じ学習の周回は数えない',
+          'Repeats of the same activity do not count',
+        ),
+        body: lang.t(
+          '同じ学習の繰り返しは0件で、別の人やラウンドへ使い回せません。',
+          'Repeating an activity counts as zero and cannot be reused for another player or round.',
+        ),
       ),
       const SizedBox(height: GameTokens.spaceMd),
-      const _LeagueRule(
+      _LeagueRule(
         icon: Icons.speed_outlined,
-        title: '速さではなく、意味のある学習',
-        body: '意味のある完了1件ずつを数え、滞在時間は得点にしません。',
+        title: lang.t('速さではなく、意味のある学習', 'Meaningful learning, not speed'),
+        body: lang.t(
+          '意味のある完了1件ずつを数え、滞在時間は得点にしません。',
+          'Each meaningful completion counts once; time spent does not earn points.',
+        ),
       ),
       const SizedBox(height: GameTokens.spaceMd),
       if (schoolMode)
-        const _LeagueRule(
+        _LeagueRule(
           icon: Icons.visibility_off_outlined,
-          title: '生徒の個人順位は表示しない',
-          body: 'この端末の進捗だけを表示し、クラス全体の件数・回答本文・音声を保存しません。',
+          title: lang.t('生徒の個人順位は表示しない', 'No individual student ranks'),
+          body: lang.t(
+            'この端末の進捗だけを表示し、クラス全体の件数・回答本文・音声を保存しません。',
+            'Only this device\'s progress is shown. Class totals, answer text, and audio are not saved.',
+          ),
         )
       else if (lanSocialOnline)
-        const _LeagueRule(
+        _LeagueRule(
           icon: Icons.verified_user_outlined,
-          title: '実参加者だけを匿名表示',
-          body: '同じWi‑Fiの実在5〜8人だけで構成し、5人未満では順位も人数も開示しません。',
+          title: lang.t('実参加者だけを匿名表示', 'Show real players anonymously'),
+          body: lang.t(
+            '同じWi‑Fiの実在5〜8人だけで構成し、5人未満では順位も人数も開示しません。',
+            'Only 5–8 real players on the same Wi-Fi participate. Ranks and counts stay hidden below 5.',
+          ),
         )
       else
         _LeagueRule(
           icon: Icons.phonelink_erase_outlined,
-          title: 'オンライン順位は使わない',
+          title: lang.t('オンライン順位は使わない', 'No online rankings'),
           body: hasLocalParticipants
-              ? '同じ端末を手渡しする実在2〜8人を匿名表示し、5〜8人の週だけslot 1のtierを最大±1段動かします。'
-              : '架空の対戦相手は作らず、実参加者の週を始めるまではブロンズです。',
+              ? lang.t(
+                  '同じ端末を手渡しする実在2〜8人を匿名表示し、5〜8人の週だけslot 1のtierを最大±1段動かします。',
+                  'Show 2–8 real players sharing one device anonymously. Slot 1 moves at most one tier in weeks with 5–8 players.',
+                )
+              : lang.t(
+                  '架空の対戦相手は作らず、実参加者の週を始めるまではブロンズです。',
+                  'No fictional rivals. Stay in Bronze until a week with real players begins.',
+                ),
         ),
       const SizedBox(height: GameTokens.spaceMd),
       GameSolidSurface(
         child: Text(
           schoolMode
-              ? '学校課題は個人XP・結晶・連続学習へ加算しません。'
+              ? lang.t(
+                  '学校課題は個人XP・結晶・連続学習へ加算しません。',
+                  'Class work does not add personal XP, gems, or streak days.',
+                )
               : lanSocialOnline
-              ? '架空の対戦相手は作らず、ブロンズからダイヤモンドまでの10段です。'
-              : 'slot 1だけを「この端末の学習者」とし、他slotは週内匿名です。氏名・account・回答・正誤は表示・保存しません。',
+              ? lang.t(
+                  '架空の対戦相手は作らず、ブロンズからダイヤモンドまでの10段です。',
+                  'No fictional rivals; 10 tiers run from Bronze to Diamond.',
+                )
+              : lang.t(
+                  'slot 1だけを「この端末の学習者」とし、他slotは週内匿名です。氏名・account・回答・正誤は表示・保存しません。',
+                  'Only slot 1 is this device\'s player; other slots stay anonymous during the week. Names, accounts, answers, and results are not shown or saved.',
+                ),
           style: Theme.of(
             context,
           ).textTheme.bodySmall?.copyWith(color: context.gamePalette.inkMuted),
@@ -522,7 +608,7 @@ class _LeagueRule extends StatelessWidget {
     final colors = context.gamePalette;
     return Semantics(
       container: true,
-      label: 'ルール。$title。$body',
+      label: lang.t('ルール。$title。$body', 'Rule. $title. $body'),
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.all(GameTokens.spaceLg),

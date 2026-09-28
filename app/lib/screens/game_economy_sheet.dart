@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/services/learning_game_projection.dart';
@@ -87,12 +88,12 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
           TextButton(
             key: ValueKey('economy-$actionId-cancel'),
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('やめる'),
+            child: Text(lang.t('やめる', 'Cancel')),
           ),
           FilledButton(
             key: ValueKey('economy-$actionId-confirm'),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('結晶を使う'),
+            child: Text(lang.t('結晶を使う', 'Spend gems')),
           ),
         ],
       ),
@@ -113,11 +114,19 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
     try {
       await action();
       if (!mounted) return;
-      setState(() => _status = '交換を端末へ記録しました。');
+      setState(
+        () =>
+            _status = lang.t('交換を端末へ記録しました。', 'Exchange saved on this device.'),
+      );
       widget.onClose();
     } catch (_) {
       if (!mounted) return;
-      setState(() => _status = '交換できませんでした。残高と現在の状態を確認してください。');
+      setState(
+        () => _status = lang.t(
+          '交換できませんでした。残高と現在の状態を確認してください。',
+          'Could not exchange. Check your gem balance and current status.',
+        ),
+      );
     } finally {
       if (mounted) setState(() => _busyAction = null);
     }
@@ -153,14 +162,17 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'ひらめき結晶',
+                        lang.t('ひらめき結晶', 'Insight gems'),
                         style: t.textTheme.headlineSmall
                             ?.copyWith(color: colors.ink)
                             .jaWeight(FontWeight.w900),
                       ),
                       const SizedBox(height: GameTokens.spaceXs),
                       Semantics(
-                        label: '現在、結晶${economy.gems}個',
+                        label: lang.t(
+                          '現在、結晶${economy.gems}個',
+                          'Current balance: ${economy.gems} gems',
+                        ),
                         child: ExcludeSemantics(
                           child: Text(
                             '◆ ${economy.gems}',
@@ -175,7 +187,7 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
                 ),
                 IconButton(
                   key: const ValueKey('game-economy-close'),
-                  tooltip: '閉じる',
+                  tooltip: lang.t('閉じる', 'Close'),
                   onPressed: _busyAction == null ? widget.onClose : null,
                   icon: const Icon(Icons.close_rounded),
                 ),
@@ -183,7 +195,10 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
             ),
             const SizedBox(height: GameTokens.spaceMd),
             Text(
-              '学習で得た結晶を、保護・ハート・Pathの見た目に使えます。実課金では増やせません。',
+              lang.t(
+                '学習で得た結晶を、保護・ハート・Pathの見た目に使えます。実課金では増やせません。',
+                'Use gems earned from learning for streak shields, hearts, or your Path mascot. Gems cannot be bought with money.',
+              ),
               style: t.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
             ),
             const SizedBox(height: GameTokens.spaceXl),
@@ -191,9 +206,15 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
               key: const ValueKey('economy-freeze-item'),
               actionId: 'freeze',
               icon: Icons.ac_unit_rounded,
-              title: '連続記録の保護を補充',
-              description: '今週使える保護を1回分補充します。週の補充上限に達した場合は使えません。',
-              currentLabel: '現在 ${widget.player.freezeCount}回分',
+              title: lang.t('連続記録の保護を補充', 'Refill a streak shield'),
+              description: lang.t(
+                '今週使える保護を1回分補充します。週の補充上限に達した場合は使えません。',
+                'Add one shield for this week. Unavailable when the weekly refill limit is reached.',
+              ),
+              currentLabel: lang.t(
+                '現在 ${widget.player.freezeCount}回分',
+                'Currently ${widget.player.freezeCount} shields',
+              ),
               cost: freezeCost,
               enabled:
                   _busyAction == null &&
@@ -204,8 +225,14 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
                   ? null
                   : () => _confirmAndRun(
                       actionId: 'freeze',
-                      title: '連続記録の保護を補充しますか？',
-                      body: '結晶$freezeCost個を使い、今週の保護を1回分補充します。',
+                      title: lang.t(
+                        '連続記録の保護を補充しますか？',
+                        'Refill a streak shield?',
+                      ),
+                      body: lang.t(
+                        '結晶$freezeCost個を使い、今週の保護を1回分補充します。',
+                        'Spend $freezeCost gems to add one shield this week.',
+                      ),
                       action: widget.onRefillStreakFreeze,
                     ),
             ),
@@ -214,11 +241,15 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
               key: const ValueKey('economy-hearts-item'),
               actionId: 'hearts',
               icon: Icons.favorite_rounded,
-              title: '学習ハートを全回復',
-              description:
-                  '固定課題で使うハートを${widget.player.maxChallengeHearts}個まで戻します。30分ごと、または回復練習でも1個戻ります。',
-              currentLabel:
-                  '現在 ${widget.player.challengeHearts} / ${widget.player.maxChallengeHearts}',
+              title: lang.t('学習ハートを全回復', 'Refill all learning hearts'),
+              description: lang.t(
+                '固定課題で使うハートを${widget.player.maxChallengeHearts}個まで戻します。30分ごと、または回復練習でも1個戻ります。',
+                'Restore hearts to ${widget.player.maxChallengeHearts}. You can also recover one every 30 minutes or with a recovery exercise.',
+              ),
+              currentLabel: lang.t(
+                '現在 ${widget.player.challengeHearts} / ${widget.player.maxChallengeHearts}',
+                'Currently ${widget.player.challengeHearts} / ${widget.player.maxChallengeHearts}',
+              ),
               cost: heartCost,
               enabled:
                   _busyAction == null &&
@@ -229,21 +260,30 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
                   ? null
                   : () => _confirmAndRun(
                       actionId: 'hearts',
-                      title: '学習ハートを全回復しますか？',
-                      body: '結晶$heartCost個を使い、学習ハートを全回復します。',
+                      title: lang.t(
+                        '学習ハートを全回復しますか？',
+                        'Refill all learning hearts?',
+                      ),
+                      body: lang.t(
+                        '結晶$heartCost個を使い、学習ハートを全回復します。',
+                        'Spend $heartCost gems to refill all learning hearts.',
+                      ),
                       action: widget.onRecoverChallengeHearts,
                     ),
             ),
             const SizedBox(height: GameTokens.spaceXl),
             Text(
-              'Pathマスコット',
+              lang.t('Pathマスコット', 'Path mascot'),
               style: t.textTheme.titleLarge
                   ?.copyWith(color: colors.ink)
                   .jaWeight(FontWeight.w900),
             ),
             const SizedBox(height: GameTokens.spaceXs),
             Text(
-              '見た目だけを変更します。学習進行・XP・正答・ハートは購入できません。',
+              lang.t(
+                '見た目だけを変更します。学習進行・XP・正答・ハートは購入できません。',
+                'Change the look only. You cannot buy progress, XP, correct answers, or hearts.',
+              ),
               style: t.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
             ),
             const SizedBox(height: GameTokens.spaceMd),
@@ -264,9 +304,14 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
                 onPurchase: () => _confirmAndRun(
                   actionId:
                       'cosmetic:${economy.cosmeticItems[index].productId}',
-                  title: '${economy.cosmeticItems[index].title}を購入しますか？',
-                  body:
-                      '結晶${economy.cosmeticItems[index].gemCost}個を使い、Pathの見た目だけを変更します。学習進行や正答は変わりません。',
+                  title: lang.t(
+                    '${economy.cosmeticItems[index].title}を購入しますか？',
+                    'Buy ${economy.cosmeticItems[index].title}?',
+                  ),
+                  body: lang.t(
+                    '結晶${economy.cosmeticItems[index].gemCost}個を使い、Pathの見た目だけを変更します。学習進行や正答は変わりません。',
+                    'Spend ${economy.cosmeticItems[index].gemCost} gems to change the look of your Path. Progress and answers stay the same.',
+                  ),
                   action: () => widget.onPurchaseCosmetic(
                     economy.cosmeticItems[index].productId,
                   ),
@@ -301,7 +346,10 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
                 border: Border.all(color: colors.border),
               ),
               child: Text(
-                '結晶は速度や誤答回数では増減しません。Timed当日券は練習タブで参加前に確認します。Match / Lightning、時間回復、ハート回復練習は無料です。学校モードでは結晶経済を使いません。',
+                lang.t(
+                  '結晶は速度や誤答回数では増減しません。Timed当日券は練習タブで参加前に確認します。Match / Lightning、時間回復、ハート回復練習は無料です。学校モードでは結晶経済を使いません。',
+                  'Speed and wrong answers do not affect gems. Confirm a Timed day pass in Practice before joining. Match, Lightning, timed recovery, and heart recovery practice are free. Gems are not used in class mode.',
+                ),
                 style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
               ),
             ),
@@ -346,8 +394,8 @@ class _EconomyItem extends StatelessWidget {
       enabled: action != null,
       label:
           '$title。$description。$currentLabel。'
-          '${cost == null ? '利用できません' : '結晶$cost個'}。'
-          '${enabled ? '交換できます' : '現在は交換できません'}',
+          '${cost == null ? lang.t('利用できません', 'Unavailable') : lang.t('結晶$cost個', '$cost gems')}。'
+          '${enabled ? lang.t('交換できます', 'Available to exchange') : lang.t('現在は交換できません', 'Cannot exchange right now')}',
       onTap: action,
       child: ExcludeSemantics(
         child: Container(
@@ -404,10 +452,10 @@ class _EconomyItem extends StatelessWidget {
                     : const Icon(Icons.diamond_rounded),
                 label: Text(
                   busy
-                      ? '記録中…'
+                      ? lang.t('記録中…', 'Saving…')
                       : cost == null
-                      ? '利用できません'
-                      : '◆ $cost で交換',
+                      ? lang.t('利用できません', 'Unavailable')
+                      : lang.t('◆ $cost で交換', 'Exchange for ◆ $cost'),
                 ),
               ),
             ],
