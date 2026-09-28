@@ -73,6 +73,11 @@ class UnitsClient {
   String _detailKey(AppLanguage lang, String unitId) =>
       'units.v10.${lang.name}.detail.$unitId';
 
+  // 言語をkeyに入れる前の日本語保存。読み取りだけ互換を残し、
+  // 書き込みは新しいkeyへ行く（日本語表示が失われない）。
+  static const _legacyListKey = 'units.v10.list';
+  String _legacyDetailKey(String unitId) => 'units.v10.detail.$unitId';
+
   /// 単元の一覧。新しいもの、保存したもの、同梱教材の順で返す。
   Future<List<UnitSummary>> list() async {
     final lang = _language();
@@ -172,7 +177,11 @@ class UnitsClient {
   // ── 保存 ──────────────────────────────────────────────────
 
   Future<List<UnitSummary>> _cachedList(AppLanguage lang) async {
-    final raw = await _store.getSetting(_listKey(lang));
+    final raw =
+        await _store.getSetting(_listKey(lang)) ??
+        (lang == AppLanguage.ja
+            ? await _store.getSetting(_legacyListKey)
+            : null);
     if (raw == null) return const [];
     try {
       return _parseSummaryList(jsonDecode(raw)) ?? const [];
@@ -183,7 +192,11 @@ class UnitsClient {
   }
 
   Future<UnitDetail?> _cachedDetail(AppLanguage lang, String unitId) async {
-    final raw = await _store.getSetting(_detailKey(lang, unitId));
+    final raw =
+        await _store.getSetting(_detailKey(lang, unitId)) ??
+        (lang == AppLanguage.ja
+            ? await _store.getSetting(_legacyDetailKey(unitId))
+            : null);
     if (raw == null) return null;
     try {
       final json = jsonDecode(raw);
