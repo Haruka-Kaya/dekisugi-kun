@@ -1,6 +1,7 @@
 import { type Req, type Res } from '../lib/http.js'
 import { emptyDossier } from '../lib/dossier.js'
-import { envLang, localizeUnit, parseLang } from '../lib/i18n.js'
+import { envLang, parseLang } from '../lib/i18n.js'
+import { EN_CONTENT } from '../lib/en/index.js'
 import {
   BUNDLED_UNIT_CATALOG_SCHEMA_VERSION,
   publicUnitDetail,
@@ -60,7 +61,6 @@ export default function handler(req: Req, res: Res) {
     (Array.isArray(rawLang) ? rawLang[0] : rawLang) ??
     /[?&]lang=([^&]+)/.exec(req.url ?? '')?.[1]
   const lang = langParam == null ? envLang() : parseLang(langParam)
-  const local = (u: (typeof UNITS)[number]) => localizeUnit(u, lang)
 
   if (id) {
     const found = unitById(decodeURIComponent(id))
@@ -68,7 +68,7 @@ export default function handler(req: Req, res: Res) {
       res.status(404).json({ error: 'unknown_unit' })
       return
     }
-    const unit = local(found)
+    const unit = found
     // カタログは滅多に変わらない。端末と CDN に持たせる。
     // **言語ごとに別のものを配るので Vary を付ける** —
     // 付けないと CDN が日本語を英語の要求に返す
@@ -76,7 +76,7 @@ export default function handler(req: Req, res: Res) {
     res.setHeader('Vary', 'Accept-Language')
     res.status(200).json({
       schemaVersion: BUNDLED_UNIT_CATALOG_SCHEMA_VERSION,
-      unit: publicUnitDetail(unit),
+      unit: publicUnitDetail(unit, lang, EN_CONTENT[unit.id]),
       dossier: emptyDossier(unit.id),
     })
     return
@@ -87,6 +87,6 @@ export default function handler(req: Req, res: Res) {
   res.setHeader('Vary', 'Accept-Language')
   res.status(200).json({
     schemaVersion: BUNDLED_UNIT_CATALOG_SCHEMA_VERSION,
-    units: UNITS.map(local).map(publicUnitSummary),
+    units: UNITS.map((unit) => publicUnitSummary(unit, lang)),
   })
 }

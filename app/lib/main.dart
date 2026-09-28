@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'config/app_radius.dart';
+import 'config/app_language.dart';
 import 'config/app_theme.dart';
 import 'config/env.dart';
 import 'config/motion.dart';
@@ -138,34 +139,48 @@ class DekisugiApp extends StatelessWidget {
         Provider<SessionStore>.value(value: store),
         Provider<ConsentStore>.value(value: ConsentStore(store)),
         Provider<Reminders>.value(value: Reminders(store: store)),
+        // 設定1件の読み込みで確定する。切替はこのControllerが配る。
+        FutureProvider<AppLanguageController?>(
+          create: (_) => AppLanguageController.load(store),
+          initialData: null,
+        ),
       ],
-      child: MaterialApp(
-        title: 'デキすぎ君',
-        debugShowCheckedModeBanner: false,
-        locale: const Locale('ja'),
-        supportedLocales: const [Locale('ja')],
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        theme: buildAppTheme(Brightness.light),
-        darkTheme: buildAppTheme(Brightness.dark),
-        themeMode: _themeMode,
-        navigatorObservers: [routeObserver],
-        // Android 14 の最大200%まで端末設定を尊重する。
-        // 主要画面は320dp・200%でスクロール可能なことをテストする。
-        builder: (context, child) => MediaQuery.withClampedTextScaling(
-          minScaleFactor: 1.0,
-          maxScaleFactor: 2.0,
-          // 「動きを減らす」設定は Android と iOS で出所が違う。
-          // ここで両方を1つにまとめて配る
-          child: ReduceMotionScope(child: child ?? const SizedBox.shrink()),
-        ),
-        home: _Gate(
-          serverUrl: serverUrl,
-          localCatalogAssets: localCatalogAssets,
-        ),
+      child: Consumer<AppLanguageController?>(
+        builder: (context, language, _) {
+          // 言語が未確定の1瞬は既定で描く — 画面文言は appLanguage の
+          // 既定値に従い、確定し次第 Consumer が全画面を組み直す。
+          final lang = language?.language ?? appLanguage;
+          return MaterialApp(
+            title: 'デキすぎ君',
+            debugShowCheckedModeBanner: false,
+            locale: lang.locale,
+            supportedLocales: const [Locale('ja'), Locale('en')],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            theme: buildAppTheme(Brightness.light),
+            darkTheme: buildAppTheme(Brightness.dark),
+            themeMode: _themeMode,
+            navigatorObservers: [routeObserver],
+            // Android 14 の最大200%まで端末設定を尊重する。
+            // 主要画面は320dp・200%でスクロール可能なことをテストする。
+            builder: (context, child) => MediaQuery.withClampedTextScaling(
+              minScaleFactor: 1.0,
+              maxScaleFactor: 2.0,
+              // 「動きを減らす」設定は Android と iOS で出所が違う。
+              // ここで両方を1つにまとめて配る
+              child: ReduceMotionScope(
+                child: child ?? const SizedBox.shrink(),
+              ),
+            ),
+            home: _Gate(
+              serverUrl: serverUrl,
+              localCatalogAssets: localCatalogAssets,
+            ),
+          );
+        },
       ),
     );
   }
