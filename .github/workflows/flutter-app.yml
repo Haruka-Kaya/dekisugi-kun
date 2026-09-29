@@ -57,7 +57,7 @@ jobs:
         working-directory: server
         run: npm test
 
-      - name: Verify bundled catalog is generated from schema v9 source
+      - name: Verify bundled catalog is generated from schema v10 source
         working-directory: server
         run: npm run catalog:check
 
