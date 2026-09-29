@@ -38,7 +38,7 @@ voices in context; notation labs train formula and diagram reasoning; spaced
 review and an exam-date countdown bring completed ideas back as new cases.
 
 The signature screen is the **カルテ (misconception map)** on the profile tab:
-a canonical catalog of 32 misconceptions, one per concept, shown as beliefs
+a canonical catalog of 35 misconceptions, one per concept, shown as beliefs
 the companion holds. Each misconception a student's explanation corrects
 flips to "corrected by your explanation" and reveals the canonical correct
 idea — progress rendered as what the learner changed in the AI, not a score.
@@ -144,6 +144,10 @@ English-build v6 capture.
 
 ## Testing instructions (for judges)
 
+0. **Fastest:** open the live demo at https://web-uxapnvfp.devinapps.com — the
+   Flutter web build runs the full loop in the browser against the bundled
+   catalog (no server, no account). Settings → 表示言語 → English toggles the
+   whole product to English live.
 1. Clone the public repository.
 2. `cd app && flutter pub get && flutter run` — the bundled-catalog mode needs
    no network, server, or credentials. The app also ships a full English build:
