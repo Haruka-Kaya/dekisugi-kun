@@ -292,7 +292,7 @@ Xiaomi の実機で、AI の声をマイクが拾い、
 
 ### 必要なもの
 
-- Flutter 3.44.9（Dart 3.12+）
+- Flutter 3.47.5（Dart 3.12+。CI と同一バージョン。Material ウィジェットは 3.44 で `material_ui` へ移行済み）
 - Node.js 24+
 - Vertex AI が有効な GCP プロジェクトと、`roles/aiplatform.user` のサービスアカウント
 
@@ -451,8 +451,8 @@ python tools\misconception-survey\analyze.py tools\misconception-survey\response
   書面で合意した個別契約が必要
 - 現在のworktreeでは Vercel production / preview の `/api/live-token`、`/api/director`、学校 Team API を
   コード上で強制停止する。公開環境では内部テスト用フラグを設定しても `503` のまま
-- **2026-08-10現在、この停止差分は本番未反映**。旧本番の`GET /api/live-token`は200を返すため、
-  明示承認後の緊急停止デプロイと実APIの503確認が完了するまで学校・未成年向けに配布しない
+- この停止差分は本番に反映済み。`GET /api/live-token` は未認証で 401、認証済みでも
+  `generativeAiEnabled()` が production で常に false のため 503 を返す（環境変数では解除不可）
 - 学校・18歳未満は、年齢や同意を保存せず外部サービスProviderを持たない端末内モードだけを選べる。
   これは固定教材による練習であり、AI評価や習得証明ではない
 - 海外での処理は、送信項目・国・委託先の措置を同意画面で表示済み

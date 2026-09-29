@@ -87,6 +87,15 @@ These rules, not growth-hack metrics, are the design contract.
 - Optional **Plus** (RevenueCat) is a supporter plan — it grants the
   Aurora Mantle companion skin, the generated-AI reply preface above, and a
   parent-facing karte report; no learning content is ever gated.
+- Entitlement is deliberately verified **on-device, not server-side**:
+  proving entitlement server-side would require sending device identifiers
+  to RevenueCat, which we classify as restricted data processing for minors
+  (`server/lib/restricted-data-processing.ts` — the webhook and sync routes
+  stay 503 in production). The server-verified path exists in code
+  (`grantEntitlement` / `revokeEntitlement` behind the recheck) and activates
+  when that processing is enabled; meanwhile the paid artifacts live in the
+  on-device entitlement ledger, and hitting `/api/companion-line` directly
+  yields only a few catalog-less filler words — never the paid content.
 
 ## Language
 

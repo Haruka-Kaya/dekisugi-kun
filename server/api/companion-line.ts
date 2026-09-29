@@ -31,6 +31,15 @@ const defaultDeps = (): CompanionLineDeps => ({
  * 生成したのは前置きのみ。問い返しの文面と3択は端末内のカタログを
  * 逐語で使うので、生成AIが教理を変える余地はない。
  *
+ * **Plus の entitlement 検証はあえてサーバでしない。**
+ * サーバ側で確かめるには端末の識別子を RevenueCat へ送る必要があり、
+ * これは未成年の制限対象データ処理として停止中
+ * （`restricted-data-processing.ts`、webhook・sync は production で 503）。
+ * かわりに entitlement は端末内の台帳が持ち、前置きの呼び出し自体を
+ * aurora 保有ゲートの内側に置く。直接叩かれても得られるのは
+ * カタログに支えられない前置き数語だけで、課金対象の本体
+ * （スキン・親レポート・カタログ連動）はここを経由しない。
+ *
  * プロバイダーのキー（COMPANION_AI_API_KEY）が無い環境では
  * 常に 503 を返し、クライアントはカタログの固定文へ退避する。
  * `generativeAiEnabled`（旧経路の全停止スイッチ）には従わない —
