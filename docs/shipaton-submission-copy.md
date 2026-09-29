@@ -65,7 +65,7 @@ nothing a student needs to learn is behind payment.
   curriculum guidelines, including the stage-2 chemistry units added this period.
 - Misconception story missions, notation labs, spaced retrieval, hearts with
   timed recovery, daily XP caps that prevent grinding.
-- The カルテ (misconception map): the 32-entry canonical misconception catalog
+- The カルテ (misconception map): the 35-entry canonical misconception catalog
   surfaced as the companion's record, with observed vs. resolved needs drawn
   from durable on-device need state — the protégé effect made visible.
 - A RevenueCat-powered optional Plus supporter plan: purchase and restore

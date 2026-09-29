@@ -33,7 +33,7 @@ teacher.
 ## The misconception map (理解カルテ)
 
 The distinctive asset under the hood is a **canonical misconception catalog**:
-32 entries (M01–M32), one per concept, each pairing the classic textbook
+35 entries (M01–M35), one per concept, each pairing the classic textbook
 misconception ("a stationary object has no forces on it") with the correct
 understanding, plus a probe phrasing the companion uses to *elicit* the
 misconception rather than guess it.
@@ -121,6 +121,6 @@ untranslated key — a partial-English build cannot ship.
 - The misconception items come from an elicitation survey administered to
   real middle/high-school students (delivery UI in `server/public/survey`,
   analysis in `tools/misconception-survey/analyze.py`, n=18 responses so
-  far) — the karte's "32 beliefs" are what actual students actually
+  far) — the karte's "35 beliefs" are what actual students actually
   misbelieve, not invented distractors. The karte screen states this
   provenance to its users.
