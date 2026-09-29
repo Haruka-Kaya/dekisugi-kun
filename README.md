@@ -69,8 +69,11 @@ loop end to end.
   SDK (`purchases_flutter`): purchase/restore grants the Aurora Mantle
   companion skin, generated-AI reply prefaces via `/api/companion-line`
   (consent-disclosed, catalog-verbatim pedagogy, deterministic fallback), and
-  a parent-facing karte report — with a server-side entitlement recheck
-  (`server/lib/revenuecat.ts`, `/api/revenuecat-webhook`). No learning content
+  a parent-facing karte report. Entitlement is verified on-device
+  (server-side re-verification via `server/lib/revenuecat.ts` +
+  `/api/revenuecat-webhook` is implemented and activates when restricted-data
+  processing is enabled — sending device IDs to RevenueCat is currently
+  held as minor-data processing). No learning content
   is behind payment. The full purchase loop is exercise-able end-to-end with
   RevenueCat's free Test Store — see
   [docs/monetization-setup.md](docs/monetization-setup.md).
