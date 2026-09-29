@@ -28,7 +28,7 @@ The record — misconceptions cataloged from real classroom surveys
 
 8
 00:00:72,700 --> 00:00:81,300
-A shareable report for parents — no raw chat ever leaves the device
+A shareable report for parents — the core learning loop stays on-device
 
 9
 00:00:81,700 --> 00:00:91,300
