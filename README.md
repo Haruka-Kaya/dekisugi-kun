@@ -32,7 +32,7 @@ Learning progress lives entirely on-device (SQLite); no account, no free-text
 upload, no LLM grading.
 
 The signature artifact is the **カルテ (misconception map)**: a canonical
-catalog of 32 misconceptions, one per concept, rendered as the companion's
+catalog of 35 misconceptions, one per concept, rendered as the companion's
 beliefs — students watch each recorded misconception flip to "corrected by
 your explanation". See [docs/product-overview-en.md](docs/product-overview-en.md)
 for the full design contract (C1–C9).
@@ -48,6 +48,12 @@ The English build on-device (Android emulator captures, `--dart-define=APP_LANG=
 *The name:* in Japanese slang, *dekisugi* (デキすぎ) is the kid who is
 suspiciously good at everything — here it's the companion's persona: it knows
 the answers but is not allowed to reveal them, so the student has to teach it.
+
+**Live demo:** https://web-uxapnvfp.devinapps.com — the Flutter web build,
+running entirely in your browser against the bundled catalog (no server, no
+account, no network calls; local-mode toggle is in the entry screen). Switch
+to English with 表示言語 → English in Settings, or any lesson teaches you the
+loop end to end.
 
 - **Stack:** Flutter app (`app/`) + TypeScript server (`server/`, Vercel).
   The app's core learning loop runs fully offline against the bundled
