@@ -136,7 +136,7 @@ void main() {
           LearningMonthlyBadgeCatalogV1.definitionVersion,
         );
         expect(monthly.rewardGems, 8);
-        expect(plan.questTitles[monthly.questInstanceId], '今月、意味のある学習を12件終える');
+        expect(plan.questTitles[monthly.questInstanceId], '今月の探究記録を12件集める');
         expect(plan.commitRules.quests, same(plan.activeQuestDefinitions));
       }
     });

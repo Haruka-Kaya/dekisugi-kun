@@ -619,7 +619,8 @@ void main() {
 
     expect(find.text('グラフと矢印を読む'), findsOneWidget);
     expect(find.text('矢印をなぞる順番'), findsNothing);
-    expect(find.textContaining('STEP 1 / 1'), findsOneWidget);
+    expect(find.textContaining('観察 1 / 1'), findsOneWidget);
+    expect(find.textContaining('NOTATION LAB'), findsNothing);
 
     await _tap(tester, find.byKey(const ValueKey('notation-graph-increase')));
     await _tap(tester, find.byKey(const ValueKey('notation-submit')));

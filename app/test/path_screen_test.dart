@@ -31,7 +31,7 @@ const _nodes = <GamePathNode>[
     state: GamePathNodeState.available,
     estimatedMinutes: 4,
     learningActions: ['条件を2つに分類する', '分類した理由を自分の言葉で足す'],
-    rewardLabel: '+10 XP',
+    rewardLabel: '+10 探究記録',
   ),
   GamePathNode(
     id: 'in-progress',
@@ -148,18 +148,47 @@ void main() {
     }
   });
 
-  testWidgets('Pathの全状態を形と文言を含むSemanticsで返す', (tester) async {
+  testWidgets('左実験レールと横長ログを一列で表示する', (tester) async {
+    await _pumpPath(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('研究テーマ 01'), findsOneWidget);
+    expect(find.text('探究ログ'), findsOneWidget);
+    for (final node in _nodes) {
+      expect(
+        find.byKey(ValueKey<String>('game-inquiry-log-${node.id}')),
+        findsOneWidget,
+      );
+    }
+
+    final first = tester.getTopLeft(
+      find.byKey(const ValueKey('game-path-node-completed')),
+    );
+    final second = tester.getTopLeft(
+      find.byKey(const ValueKey('game-path-node-available')),
+    );
+    expect(second.dx, first.dx);
+    expect(second.dy, greaterThan(first.dy));
+
+    final marker = tester.widget<AnimatedContainer>(
+      find.byKey(const ValueKey('game-path-current-ring-available')),
+    );
+    expect(marker.decoration, isA<BoxDecoration>());
+    expect((marker.decoration! as BoxDecoration).shape, BoxShape.rectangle);
+  });
+
+  testWidgets('探究ログの全状態を形と文言を含むSemanticsで返す', (tester) async {
     final semantics = tester.ensureSemantics();
     try {
       await _pumpPath(tester);
       await tester.pumpAndSettle();
 
       expect(
-        find.bySemanticsLabel(RegExp(r'理科レッスン「落ちる前に予想する」。完了。もう一度取り組めます')),
+        find.bySemanticsLabel(RegExp(r'教材観察「落ちる前に予想する」。完了。もう一度取り組めます')),
         findsOneWidget,
       );
       expect(
-        find.bySemanticsLabel(RegExp(r'理科レッスン「空気の影響を見分ける」。現在位置。次に進めます')),
+        find.bySemanticsLabel(RegExp(r'教材観察「空気の影響を見分ける」。現在位置。次に進めます')),
         findsOneWidget,
       );
       expect(find.text('次はここ'), findsOneWidget);
@@ -168,35 +197,35 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.bySemanticsLabel(RegExp(r'章ボス「実験の順番を組む」。3回中1回完了')),
+        find.bySemanticsLabel(RegExp(r'総合検証「実験の順番を組む」。3回中1回完了')),
         findsOneWidget,
       );
       expect(
-        find.bySemanticsLabel(RegExp(r'復習「別の場面でたしかめる」。復習する時期です')),
+        find.bySemanticsLabel(RegExp(r'再観察「別の場面でたしかめる」。復習する時期です')),
         findsOneWidget,
       );
       expect(
-        find.bySemanticsLabel(RegExp(r'理科ストーリー「消えた落下記録」。未解放。前のレッスンを終えると開きます')),
+        find.bySemanticsLabel(RegExp(r'理科事件簿「消えた落下記録」。未解放。前の観察記録を終えると開きます')),
         findsOneWidget,
       );
       expect(
-        find.bySemanticsLabel(RegExp(r'高難度チャレンジ「落下の博士チャレンジ」。高難度課題に挑戦できます')),
+        find.bySemanticsLabel(RegExp(r'高難度検証「落下の博士チャレンジ」。高難度課題に挑戦できます')),
         findsOneWidget,
       );
       expect(
-        find.bySemanticsLabel(RegExp(r'高難度チャレンジ「実験計画の博士チャレンジ」。高難度課題を完了')),
+        find.bySemanticsLabel(RegExp(r'高難度検証「実験計画の博士チャレンジ」。高難度課題を完了')),
         findsOneWidget,
       );
-      expect(find.bySemanticsLabel('連続学習、14日。連続記録の保護、2回分'), findsOneWidget);
+      expect(find.bySemanticsLabel('連続観測、14日。お休みの日の保護、2回分'), findsOneWidget);
       expect(find.bySemanticsLabel('ひらめき結晶、1280個'), findsOneWidget);
-      expect(find.bySemanticsLabel('学習ハート、5個中4個'), findsOneWidget);
+      expect(find.bySemanticsLabel('試行余力、5枠中4枠'), findsOneWidget);
       expect(tester.takeException(), isNull);
     } finally {
       semantics.dispose();
     }
   });
 
-  testWidgets('iOSのReduce Motionではノード押下transformを補間しない', (tester) async {
+  testWidgets('iOSのReduce Motionでは探究ログの状態変化を補間しない', (tester) async {
     final binding = TestWidgetsFlutterBinding.instance;
     binding.platformDispatcher.accessibilityFeaturesTestValue =
         const FakeAccessibilityFeatures(reduceMotion: true);
@@ -213,9 +242,10 @@ void main() {
     );
     await tester.pump();
     final animated = tester.widget<AnimatedContainer>(
-      find.descendant(of: node, matching: find.byType(AnimatedContainer)),
+      find.byKey(const ValueKey('game-inquiry-log-available')),
     );
     expect(animated.duration, Duration.zero);
+    expect(animated.transform, isNull);
   });
 
   testWidgets('深い進捗から再起動しても現在の「次はここ」を自動で見える位置へ出す', (tester) async {
@@ -261,7 +291,7 @@ void main() {
     );
   });
 
-  testWidgets('ノード詳細sheetは学習行為を示し主CTAでDTOを返す', (tester) async {
+  testWidgets('探究ログ詳細sheetは学習行為を示し主CTAでDTOを返す', (tester) async {
     GamePathNode? started;
     await _pumpPath(tester, onNodeStart: (node) => started = node);
     await tester.pumpAndSettle();
@@ -280,7 +310,7 @@ void main() {
     expect(find.text('空気の影響を見分ける'), findsWidgets);
     expect(find.text('条件を2つに分類する'), findsOneWidget);
     expect(find.text('分類した理由を自分の言葉で足す'), findsOneWidget);
-    expect(find.text('完了時 +10 XP'), findsOneWidget);
+    expect(find.text('完了時 +10 探究記録'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('game-node-sheet-start')));
     await tester.pumpAndSettle();
@@ -290,7 +320,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('320dp・文字200%でPathとnode/quest sheetが横に溢れない', (tester) async {
+  testWidgets('320dp・文字200%で探究ログと詳細sheetが横に溢れない', (tester) async {
     tester.view.physicalSize = const Size(320, 568);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -307,7 +337,7 @@ void main() {
       tester
           .getSize(find.byKey(const ValueKey('game-path-node-available')))
           .width,
-      greaterThanOrEqualTo(72),
+      greaterThanOrEqualTo(180),
     );
 
     final available = find.byKey(const ValueKey('game-path-node-available'));
@@ -353,17 +383,17 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('game-quest-button')));
     await tester.pumpAndSettle();
 
-    expect(find.text('この端末で達成済み'), findsOneWidget);
-    expect(find.textContaining('報酬を受け取れます'), findsNothing);
+    expect(find.text('この端末に記録済み'), findsOneWidget);
+    expect(find.textContaining('結晶を受け取れます'), findsNothing);
     expect(find.text('結晶 5個'), findsNothing);
-    expect(find.bySemanticsLabel(RegExp('授業クエスト.*この端末で達成済み')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('授業の観察予定.*この端末に記録済み')), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('game-quest-sheet-close')));
     await tester.pumpAndSettle();
     const personalQuest = GameQuest(
       id: 'completed-personal',
       title: '今日の学習を1件終える',
-      description: '学習パスの目標です。',
+      description: '探究ノートの観察予定です。',
       kind: GameQuestKind.daily,
       state: GameQuestState.completed,
       current: 1,
@@ -380,11 +410,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('game-quest-button')));
     await tester.pumpAndSettle();
 
-    expect(find.text('達成。報酬を受け取れます'), findsOneWidget);
+    expect(find.text('記録済み。結晶を受け取れます'), findsOneWidget);
     expect(find.text('結晶 5個'), findsOneWidget);
-    expect(
-      find.bySemanticsLabel(RegExp('デイリークエスト.*報酬を受け取れます')),
-      findsOneWidget,
-    );
+    expect(find.bySemanticsLabel(RegExp('今日の観察予定.*結晶を受け取れます')), findsOneWidget);
   });
 }

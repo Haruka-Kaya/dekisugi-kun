@@ -105,10 +105,10 @@ void main() {
     );
 
     expect(find.textContaining('任意'), findsWidgets);
-    expect(find.textContaining('Path・連続学習・報酬'), findsOneWidget);
-    expect(find.textContaining('学校モードはハート無制限'), findsOneWidget);
+    expect(find.textContaining('探究ノート・連続観測・報酬'), findsOneWidget);
+    expect(find.textContaining('学校モードは試行余力が無制限'), findsOneWidget);
     expect(
-      find.bySemanticsLabel(RegExp('OPTIONAL.*落下の速さ.*速さは学習の代わりにはなりません')),
+      find.bySemanticsLabel(RegExp('ラボ・ブリーフ.*時間観察.*落下の速さ.*速さは学習の代わりにはなりません')),
       findsOneWidget,
     );
     _expectReferenceHidden(tester);
@@ -127,7 +127,7 @@ void main() {
       find.bySemanticsLabel(RegExp('時間になったことを落ち着いて伝えています')),
       findsOneWidget,
     );
-    expect(find.textContaining('Path・連続学習・報酬'), findsOneWidget);
+    expect(find.textContaining('探究ノート・連続観測・報酬'), findsOneWidget);
     expect(finished, 0, reason: '時間切れを外部の完了イベントにしない');
     expect(heartLosses, isEmpty, reason: '時間切れではハートを失わない');
 
@@ -222,7 +222,7 @@ void main() {
     _expectReferenceHidden(tester);
     await _answerCheckpoint(tester, 'same-time');
 
-    expect(find.text('2問クリア'), findsOneWidget);
+    expect(find.text('時間観察を完了'), findsOneWidget);
     expect(find.textContaining('追加報酬はありません'), findsOneWidget);
     expect(
       find.textContaining(challengeVariant.expectedOutcome),

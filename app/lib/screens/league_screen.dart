@@ -82,8 +82,8 @@ class LeagueScreen extends StatelessWidget {
             (localWeeklyLeague?.history.isNotEmpty ?? false)) ...[
           const SizedBox(height: GameTokens.spaceXl),
           const GameSectionHeader(
-            title: 'これまでの週',
-            description: 'この端末の学習者の実順位から、週終了後に一度だけ確定した履歴です。',
+            title: '共同観測の記録',
+            description: 'この端末の観測者の実順位から、週終了後に一度だけ確定した記録です。',
           ),
           const SizedBox(height: GameTokens.spaceMd),
           GameResponsiveGrid(
@@ -121,17 +121,17 @@ class _LocalLeagueHistoryRow extends StatelessWidget {
     final colors = context.gamePalette;
     final movement = switch (week.movement) {
       LanSocialLeagueMovement.promoted => (
-        label: '昇格',
+        label: '上位級へ',
         icon: Icons.arrow_upward_rounded,
         color: colors.pathComplete,
       ),
       LanSocialLeagueMovement.stayed => (
-        label: '維持',
+        label: '同級維持',
         icon: Icons.horizontal_rule_rounded,
         color: colors.pathActive,
       ),
       LanSocialLeagueMovement.demoted => (
-        label: '降格',
+        label: '下位級へ',
         icon: Icons.arrow_downward_rounded,
         color: colors.heart,
       ),
@@ -144,8 +144,8 @@ class _LocalLeagueHistoryRow extends StatelessWidget {
     return Semantics(
       container: true,
       label:
-          '${week.weekKey}の週、${week.tier.label}、$rankLabel、'
-          '${week.meaningfulEventCount}件、${movement.label}',
+          '${week.weekKey}の週、${week.tier.displayLabel}、$rankLabel、'
+          '観察${week.meaningfulEventCount}件、${movement.label}',
       child: ExcludeSemantics(
         child: Container(
           key: ValueKey('local-league-history-${week.weekKey}'),
@@ -170,8 +170,8 @@ class _LocalLeagueHistoryRow extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${week.tier.label} ・ $rankLabel ・ '
-                      '${week.meaningfulEventCount}件',
+                      '${week.tier.displayLabel} ・ $rankLabel ・ '
+                      '観察${week.meaningfulEventCount}件',
                       style: t.textTheme.titleSmall
                           ?.copyWith(color: colors.ink)
                           .jaWeight(FontWeight.w800),
@@ -216,8 +216,8 @@ class _SchoolArena extends StatelessWidget {
       ),
       color: colors.story,
       foregroundColor: colors.onStory,
-      eyebrow: '授業の探究',
-      title: hasMission ? 'この端末の授業ミッション' : '同じ課題に、並んで挑む',
+      eyebrow: '授業の共同観測',
+      title: hasMission ? 'この端末の観察目標' : '同じ課題を、並んで観察する',
       body: hasMission
           ? 'この端末の完了だけを表示します。クラス全体の件数と個人順位は作りません。'
           : '先生の教材コードで同じ課題を開けます。この端末は個人順位やクラス全体の件数を集計しません。',
@@ -261,10 +261,10 @@ class _OnlineArena extends StatelessWidget {
       surfaceKey: const ValueKey('league-lan-social-summary'),
       color: colors.story,
       foregroundColor: colors.onStory,
-      eyebrow: '実参加者リーグ',
-      title: '同じWi‑Fiの仲間と、今週を競う',
+      eyebrow: '実参加者の共同観測',
+      title: '同じWi‑Fiの仲間と、今週を観測する',
       body: '実在5〜8人が接続したときだけ開きます。5人未満では順位も人数も表示しません。',
-      semanticSummary: '実参加者リーグ。実在5人から8人。5人未満では順位と人数を表示しません',
+      semanticSummary: '実参加者の共同観測。実在5人から8人。5人未満では順位と人数を表示しません',
       mascotReaction: GameCharacterReaction.invite,
       mascotStyle: mascotStyle,
       content: const Column(
@@ -281,8 +281,8 @@ class _OnlineArena extends StatelessWidget {
           ),
           SizedBox(height: GameTokens.spaceSm),
           _ArenaInsetFact(
-            icon: Icons.workspace_premium_outlined,
-            text: 'ブロンズからダイヤモンドまでの10段',
+            icon: Icons.fact_check_outlined,
+            text: '観測級01から観測級10までの10段階',
           ),
         ],
       ),
@@ -295,7 +295,7 @@ class _OnlineArena extends StatelessWidget {
         ),
         onPressed: onOpen,
         icon: const Icon(Icons.radar_rounded),
-        label: const Text('仲間とつながる'),
+        label: const Text('共同観測を開く'),
       ),
     );
   }
@@ -331,9 +331,9 @@ class _LocalArena extends StatelessWidget {
       color: colors.pathActive,
       foregroundColor: colors.onPathActive,
       eyebrow: '実参加者・端末手渡し',
-      title: '${tier.label}リーグ',
-      body: 'slot 1の「この端末の学習者」を、実在する仲間との週次順位だけでブロンズからダイヤモンドへ進めます。',
-      semanticSummary: '${tier.label}リーグ。この端末の学習者を実在5人から8人の順位で週終了後に確定',
+      title: '${tier.displayLabel}の共同観測',
+      body: 'slot 1の「この端末の観測者」を、実在する仲間との週次順位だけで観測級01から観測級10へ進めます。',
+      semanticSummary: '${tier.displayLabel}の共同観測。この端末の観測者を実在5人から8人の順位で週終了後に確定',
       mascotReaction: GameCharacterReaction.celebrate,
       mascotStyle: mascotStyle,
       content: Column(
@@ -341,13 +341,13 @@ class _LocalArena extends StatelessWidget {
         children: [
           const _ArenaInsetFact(
             key: ValueKey('league-local-tier-rule'),
-            icon: Icons.workspace_premium_outlined,
-            text: '10段tierは週終了後に一度だけ確定し、1週で最大±1段',
+            icon: Icons.fact_check_outlined,
+            text: '10段階の観測級は週終了後に一度だけ確定し、1週で最大±1段',
           ),
           const SizedBox(height: GameTokens.spaceSm),
           const _ArenaInsetFact(
             icon: Icons.groups_2_outlined,
-            text: '2〜4人は途中順位だけ。tier確定は実在5〜8人の週だけ',
+            text: '2〜4人は途中順位だけ。観測級の確定は実在5〜8人の週だけ',
           ),
           const SizedBox(height: GameTokens.spaceLg),
           if (localWeeklyLeague case final league?)
@@ -364,7 +364,7 @@ class _LocalArena extends StatelessWidget {
           else
             const _ArenaInsetFact(
               icon: Icons.shield_outlined,
-              text: '架空の対戦相手や旧4段XP tierは主表示に使いません',
+              text: '架空の観測者や旧4段の探究記録区分は主表示に使いません',
             ),
         ],
       ),
@@ -452,7 +452,7 @@ Future<void> _showLeagueRules(
   required bool hasLocalParticipants,
 }) => showGamePageSheet<void>(
   context: context,
-  title: 'リーグのルールと保存範囲',
+  title: '共同観測のルールと保存範囲',
   child: Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
@@ -464,8 +464,8 @@ Future<void> _showLeagueRules(
       const SizedBox(height: GameTokens.spaceMd),
       const _LeagueRule(
         icon: Icons.speed_outlined,
-        title: '速さではなく、意味のある学習',
-        body: '意味のある完了1件ずつを数え、滞在時間は得点にしません。',
+        title: '速さではなく、意味のある観察',
+        body: '意味のある完了1件ずつを観察として数え、滞在時間は得点にしません。',
       ),
       const SizedBox(height: GameTokens.spaceMd),
       if (schoolMode)
@@ -485,17 +485,17 @@ Future<void> _showLeagueRules(
           icon: Icons.phonelink_erase_outlined,
           title: 'オンライン順位は使わない',
           body: hasLocalParticipants
-              ? '同じ端末を手渡しする実在2〜8人を匿名表示し、5〜8人の週だけslot 1のtierを最大±1段動かします。'
-              : '架空の対戦相手は作らず、実参加者の週を始めるまではブロンズです。',
+              ? '同じ端末を手渡しする実在2〜8人を匿名表示し、5〜8人の週だけslot 1の観測級を最大±1段動かします。'
+              : '架空の観測者は作らず、実参加者の週を始めるまでは観測級01です。',
         ),
       const SizedBox(height: GameTokens.spaceMd),
       GameSolidSurface(
         child: Text(
           schoolMode
-              ? '学校課題は個人XP・結晶・連続学習へ加算しません。'
+              ? '学校課題は個人の探究記録・結晶・連続観測へ加算しません。'
               : lanSocialOnline
-              ? '架空の対戦相手は作らず、ブロンズからダイヤモンドまでの10段です。'
-              : 'slot 1だけを「この端末の学習者」とし、他slotは週内匿名です。氏名・account・回答・正誤は表示・保存しません。',
+              ? '架空の観測者は作らず、観測級01から観測級10までの10段階です。'
+              : 'slot 1だけを「この端末の観測者」とし、他slotは週内匿名です。氏名・account・回答・正誤は表示・保存しません。',
           style: Theme.of(
             context,
           ).textTheme.bodySmall?.copyWith(color: context.gamePalette.inkMuted),

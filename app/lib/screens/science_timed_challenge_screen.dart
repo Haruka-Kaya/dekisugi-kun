@@ -301,7 +301,7 @@ class _ScienceTimedChallengeScreenState
               backgroundColor: colors.canvas,
               foregroundColor: colors.ink,
               title: Text(
-                '時間制チャレンジ',
+                '時間観察',
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
@@ -390,7 +390,7 @@ class _TimedIntro extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'OPTIONAL  /  TIMED LAB',
+          eyebrow: 'ラボ・ブリーフ  /  時間観察  /  任意',
           title: conceptLabel,
           body: '固定の2問を$seconds秒で解きます。速さは学習の代わりにはなりません。',
           icon: Icons.timer_outlined,
@@ -403,14 +403,14 @@ class _TimedIntro extends StatelessWidget {
           label: '時間切れは失点なし',
           icon: Icons.shield_outlined,
           child: const Text(
-            '時間切れでは学習ハートは減りません。固定問題の誤答だけ、個人モードでは学習ハートが1つ減ります。'
-            'Path・連続学習・報酬・学校課題は変わらず、学校モードはハート無制限です。',
+            '時間切れでは試行余力は減りません。固定問題の誤答だけ、個人モードでは試行余力が1つ減ります。'
+            '探究ノート・連続観測・報酬・学校課題は変わらず、学校モードは試行余力が無制限です。',
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('timed-start'),
-          label: '任意チャレンジを始める',
+          label: '時間観察を始める',
           icon: Icons.play_arrow_rounded,
           onPressed: onStart,
           backgroundColor: colors.pathReview,
@@ -672,7 +672,7 @@ class _TimedResult extends StatelessWidget {
     final colors = context.gamePalette;
     final (title, body, icon, accent, foreground) = switch (outcome) {
       _TimedOutcome.cleared => (
-        '2問クリア',
+        '時間観察を完了',
         '固定問題を最後まで解きました。速さによる追加報酬はありません。',
         Icons.check_circle_outline,
         colors.pathComplete,
@@ -697,7 +697,7 @@ class _TimedResult extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'TIMED LAB  /  RESULT',
+          eyebrow: 'ラボ・ブリーフ  /  時間観察  /  記録',
           title: title,
           body: body,
           icon: icon,
@@ -739,14 +739,14 @@ class _TimedResult extends StatelessWidget {
           label: '進行と報酬はそのまま',
           icon: Icons.shield_outlined,
           child: const Text(
-            'Path・連続学習・報酬・学校課題は増減しません。時間切れでは学習ハートも減らず、'
-            '固定問題に誤答した場合だけ個人モードの学習ハートが1つ減ります。',
+            '探究ノート・連続観測・報酬・学校課題は増減しません。時間切れでは試行余力も減らず、'
+            '固定問題に誤答した場合だけ個人モードの試行余力が1つ減ります。',
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('timed-finish'),
-          label: '練習ラボへ戻る',
+          label: '探究ノートの練習へ戻る',
           icon: Icons.arrow_back_rounded,
           onPressed: onFinish,
           backgroundColor: colors.pathReview,

@@ -146,7 +146,7 @@ void main() {
     }
   });
 
-  testWidgets('mascotはsolid surfaceとaccent境界の上で3:1以上を保つ', (tester) async {
+  testWidgets('Lab Briefは中立面・4dp罫線・矩形の観察印で情報を分ける', (tester) async {
     for (final brightness in Brightness.values) {
       final theme = buildAppTheme(brightness);
       final palette = theme.extension<GamePalette>()!;
@@ -172,8 +172,10 @@ void main() {
                 ? ThemeMode.dark
                 : ThemeMode.light,
             home: Scaffold(
-              backgroundColor: accent,
-              body: ScienceActivityMascotBadge(
+              body: ScienceChallengeHeader(
+                eyebrow: '観察 1 / 2',
+                title: '条件を見つける',
+                body: '標本を比べます。',
                 icon: Icons.science_outlined,
                 accent: accent,
                 onAccent: onAccent,
@@ -189,8 +191,27 @@ void main() {
           find.byKey(const ValueKey('science-activity-mascot-surface')),
         );
         final decoration = surface.decoration! as BoxDecoration;
+        final brief = tester.widget<Container>(
+          find.byKey(const ValueKey('science-challenge-lab-brief')),
+        );
+        final briefDecoration = brief.decoration! as BoxDecoration;
+        final accentRule = tester.widget<ColoredBox>(
+          find.byKey(const ValueKey('science-challenge-accent-rule')),
+        );
         expect(art.body, character.charBody);
-        expect(decoration.color, palette.surface);
+        expect(briefDecoration.color, palette.benchRaised);
+        expect(briefDecoration.gradient, isNull);
+        expect(briefDecoration.boxShadow, isNull);
+        expect(accentRule.color, accent);
+        expect(
+          tester
+              .getSize(
+                find.byKey(const ValueKey('science-challenge-accent-rule')),
+              )
+              .width,
+          GameTokens.accentRuleWidth,
+        );
+        expect(decoration.color, palette.bench);
         expect(decoration.gradient, isNull);
         expect(decoration.boxShadow, isNull);
         expect(
@@ -200,12 +221,23 @@ void main() {
         );
         expect(decoration.border, isA<Border>());
         final border = decoration.border! as Border;
-        expect(border.top.color, onAccent);
-        expect(border.top.width, 2);
+        expect(border.top.color, palette.inkMuted);
+        expect(border.top.width, GameTokens.strongBorderWidth);
         expect(
-          _contrast(border.top.color, accent),
+          _contrast(border.top.color, decoration.color!),
           greaterThanOrEqualTo(3),
-          reason: '${brightness.name}/${entry.key}/border',
+          reason: '${brightness.name}/${entry.key}/observation stamp border',
+        );
+        final kindIcon = tester.widget<Container>(
+          find.byKey(const ValueKey('science-activity-kind-icon')),
+        );
+        final kindDecoration = kindIcon.decoration! as BoxDecoration;
+        expect(kindDecoration.color, accent);
+        expect(kindDecoration.shape, BoxShape.rectangle);
+        expect(
+          _contrast(onAccent, accent),
+          greaterThanOrEqualTo(4.5),
+          reason: '${brightness.name}/${entry.key}/activity kind icon',
         );
         expect(tester.takeException(), isNull);
       }

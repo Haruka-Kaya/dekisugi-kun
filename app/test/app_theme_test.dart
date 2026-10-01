@@ -97,18 +97,34 @@ void main() {
           );
         });
 
-        test('Material標準部品もOrbit Labの面とinkへ統一する', () {
+        test('Material標準部品もField Notebookの面とinkへ統一する', () {
           final game = theme.extension<GamePalette>()!;
-          expect(scheme.surface, game.canvas);
+          expect(scheme.surface, game.paper);
           expect(scheme.onSurface, game.ink);
           expect(scheme.onSurfaceVariant, game.inkMuted);
-          expect(scheme.surfaceContainerLow, game.surface);
-          expect(scheme.surfaceContainer, game.surfaceRaised);
+          expect(scheme.surfaceContainerLow, game.bench);
+          expect(scheme.surfaceContainer, game.benchRaised);
           expect(scheme.outlineVariant, game.border);
-          expect(theme.scaffoldBackgroundColor, game.canvas);
-          expect(theme.inputDecorationTheme.fillColor, game.surfaceRaised);
-          expect(c.warmSurface, game.surfaceRaised);
-          expect(c.coolSurface, game.surfaceRaised);
+          expect(theme.scaffoldBackgroundColor, game.paper);
+          expect(theme.inputDecorationTheme.fillColor, game.benchRaised);
+          expect(c.heroSurface, game.benchRaised);
+          expect(c.onHeroSurface, game.ink);
+          expect(c.heroMuted, game.inkMuted);
+          expect(c.warmSurface, game.benchRaised);
+          expect(c.coolSurface, game.benchRaised);
+        });
+
+        test('汎用componentは低角丸で、chipをpillにしない', () {
+          final cardShape = theme.cardTheme.shape! as RoundedRectangleBorder;
+          final chipShape = theme.chipTheme.shape! as RoundedRectangleBorder;
+          expect(
+            cardShape.borderRadius,
+            BorderRadius.circular(GameTokens.radiusLg),
+          );
+          expect(
+            chipShape.borderRadius,
+            BorderRadius.circular(GameTokens.radiusSm),
+          );
         });
       });
     }

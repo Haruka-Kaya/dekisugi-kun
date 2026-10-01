@@ -201,7 +201,7 @@ class GamePathProjection {
     required int rewardXpAvailable,
     bool rewardEligible = true,
   }) {
-    final standardReward = '+$rewardXpAvailable XP（初回・期限復習・1日上限まで）';
+    final standardReward = '+$rewardXpAvailable 探究記録（初回・期限復習・1日上限まで）';
     final (title, description, actions, minutes, reward) = switch (kind) {
       GamePathNodeKind.lesson => (
         'まず予想する',
@@ -239,14 +239,14 @@ class GamePathProjection {
         standardReward,
       ),
       GamePathNodeKind.challenge => (
-        '$conceptLabelの章ボス',
+        '$conceptLabelの総合検証',
         '$conceptLabelを別の場面へ使い、最後にまとめて答え合わせします。',
         const ['ヒントなしで解く', '別場面へ使う', 'まとめて比較する'],
         5,
         standardReward,
       ),
       GamePathNodeKind.legendary => (
-        'レジェンド',
+        '単元の高難度検証',
         '翌学習日から挑める、ヒントなしの高難度課題です。',
         const ['間隔を空けて思い出す', 'ヒントなしで解く', '転移を確かめる'],
         5,

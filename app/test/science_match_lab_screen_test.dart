@@ -115,6 +115,8 @@ void main() {
       _wrap(disableAnimations: true, onCompleted: () => completed++),
     );
 
+    expect(find.text('対応づけ実験'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('ラボ・ブリーフ.*対応づけ実験')), findsOneWidget);
     await _start(tester);
     expect(find.text('真空中の落下'), findsOneWidget);
     expect(find.bySemanticsLabel(RegExp('1/2組目.*残り時間30秒')), findsOneWidget);
@@ -192,7 +194,7 @@ void main() {
         },
       ),
     );
-    expect(find.textContaining('学校モードはハート無制限'), findsOneWidget);
+    expect(find.textContaining('学校モードは試行余力が無制限'), findsOneWidget);
     await _start(tester);
     await tester.pump(const Duration(seconds: 2));
 
@@ -201,7 +203,7 @@ void main() {
       find.bySemanticsLabel(RegExp('時間になったことを落ち着いて伝えています')),
       findsOneWidget,
     );
-    expect(find.textContaining('Path・連続学習・報酬は変わりません'), findsOneWidget);
+    expect(find.textContaining('探究ノート・連続観測・報酬は変わりません'), findsOneWidget);
     expect(find.byKey(const ValueKey('match-complete')), findsNothing);
     expect(completed, 0);
     expect(heartLosses, isEmpty, reason: '時間切れではハートを失わない');

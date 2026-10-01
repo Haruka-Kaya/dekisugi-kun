@@ -28,6 +28,16 @@ class DailyAudioPracticePanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              key: const ValueKey('daily-audio-record-rule'),
+              width: 64,
+              height: 4,
+              color: colors.revisit,
+            ),
+          ),
+          const SizedBox(height: GameTokens.spaceMd),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -38,14 +48,14 @@ class DailyAudioPracticePanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '今日の音声ミッション',
+                      '今日の音声観察',
                       style: theme.textTheme.titleLarge
                           ?.copyWith(color: colors.ink)
                           .jaWeight(FontWeight.w900),
                     ),
                     const SizedBox(height: GameTokens.spaceXs),
                     Text(
-                      '聞く課題と話す課題は別々です。どちらも回答・録音を保存しません。',
+                      '聞き取り観察と教え返しは別々に記録します。どちらも回答・録音を保存しません。',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colors.inkMuted,
                       ),
@@ -90,18 +100,18 @@ class _AudioMissionButton extends StatelessWidget {
     final theme = Theme.of(context);
     final available = mission != null;
     final title = switch (kind) {
-      DailyAudioMissionKind.listening => '今日の「聞く」',
-      DailyAudioMissionKind.speaking => '今日の「話す」',
+      DailyAudioMissionKind.listening => '聞き取り観察',
+      DailyAudioMissionKind.speaking => '教え返し',
     };
     final description = switch (kind) {
       DailyAudioMissionKind.listening =>
         available
-            ? '${mission!.conceptLabel}の固定説明を聞き、条件を判断します。'
-            : 'PathでListeningまで進むと開きます。',
+            ? '${mission!.conceptLabel}の固定説明を聞き、条件を観察します。'
+            : '探究ノートで聞き取り観察まで進むと開きます。',
       DailyAudioMissionKind.speaking =>
         available
-            ? '${mission!.conceptLabel}を説明し、自分で再生・再読して比べます。'
-            : 'PathでSpeakingまで進むと開きます。',
+            ? '${mission!.conceptLabel}を自分のことばで説明し、再生・再読して確かめます。'
+            : '探究ノートで教え返しまで進むと開きます。',
     };
     final icon = switch (kind) {
       DailyAudioMissionKind.listening => Icons.headphones_rounded,
@@ -115,8 +125,8 @@ class _AudioMissionButton extends StatelessWidget {
           '$title。$description。${!available
               ? '未解放'
               : completedToday
-              ? '今日完了。もう一度練習できます'
-              : '今日の1件、利用できます'}',
+              ? '本日記録済み。もう一度観察できます'
+              : '今日の観察、利用できます'}',
       onTap: available ? () => onOpen(mission!) : null,
       child: ExcludeSemantics(
         child: Material(
@@ -182,7 +192,7 @@ class _AudioMissionButton extends StatelessWidget {
                                 const SizedBox(width: GameTokens.spaceXs),
                                 Expanded(
                                   child: Text(
-                                    '今日完了／もう一度練習',
+                                    '本日記録済み／もう一度観察',
                                     key: ValueKey(
                                       'daily-audio-${kind.name}-replay',
                                     ),

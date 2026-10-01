@@ -64,7 +64,10 @@ class _ScienceDiagramScreenState extends State<ScienceDiagramScreen> {
       _reason.text.trim().isNotEmpty;
 
   bool get _canComplete =>
-      _reflectionChoice != null && _reflection.text.trim().isNotEmpty;
+      _response != null &&
+      matchesCognitiveTaskSolution(_variant.cognitiveTask, _response) &&
+      _reflectionChoice != null &&
+      _reflection.text.trim().isNotEmpty;
 
   @override
   void didUpdateWidget(covariant ScienceDiagramScreen oldWidget) {
@@ -134,6 +137,26 @@ class _ScienceDiagramScreenState extends State<ScienceDiagramScreen> {
     widget.onCompleted();
   }
 
+  void _tryAgain() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _submitted = false;
+      _response = null;
+      _reflectionChoice = null;
+      _reflection.clear();
+    });
+    _returnToTop();
+  }
+
+  void _returnToPath() {
+    final callback = widget.onReturnToPath;
+    if (callback != null) {
+      callback();
+    } else {
+      Navigator.of(context).maybePop();
+    }
+  }
+
   void _returnToTop() {
     final reduceMotion = ReduceMotionScope.of(context);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -192,7 +215,7 @@ class _ScienceDiagramScreenState extends State<ScienceDiagramScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   ScienceChallengeHeader(
-                    eyebrow: 'DIAGRAM LAB',
+                    eyebrow: 'しくみ図  /  観察中',
                     title: widget.conceptLabel,
                     body: headerBody,
                     icon: Icons.account_tree_rounded,
@@ -229,6 +252,10 @@ class _ScienceDiagramScreenState extends State<ScienceDiagramScreen> {
                             ),
                             expectedOutcome: _variant.expectedOutcome,
                             expectedReason: _variant.expectedReason,
+                            isCorrect: matchesCognitiveTaskSolution(
+                              _variant.cognitiveTask,
+                              _response,
+                            ),
                             choice: _reflectionChoice,
                             reflectionController: _reflection,
                             canComplete: _canComplete,
@@ -236,6 +263,8 @@ class _ScienceDiagramScreenState extends State<ScienceDiagramScreen> {
                                 setState(() => _reflectionChoice = choice),
                             onReflectionChanged: (_) => setState(() {}),
                             onComplete: _complete,
+                            onTryAgain: _tryAgain,
+                            onDefer: _returnToPath,
                           )
                         : _ComposeStep(
                             key: const ValueKey('science-diagram-compose'),
@@ -249,6 +278,7 @@ class _ScienceDiagramScreenState extends State<ScienceDiagramScreen> {
                                 setState(() => _response = response),
                             onReasonChanged: (_) => setState(() {}),
                             onSubmit: _submit,
+                            onDefer: _returnToPath,
                           ),
                   ),
                 ],
@@ -273,6 +303,7 @@ class _ComposeStep extends StatelessWidget {
     required this.onResponseChanged,
     required this.onReasonChanged,
     required this.onSubmit,
+    required this.onDefer,
   });
 
   final String conceptLabel;
@@ -284,6 +315,7 @@ class _ComposeStep extends StatelessWidget {
   final ValueChanged<CognitiveTaskResponse> onResponseChanged;
   final ValueChanged<String> onReasonChanged;
   final VoidCallback onSubmit;
+  final VoidCallback onDefer;
 
   @override
   Widget build(BuildContext context) {
@@ -299,7 +331,7 @@ class _ComposeStep extends StatelessWidget {
         children: [
           _LessonHeader(
             step: '1 / 2',
-            eyebrow: 'SCIENCE DIAGRAM',
+            eyebrow: 'しくみを組む',
             title: conceptLabel,
             body: '先にカードで予想を組み、そのあと決め手を一文だけ書きます。',
           ),
@@ -391,6 +423,8 @@ class _ComposeStep extends StatelessWidget {
           ),
           const SizedBox(height: GameTokens.spaceLg),
           _PrivacyNote(),
+          const SizedBox(height: GameTokens.spaceSm),
+          _DeferDiagramButton(onPressed: onDefer),
         ],
       ),
     );
@@ -408,12 +442,15 @@ class _ComparisonStep extends StatelessWidget {
     required this.solutionSummary,
     required this.expectedOutcome,
     required this.expectedReason,
+    required this.isCorrect,
     required this.choice,
     required this.reflectionController,
     required this.canComplete,
     required this.onChoiceChanged,
     required this.onReflectionChanged,
     required this.onComplete,
+    required this.onTryAgain,
+    required this.onDefer,
   });
 
   final String conceptLabel;
@@ -424,12 +461,15 @@ class _ComparisonStep extends StatelessWidget {
   final String solutionSummary;
   final String expectedOutcome;
   final String expectedReason;
+  final bool isCorrect;
   final _ReflectionChoice? choice;
   final TextEditingController reflectionController;
   final bool canComplete;
   final ValueChanged<_ReflectionChoice> onChoiceChanged;
   final ValueChanged<String> onReflectionChanged;
   final VoidCallback onComplete;
+  final VoidCallback onTryAgain;
+  final VoidCallback onDefer;
 
   @override
   Widget build(BuildContext context) {
@@ -444,9 +484,9 @@ class _ComparisonStep extends StatelessWidget {
         children: [
           _LessonHeader(
             step: '2 / 2',
-            eyebrow: 'COMPARE',
+            eyebrow: '教材と比べる',
             title: conceptLabel,
-            body: '正誤点はつけません。違いを見つけて、最後に自分の一文を残します。',
+            body: '教材の根拠と照らし、違っていたら組み直してから自分の一文を残します。',
           ),
           const SizedBox(height: GameTokens.spaceXl),
           _PromptSurface(prompt: transferPrompt),
@@ -464,68 +504,106 @@ class _ComparisonStep extends StatelessWidget {
             expectedOutcome: expectedOutcome,
             expectedReason: expectedReason,
           ),
-          const SizedBox(height: GameTokens.spaceXl),
-          Text(
-            '自分の考えをどうする？',
-            style: t.textTheme.titleLarge
-                ?.copyWith(color: colors.ink)
-                .jaWeight(FontWeight.w800),
-          ),
-          const SizedBox(height: GameTokens.spaceXs),
-          Text(
-            '教材と同じでも違っていても、次に使う自分の一文を選びます。',
-            style: t.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
-          ),
-          const SizedBox(height: GameTokens.spaceMd),
-          _DecisionButton(
-            key: const ValueKey('science-diagram-keep'),
-            label: 'この考えを残す',
-            description: '理由をより短く、使える形にする',
-            icon: Icons.bookmark_add_outlined,
-            selected: choice == _ReflectionChoice.keep,
-            onTap: () => onChoiceChanged(_ReflectionChoice.keep),
-          ),
-          const SizedBox(height: GameTokens.spaceSm),
-          _DecisionButton(
-            key: const ValueKey('science-diagram-revise'),
-            label: '考えを直す',
-            description: '比較して変わったところを書き直す',
-            icon: Icons.edit_note_rounded,
-            selected: choice == _ReflectionChoice.revise,
-            onTap: () => onChoiceChanged(_ReflectionChoice.revise),
-          ),
-          if (choice != null) ...[
+          if (!isCorrect) ...[
             const SizedBox(height: GameTokens.spaceLg),
-            _LocalSentenceField(
-              key: const ValueKey('science-diagram-reflection'),
-              controller: reflectionController,
-              label: choice == _ReflectionChoice.keep
-                  ? '残したい自分の一文'
-                  : '直して残す自分の一文',
-              hint: choice == _ReflectionChoice.keep
-                  ? '次の場面でも使える言い方にする'
-                  : '変わった考えを一文にする',
-              onChanged: onReflectionChanged,
-            ),
-            const SizedBox(height: GameTokens.spaceLg),
-            FilledButton.icon(
-              key: const ValueKey('science-diagram-complete'),
-              onPressed: canComplete ? onComplete : null,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(56),
-                backgroundColor: colors.pathActive,
-                foregroundColor: colors.onPathActive,
+            ScienceChallengeSurface(
+              label: '教材の組み方と違うところがあります',
+              icon: Icons.menu_book_outlined,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text('教材の根拠を見て、もう一度カードを組みます。'),
+                  const SizedBox(height: GameTokens.spaceMd),
+                  OutlinedButton.icon(
+                    key: const ValueKey('science-diagram-try-again'),
+                    onPressed: onTryAgain,
+                    icon: const Icon(Icons.replay_rounded),
+                    label: const Text('カードを組み直す'),
+                  ),
+                ],
               ),
-              icon: const Icon(Icons.check_rounded),
-              label: const Text('この一文で完了'),
             ),
+          ],
+          if (isCorrect) ...[
+            const SizedBox(height: GameTokens.spaceXl),
+            Text(
+              '自分の考えをどうする？',
+              style: t.textTheme.titleLarge
+                  ?.copyWith(color: colors.ink)
+                  .jaWeight(FontWeight.w800),
+            ),
+            const SizedBox(height: GameTokens.spaceXs),
+            Text(
+              '教材と同じでも違っていても、次に使う自分の一文を選びます。',
+              style: t.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
+            ),
+            const SizedBox(height: GameTokens.spaceMd),
+            _DecisionButton(
+              key: const ValueKey('science-diagram-keep'),
+              label: 'この考えを残す',
+              description: '理由をより短く、使える形にする',
+              icon: Icons.bookmark_add_outlined,
+              selected: choice == _ReflectionChoice.keep,
+              onTap: () => onChoiceChanged(_ReflectionChoice.keep),
+            ),
+            const SizedBox(height: GameTokens.spaceSm),
+            _DecisionButton(
+              key: const ValueKey('science-diagram-revise'),
+              label: '考えを直す',
+              description: '比較して変わったところを書き直す',
+              icon: Icons.edit_note_rounded,
+              selected: choice == _ReflectionChoice.revise,
+              onTap: () => onChoiceChanged(_ReflectionChoice.revise),
+            ),
+            if (choice != null) ...[
+              const SizedBox(height: GameTokens.spaceLg),
+              _LocalSentenceField(
+                key: const ValueKey('science-diagram-reflection'),
+                controller: reflectionController,
+                label: choice == _ReflectionChoice.keep
+                    ? '残したい自分の一文'
+                    : '直して残す自分の一文',
+                hint: choice == _ReflectionChoice.keep
+                    ? '次の場面でも使える言い方にする'
+                    : '変わった考えを一文にする',
+                onChanged: onReflectionChanged,
+              ),
+              const SizedBox(height: GameTokens.spaceLg),
+              FilledButton.icon(
+                key: const ValueKey('science-diagram-complete'),
+                onPressed: canComplete ? onComplete : null,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                  backgroundColor: colors.pathActive,
+                  foregroundColor: colors.onPathActive,
+                ),
+                icon: const Icon(Icons.check_rounded),
+                label: const Text('この一文で完了'),
+              ),
+            ],
           ],
           const SizedBox(height: GameTokens.spaceLg),
           _PrivacyNote(),
+          const SizedBox(height: GameTokens.spaceSm),
+          _DeferDiagramButton(onPressed: onDefer),
         ],
       ),
     );
   }
+}
+
+class _DeferDiagramButton extends StatelessWidget {
+  const _DeferDiagramButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => TextButton.icon(
+    key: const ValueKey('science-diagram-defer'),
+    onPressed: onPressed,
+    icon: const Icon(Icons.bookmark_add_outlined),
+    label: const Text('このステップは後でやる'),
+  );
 }
 
 class _LessonHeader extends StatelessWidget {
@@ -560,7 +638,7 @@ class _LessonHeader extends StatelessWidget {
                 borderRadius: BorderRadius.circular(GameTokens.radiusPill),
               ),
               child: Text(
-                'STEP $step',
+                '観察手順 $step',
                 style: t.textTheme.labelMedium
                     ?.copyWith(color: colors.onPathActive)
                     .jaWeight(FontWeight.w800),
@@ -987,7 +1065,7 @@ class _FinishedStep extends StatelessWidget {
                   foregroundColor: colors.onPathActive,
                 ),
                 icon: const Icon(Icons.route_rounded),
-                label: const Text('学習パスへ戻る'),
+                label: const Text('探究ノートへ戻る'),
               ),
             ],
           ],

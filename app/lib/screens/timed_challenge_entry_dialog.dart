@@ -1,9 +1,9 @@
 import '../ui/_material.dart';
 
-/// 任意Timedだけに結晶を使う前の、明示確認。
+/// 任意の時間観察だけに結晶を使う前の、明示確認。
 ///
 /// 価格は固定catalogから投影された値だけを受け取る。回答・正誤・速度は
-/// 受け取らず、通常Pathや無料challengeの利用資格にも触れない。
+/// 受け取らず、探究ノートや無料実験の利用資格にも触れない。
 Future<bool> confirmTimedChallengeEntry(
   BuildContext context, {
   required int gemCost,
@@ -15,11 +15,11 @@ Future<bool> confirmTimedChallengeEntry(
     context: context,
     builder: (dialogContext) => AlertDialog(
       key: const ValueKey('timed-entry-confirmation'),
-      title: const Text('今日のタイム挑戦券'),
+      title: const Text('今日の時間観察券'),
       content: SingleChildScrollView(
         child: Text(
-          '結晶$gemCost個で、今日の学習日は何度でもタイムチャレンジへ参加できます。'
-          'Path・XP・正答は購入できません。Match / Lightningは無料です。',
+          '結晶$gemCost個で、今日の学習日は何度でも時間観察へ参加できます。'
+          '探究ノート・探究記録・正答は購入できません。対応づけ実験と連続観察は無料です。',
         ),
       ),
       actions: [

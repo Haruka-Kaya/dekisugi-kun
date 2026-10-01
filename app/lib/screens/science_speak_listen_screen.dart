@@ -1527,7 +1527,7 @@ class _Complete extends StatelessWidget {
           key: const ValueKey('science-explain-return-to-path'),
           onPressed: onReturnToPath,
           icon: const Icon(Icons.route_outlined),
-          label: const Text('学習パスへ戻る'),
+          label: const Text('探究ノートへ戻る'),
           style: FilledButton.styleFrom(
             minimumSize: const Size(double.infinity, 52),
           ),

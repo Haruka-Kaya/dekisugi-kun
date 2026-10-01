@@ -341,7 +341,7 @@ class _StoryHeader extends StatelessWidget {
     return Semantics(
       container: true,
       label:
-          '科学ストーリー、3幕中$act。$storyTitle。$conceptLabel。$stageLabel。'
+          '理科事件、3幕中$act。$storyTitle。$conceptLabel。$stageLabel。'
           'デキすぎ君。${reaction.semanticsLabel}',
       child: ExcludeSemantics(
         child: Padding(
@@ -365,7 +365,7 @@ class _StoryHeader extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        'SCIENCE STORY  /  $act of 3',
+                        '理科事件  /  第$act幕・全3幕',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.labelMedium
@@ -748,7 +748,7 @@ class _ComparisonAct extends StatelessWidget {
       ),
       action: _PrimaryAction(
         buttonKey: const ValueKey('science-story-complete'),
-        label: 'ストーリーを終える',
+        label: '事件の記録を終える',
         icon: Icons.check,
         onPressed: onComplete,
       ),
@@ -791,7 +791,7 @@ class _CompleteAct extends StatelessWidget {
         Semantics(
           key: const ValueKey('science-story-finished'),
           container: true,
-          label: '科学ストーリー完了。判断を観察と教材の訂正まで比べました。',
+          label: '理科事件完了。判断を観察と教材の訂正まで比べました。',
           child: ExcludeSemantics(
             child: Container(
               width: double.infinity,
@@ -810,7 +810,7 @@ class _CompleteAct extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    'ストーリー完了',
+                    '事件の記録を完了',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineSmall
                         ?.copyWith(color: colors.ink)
@@ -834,7 +834,7 @@ class _CompleteAct extends StatelessWidget {
           key: const ValueKey('science-story-return-to-path'),
           onPressed: onReturnToPath,
           icon: const Icon(Icons.route_outlined),
-          label: const Text('学習パスへ戻る'),
+          label: const Text('探究ノートへ戻る'),
           style: FilledButton.styleFrom(
             minimumSize: const Size(double.infinity, 52),
           ),
@@ -990,7 +990,7 @@ class _CaseSurface extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'CASE',
+            '事件の状況',
             style: theme.textTheme.labelMedium
                 ?.copyWith(color: colors.story)
                 .jaWeight(FontWeight.w700),

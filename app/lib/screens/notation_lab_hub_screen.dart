@@ -106,7 +106,7 @@ class NotationLabHubScreen extends StatelessWidget {
           const GameSolidSurface(
             surfaceKey: ValueKey('notation-lab-empty'),
             raised: true,
-            child: Text('学習パスを進めると、ここに記号の課題が加わります。'),
+            child: Text('探究ノートを進めると、ここに記号の観察が加わります。'),
           )
         else
           GameResponsiveGrid(
@@ -213,7 +213,7 @@ _NotationHeroState _notationHeroState(List<NotationLabEntry> entries) {
     return (
       eyebrow: '記号ラボ',
       title: '最初の記号課題を準備中',
-      body: '学習パスを進めると、式・単位・矢印・グラフの課題が加わります。',
+      body: '探究ノートを進めると、式・単位・矢印・グラフの観察が加わります。',
       semanticState: '記号課題を準備中です',
       reaction: GameCharacterReaction.invite,
       primaryEntry: null,
@@ -224,7 +224,7 @@ _NotationHeroState _notationHeroState(List<NotationLabEntry> entries) {
 
   return (
     eyebrow: '記号ラボ ・ 未解放',
-    title: '次の記号課題は学習パスで解放',
+    title: '次の記号観察は探究ノートで解放',
     body: '現在の必修ノードを終えると、次の記号課題を利用できます。',
     semanticState: '利用できる記号課題はまだありません',
     reaction: GameCharacterReaction.invite,

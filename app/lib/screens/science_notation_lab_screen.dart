@@ -6,6 +6,7 @@ import '../models/game_path.dart';
 import '../models/unit.dart';
 import '../ui/_material.dart';
 import '../widgets/game_activity_scaffold.dart';
+import '../widgets/cognitive_task_input.dart';
 import '../widgets/science_challenge_support.dart';
 import '../widgets/science_mini_game_widgets.dart';
 
@@ -509,7 +510,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
               backgroundColor: colors.canvas,
               foregroundColor: colors.ink,
               title: Text(
-                'Notation Lab',
+                '記号実験',
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
@@ -540,12 +541,12 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
 
   Widget _buildTask(BuildContext context) {
     final colors = context.gamePalette;
-    final stepLabel = 'STEP ${_step + 1} / $_stepCount';
+    final stepLabel = '観察 ${_step + 1} / $_stepCount';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: '$stepLabel  /  NOTATION LAB',
+          eyebrow: '記号実験  /  $stepLabel',
           title: widget.conceptLabel,
           body: '記号・モデル・図表を組み立て、意味と結びます。',
           icon: Icons.draw_outlined,
@@ -558,7 +559,8 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
           label: 'この単元の場面',
           icon: Icons.science_outlined,
           child: Text(
-            '${_variant.transferPrompt}\n\n${_variant.cognitiveTask.prompt}',
+            '${_variant.transferPrompt}\n\n'
+            '${cognitiveTaskPromptSummary(_variant.cognitiveTask.prompt)}',
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
@@ -879,7 +881,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
               foregroundColor: colors.ink,
             ),
             icon: const Icon(Icons.refresh_rounded),
-            label: Text(_retryChecking ? 'ハートを確認中…' : 'この課題だけ組み直す'),
+            label: Text(_retryChecking ? '試行余力を確認中…' : 'この課題だけ組み直す'),
           ),
         ],
       ),
@@ -895,7 +897,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'NOTATION LAB  /  COMPLETE',
+          eyebrow: '記号実験  /  完了',
           title: '記号を意味とつなげました',
           body: widget.conceptLabel,
           icon: Icons.fact_check_outlined,
@@ -920,7 +922,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('notation-complete'),
-          label: 'Notation Labを完了する',
+          label: '記号実験を完了する',
           icon: Icons.check_circle_outline_rounded,
           onPressed: _completionCalled ? null : _completeLab,
           backgroundColor: colors.pathComplete,

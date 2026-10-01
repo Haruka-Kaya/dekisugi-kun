@@ -40,6 +40,7 @@ class _ScienceLessonScreenState extends State<ScienceLessonScreen> {
   final _scroll = ScrollController();
   _LessonStep _step = _LessonStep.predict;
   _LessonDecision? _decision;
+  String? _checkpointAnswerId;
   String? _submittedPrediction;
   bool _completionCalled = false;
 
@@ -89,6 +90,7 @@ class _ScienceLessonScreenState extends State<ScienceLessonScreen> {
   void _complete() {
     if (_step != _LessonStep.compare ||
         _decision == null ||
+        _checkpointAnswerId != widget.section.localCheckpoint.correctOptionId ||
         _reflection.text.trim().isEmpty ||
         _completionCalled) {
       return;
@@ -115,6 +117,8 @@ class _ScienceLessonScreenState extends State<ScienceLessonScreen> {
       Navigator.of(context).maybePop();
     }
   }
+
+  void _deferLesson() => _returnToPath();
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +156,7 @@ class _ScienceLessonScreenState extends State<ScienceLessonScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'TEXT LAB  /  ${widget.conceptLabel}',
+                            '教材観察  /  ${widget.conceptLabel}',
                             style: Theme.of(context).textTheme.labelLarge
                                 ?.copyWith(
                                   color: context.gamePalette.pathActive,
@@ -161,7 +165,7 @@ class _ScienceLessonScreenState extends State<ScienceLessonScreen> {
                           ),
                           const SizedBox(height: 8),
                           Semantics(
-                            label: '文字学習、4段階中${_step.index + 1}',
+                            label: '教材観察、4段階中${_step.index + 1}',
                             child: LinearProgressIndicator(
                               value: progress,
                               minHeight: 8,
@@ -191,10 +195,12 @@ class _ScienceLessonScreenState extends State<ScienceLessonScreen> {
                         onContinue: _prediction.text.trim().isEmpty
                             ? null
                             : _openText,
+                        onDefer: _deferLesson,
                       ),
                       _LessonStep.read => _ReadingStep(
                         section: widget.section,
                         onContinue: _openComparison,
+                        onDefer: _deferLesson,
                       ),
                       _LessonStep.compare => _ComparisonStep(
                         prediction: _submittedPrediction ?? '',
@@ -203,11 +209,20 @@ class _ScienceLessonScreenState extends State<ScienceLessonScreen> {
                         reflection: _reflection,
                         onDecision: (value) =>
                             setState(() => _decision = value),
+                        checkpointAnswerId: _checkpointAnswerId,
+                        onCheckpointAnswerChanged: (value) =>
+                            setState(() => _checkpointAnswerId = value),
                         onComplete:
                             _decision != null &&
+                                _checkpointAnswerId ==
+                                    widget
+                                        .section
+                                        .localCheckpoint
+                                        .correctOptionId &&
                                 _reflection.text.trim().isNotEmpty
                             ? _complete
                             : null,
+                        onDefer: _deferLesson,
                       ),
                       _LessonStep.complete => _LessonComplete(
                         onReturnToPath: _returnToPath,
@@ -229,15 +244,17 @@ class _PredictionStep extends StatelessWidget {
     required this.prompt,
     required this.controller,
     required this.onContinue,
+    required this.onDefer,
   });
 
   final String prompt;
   final TextEditingController controller;
   final VoidCallback? onContinue;
+  final VoidCallback onDefer;
 
   @override
   Widget build(BuildContext context) => _LessonLayout(
-    eyebrow: 'STEP 1  /  答えを見る前に',
+    eyebrow: '観察手順 1 / 3  ・  答えを見る前に',
     title: 'まず、自分の予想を置く。',
     body: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -266,6 +283,7 @@ class _PredictionStep extends StatelessWidget {
       onPressed: onContinue,
       child: const Text('予想を置いて、教材を読む'),
     ),
+    secondaryAction: _DeferLessonButton(onPressed: onDefer),
   );
 }
 
@@ -309,22 +327,45 @@ class _TeachBackNotice extends StatelessWidget {
 }
 
 class _ReadingStep extends StatelessWidget {
-  const _ReadingStep({required this.section, required this.onContinue});
+  const _ReadingStep({
+    required this.section,
+    required this.onContinue,
+    required this.onDefer,
+  });
 
   final Section section;
   final VoidCallback onContinue;
+  final VoidCallback onDefer;
 
   @override
   Widget build(BuildContext context) => _LessonLayout(
-    eyebrow: 'STEP 2  /  TEXT',
+    eyebrow: '観察手順 2 / 3  ・  教材を読む',
     title: section.title,
     body: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final paragraph in section.body) ...[
-          EmphasisText(paragraph, style: Theme.of(context).textTheme.bodyLarge),
-          const SizedBox(height: 16),
-        ],
+        _ReadingHighlights(section: section),
+        const SizedBox(height: 14),
+        ExpansionTile(
+          key: const ValueKey('science-lesson-full-text'),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          title: const Text('教材をくわしく読む'),
+          subtitle: const Text('本文を開いて、言葉や条件を確かめられます。'),
+          children: [
+            for (final paragraph in section.body) ...[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: EmphasisText(
+                  paragraph,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ],
+        ),
+        const SizedBox(height: 14),
         _Surface(
           label: '手を動かすなら',
           text: section.tryIt,
@@ -337,7 +378,47 @@ class _ReadingStep extends StatelessWidget {
       onPressed: onContinue,
       child: const Text('最初の予想と比べる'),
     ),
+    secondaryAction: _DeferLessonButton(onPressed: onDefer),
   );
+}
+
+class _ReadingHighlights extends StatelessWidget {
+  const _ReadingHighlights({required this.section});
+
+  final Section section;
+
+  @override
+  Widget build(BuildContext context) => _Surface(
+    label: 'まず押さえる要点',
+    text: '',
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final paragraph in section.body)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.check_circle_outline_rounded,
+                  size: 20,
+                  color: context.gamePalette.pathActive,
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: EmphasisText(_keyPoint(paragraph))),
+              ],
+            ),
+          ),
+      ],
+    ),
+  );
+
+  static String _keyPoint(String paragraph) {
+    final plain = paragraph.replaceAll('**', '').trim();
+    final end = plain.indexOf(RegExp(r'[。！？]'));
+    return end >= 0 ? plain.substring(0, end + 1) : plain;
+  }
 }
 
 class _ComparisonStep extends StatelessWidget {
@@ -347,7 +428,10 @@ class _ComparisonStep extends StatelessWidget {
     required this.decision,
     required this.reflection,
     required this.onDecision,
+    required this.checkpointAnswerId,
+    required this.onCheckpointAnswerChanged,
     required this.onComplete,
+    required this.onDefer,
   });
 
   final String prediction;
@@ -355,11 +439,14 @@ class _ComparisonStep extends StatelessWidget {
   final _LessonDecision? decision;
   final TextEditingController reflection;
   final ValueChanged<_LessonDecision> onDecision;
+  final String? checkpointAnswerId;
+  final ValueChanged<String> onCheckpointAnswerChanged;
   final VoidCallback? onComplete;
+  final VoidCallback onDefer;
 
   @override
   Widget build(BuildContext context) => _LessonLayout(
-    eyebrow: 'STEP 3  /  SELF COMPARE',
+    eyebrow: '観察手順 3 / 3  ・  自分の予想と比べる',
     title: '予想を、教材の要点と比べる。',
     body: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -370,6 +457,12 @@ class _ComparisonStep extends StatelessWidget {
           label: '教材で確かめたこと',
           text: section.body.join('\n\n'),
           interpretEmphasis: true,
+        ),
+        const SizedBox(height: 18),
+        _CheckpointComparison(
+          checkpoint: section.localCheckpoint,
+          selectedId: checkpointAnswerId,
+          onChanged: onCheckpointAnswerChanged,
         ),
         const SizedBox(height: 18),
         SegmentedButton<_LessonDecision>(
@@ -408,9 +501,79 @@ class _ComparisonStep extends StatelessWidget {
     action: FilledButton(
       key: const ValueKey('science-lesson-complete'),
       onPressed: onComplete,
-      child: const Text('文字学習を完了する'),
+      child: const Text('教材観察を完了する'),
     ),
+    secondaryAction: _DeferLessonButton(onPressed: onDefer),
   );
+}
+
+class _CheckpointComparison extends StatelessWidget {
+  const _CheckpointComparison({
+    required this.checkpoint,
+    required this.selectedId,
+    required this.onChanged,
+  });
+
+  final LocalCheckpoint checkpoint;
+  final String? selectedId;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final correct = selectedId == checkpoint.correctOptionId;
+    final hasAnswer = selectedId != null;
+    return _Surface(
+      label: '教材の根拠で、もう一度確かめる',
+      text: '',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(checkpoint.lure),
+          const SizedBox(height: 8),
+          RadioGroup<String>(
+            groupValue: selectedId,
+            onChanged: (value) {
+              if (value != null) onChanged(value);
+            },
+            child: Column(
+              children: [
+                for (final option in checkpoint.options)
+                  InkWell(
+                    onTap: () => onChanged(option.id),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          Radio<String>(value: option.id),
+                          const SizedBox(width: 4),
+                          Expanded(child: Text(option.text)),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (hasAnswer) ...[
+            const SizedBox(height: 8),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                correct
+                    ? '教材の根拠と照合できました。'
+                    : '教材の根拠を読み直して、もう一度選んでみましょう。\n${checkpoint.explanation}',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: correct
+                      ? context.gamePalette.pathComplete
+                      : context.gamePalette.inkMuted,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 class _LessonComplete extends StatelessWidget {
@@ -422,17 +585,17 @@ class _LessonComplete extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     key: const ValueKey('science-lesson-finished'),
     container: true,
-    label: '文字学習完了。読む前の予想を教材と比べました。',
+    label: '教材観察完了。読む前の予想を教材と比べました。',
     child: ExcludeSemantics(
       child: _LessonLayout(
-        eyebrow: 'TEXT CLEAR',
+        eyebrow: '教材観察  /  完了',
         title: '予想と本文を、比べ終えた。',
         body: const _LocalOnlyNote(),
         action: FilledButton.icon(
           key: const ValueKey('science-lesson-return'),
           onPressed: onReturnToPath,
           icon: const Icon(Icons.route),
-          label: const Text('学習パスへ戻る'),
+          label: const Text('探究ノートへ戻る'),
         ),
       ),
     ),
@@ -445,12 +608,14 @@ class _LessonLayout extends StatelessWidget {
     required this.title,
     required this.body,
     required this.action,
+    this.secondaryAction,
   });
 
   final String eyebrow;
   final String title;
   final Widget body;
   final Widget action;
+  final Widget? secondaryAction;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -476,6 +641,10 @@ class _LessonLayout extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: GameTokens.minTouchTarget),
         child: action,
       ),
+      if (secondaryAction != null) ...[
+        const SizedBox(height: 8),
+        secondaryAction!,
+      ],
     ],
   );
 }
@@ -485,11 +654,13 @@ class _Surface extends StatelessWidget {
     required this.label,
     required this.text,
     this.interpretEmphasis = false,
+    this.child,
   });
 
   final String label;
   final String text;
   final bool interpretEmphasis;
+  final Widget? child;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -509,9 +680,28 @@ class _Surface extends StatelessWidget {
           ).textTheme.labelLarge?.jaWeight(FontWeight.w800),
         ),
         const SizedBox(height: 7),
-        if (interpretEmphasis) EmphasisText(text) else Text(text),
+        if (child != null)
+          child!
+        else if (interpretEmphasis)
+          EmphasisText(text)
+        else
+          Text(text),
       ],
     ),
+  );
+}
+
+class _DeferLessonButton extends StatelessWidget {
+  const _DeferLessonButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => TextButton.icon(
+    key: const ValueKey('science-lesson-defer'),
+    onPressed: onPressed,
+    icon: const Icon(Icons.bookmark_add_outlined),
+    label: const Text('このステップは後でやる'),
   );
 }
 

@@ -5,7 +5,7 @@ import '../models/game_path.dart';
 import '../ui/_material.dart';
 import 'learning_path.dart';
 
-/// Orbit Lab のハブ画面で共有する、幅・余白・背景の骨格。
+/// Field Notebook のハブ画面で共有する、幅・余白・背景の骨格。
 ///
 /// 画面ごとに `ListView + padding + maxWidth` を作り直さない。小さい端末では
 /// 16dp、通常端末では24dpの余白を使い、広い端末では本文幅だけを止める。
@@ -57,7 +57,10 @@ class GamePageScaffold extends StatelessWidget {
   }
 }
 
-/// 1画面に1つだけ置く主役面。色・角丸・余白を全ハブで揃える。
+/// 1画面に1つだけ置く Lab Brief。紙面・罫線・余白を全ハブで揃える。
+///
+/// [color] と [foregroundColor] は既存画面との公開API互換を保つが、全面を
+/// 塗るためには使わない。実験の種類は4dpの罫線と低角丸の見出しラベルで示す。
 class GameHeroSurface extends StatelessWidget {
   const GameHeroSurface({
     super.key,
@@ -96,6 +99,7 @@ class GameHeroSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
+    final colors = context.gamePalette;
     Widget excludeFromSummary(Widget child) =>
         semanticSummary == null ? child : ExcludeSemantics(child: child);
 
@@ -106,78 +110,160 @@ class GameHeroSurface extends StatelessWidget {
       label: semanticSummary,
       child: Container(
         key: surfaceKey,
-        padding: const EdgeInsets.all(GameTokens.spaceXl),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: color,
+          color: colors.benchRaised,
           borderRadius: BorderRadius.circular(GameTokens.radiusLg),
+          border: Border.all(color: colors.border),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Stack(
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox.square(
-                  dimension: GameTokens.heroLeadingSize,
-                  child: mascotReaction == null
-                      ? Center(child: leading)
-                      : _GameHeroMascot(
-                          reaction: mascotReaction!,
-                          style: mascotStyle,
-                        ),
-                ),
-                const SizedBox(width: GameTokens.spaceMd),
-                Expanded(
-                  child: Column(
+            PositionedDirectional(
+              start: 0,
+              top: 0,
+              bottom: 0,
+              width: GameTokens.accentRuleWidth,
+              child: ColoredBox(
+                key: const ValueKey('game-hero-accent-rule'),
+                color: color,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                GameTokens.spaceXl + GameTokens.accentRuleWidth,
+                GameTokens.spaceXl,
+                GameTokens.spaceXl,
+                GameTokens.spaceXl,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      excludeFromSummary(
-                        Text(
-                          eyebrow,
-                          style: t.labelLarge
-                              ?.copyWith(color: foregroundColor)
-                              .jaWeight(FontWeight.w800),
+                      SizedBox.square(
+                        dimension: GameTokens.heroLeadingSize,
+                        child: mascotReaction == null
+                            ? _GameHeroLeadingSurface(child: leading!)
+                            : _GameHeroMascot(
+                                reaction: mascotReaction!,
+                                style: mascotStyle,
+                              ),
+                      ),
+                      const SizedBox(width: GameTokens.spaceMd),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            excludeFromSummary(
+                              _LabBriefLabel(
+                                color: color,
+                                foregroundColor: foregroundColor,
+                                label: eyebrow,
+                              ),
+                            ),
+                            const SizedBox(height: GameTokens.spaceSm),
+                            excludeFromSummary(
+                              Semantics(
+                                header: true,
+                                child: Text(
+                                  title,
+                                  style: t.headlineSmall
+                                      ?.copyWith(
+                                        color: colors.ink,
+                                        height: GameTokens.heroTitleLineHeight,
+                                      )
+                                      .jaWeight(FontWeight.w900),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: GameTokens.spaceXs),
-                      excludeFromSummary(
-                        Semantics(
-                          header: true,
-                          child: Text(
-                            title,
-                            style: t.headlineSmall
-                                ?.copyWith(
-                                  color: foregroundColor,
-                                  height: GameTokens.heroTitleLineHeight,
-                                )
-                                .jaWeight(FontWeight.w900),
-                          ),
-                        ),
-                      ),
+                      if (trailing != null) ...[
+                        const SizedBox(width: GameTokens.spaceSm),
+                        trailing!,
+                      ],
                     ],
                   ),
-                ),
-                if (trailing != null) ...[
-                  const SizedBox(width: GameTokens.spaceSm),
-                  trailing!,
+                  const SizedBox(height: GameTokens.spaceMd),
+                  excludeFromSummary(
+                    Text(
+                      body,
+                      style: t.bodyMedium?.copyWith(color: colors.inkMuted),
+                    ),
+                  ),
+                  if (content != null) ...[
+                    const SizedBox(height: GameTokens.spaceLg),
+                    content!,
+                  ],
+                  if (primaryAction != null) ...[
+                    const SizedBox(height: GameTokens.spaceLg),
+                    primaryAction!,
+                  ],
                 ],
-              ],
+              ),
             ),
-            const SizedBox(height: GameTokens.spaceMd),
-            excludeFromSummary(
-              Text(body, style: t.bodyMedium?.copyWith(color: foregroundColor)),
-            ),
-            if (content != null) ...[
-              const SizedBox(height: GameTokens.spaceLg),
-              content!,
-            ],
-            if (primaryAction != null) ...[
-              const SizedBox(height: GameTokens.spaceLg),
-              primaryAction!,
-            ],
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 実験コードを、丸いchipではなく標本ラベルとして示す。
+class _LabBriefLabel extends StatelessWidget {
+  const _LabBriefLabel({
+    required this.color,
+    required this.foregroundColor,
+    required this.label,
+  });
+
+  final Color color;
+  final Color foregroundColor;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(GameTokens.radiusXs),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: GameTokens.spaceSm,
+        vertical: GameTokens.spaceXs,
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelLarge
+            ?.copyWith(color: foregroundColor)
+            .jaWeight(FontWeight.w800),
+      ),
+    ),
+  );
+}
+
+/// キャラクターや記号を置く観察印。丸いメダリオンにはしない。
+class _GameHeroLeadingSurface extends StatelessWidget {
+  const _GameHeroLeadingSurface({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gamePalette;
+    return Container(
+      key: const ValueKey('game-hero-leading-surface'),
+      decoration: BoxDecoration(
+        color: colors.bench,
+        borderRadius: BorderRadius.circular(GameTokens.radiusSm),
+        border: Border.all(
+          color: colors.inkMuted,
+          width: GameTokens.strongBorderWidth,
+        ),
+      ),
+      child: Center(child: child),
     );
   }
 }
@@ -199,10 +285,15 @@ class _GameHeroMascot extends StatelessWidget {
       image: true,
       label: '${style.label}が${reaction.semanticsLabel}',
       child: ExcludeSemantics(
-        child: DecoratedBox(
+        child: Container(
+          key: const ValueKey('game-hero-mascot-surface'),
           decoration: BoxDecoration(
-            color: colors.surface,
-            shape: BoxShape.circle,
+            color: colors.bench,
+            borderRadius: BorderRadius.circular(GameTokens.radiusSm),
+            border: Border.all(
+              color: colors.inkMuted,
+              width: GameTokens.strongBorderWidth,
+            ),
           ),
           child: Center(
             child: PathMascotPreview(
@@ -217,7 +308,7 @@ class _GameHeroMascot extends StatelessWidget {
   }
 }
 
-/// Hero左上の記号。画面ごとにサイズと円を作り直さない。
+/// Lab Brief左上の記号。低角丸の標本枠として揃える。
 class GameHeroIcon extends StatelessWidget {
   const GameHeroIcon({
     super.key,
@@ -232,7 +323,10 @@ class GameHeroIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
-    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(GameTokens.radiusSm),
+    ),
     child: Center(
       child: Icon(icon, size: GameTokens.heroIconSize, color: foregroundColor),
     ),

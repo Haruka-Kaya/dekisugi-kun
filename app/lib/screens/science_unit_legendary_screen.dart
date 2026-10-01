@@ -282,7 +282,7 @@ class _ScienceUnitLegendaryScreenState
               backgroundColor: colors.canvas,
               foregroundColor: colors.ink,
               title: Text(
-                'Unit Legendary',
+                '単元の高難度検証',
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
@@ -331,9 +331,9 @@ class _ScienceUnitLegendaryScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'UNIT LEGENDARY  /  LOCKED',
+          eyebrow: 'ラボ・ブリーフ  /  単元の高難度検証  /  準備中',
           title: widget.unitTitle,
-          body: 'この単元の全章ボスを終えた、次の学習日から開きます。',
+          body: 'この単元の全総合検証を終えた、次の学習日から開きます。',
           icon: Icons.lock_clock_outlined,
           accent: colors.pathLocked,
           onAccent: colors.onPathLocked,
@@ -341,9 +341,9 @@ class _ScienceUnitLegendaryScreenState
         ),
         const SizedBox(height: GameTokens.spaceXl),
         const ScienceChallengeSurface(
-          label: '通常Pathは止まりません',
+          label: '通常の探究ノートは止まりません',
           icon: Icons.route_outlined,
-          child: Text('Unit Legendaryは任意です。待っている間も、次の単元・復習・学校課題へ進めます。'),
+          child: Text('単元の高難度検証は任意です。待っている間も、次の単元・復習・学校課題へ進めます。'),
         ),
       ],
     );
@@ -356,10 +356,10 @@ class _ScienceUnitLegendaryScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'UNIT LEGENDARY  /  $_questionNumber OF $_questionCount',
+          eyebrow: 'ラボ・ブリーフ  /  単元の高難度検証  /  $_questionNumber/$_questionCount',
           title: _challenge.conceptLabel,
           body: '単元内${widget.challenges.length}概念を横断します。全問を確定するまで正本は開きません。',
-          icon: Icons.workspace_premium_outlined,
+          icon: Icons.fact_check_outlined,
           accent: colors.legendary,
           onAccent: colors.onLegendary,
           mascotReaction: GameCharacterReaction.thinking,
@@ -402,7 +402,7 @@ class _ScienceUnitLegendaryScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'UNIT LEGENDARY  /  $_questionNumber OF $_questionCount',
+          eyebrow: 'ラボ・ブリーフ  /  単元の高難度検証  /  $_questionNumber/$_questionCount',
           title: '${_challenge.conceptLabel}の思い込み',
           body: 'ヒントなしで最初の判断を確定します。まだ正本は表示しません。',
           icon: Icons.fact_check_outlined,
@@ -459,13 +459,13 @@ class _ScienceUnitLegendaryScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'UNIT LEGENDARY  /  REVIEW',
+          eyebrow: 'ラボ・ブリーフ  /  単元の高難度検証  /  比較',
           title: '単元全体を正本と比べる',
           body: _cleared
               ? '全${widget.challenges.length}概念の固定問題を、最初の回答で通過しました。'
               : '全回答は確定済みです。違いを見つけ、通常練習へつなげます。',
           icon: _cleared
-              ? Icons.workspace_premium_outlined
+              ? Icons.fact_check_outlined
               : Icons.compare_arrows_rounded,
           accent: colors.legendary,
           onAccent: colors.onLegendary,
@@ -518,7 +518,7 @@ class _ScienceUnitLegendaryScreenState
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('unit-legendary-finish'),
-          label: _cleared ? 'Unit Legendaryをクリア' : '通常練習へ戻る',
+          label: _cleared ? '単元の高難度検証を完了' : '通常練習へ戻る',
           icon: _cleared ? Icons.verified_outlined : Icons.refresh_rounded,
           onPressed: _canFinish ? _finishComparison : null,
           backgroundColor: _cleared ? colors.legendary : colors.pathReview,
@@ -537,19 +537,19 @@ class _ScienceUnitLegendaryScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'UNIT LEGENDARY  /  COMPLETE',
+          eyebrow: 'ラボ・ブリーフ  /  単元の高難度検証  /  記録',
           title: _cleared
-              ? 'Unit高難度課題クリア'
+              ? '単元の高難度検証を完了'
               : _stoppedAfterWrong
               ? '今回はここまで'
               : '自己比較を完了',
           body: _cleared
               ? '単元内の複数概念を、別場面の固定問題で横断しました。'
               : _stoppedAfterWrong
-              ? '最初の誤答でこの挑戦を終了しました。ハートが0なら、回復練習の後で別の固定問題に挑戦できます。'
-              : 'Unit Legendaryは未クリアです。通常練習で確かめ、また挑戦できます。',
+              ? '最初の誤答でこの検証を終了しました。試行余力が0なら、回復練習の後で別の固定問題を検証できます。'
+              : '単元の高難度検証は未完了です。通常練習で確かめ、また検証できます。',
           icon: _cleared
-              ? Icons.workspace_premium_outlined
+              ? Icons.fact_check_outlined
               : Icons.psychology_alt_outlined,
           accent: _cleared ? colors.legendary : colors.pathReview,
           onAccent: _cleared ? colors.onLegendary : colors.onPathReview,
@@ -559,21 +559,21 @@ class _ScienceUnitLegendaryScreenState
         ),
         const SizedBox(height: GameTokens.spaceXl),
         ScienceChallengeSurface(
-          label: _cleared ? '習得の断定ではありません' : '通常Pathは失いません',
+          label: _cleared ? '習得の断定ではありません' : '通常の探究ノートは失いません',
           icon: Icons.info_outline,
           child: Text(
             _cleared
-                ? '表示するのは「Unit高難度課題クリア」です。単元全体の理解を自動判定しません。'
+                ? '表示するのは「単元の高難度検証を完了」です。単元全体の理解を自動判定しません。'
                 : _stoppedAfterWrong
                 ? '次の固定問題と正解は開いていません。回答内容も保存しません。'
-                : '通常Path・連続学習・学校課題の利用条件は変わりません。',
+                : '通常の探究ノート・連続観測・学校課題の利用条件は変わりません。',
           ),
         ),
         if (widget.onReturnToPath != null) ...[
           const SizedBox(height: GameTokens.spaceLg),
           ScienceChallengePrimaryButton(
             key: const ValueKey('unit-legendary-return-to-path'),
-            label: _cleared ? '学習パスへ戻る' : '通常練習へ戻る',
+            label: _cleared ? '探究ノートへ戻る' : '通常練習へ戻る',
             icon: Icons.route_outlined,
             onPressed: _returnCalled ? null : _returnToPath,
             backgroundColor: colors.pathActive,

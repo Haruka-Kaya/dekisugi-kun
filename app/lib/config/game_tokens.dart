@@ -1,10 +1,12 @@
 import '../ui/_material.dart';
 
-/// 学習世界「Orbit Lab」の色。
+/// 学習世界「Field Notebook」の色。
 ///
-/// Duolingo の緑を写すのではなく、理科の観察・軌道・実験器具を連想する
-/// cobalt / teal / violet を中心にする。状態は色だけで表さず、Path 側で必ず
-/// 形・アイコン・文言を併記する。
+/// 暖かな観察紙、実験器具の teal、標本ラベルの copper を基調にする。
+/// 状態は色だけで表さず、探究ログ側で必ず形・アイコン・文言を併記する。
+///
+/// `pathActive` などの旧名は保存値や画面実装を一斉に改名しないために維持し、
+/// 新しい画面では [action] など、用途を表す別名を使う。
 @immutable
 class GamePalette extends ThemeExtension<GamePalette> {
   const GamePalette({
@@ -55,56 +57,98 @@ class GamePalette extends ThemeExtension<GamePalette> {
   final Color heart;
   final Color onHeart;
 
+  /// 観察紙の背景。
+  Color get paper => canvas;
+
+  /// 標本や記録を置く実験台の面。
+  Color get bench => surface;
+
+  /// 一段持ち上げた記録面。
+  Color get benchRaised => surfaceRaised;
+
+  /// 次の観察へ進む操作。
+  Color get action => pathActive;
+  Color get onAction => onPathActive;
+
+  /// 観察済み・根拠を確認済みの状態。
+  Color get evidence => pathComplete;
+  Color get onEvidence => onPathComplete;
+
+  /// 再観察する項目。
+  Color get revisit => pathReview;
+  Color get onRevisit => onPathReview;
+
+  /// まだ開いていない記録。
+  Color get locked => pathLocked;
+  Color get onLocked => onPathLocked;
+
+  /// 理科事件簿などのケースファイル。
+  Color get caseFile => story;
+  Color get onCaseFile => onStory;
+
+  /// ヒントなしで行う総合検証。
+  Color get fieldTest => legendary;
+  Color get onFieldTest => onLegendary;
+
+  /// 学習日の連続記録。
+  Color get continuity => streak;
+
+  /// ひらめき結晶。
+  Color get crystal => gem;
+
+  /// 再試行に使える余力。
+  Color get attempt => heart;
+  Color get onAttempt => onHeart;
+
   static const light = GamePalette(
-    canvas: Color(0xFFF7F9FF),
+    canvas: Color(0xFFF6F3EA),
     surface: Color(0xFFFFFFFF),
-    surfaceRaised: Color(0xFFEEF3FF),
-    ink: Color(0xFF17223A),
-    inkMuted: Color(0xFF59657A),
-    border: Color(0xFFD7DEEA),
-    pathActive: Color(0xFF2457D6),
+    surfaceRaised: Color(0xFFE2F0F2),
+    ink: Color(0xFF14252B),
+    inkMuted: Color(0xFF465A62),
+    border: Color(0xFFA5BEC2),
+    pathActive: Color(0xFF006A73),
     onPathActive: Color(0xFFFFFFFF),
-    pathComplete: Color(0xFF167344),
+    pathComplete: Color(0xFF1D6B45),
     onPathComplete: Color(0xFFFFFFFF),
-    pathReview: Color(0xFF006D71),
+    pathReview: Color(0xFFA33C10),
     onPathReview: Color(0xFFFFFFFF),
-    pathLocked: Color(0xFFDCE3ED),
-    onPathLocked: Color(0xFF59657A),
-    story: Color(0xFF7046C8),
+    pathLocked: Color(0xFFD9DEDC),
+    onPathLocked: Color(0xFF4A585A),
+    story: Color(0xFF4F3A79),
     onStory: Color(0xFFFFFFFF),
-    legendary: Color(0xFFF2B705),
-    onLegendary: Color(0xFF2B2100),
-    // 明るい橙・紫・赤を白背景の本文色へ流用しない。ここでは大きな
-    // アイコンと短い数字だけに使い、意味はSemanticsでも返す。
-    streak: Color(0xFFA84B00),
-    gem: Color(0xFF7046C8),
-    heart: Color(0xFFB73552),
+    legendary: Color(0xFFA56800),
+    onLegendary: Color(0xFF000000),
+    // 連続記録・結晶・試行余力は本文色へ流用せず、短い値とアイコンに使う。
+    streak: Color(0xFFB93E1B),
+    gem: Color(0xFF334C9E),
+    heart: Color(0xFFAD2E52),
     onHeart: Color(0xFFFFFFFF),
   );
 
   static const dark = GamePalette(
-    canvas: Color(0xFF101522),
-    surface: Color(0xFF171D2B),
-    surfaceRaised: Color(0xFF20283A),
-    ink: Color(0xFFF5F7FC),
-    inkMuted: Color(0xFFB8C0D3),
-    border: Color(0xFF3B465C),
-    pathActive: Color(0xFF89A9FF),
-    onPathActive: Color(0xFF0B1C48),
-    pathComplete: Color(0xFF6BD396),
-    onPathComplete: Color(0xFF082718),
-    pathReview: Color(0xFF63D1D4),
-    onPathReview: Color(0xFF062A2C),
-    pathLocked: Color(0xFF313B4E),
-    onPathLocked: Color(0xFFC0C8D8),
-    story: Color(0xFFC0A1FF),
-    onStory: Color(0xFF251346),
-    legendary: Color(0xFFFFD35A),
-    onLegendary: Color(0xFF2B2100),
-    streak: Color(0xFFFFA766),
-    gem: Color(0xFFC0A1FF),
-    heart: Color(0xFFFF91A7),
-    onHeart: Color(0xFF3B0715),
+    canvas: Color(0xFF121719),
+    surface: Color(0xFF192124),
+    surfaceRaised: Color(0xFF232E31),
+    ink: Color(0xFFF1EEE5),
+    inkMuted: Color(0xFFB9C4C4),
+    border: Color(0xFF465356),
+    pathActive: Color(0xFF72CDD3),
+    onPathActive: Color(0xFF082A2E),
+    pathComplete: Color(0xFF8CC6A7),
+    onPathComplete: Color(0xFF10251B),
+    pathReview: Color(0xFFE3A175),
+    onPathReview: Color(0xFF331A0C),
+    pathLocked: Color(0xFF2E383A),
+    onPathLocked: Color(0xFFC4CECE),
+    story: Color(0xFFC6B2E1),
+    onStory: Color(0xFF291A37),
+    legendary: Color(0xFFE8C15B),
+    onLegendary: Color(0xFF30260B),
+    streak: Color(0xFFFFB088),
+    gem: Color(0xFFAAB9E8),
+    heart: Color(0xFFF095A6),
+    onHeart: Color(0xFF390B15),
   );
 
   @override
@@ -194,10 +238,12 @@ abstract final class GameTokens {
   static const double spaceXl = 24;
   static const double spaceXxl = 32;
 
-  static const double radiusSm = 10;
-  static const double radiusMd = 16;
-  static const double radiusLg = 22;
-  static const double radiusSheet = 28;
+  /// Field Notebook は紙・罫線・標本枠で階層を作る。角丸を主役にしない。
+  static const double radiusXs = 2;
+  static const double radiusSm = 6;
+  static const double radiusMd = 10;
+  static const double radiusLg = 14;
+  static const double radiusSheet = 18;
   static const double radiusPill = 999;
 
   static const double minTouchTarget = 48;
@@ -226,6 +272,7 @@ abstract final class GameTokens {
   static const double hubTileMinHeight = 96;
   static const double statusIconSize = 18;
   static const double strongBorderWidth = 2;
+  static const double accentRuleWidth = 4;
 
   /// Themeへ接続する前でも新画面を単独テストできるフォールバック。
   static GamePalette paletteOf(BuildContext context) =>

@@ -185,6 +185,7 @@ class _GateState extends State<_Gate> {
   LocalClassroomRunStore? _localClassroomRun;
   LearningScope _localOnlyScope = LearningScope.personal;
   bool _loading = true;
+  bool _showTabGuide = false;
 
   @override
   void initState() {
@@ -227,6 +228,8 @@ class _GateState extends State<_Gate> {
         serverUrl: widget.serverUrl,
         localCatalogAssets: widget.localCatalogAssets,
         allowIndividualPurchases: _consent!.allowsIndividualPurchases,
+        showTabGuide: _showTabGuide,
+        onTabGuideDismissed: () => setState(() => _showTabGuide = false),
       );
     }
     if (_localOnlyUnits case final units?) {
@@ -238,6 +241,8 @@ class _GateState extends State<_Gate> {
         sessionStore: store,
         scope: _localOnlyScope,
         schoolMode: schoolMode,
+        showTabGuide: _showTabGuide,
+        onTabGuideDismissed: () => setState(() => _showTabGuide = false),
         lanSocialAllowed: false,
         controller: _localGameController,
         // 旧端末内練習は個人記録。学校scopeへ混ぜない。
@@ -270,7 +275,12 @@ class _GateState extends State<_Gate> {
           return JoinFailure.unknown;
         }
         await consentStore.save(record);
-        if (mounted) setState(() => _consent = record);
+        if (mounted) {
+          setState(() {
+            _consent = record;
+            _showTabGuide = true;
+          });
+        }
         return null;
       },
     );
@@ -285,6 +295,7 @@ class _GateState extends State<_Gate> {
     // 入口へ戻り、今回選んだ経路だけをpersonal/schoolLocalへ明示的に割り当てる。
     setState(() {
       _localOnlyScope = scope;
+      _showTabGuide = true;
       _localOnlyUnits = UnitsClient(
         baseUrl: '',
         // 保存済みのサーバ教材も読まず、このビルドに同梱した正本だけを使う。
@@ -358,11 +369,15 @@ class _OnlineServices extends StatelessWidget {
     required this.serverUrl,
     required this.localCatalogAssets,
     required this.allowIndividualPurchases,
+    required this.showTabGuide,
+    required this.onTabGuideDismissed,
   });
 
   final String serverUrl;
   final AssetBundle? localCatalogAssets;
   final bool allowIndividualPurchases;
+  final bool showTabGuide;
+  final VoidCallback onTabGuideDismissed;
 
   @override
   Widget build(BuildContext context) {
@@ -409,6 +424,8 @@ class _OnlineServices extends StatelessWidget {
           scope: LearningScope.personal,
           schoolMode: false,
           lanSocialAllowed: true,
+          showTabGuide: showTabGuide,
+          onTabGuideDismissed: onTabGuideDismissed,
           legacyProgress: LocalPracticeStore(store),
           onOpenSettings: () => _openOnlineSettings(providerContext),
         ),

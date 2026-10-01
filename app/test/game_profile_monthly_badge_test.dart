@@ -67,10 +67,10 @@ void main() {
         240,
       );
 
-      expect(find.text('月間バッジ'), findsOneWidget);
+      expect(find.text('月間観測印'), findsOneWidget);
       expect(find.textContaining('結晶では購入できません'), findsOneWidget);
       expect(
-        find.bySemanticsLabel(RegExp(r'2026年8月 観測バッジ。獲得済み')),
+        find.bySemanticsLabel(RegExp(r'2026年8月 観測印。記録済み')),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);

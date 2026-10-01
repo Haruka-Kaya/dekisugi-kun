@@ -29,30 +29,40 @@ class LocalCoopQuestPanel extends StatelessWidget {
       padding: const EdgeInsets.all(GameTokens.spaceLg),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(GameTokens.radiusLg),
-        border: Border.all(color: colors.story, width: 2),
+        borderRadius: BorderRadius.circular(GameTokens.radiusMd),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              key: const ValueKey('local-coop-record-rule'),
+              width: 64,
+              height: 4,
+              color: colors.caseFile,
+            ),
+          ),
+          const SizedBox(height: GameTokens.spaceMd),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.group_work_outlined, color: colors.story, size: 30),
+              Icon(Icons.group_work_outlined, color: colors.caseFile, size: 30),
               const SizedBox(width: GameTokens.spaceSm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '端末内ペアクエスト',
+                      'ふたりの共同観察',
                       style: t.textTheme.titleLarge
                           ?.copyWith(color: colors.ink)
                           .jaWeight(FontWeight.w900),
                     ),
                     const SizedBox(height: GameTokens.spaceXs),
                     Text(
-                      '実在する2人がこの端末を手渡し、それぞれ1件ずつ学習します。名前・回答・正誤は保存しません。',
+                      '実在する2人がこの端末を手渡し、それぞれ観察記録を1件ずつ残します。名前・回答・正誤は保存しません。',
                       style: t.textTheme.bodySmall?.copyWith(
                         color: colors.inkMuted,
                       ),
@@ -71,7 +81,7 @@ class LocalCoopQuestPanel extends StatelessWidget {
                   key: const ValueKey('local-coop-start'),
                   onPressed: unavailableReason == null ? onStart : null,
                   icon: const Icon(Icons.group_add_outlined),
-                  label: const Text('2人クエストを作る'),
+                  label: const Text('ふたりの観察を準備する'),
                 ),
                 if (unavailableReason case final reason?) ...[
                   const SizedBox(height: GameTokens.spaceSm),
@@ -91,7 +101,7 @@ class LocalCoopQuestPanel extends StatelessWidget {
           else ...[
             Semantics(
               label:
-                  '端末内ペアクエスト、${active.target}件中${active.progress}件'
+                  'ふたりの共同観察、${active.target}件中${active.progress}件'
                   '${active.completed ? '、達成済み' : '、進行中'}'
                   '、結晶${active.rewardGems}個',
               child: ExcludeSemantics(
@@ -101,17 +111,15 @@ class LocalCoopQuestPanel extends StatelessWidget {
                     LinearProgressIndicator(
                       value: (active.progress / active.target).clamp(0.0, 1.0),
                       minHeight: 10,
-                      borderRadius: BorderRadius.circular(
-                        GameTokens.radiusPill,
-                      ),
+                      borderRadius: BorderRadius.circular(GameTokens.radiusXs),
                       color: active.completed
                           ? colors.pathComplete
-                          : colors.story,
+                          : colors.caseFile,
                       backgroundColor: colors.border,
                     ),
                     const SizedBox(height: GameTokens.spaceXs),
                     Text(
-                      '${active.progress} / ${active.target}  ・  ◆ ${active.rewardGems}',
+                      '観察記録 ${active.progress} / ${active.target}  ・  結晶 ${active.rewardGems}',
                       textAlign: TextAlign.end,
                       style: t.textTheme.labelLarge?.copyWith(
                         color: colors.ink,
@@ -130,7 +138,7 @@ class LocalCoopQuestPanel extends StatelessWidget {
                   const SizedBox(width: GameTokens.spaceSm),
                   Expanded(
                     child: Text(
-                      '2人の学習がそろいました。報酬は端末内の個人walletへ一度だけ記録済みです。',
+                      'ふたりの観察記録がそろいました。報酬は端末内の個人の結晶残高へ一度だけ記録済みです。',
                       style: t.textTheme.bodyMedium?.copyWith(
                         color: colors.ink,
                       ),
@@ -140,7 +148,7 @@ class LocalCoopQuestPanel extends StatelessWidget {
               )
             else ...[
               Text(
-                '次に学習する人を選ぶ',
+                '次に観察する人を選ぶ',
                 style: t.textTheme.titleSmall
                     ?.copyWith(color: colors.ink)
                     .jaWeight(FontWeight.w800),
@@ -162,8 +170,8 @@ class LocalCoopQuestPanel extends StatelessWidget {
               ],
               Text(
                 selectedParticipantId == null
-                    ? '人を選んでからPathへ戻り、初回または期限の復習を1件終えてください。'
-                    : '選択中です。次に完了した意味のある学習1件だけを、この枠へ記録します。',
+                    ? '人を選んでから探究ノートへ戻り、初回観察または期限の来た再観察を1件終えてください。'
+                    : '選択中です。次に完了した意味のある観察1件だけを、この枠へ記録します。',
                 style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
               ),
             ],
@@ -198,9 +206,9 @@ class _ParticipantButton extends StatelessWidget {
       selected: selected,
       label:
           '$label、${contributed
-              ? '学習記録済み'
+              ? '観察記録済み'
               : selected
-              ? '次に学習する人として選択中'
+              ? '次に観察する人として選択中'
               : '未選択'}',
       onTap: contributed ? null : onTap,
       child: ExcludeSemantics(

@@ -13,7 +13,7 @@ class GameContentProjectionResult {
   final List<PracticeModeView> practiceModes;
 }
 
-/// Pathと別タブを同じnode状態から組み立てる。
+/// 探究ノートと別タブを同じnode状態から組み立てる。
 ///
 /// Story一覧や練習ラボが独自に「完了したはず」と推測しないための境界。
 /// 正答・教材本文は複製せず、表示用IDから起動時にcatalog detailを読み直す。
@@ -96,14 +96,14 @@ class GameContentProjection {
     final timedBadge = !hasChallenge
         ? null
         : schoolMode
-        ? '任意・ハート無制限'
+        ? '任意・試行余力は無制限'
         : timedChallengeGemCost == null
-        ? '任意・誤答はハート-1'
+        ? '任意・誤答は試行余力-1'
         : timedChallengePassActive
-        ? '今日の挑戦券あり・誤答はハート-1'
+        ? '今日の時間観察券あり・誤答は試行余力-1'
         : canPurchaseTimedChallengePass
-        ? '◆ $timedChallengeGemCostで今日参加・誤答はハート-1'
-        : '結晶不足・Match / Lightningは無料';
+        ? '◆ $timedChallengeGemCostで今日参加・誤答は試行余力-1'
+        : '結晶不足・対応づけ実験／連続観察は無料';
 
     return GameContentProjectionResult(
       stories: List.unmodifiable(stories),
@@ -112,7 +112,7 @@ class GameContentProjection {
           id: 'practice:personalized',
           title: '今日の個別練習',
           description: duePracticeCount == 0
-              ? '期限が来るまではPathを進めます。'
+              ? '期限が来るまでは探究ノートを進めます。'
               : '期限が来た概念を、別の操作で取り出します。',
           kind: PracticeModeKind.personalized,
           enabled: duePracticeCount > 0,
@@ -122,8 +122,8 @@ class GameContentProjection {
           id: 'practice:resume',
           title: '続きから',
           description: resumeCount == 0
-              ? '中断中のPath課題はありません。'
-              : '中断したPath課題を、保存された位置から再開します。',
+              ? '中断中の探究課題はありません。'
+              : '中断した探究課題を、保存された位置から再開します。',
           kind: PracticeModeKind.resume,
           enabled: resumeCount > 0,
           badge: resumeCount == 0 ? null : '$resumeCount件',
@@ -154,34 +154,34 @@ class GameContentProjection {
         ),
         PracticeModeView(
           id: 'practice:timed',
-          title: 'タイムチャレンジ',
-          description: '固定の転移問題を時間内に解きます。',
+          title: '時間観察',
+          description: '時間を観察しながら、固定の転移問題を解きます。',
           kind: PracticeModeKind.timed,
           enabled: hasChallenge && timedHasEntry,
           badge: timedBadge,
         ),
         PracticeModeView(
           id: 'practice:match',
-          title: 'Match Lab',
+          title: '対応づけ実験',
           description: '観察・理由・訂正を、対応する説明へすばやく結びます。',
           kind: PracticeModeKind.match,
           enabled: hasChallenge,
           badge: hasChallenge
               ? schoolMode
-                    ? '45秒・ハート無制限'
-                    : '45秒・誤答はハート-1'
+                    ? '45秒・試行余力は無制限'
+                    : '45秒・誤答は試行余力-1'
               : null,
         ),
         PracticeModeView(
           id: 'practice:lightning',
-          title: 'Lightning',
+          title: '連続観察',
           description: '3ラウンドの思い込み訂正を順番に判断します。',
           kind: PracticeModeKind.lightning,
           enabled: hasChallenge,
           badge: hasChallenge
               ? schoolMode
-                    ? '50秒・ハート無制限'
-                    : '50秒・誤答はハート-1'
+                    ? '50秒・試行余力は無制限'
+                    : '50秒・誤答は試行余力-1'
               : null,
         ),
       ]),

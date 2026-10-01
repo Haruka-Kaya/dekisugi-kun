@@ -166,7 +166,9 @@ void main() {
             expect(tester.getSize(open).height, greaterThanOrEqualTo(48));
             expect(find.textContaining('実在5〜8人'), findsOneWidget);
             expect(find.textContaining('接続前・現在の人数と順位は非表示'), findsOneWidget);
-            expect(find.textContaining('ダイヤモンドまでの10段'), findsOneWidget);
+            expect(find.textContaining('観測級10までの10段階'), findsOneWidget);
+            expect(find.byIcon(Icons.workspace_premium_outlined), findsNothing);
+            expect(find.byIcon(Icons.emoji_events_outlined), findsNothing);
             expect(
               find.byKey(const ValueKey('local-weekly-league-panel')),
               findsNothing,
@@ -202,7 +204,7 @@ void main() {
           expect(tester.getSize(rules).height, greaterThanOrEqualTo(48));
           await tester.tap(rules);
           await tester.pumpAndSettle();
-          expect(find.text('リーグのルールと保存範囲'), findsOneWidget);
+          expect(find.text('共同観測のルールと保存範囲'), findsOneWidget);
           expect(tester.takeException(), isNull);
           await tester.tapAt(const Offset(4, 4));
           await tester.pumpAndSettle();
@@ -239,7 +241,7 @@ void main() {
       final hero = find.byKey(const ValueKey('league-progress'));
       final heroHeading = find.descendant(
         of: hero,
-        matching: find.text('ブロンズリーグ'),
+        matching: find.text('観測級01の共同観測'),
       );
       expect(heroHeading, findsOneWidget);
       expect(
@@ -251,12 +253,12 @@ void main() {
         isTrue,
       );
       expect(
-        find.text('端末手渡し週次リーグ'),
+        find.text('端末手渡し共同観測'),
         findsNothing,
         reason: 'embedded panelの見出しは外側Heroと競合させない',
       );
       expect(
-        find.bySemanticsLabel(RegExp('端末手渡し週次リーグ。実在する2人、意味のある学習2件')),
+        find.bySemanticsLabel(RegExp('端末手渡し共同観測。実在する2人、観察2件')),
         findsOneWidget,
         reason: '見出しを省いてもactive状態の読み上げは維持する',
       );
@@ -282,7 +284,7 @@ void main() {
 
       await tester.tap(rules);
       await tester.pumpAndSettle();
-      expect(find.text('リーグのルールと保存範囲'), findsOneWidget);
+      expect(find.text('共同観測のルールと保存範囲'), findsOneWidget);
       expect(find.text('同じ学習の周回は数えない'), findsOneWidget);
       expect(find.textContaining('氏名・account・回答・正誤は表示・保存しません'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -302,6 +304,9 @@ void main() {
     final semantics = tester.ensureSemantics();
 
     for (final brightness in Brightness.values) {
+      final palette = brightness == Brightness.light
+          ? GamePalette.light
+          : GamePalette.dark;
       await tester.pumpWidget(
         KeyedSubtree(
           key: ValueKey('profile-${brightness.name}'),
@@ -334,6 +339,22 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(
+        find.descendant(
+          of: hero,
+          matching: find.byIcon(Icons.electric_bolt_rounded),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: hero, matching: find.byIcon(Icons.diamond_rounded)),
+        findsNothing,
+      );
+      expect(
+        tester.widget<Text>(find.text('連続観測')).style?.color,
+        palette.inkMuted,
+      );
+      expect(tester.widget<Text>(find.text('4日')).style?.color, palette.ink);
       final settings = find.byKey(const ValueKey('game-profile-settings'));
       final economy = find.byKey(const ValueKey('game-profile-open-economy'));
       expect(tester.getSize(settings).height, greaterThanOrEqualTo(48));
@@ -357,8 +378,10 @@ void main() {
               .dy,
         ),
       );
-      expect(find.text('月間バッジ'), findsOneWidget);
-      expect(find.text('今日のクエスト'), findsOneWidget);
+      expect(find.text('月間観測印'), findsOneWidget);
+      expect(find.textContaining('観測バッジ'), findsNothing);
+      expect(find.text('今日の観察予定'), findsOneWidget);
+      expect(find.text('探究ノートを1件進める'), findsOneWidget);
       expect(find.textContaining('専用の回復練習1件'), findsOneWidget);
       expect(tester.takeException(), isNull);
     }
@@ -464,7 +487,8 @@ void main() {
       tester,
       find.byKey(const ValueKey('league-lan-social-summary')),
     );
-    expect(leagueDecoration.color, GamePalette.dark.story);
+    expect(leagueDecoration.color, GamePalette.dark.surfaceRaised);
+    expect(leagueDecoration.border, isNotNull);
     expect(leagueDecoration.gradient, isNull);
     expect(leagueDecoration.boxShadow, isNull);
 
@@ -483,7 +507,8 @@ void main() {
       tester,
       find.byKey(const ValueKey('game-profile-progress')),
     );
-    expect(profileDecoration.color, GamePalette.dark.pathActive);
+    expect(profileDecoration.color, GamePalette.dark.surfaceRaised);
+    expect(profileDecoration.border, isNotNull);
     expect(profileDecoration.gradient, isNull);
     expect(profileDecoration.boxShadow, isNull);
   });

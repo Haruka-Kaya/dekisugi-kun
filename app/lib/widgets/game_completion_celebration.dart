@@ -52,10 +52,11 @@ Future<GameCompletionAction?> showGameCompletionCelebration(
   );
 }
 
-/// 保存成功後だけ表示する、Path共通の達成面。
+/// 保存成功後だけ表示する、探究ノート共通の記録票。
 ///
-/// 毎回の操作を跳ねさせず、完了時の500msだけをexpressiveにする。回答本文・
-/// 正答率・反応時間は受け取らないため、測っていない理解度を演出のために作らない。
+/// 中央バーストや紙吹雪ではなく、保存した事実を一枚の観察記録として返す。
+/// 回答本文・正答率・反応時間は受け取らないため、測っていない理解度を
+/// 演出のために作らない。
 class GameCompletionCelebration extends StatelessWidget {
   const GameCompletionCelebration({super.key, required this.summary});
 
@@ -74,8 +75,8 @@ class GameCompletionCelebration extends StatelessWidget {
       backgroundColor: colors.surface,
       insetPadding: const EdgeInsets.all(GameTokens.spaceMd),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(GameTokens.radiusSheet),
-        side: BorderSide(color: colors.border),
+        borderRadius: BorderRadius.circular(GameTokens.radiusLg),
+        side: BorderSide(color: colors.border, width: 2),
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 520, maxHeight: maxHeight),
@@ -94,28 +95,22 @@ class GameCompletionCelebration extends StatelessWidget {
                   tween: Tween(begin: 0, end: 1),
                   duration: reduceMotion ? Duration.zero : Motion.celebrate,
                   curve: Motion.celebrateCurve,
-                  builder: (context, progress, child) => Transform.translate(
-                    offset: Offset(0, (1 - progress) * 18),
-                    child: Transform.scale(
-                      scale: .82 + (.18 * progress),
-                      child: Opacity(opacity: progress, child: child),
+                  builder: (context, progress, child) => Opacity(
+                    opacity: progress,
+                    child: Transform.translate(
+                      offset: Offset((1 - progress) * -12, 0),
+                      child: child,
                     ),
                   ),
-                  child: _CelebrationHero(mascotStyle: summary.mascotStyle),
+                  child: _ObservationRecordHeader(
+                    eyebrow: _observationEyebrow(summary.eyebrow),
+                    mascotStyle: summary.mascotStyle,
+                  ),
                 ),
                 const SizedBox(height: GameTokens.spaceLg),
-                Text(
-                  summary.eyebrow,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.labelLarge
-                      ?.copyWith(color: colors.pathComplete)
-                      .jaWeight(FontWeight.w800),
-                ),
-                const SizedBox(height: GameTokens.spaceXs),
                 ExcludeSemantics(
                   child: Text(
                     summary.title,
-                    textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineMedium
                         ?.copyWith(color: colors.ink, height: 1.35)
                         .jaWeight(FontWeight.w800),
@@ -125,58 +120,78 @@ class GameCompletionCelebration extends StatelessWidget {
                 ExcludeSemantics(
                   child: Text(
                     summary.message,
-                    textAlign: TextAlign.center,
                     style: Theme.of(
                       context,
                     ).textTheme.bodyLarge?.copyWith(color: colors.inkMuted),
                   ),
                 ),
                 const SizedBox(height: GameTokens.spaceXl),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: GameTokens.spaceSm,
-                  runSpacing: GameTokens.spaceSm,
-                  children: [
-                    if (summary.showPersonalRewards)
+                Container(
+                  key: const ValueKey('completion-ledger'),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceRaised,
+                    borderRadius: BorderRadius.circular(GameTokens.radiusMd),
+                    border: Border.all(color: colors.border),
+                  ),
+                  child: Column(
+                    children: [
+                      if (summary.showPersonalRewards)
+                        _CompletionMetric(
+                          key: const ValueKey('completion-xp'),
+                          icon: Icons.note_alt_outlined,
+                          value: '+${summary.xpAwarded}',
+                          label: summary.xpAwarded == 0
+                              ? '探究記録（今回は加算なし）'
+                              : '探究記録',
+                          color: colors.streak,
+                        ),
+                      if (summary.showPersonalRewards &&
+                          summary.gemsAwarded > 0)
+                        _CompletionMetric(
+                          key: const ValueKey('completion-gems'),
+                          icon: Icons.hexagon_outlined,
+                          value: '+${summary.gemsAwarded}',
+                          label: 'ひらめき結晶',
+                          color: colors.gem,
+                        ),
                       _CompletionMetric(
-                        key: const ValueKey('completion-xp'),
-                        icon: Icons.bolt_rounded,
-                        value: '+${summary.xpAwarded}',
-                        label: summary.xpAwarded == 0 ? 'XP（今回は加算なし）' : 'XP',
-                        color: colors.streak,
+                        key: const ValueKey('completion-time'),
+                        icon: Icons.schedule_outlined,
+                        value: _formatElapsed(summary.elapsed),
+                        label: '今回の観察時間',
+                        color: colors.pathReview,
+                        last: true,
                       ),
-                    if (summary.showPersonalRewards && summary.gemsAwarded > 0)
-                      _CompletionMetric(
-                        key: const ValueKey('completion-gems'),
-                        icon: Icons.diamond_rounded,
-                        value: '+${summary.gemsAwarded}',
-                        label: '結晶',
-                        color: colors.gem,
-                      ),
-                    _CompletionMetric(
-                      key: const ValueKey('completion-time'),
-                      icon: Icons.timer_outlined,
-                      value: _formatElapsed(summary.elapsed),
-                      label: '今回の時間',
-                      color: colors.pathReview,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: GameTokens.spaceSm),
-                Text(
-                  '時間はこの完了画面だけに表示し、端末へ保存しません。',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: colors.inkMuted),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.lock_clock_outlined,
+                      size: 18,
+                      color: colors.inkMuted,
+                    ),
+                    const SizedBox(width: GameTokens.spaceSm),
+                    Expanded(
+                      child: Text(
+                        '観察時間はこの記録票だけに表示し、端末へ保存しません。',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: colors.inkMuted),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: GameTokens.spaceXl),
                 FilledButton.icon(
                   key: const ValueKey('completion-next-step'),
                   onPressed: () =>
                       Navigator.of(context).pop(GameCompletionAction.nextStep),
-                  icon: const Icon(Icons.route_rounded),
-                  label: const Text('次の一歩をマップで見る'),
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text('次の観察へ'),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(56),
                     backgroundColor: colors.pathComplete,
@@ -193,7 +208,7 @@ class GameCompletionCelebration extends StatelessWidget {
                     context,
                   ).pop(GameCompletionAction.reviewResult),
                   icon: const Icon(Icons.visibility_outlined),
-                  label: const Text('学習結果を見直す'),
+                  label: const Text('今回の記録を見る'),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                     shape: RoundedRectangleBorder(
@@ -210,44 +225,134 @@ class GameCompletionCelebration extends StatelessWidget {
   }
 }
 
-class _CelebrationHero extends StatelessWidget {
-  const _CelebrationHero({required this.mascotStyle});
+class _ObservationRecordHeader extends StatelessWidget {
+  const _ObservationRecordHeader({
+    required this.eyebrow,
+    required this.mascotStyle,
+  });
 
+  final String eyebrow;
   final LearningPathMascotStyle mascotStyle;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
-    return SizedBox(
-      height: 146,
+    return Container(
+      key: const ValueKey('completion-record-header'),
+      decoration: BoxDecoration(
+        color: colors.surfaceRaised,
+        borderRadius: BorderRadius.circular(GameTokens.radiusMd),
+        border: Border.all(color: colors.border),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: Stack(
-        alignment: Alignment.center,
         children: [
-          Positioned.fill(
-            child: ExcludeSemantics(
-              child: CustomPaint(
-                painter: _CelebrationBurstPainter(
-                  primary: colors.pathComplete,
-                  secondary: colors.legendary,
-                  tertiary: colors.story,
+          Padding(
+            padding: const EdgeInsets.all(GameTokens.spaceMd),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Semantics(
+                  label: '${mascotStyle.label}が観察記録へ完了印を押しています',
+                  child: ExcludeSemantics(
+                    child: Container(
+                      width: 88,
+                      height: 88,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: colors.surface,
+                        borderRadius: BorderRadius.circular(
+                          GameTokens.radiusSm,
+                        ),
+                        border: Border.all(color: colors.border, width: 2),
+                      ),
+                      child: PathMascotPreview(
+                        reaction: GameCharacterReaction.celebrate,
+                        size: 82,
+                        style: mascotStyle,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: GameTokens.spaceMd),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        eyebrow,
+                        style: Theme.of(context).textTheme.labelLarge
+                            ?.copyWith(color: colors.inkMuted)
+                            .jaWeight(FontWeight.w700),
+                      ),
+                      const SizedBox(height: GameTokens.spaceXs),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.task_alt_rounded,
+                            color: colors.pathComplete,
+                            size: 22,
+                          ),
+                          const SizedBox(width: GameTokens.spaceSm),
+                          Expanded(
+                            child: Text(
+                              '観察記録を保存しました',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(color: colors.ink)
+                                  .jaWeight(FontWeight.w900),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          Semantics(
-            label: '${mascotStyle.label}が笑顔で学習完了を祝っています',
-            child: ExcludeSemantics(
-              child: PathMascotPreview(
-                reaction: GameCharacterReaction.celebrate,
-                size: 112,
-                style: mascotStyle,
-              ),
-            ),
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 4,
+            child: ColoredBox(color: colors.pathComplete),
           ),
         ],
       ),
     );
   }
+}
+
+String _observationEyebrow(String source) {
+  final upper = source.toUpperCase();
+  if (source.contains('授業') || upper.contains('CLASS')) {
+    return '授業の観察記録';
+  }
+  if (source.contains('記号') ||
+      source.contains('図解') ||
+      upper.contains('NOTATION')) {
+    return '記号実験の観察記録';
+  }
+  if (source.contains('事件') || upper.contains('STORY')) {
+    return '事件簿の観察記録';
+  }
+  if (source.contains('聞き取り') || upper.contains('LISTEN')) {
+    return '聞き取りの観察記録';
+  }
+  if (source.contains('教え返し') || upper.contains('SPEAK')) {
+    return '教え返しの観察記録';
+  }
+  if (source.contains('教材観察')) return '教材観察の記録';
+  if (source.contains('構造実験')) return '構造実験の観察記録';
+  if (source.contains('高難度')) return '高難度検証の観察記録';
+  if (source.contains('総合検証')) return '総合検証の観察記録';
+  if (upper.contains('BOSS') ||
+      upper.contains('LEGENDARY') ||
+      upper.contains('UNIT')) {
+    return '総合検証の観察記録';
+  }
+  return '探究ノート / 保存済み';
 }
 
 class _CompletionMetric extends StatelessWidget {
@@ -257,12 +362,14 @@ class _CompletionMetric extends StatelessWidget {
     required this.value,
     required this.label,
     required this.color,
+    this.last = false,
   });
 
   final IconData icon;
   final String value;
   final String label;
   final Color color;
+  final bool last;
 
   @override
   Widget build(BuildContext context) {
@@ -271,43 +378,44 @@ class _CompletionMetric extends StatelessWidget {
       label: '$label、$value',
       child: ExcludeSemantics(
         child: Container(
-          constraints: const BoxConstraints(
-            minWidth: 132,
-            minHeight: GameTokens.minTouchTarget,
-          ),
+          constraints: const BoxConstraints(minHeight: 52),
           padding: const EdgeInsets.symmetric(
             horizontal: GameTokens.spaceMd,
             vertical: GameTokens.spaceSm,
           ),
           decoration: BoxDecoration(
-            color: colors.surfaceRaised,
-            borderRadius: BorderRadius.circular(GameTokens.radiusMd),
-            border: Border.all(color: colors.border),
+            border: last
+                ? null
+                : Border(bottom: BorderSide(color: colors.border)),
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: color, size: 24),
-              const SizedBox(width: GameTokens.spaceSm),
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      value,
-                      style: Theme.of(context).textTheme.titleMedium
-                          ?.copyWith(color: colors.ink)
-                          .jaWeight(FontWeight.w800),
-                    ),
-                    Text(
-                      label,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: colors.inkMuted),
-                    ),
-                  ],
+              SizedBox.square(
+                dimension: 32,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(GameTokens.radiusSm),
+                    border: Border.all(color: colors.border),
+                  ),
+                  child: Icon(icon, color: color, size: 19),
                 ),
+              ),
+              const SizedBox(width: GameTokens.spaceMd),
+              Expanded(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: colors.inkMuted)
+                      .jaWeight(FontWeight.w600),
+                ),
+              ),
+              const SizedBox(width: GameTokens.spaceSm),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(color: colors.ink)
+                    .jaWeight(FontWeight.w800),
               ),
             ],
           ),
@@ -315,49 +423,6 @@ class _CompletionMetric extends StatelessWidget {
       ),
     );
   }
-}
-
-class _CelebrationBurstPainter extends CustomPainter {
-  const _CelebrationBurstPainter({
-    required this.primary,
-    required this.secondary,
-    required this.tertiary,
-  });
-
-  final Color primary;
-  final Color secondary;
-  final Color tertiary;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final radius = math.min(size.width, size.height) * .42;
-    final colors = [primary, secondary, tertiary];
-    for (var index = 0; index < 12; index++) {
-      final angle = (math.pi * 2 * index / 12) - math.pi / 2;
-      final distance = radius * (index.isEven ? .92 : .72);
-      final point =
-          center + Offset(math.cos(angle), math.sin(angle)) * distance;
-      final paint = Paint()..color = colors[index % colors.length];
-      if (index % 3 == 0) {
-        final path = Path()
-          ..moveTo(point.dx, point.dy - 5)
-          ..lineTo(point.dx + 4, point.dy)
-          ..lineTo(point.dx, point.dy + 5)
-          ..lineTo(point.dx - 4, point.dy)
-          ..close();
-        canvas.drawPath(path, paint);
-      } else {
-        canvas.drawCircle(point, index.isEven ? 4 : 3, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_CelebrationBurstPainter oldDelegate) =>
-      oldDelegate.primary != primary ||
-      oldDelegate.secondary != secondary ||
-      oldDelegate.tertiary != tertiary;
 }
 
 String _formatElapsed(Duration elapsed) {

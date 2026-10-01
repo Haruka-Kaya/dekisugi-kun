@@ -34,6 +34,11 @@ enum LanSocialLeagueTier {
   }
 }
 
+/// 保存済みの宝石名やwire値を変えず、探究ノートUIだけで使う表示名。
+extension LanSocialLeagueTierDisplay on LanSocialLeagueTier {
+  String get displayLabel => '観測級${(index + 1).toString().padLeft(2, '0')}';
+}
+
 enum LanSocialLeagueMovement {
   promoted,
   stayed,

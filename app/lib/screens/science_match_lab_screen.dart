@@ -9,6 +9,7 @@ import '../models/unit.dart';
 import '../services/challenge_deadline.dart';
 import '../ui/_material.dart';
 import '../widgets/game_activity_scaffold.dart';
+import '../widgets/cognitive_task_input.dart';
 import '../widgets/science_challenge_support.dart';
 import '../widgets/science_mini_game_widgets.dart';
 
@@ -305,7 +306,7 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
               backgroundColor: colors.canvas,
               foregroundColor: colors.ink,
               title: Text(
-                'Match Lab',
+                '対応づけ実験',
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
@@ -344,7 +345,7 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'OPTIONAL  /  MATCH LAB',
+          eyebrow: 'ラボ・ブリーフ  /  対応づけ実験  /  任意',
           title: widget.conceptLabel,
           body: '${widget.content.pairs.length}組を$_initialSeconds秒で結びます。',
           icon: Icons.hub_outlined,
@@ -357,8 +358,8 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
           label: '時間切れは失点なし',
           icon: Icons.shield_outlined,
           child: const Text(
-            '時間切れでは学習ハートは減りません。組み合わせの誤答だけ、個人モードでは学習ハートが1つ減ります。'
-            'Path・連続学習・報酬は変わらず、学校モードはハート無制限です。',
+            '時間切れでは試行余力は減りません。組み合わせの誤答だけ、個人モードでは試行余力が1つ減ります。'
+            '探究ノート・連続観測・報酬は変わらず、学校モードは試行余力が無制限です。',
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
@@ -366,13 +367,14 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
           label: '学習する場面',
           icon: Icons.science_outlined,
           child: Text(
-            '${_variant.transferPrompt}\n\n${_variant.cognitiveTask.prompt}',
+            '${_variant.transferPrompt}\n\n'
+            '${cognitiveTaskPromptSummary(_variant.cognitiveTask.prompt)}',
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('match-start'),
-          label: 'Match Labを始める',
+          label: '対応づけ実験を始める',
           icon: Icons.play_arrow_rounded,
           onPressed: _start,
           backgroundColor: colors.pathReview,
@@ -446,14 +448,15 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
     };
     final body = switch (_outcome!) {
       _MatchOutcome.cleared => '概念と条件・結果を対応させました。',
-      _MatchOutcome.needsReview => '同じ問題の残りの選択肢は開きません。教材で条件を確認してから再挑戦できます。',
+      _MatchOutcome.needsReview =>
+        '同じ問題の残りの選択肢は開きません。教材で条件を確認してから、もう一度対応づけられます。',
       _MatchOutcome.timeUp => '未回答の正解は表示しません。落ち着いて通常練習へ戻れます。',
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'MATCH LAB  /  RESULT',
+          eyebrow: 'ラボ・ブリーフ  /  対応づけ実験  /  記録',
           title: title,
           body: body,
           icon: cleared
@@ -471,13 +474,13 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
         ScienceChallengeSurface(
           label: '学習記録への影響',
           icon: Icons.shield_outlined,
-          child: const Text('この結果だけではPath・連続学習・報酬は変わりません。回答と残り時間も保存しません。'),
+          child: const Text('この結果だけでは探究ノート・連続観測・報酬は変わりません。回答と残り時間も保存しません。'),
         ),
         if (cleared) ...[
           const SizedBox(height: GameTokens.spaceLg),
           ScienceChallengePrimaryButton(
             key: const ValueKey('match-complete'),
-            label: 'Match Labを完了する',
+            label: '対応づけ実験を完了する',
             icon: Icons.check_rounded,
             onPressed: _completionCalled ? null : _complete,
             backgroundColor: colors.pathComplete,
@@ -493,7 +496,7 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
               foregroundColor: colors.ink,
             ),
             icon: const Icon(Icons.refresh_rounded),
-            label: Text(_retryChecking ? 'ハートを確認中…' : '最初からもう一度'),
+            label: Text(_retryChecking ? '試行余力を確認中…' : '最初からもう一度'),
           ),
         ],
         const SizedBox(height: GameTokens.spaceLg),

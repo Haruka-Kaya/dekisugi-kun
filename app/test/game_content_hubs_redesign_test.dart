@@ -704,7 +704,7 @@ void main() {
     }
   });
 
-  testWidgets('3つのheroはtokenのsolid面でgradientとshadowを使わない', (tester) async {
+  testWidgets('3つのheroは中立なLab Brief面と4dpのaccent罫線を使う', (tester) async {
     final fixtures = <({Widget screen, String heroKey, Color color})>[
       (
         screen: _stories(),
@@ -734,9 +734,29 @@ void main() {
         tester,
         find.byKey(ValueKey(fixture.heroKey)),
       );
-      expect(decoration.color, fixture.color);
+      expect(decoration.color, GamePalette.dark.benchRaised);
       expect(decoration.gradient, isNull);
       expect(decoration.boxShadow, isNull);
+      expect(decoration.border, isA<Border>());
+      final accentRule = find.descendant(
+        of: find.byKey(ValueKey(fixture.heroKey)),
+        matching: find.byKey(const ValueKey('game-hero-accent-rule')),
+      );
+      expect(accentRule, findsOneWidget);
+      expect(tester.widget<ColoredBox>(accentRule).color, fixture.color);
+      expect(tester.getSize(accentRule).width, GameTokens.accentRuleWidth);
+
+      final mascotSurface = find.descendant(
+        of: find.byKey(ValueKey(fixture.heroKey)),
+        matching: find.byKey(const ValueKey('game-hero-mascot-surface')),
+      );
+      expect(mascotSurface, findsOneWidget);
+      final mascotDecoration = _decoration(tester, mascotSurface);
+      expect(mascotDecoration.shape, BoxShape.rectangle);
+      expect(
+        mascotDecoration.borderRadius,
+        BorderRadius.circular(GameTokens.radiusSm),
+      );
     }
   });
 }

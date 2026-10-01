@@ -129,7 +129,7 @@ final class LearningChallengePassPurchaseResult {
 
 /// launch時点で保存層とUIが共有するversionedカタログ。
 ///
-/// - cosmeticはPathマスコットの描画だけを変える
+/// - cosmeticは探究ノート用マスコットの描画だけを変える
 /// - challenge passは任意の時間制画面への当日入場だけを許可する
 /// - 学習node、証拠レベル、報酬、正答へ影響する商品を持たない
 final class SafeLearningEconomyCatalogV1 {
@@ -143,7 +143,7 @@ final class SafeLearningEconomyCatalogV1 {
   static const LearningCosmeticProduct standardMascot = LearningCosmeticProduct(
     productId: standardMascotId,
     title: 'いつものデキすぎ君',
-    description: '標準のPathマスコットです。いつでも選べます。',
+    description: '標準の探究ノート用マスコットです。いつでも選べます。',
     slot: LearningCosmeticSlot.pathMascot,
     mascotStyle: LearningPathMascotStyle.standard,
     gemCost: 0,
@@ -171,7 +171,7 @@ final class SafeLearningEconomyCatalogV1 {
       LearningChallengePassProduct(
         productId: timedDayPassId,
         title: '今日のタイム挑戦券',
-        description: '購入した学習日は、タイムチャレンジへ何度でも入れます。',
+        description: '購入した学習日は、時間観察へ何度でも入れます。',
         gemCost: 1,
       );
 

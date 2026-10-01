@@ -130,7 +130,7 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
       return;
     }
     if (widget.schoolMode && code.kind == LanSocialRoomKind.league) {
-      _setMessage('学校モードでは個人順位の週次リーグに参加できません。', isError: true);
+      _setMessage('学校モードでは個人順位の共同観測に参加できません。', isError: true);
       return;
     }
     if (code.kind != _selected) {
@@ -268,18 +268,16 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
   String _terminalSettlementMessage(LanSocialTerminalReceipt receipt) {
     return switch (receipt) {
       LanSocialFriendsTerminalReceipt(:final completed) =>
-        completed
-            ? 'フレンズクエストの共同達成を端末に確定しました。結晶はこの部屋につき1個です。'
-            : 'フレンズクエストは未達成で終了しました。',
+        completed ? '共同観察の達成を端末に確定しました。結晶はこの部屋につき1個です。' : '共同観察は未達成で終了しました。',
       LanSocialLeagueTerminalReceipt(
         :final privacyThresholdReached,
         :final rank,
       ) =>
         !privacyThresholdReached
-            ? '参加者が5人未満だったため、順位を保存せずリーグを終了しました。'
+            ? '参加者が5人未満だったため、順位を保存せず共同観測を終了しました。'
             : rank == null
-            ? '週のリーグ結果を「順位なし」として端末に保存しました。'
-            : '週のリーグ$rank位を端末に保存しました。',
+            ? '共同観測の結果を「順位なし」として端末に保存しました。'
+            : '共同観測の$rank位を端末に保存しました。',
     };
   }
 
@@ -289,7 +287,7 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
       builder: (context) => AlertDialog(
         title: const Text('参加をやめますか？'),
         content: const Text(
-          'この端末の参加資格を消し、コーディネーターにも退出を伝えます。これまでの週次tier履歴は端末内に残ります。',
+          'この端末の参加資格を消し、コーディネーターにも退出を伝えます。これまでの週ごとの観測級履歴は端末内に残ります。',
         ),
         actions: [
           TextButton(
@@ -608,8 +606,8 @@ class _KindButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = switch (kind) {
-      LanSocialRoomKind.friends => 'ふたりクエスト',
-      LanSocialRoomKind.league => '週次リーグ',
+      LanSocialRoomKind.friends => '共同観察',
+      LanSocialRoomKind.league => '共同観測',
     };
     return Semantics(
       button: true,
@@ -623,8 +621,8 @@ class _KindButton extends StatelessWidget {
                 onPressed: onPressed,
                 icon: Icon(
                   kind == LanSocialRoomKind.friends
-                      ? Icons.handshake_outlined
-                      : Icons.leaderboard_outlined,
+                      ? Icons.fact_check_outlined
+                      : Icons.format_list_numbered_outlined,
                 ),
                 label: Text('$label${joined ? '（参加中）' : ''}'),
               )
@@ -633,8 +631,8 @@ class _KindButton extends StatelessWidget {
                 onPressed: onPressed,
                 icon: Icon(
                   kind == LanSocialRoomKind.friends
-                      ? Icons.handshake_outlined
-                      : Icons.leaderboard_outlined,
+                      ? Icons.fact_check_outlined
+                      : Icons.format_list_numbered_outlined,
                 ),
                 label: Text('$label${joined ? '（参加中）' : ''}'),
               ),
@@ -666,7 +664,7 @@ class _JoinRoom extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
     final theme = Theme.of(context);
-    final title = kind == LanSocialRoomKind.friends ? 'ふたりクエストに参加' : '週次リーグに参加';
+    final title = kind == LanSocialRoomKind.friends ? '共同観察に参加' : '共同観測に参加';
     return _Surface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -800,8 +798,8 @@ class _JoinedRoom extends StatelessWidget {
             leavePending
                 ? '退出をもう一度送る'
                 : kind == LanSocialRoomKind.friends
-                ? 'ふたりクエストの参加をやめる'
-                : '週次リーグの参加をやめる',
+                ? '共同観察の参加をやめる'
+                : '共同観測の参加をやめる',
           ),
         ),
       ],
@@ -825,23 +823,23 @@ class _FriendsRoom extends StatelessWidget {
         body: '参加コードを、いっしょに学ぶ1人へ渡してください。',
       ),
       LanSocialFriendsState.active => (
-        icon: Icons.handshake_outlined,
+        icon: Icons.fact_check_outlined,
         title: 'ふたりそろいました',
         body: snapshot.myContributed
             ? 'あなたの学習成果は届きました。相手の1回を待っています。'
             : 'ふたりがそれぞれ学習成果を1回積むと達成し、結晶1個を受け取れます。',
       ),
       LanSocialFriendsState.completed => (
-        icon: Icons.celebration_outlined,
-        title: 'ふたりのクエスト達成',
+        icon: Icons.assignment_turned_in_outlined,
+        title: '共同観察を達成しました',
         body: '実在するふたりが、それぞれ学習成果を積みました。達成報酬の結晶1個は、この端末に一度だけ記録されます。',
       ),
       LanSocialFriendsState.expired => (
         icon: Icons.event_busy_outlined,
-        title: 'このクエストは終了しました',
+        title: 'この共同観察は終了しました',
         body: snapshot.completed
             ? '終了前に、ふたりで達成しています。'
-            : '新しい参加コードで次のクエストへ参加できます。',
+            : '新しい参加コードで次の共同観察へ参加できます。',
       ),
     };
     final myState = snapshot.myContributed ? '自分の1回：完了' : '自分の1回：まだ';
@@ -919,19 +917,19 @@ class _LeagueRoom extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _Surface(
-          semanticLabel: '現在のtierは${profile.currentTier.label}',
+          semanticLabel: '現在の観測級は${profile.currentTier.displayLabel}',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '自分の週次tier',
+                '自分の観測級',
                 style: theme.textTheme.labelLarge?.copyWith(
                   color: colors.inkMuted,
                 ),
               ),
               const SizedBox(height: GameTokens.spaceXs),
               Text(
-                profile.currentTier.label,
+                profile.currentTier.displayLabel,
                 key: const ValueKey('lan-social-current-tier'),
                 style: theme.textTheme.headlineSmall
                     ?.copyWith(color: colors.ink)
@@ -951,7 +949,7 @@ class _LeagueRoom extends StatelessWidget {
               ),
               const SizedBox(height: GameTokens.spaceMd),
               Text(
-                '実参加者の今週順位と、端末内だけのtier履歴は別に扱います。',
+                '実参加者の今週順位と、端末内だけの観測級履歴は別に扱います。',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colors.inkMuted,
                 ),
@@ -1072,7 +1070,7 @@ class _StandingRow extends StatelessWidget {
     final tied = standing.tied ? '、同順位' : '';
     return Semantics(
       container: true,
-      label: '$rank、$participant、${standing.xp} XP$tied',
+      label: '$rank、$participant、${standing.xp} 探究記録$tied',
       child: ExcludeSemantics(
         child: Container(
           key: ValueKey('lan-social-standing-$index'),
@@ -1091,7 +1089,7 @@ class _StandingRow extends StatelessWidget {
               ),
               const SizedBox(height: GameTokens.spaceXs),
               Text(
-                '${standing.xp} XP',
+                '${standing.xp} 探究記録',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: colors.inkMuted,
                 ),
@@ -1162,7 +1160,7 @@ class _LeagueHistoryRow extends StatelessWidget {
     };
     return Semantics(
       label:
-          '${week.weekStart}の週、${week.previousTier.label}から${week.tier.label}へ${movement.label}',
+          '${week.weekStart}の週、${week.previousTier.displayLabel}から${week.tier.displayLabel}へ${movement.label}',
       child: ExcludeSemantics(
         child: Container(
           key: ValueKey('lan-social-history-${week.weekStart}'),
@@ -1181,7 +1179,7 @@ class _LeagueHistoryRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${movement.label}：${week.previousTier.label} → ${week.tier.label}',
+                      '${movement.label}：${week.previousTier.displayLabel} → ${week.tier.displayLabel}',
                       style: theme.textTheme.titleSmall
                           ?.copyWith(color: colors.ink)
                           .jaWeight(FontWeight.w800),
@@ -1213,8 +1211,9 @@ class _TierLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
     final theme = Theme.of(context);
+    final label = tier.displayLabel;
     return Semantics(
-      label: '${tier.label}${current ? '、現在' : ''}',
+      label: '$label${current ? '、現在' : ''}',
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.symmetric(
@@ -1226,7 +1225,7 @@ class _TierLabel extends StatelessWidget {
             borderRadius: BorderRadius.circular(GameTokens.radiusPill),
           ),
           child: Text(
-            tier.label,
+            label,
             style: theme.textTheme.labelMedium
                 ?.copyWith(color: current ? colors.onPathActive : colors.ink)
                 .jaWeight(current ? FontWeight.w900 : FontWeight.w600),
@@ -1786,7 +1785,7 @@ String _joinErrorLabel(LanSocialClientError? error) => switch (error) {
   LanSocialClientError.roomFull => 'この部屋の参加枠は埋まっています。',
   LanSocialClientError.rateLimited => '試行回数の上限です。しばらく待ってください。',
   LanSocialClientError.unauthorized => '参加資格を確認できませんでした。',
-  LanSocialClientError.schoolLeagueDisabled => '学校モードでは週次リーグに参加できません。',
+  LanSocialClientError.schoolLeagueDisabled => '学校モードでは共同観測に参加できません。',
   LanSocialClientError.wrongDay => '学習日の確認に失敗しました。',
   LanSocialClientError.invalidResponse => '安全な応答として確認できなかったため、参加しませんでした。',
   LanSocialClientError.notJoined ||

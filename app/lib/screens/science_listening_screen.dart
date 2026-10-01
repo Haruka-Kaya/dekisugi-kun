@@ -671,7 +671,7 @@ class _Answer extends StatelessWidget {
       children: [
         if (textOnlySource case final source?) ...[
           ScienceChallengeSurface(
-            label: '文字教材（Listeningとは別の学習）',
+            label: '文字教材（聞き取り観察とは別の学習）',
             icon: Icons.article_outlined,
             child: Text(source),
           ),
@@ -867,7 +867,7 @@ class _Done extends StatelessWidget {
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('listening-return-to-path'),
-          label: '学習パスへ戻る',
+          label: '探究ノートへ戻る',
           icon: Icons.route_rounded,
           onPressed: onReturnToPath,
           backgroundColor: colors.pathActive,
@@ -894,13 +894,13 @@ class _TextOnlyDone extends StatelessWidget {
           icon: Icons.article_outlined,
           backgroundColor: colors.pathReview.withValues(alpha: .12),
           child: const Text(
-            '音声を再生できなかったため、Listening完了・XP・連続記録には数えません。文字で意味だけを確認しました。',
+            '音声を再生できなかったため、聞き取り観察・探究記録・連続観測には数えません。文字で意味だけを確認しました。',
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('listening-text-only-return-to-path'),
-          label: '学習パスへ戻る',
+          label: '探究ノートへ戻る',
           icon: Icons.route_rounded,
           onPressed: onReturnToPath,
           backgroundColor: colors.pathActive,

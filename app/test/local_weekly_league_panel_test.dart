@@ -133,10 +133,7 @@ void main() {
     );
 
     expect(find.text('同率1位'), findsNWidgets(2));
-    expect(
-      find.bySemanticsLabel(RegExp('この端末の学習者、同率1位、意味のある学習1件')),
-      findsOneWidget,
-    );
+    expect(find.bySemanticsLabel(RegExp('この端末の観測者、同率1位、観察1件')), findsOneWidget);
     expect(find.textContaining('5人未満のため'), findsOneWidget);
     expect(find.textContaining('opaque.participant'), findsNothing);
 
@@ -154,7 +151,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('local-weekly-league-rules')));
     await tester.pumpAndSettle();
     expect(find.textContaining('周回は0件'), findsOneWidget);
-    expect(find.textContaining('Pathと練習はいつでも'), findsOneWidget);
+    expect(find.textContaining('探究ノートと練習はいつでも'), findsOneWidget);
   });
 
   testWidgets('schoolLocalは順位・開始・参加枠選択を一切出さない', (tester) async {
@@ -194,10 +191,10 @@ void main() {
     );
 
     expect(
-      find.bySemanticsLabel(RegExp('端末手渡し週次リーグ。実在する8人、意味のある学習2件')),
+      find.bySemanticsLabel(RegExp('端末手渡し共同観測。実在する8人、観察2件')),
       findsOneWidget,
     );
-    expect(find.bySemanticsLabel(RegExp('8人目、同率3位、意味のある学習0件')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('8人目、同率3位、観察0件')), findsOneWidget);
     expect(tester.takeException(), isNull);
     semantics.dispose();
   });

@@ -138,7 +138,7 @@ void main() {
       const ValueKey('local-weekly-league-panel'),
     );
     expect(heading, findsOneWidget);
-    expect(find.text('ブロンズリーグ'), findsOneWidget);
+    expect(find.text('観測級01の共同観測'), findsOneWidget);
     expect(find.textContaining('彗星リーグ'), findsNothing);
     expect(find.textContaining('120 / 500'), findsNothing);
     expect(selfTier, findsOneWidget);
@@ -240,7 +240,7 @@ void main() {
       ),
     );
 
-    final eighth = find.bySemanticsLabel(RegExp('8人目、同率3位、意味のある学習0件'));
+    final eighth = find.bySemanticsLabel(RegExp('8人目、同率3位、観察0件'));
     await _show(tester, eighth);
     expect(eighth, findsOneWidget);
     expect(tester.takeException(), isNull);

@@ -166,7 +166,7 @@ _StoryHeroState _storyHeroState(List<StoryEpisodeView> episodes) {
     return (
       eyebrow: '理科事件簿 ・ 解明済み',
       title: 'すべての事件を解明しました',
-      body: '観察した条件と結果を、学習パスで次の問いにつなげられます。',
+      body: '観察した条件と結果を、探究ノートで次の問いにつなげられます。',
       semanticState: 'すべての事件を解明済みです',
       reaction: GameCharacterReaction.celebrate,
       primaryEpisode: null,
@@ -179,7 +179,7 @@ _StoryHeroState _storyHeroState(List<StoryEpisodeView> episodes) {
     return (
       eyebrow: '理科事件簿',
       title: '最初の事件を準備中',
-      body: '学習パスを進めると、ここに観察ストーリーが現れます。',
+      body: '探究ノートを進めると、ここに観察事件が現れます。',
       semanticState: '事件を準備中です',
       reaction: GameCharacterReaction.invite,
       primaryEpisode: null,
@@ -190,7 +190,7 @@ _StoryHeroState _storyHeroState(List<StoryEpisodeView> episodes) {
 
   return (
     eyebrow: '理科事件簿 ・ 未解放',
-    title: '次の事件は学習パスで解放',
+    title: '次の事件は探究ノートで解放',
     body: '現在の必修ノードを終えると、次の事件ファイルを読めます。',
     semanticState: '読める事件はまだありません',
     reaction: GameCharacterReaction.invite,
@@ -210,7 +210,7 @@ class _EmptyStories extends StatelessWidget {
     return Semantics(
       key: const ValueKey('stories-empty'),
       container: true,
-      label: '事件簿はまだ未解放。学習パスを進めると開きます',
+      label: '事件簿はまだ未解放。探究ノートを進めると開きます',
       child: ExcludeSemantics(
         child: GameSolidSurface(
           raised: true,
@@ -222,7 +222,8 @@ class _EmptyStories extends StatelessWidget {
                 height: GameTokens.minTouchTarget,
                 decoration: BoxDecoration(
                   color: colors.pathLocked,
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(GameTokens.radiusSm),
+                  border: Border.all(color: colors.border),
                 ),
                 child: Icon(
                   Icons.lock_outline_rounded,
@@ -242,7 +243,7 @@ class _EmptyStories extends StatelessWidget {
                     ),
                     const SizedBox(height: GameTokens.spaceSm),
                     Text(
-                      '学習パスを進めると、事件簿が開きます。',
+                      '探究ノートを進めると、事件簿が開きます。',
                       style: t.textTheme.bodyMedium?.copyWith(
                         color: colors.inkMuted,
                       ),
@@ -333,7 +334,9 @@ class _EpisodeCard extends StatelessWidget {
                           width: GameTokens.minTouchTarget,
                           height: GameTokens.minTouchTarget,
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(
+                              GameTokens.radiusSm,
+                            ),
                             color: nodeColor,
                             border: Border.all(
                               color: enabled ? nodeColor : colors.border,

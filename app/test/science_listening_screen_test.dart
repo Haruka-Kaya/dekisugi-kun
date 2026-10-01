@@ -309,7 +309,7 @@ void main() {
       findsNothing,
       reason: '音声未確認で表示した正本の書き写しをListening成功にしない',
     );
-    expect(find.text('文字教材（Listeningとは別の学習）'), findsOneWidget);
+    expect(find.text('文字教材（聞き取り観察とは別の学習）'), findsOneWidget);
     await _tapVisible(
       tester,
       find.byKey(const ValueKey('listening-option-same-time')),

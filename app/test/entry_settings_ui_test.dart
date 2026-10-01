@@ -46,7 +46,26 @@ void main() {
     );
 
     expect(find.byType(StudioWordmark), findsOneWidget);
-    expect(find.textContaining('あなたの言葉で'), findsOneWidget);
+    expect(find.textContaining('生年月日や氏名は集めません'), findsAtLeastNWidgets(1));
+    final under16 = find.text('15歳以下');
+    await tester.scrollUntilVisible(
+      under16,
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(under16);
+    await tester.pumpAndSettle();
+    await tester.tap(under16);
+    final next = find.byKey(const ValueKey('consent-next'));
+    await tester.scrollUntilVisible(
+      next,
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(next);
+    await tester.pumpAndSettle();
+    await tester.tap(next);
+    await tester.pumpAndSettle();
     final schoolRoute = find.text('学校からもらって使います');
     await tester.scrollUntilVisible(
       schoolRoute,

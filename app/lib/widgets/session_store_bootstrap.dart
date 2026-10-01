@@ -72,7 +72,7 @@ class _SessionStoreOpeningPage extends StatelessWidget {
     final title = failed ? '学習記録の保存先を開けませんでした' : '学習記録を準備しています';
     final message = failed
         ? '記録が消える一時モードでは開始しません。端末の空き容量を確認して、もう一度お試しください。'
-        : '前回の続きと、今日の学習パスを読み込んでいます。';
+        : '前回の続きと、今日の探究ノートを読み込んでいます。';
 
     return Scaffold(
       backgroundColor: colors.canvas,

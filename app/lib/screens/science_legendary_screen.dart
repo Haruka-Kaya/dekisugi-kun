@@ -258,8 +258,8 @@ class _ScienceLegendaryScreenState extends State<ScienceLegendaryScreen> {
               foregroundColor: colors.ink,
               title: Text(
                 widget.presentation == ScienceLegendaryPresentation.legendary
-                    ? 'Legendary'
-                    : '期限の復習',
+                    ? '高難度検証'
+                    : '間隔を空けた再検証',
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
@@ -356,9 +356,9 @@ class _LegendaryLocked extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'LEGENDARY  /  LOCKED',
+          eyebrow: 'ラボ・ブリーフ  /  高難度検証  /  準備中',
           title: conceptLabel,
-          body: 'この高難度課題は、通常課題を終えた翌学習日以降に開きます。',
+          body: 'この高難度検証は、通常課題を終えた翌学習日以降に開きます。',
           icon: Icons.lock_clock_outlined,
           accent: colors.pathLocked,
           onAccent: colors.onPathLocked,
@@ -366,9 +366,9 @@ class _LegendaryLocked extends StatelessWidget {
         ),
         const SizedBox(height: GameTokens.spaceXl),
         ScienceChallengeSurface(
-          label: '今は通常Pathを進められます',
+          label: '今は探究ノートを進められます',
           icon: Icons.route_outlined,
-          child: const Text('待っている間も、通常レッスン・復習・学校課題は止まりません。解放日はこの画面では推測しません。'),
+          child: const Text('待っている間も、通常課題・復習・学校課題は止まりません。解放日はこの画面では推測しません。'),
         ),
       ],
     );
@@ -403,11 +403,11 @@ class _LegendaryTask extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: '${legendary ? 'LEGENDARY' : 'SPACED REVIEW'}  /  1 OF 3',
+          eyebrow: 'ラボ・ブリーフ  /  ${legendary ? '高難度検証' : '間隔を空けた再検証'}  /  1/3',
           title: conceptLabel,
           body: 'ヒントなし・一度だけの回答です。まず構造課題を組みます。',
           icon: legendary
-              ? Icons.workspace_premium_outlined
+              ? Icons.fact_check_outlined
               : Icons.event_repeat_outlined,
           accent: accent,
           onAccent: onAccent,
@@ -467,7 +467,7 @@ class _LegendaryCheckpoint extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: '${legendary ? 'LEGENDARY' : 'SPACED REVIEW'}  /  2 OF 3',
+          eyebrow: 'ラボ・ブリーフ  /  ${legendary ? '高難度検証' : '間隔を空けた再検証'}  /  2/3',
           title: '思い込みを見破る',
           body: 'ヒントは出ません。最初の判断を確定すると、すぐ自己比較へ進みます。',
           icon: Icons.fact_check_outlined,
@@ -611,13 +611,13 @@ class _LegendaryComparison extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: '${legendary ? 'LEGENDARY' : 'SPACED REVIEW'}  /  3 OF 3',
+          eyebrow: 'ラボ・ブリーフ  /  ${legendary ? '高難度検証' : '間隔を空けた再検証'}  /  3/3',
           title: '正本と自己比較する',
           body: cleared
               ? '2つの固定問題を最初の回答で通過しました。最後に根拠を言葉にします。'
               : '最初の回答はここで確定です。違いを見つけ、通常練習へつなげます。',
           icon: cleared
-              ? Icons.workspace_premium_outlined
+              ? Icons.fact_check_outlined
               : Icons.compare_arrows_rounded,
           accent: accent,
           onAccent: onAccent,
@@ -658,8 +658,8 @@ class _LegendaryComparison extends StatelessWidget {
           key: const ValueKey('legendary-finish'),
           label: cleared
               ? legendary
-                    ? '高難度課題をクリア'
-                    : '期限の復習をクリア'
+                    ? '高難度検証を完了'
+                    : '間隔を空けた再検証を完了'
               : '答えを比べて通常練習へ戻る',
           icon: cleared ? Icons.verified_outlined : Icons.refresh_rounded,
           onPressed: canFinish ? onFinish : null,
@@ -697,23 +697,23 @@ class _LegendaryDone extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: '${legendary ? 'LEGENDARY' : 'SPACED REVIEW'}  /  COMPLETE',
+          eyebrow: 'ラボ・ブリーフ  /  ${legendary ? '高難度検証' : '間隔を空けた再検証'}  /  記録',
           title: cleared
               ? legendary
-                    ? '高難度課題クリア'
-                    : '期限の復習クリア'
+                    ? '高難度検証を完了'
+                    : '間隔を空けた再検証を完了'
               : stoppedAfterWrong
               ? '今回はここまで'
               : '自己比較を完了',
           body: cleared
               ? '翌学習日の別場面で、固定問題と誤概念訂正を通過しました。'
               : stoppedAfterWrong
-              ? '最初の誤答でこの挑戦を終了しました。ハートが0なら、回復練習の後で別の固定問題に挑戦できます。'
+              ? '最初の誤答でこの検証を終了しました。試行余力が0なら、回復練習の後で別の固定問題を検証できます。'
               : legendary
-              ? 'Legendaryは未クリアです。通常練習で確かめ、また挑戦できます。'
-              : '今回は復習クリアになりません。別の問題でまた確かめられます。',
+              ? '高難度検証は未完了です。通常練習で確かめ、また検証できます。'
+              : '今回は再検証の完了になりません。別の問題でまた確かめられます。',
           icon: cleared
-              ? Icons.workspace_premium_outlined
+              ? Icons.fact_check_outlined
               : Icons.psychology_alt_outlined,
           accent: cleared ? accent : colors.pathReview,
           onAccent: cleared ? onAccent : colors.onPathReview,
@@ -728,11 +728,11 @@ class _LegendaryDone extends StatelessWidget {
           child: Text(
             cleared
                 ? legendary
-                      ? '表示するのは「高難度課題クリア」です。内容全体の理解を自動判定しません。'
+                      ? '表示するのは「高難度検証を完了」です。内容全体の理解を自動判定しません。'
                       : '固定問題を初回回答で通過したため、次の復習日を更新します。内容全体の理解は断定しません。'
                 : stoppedAfterWrong
                 ? '次の固定問題と正解は開いていません。回答内容も保存しません。'
-                : 'Path・連続学習・報酬・通常練習の利用条件は変わりません。',
+                : '探究ノート・連続観測・報酬・通常練習の利用条件は変わりません。',
           ),
         ),
         if (onReturnToPath != null) ...[
@@ -741,7 +741,7 @@ class _LegendaryDone extends StatelessWidget {
             key: const ValueKey('legendary-return-to-path'),
             label: cleared
                 ? legendary
-                      ? '学習パスへ戻る'
+                      ? '探究ノートへ戻る'
                       : '練習タブへ戻る'
                 : '通常練習へ戻る',
             icon: Icons.route_outlined,

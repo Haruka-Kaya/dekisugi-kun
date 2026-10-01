@@ -75,13 +75,13 @@ void main() {
       ),
     );
 
-    expect(find.text('実参加者リーグ'), findsOneWidget);
+    expect(find.text('実参加者の共同観測'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('league-lan-social-summary')),
       findsOneWidget,
     );
     expect(find.textContaining('実在5〜8人'), findsOneWidget);
-    expect(find.textContaining('ブロンズからダイヤモンドまでの10段'), findsWidgets);
+    expect(find.textContaining('観測級01から観測級10までの10段階'), findsWidgets);
     expect(find.byKey(const ValueKey('league-progress')), findsNothing);
     expect(find.textContaining('研究主任リーグ'), findsNothing);
     expect(find.text('これまでの週'), findsNothing);
@@ -108,8 +108,8 @@ void main() {
     await tester.pumpWidget(_host(schoolMode: false));
 
     expect(find.text('実参加者・端末手渡し'), findsOneWidget);
-    expect(find.text('ブロンズリーグ'), findsOneWidget);
-    expect(find.textContaining('10段tier'), findsOneWidget);
+    expect(find.text('観測級01の共同観測'), findsOneWidget);
+    expect(find.textContaining('10段階の観測級'), findsOneWidget);
     expect(find.textContaining('研究主任リーグ'), findsNothing);
     expect(find.byKey(const ValueKey('league-progress')), findsOneWidget);
     expect(find.text('これまでの週'), findsNothing);
@@ -125,7 +125,7 @@ void main() {
       _host(schoolMode: true, onOpenLanSocial: () => opened += 1),
     );
 
-    expect(find.text('授業の探究'), findsOneWidget);
+    expect(find.text('授業の共同観測'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('league-lan-social-summary')),
       findsNothing,

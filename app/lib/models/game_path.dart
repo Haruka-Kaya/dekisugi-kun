@@ -111,7 +111,7 @@ class GamePathNode {
   /// 正解ではなく、このノードで行う学習行為だけを渡す。
   final List<String> learningActions;
 
-  /// 「+10 XP」等。学習内容より上へ置かず、無い場合は表示しない。
+  /// 「+10 探究記録」等。学習内容より上へ置かず、無い場合は表示しない。
   final String? rewardLabel;
 
   double get progress => completedLessons / totalLessons;
@@ -195,7 +195,7 @@ class GamePathViewData {
   const GamePathViewData({
     required this.status,
     required this.units,
-    this.title = '学習パス',
+    this.title = '探究ノート',
     this.currentNodeId,
     this.quests = const <GameQuest>[],
     this.schoolMode = false,

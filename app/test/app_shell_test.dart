@@ -415,13 +415,10 @@ void main() {
     expect(localEntrySemantics.hasAction(SemanticsAction.tap), isTrue);
     expect(localEntrySemantics.flagsCollection.isButton, isTrue);
     expect(localEntrySemantics.flagsCollection.isEnabled, Tristate.isTrue);
-    expect(
-      tester.widget<CheckboxListTile>(find.byType(CheckboxListTile)).value,
-      isFalse,
-      reason: '外部送信へ同意しないまま端末内を選ぶ',
-    );
-
     await tester.tap(localEntry);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('game-tab-guide')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('game-tab-guide-dismiss')));
     await tester.pumpAndSettle();
 
     final localHome = find.byType(ScienceGameHomeScreen);
@@ -552,6 +549,9 @@ void main() {
     await reveal(tester, localEntry);
     await tester.tap(localEntry);
     await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('game-tab-guide')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('game-tab-guide-dismiss')));
+    await tester.pumpAndSettle();
 
     final localHome = find.byType(ScienceGameHomeScreen);
     expect(localHome, findsOneWidget);
@@ -562,8 +562,8 @@ void main() {
     expect(screen.legacyProgress, isNotNull);
     expect(find.byKey(const ValueKey('player-status-streak')), findsOneWidget);
     expect(find.byKey(const ValueKey('player-status-gems')), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp('連続記録の保護、[0-9]+回分')), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp('学習ハート、5個中[0-5]個')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('お休みの日の保護、[0-9]+回分')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('試行余力、5枠中[0-5]枠')), findsOneWidget);
 
     final path = tester.widget<PathScreen>(find.byType(PathScreen));
     expect(
@@ -664,6 +664,10 @@ void main() {
     await reveal(tester, under16);
     await tester.tap(under16);
     await tester.pumpAndSettle();
+    final next = find.byKey(const ValueKey('consent-next'));
+    await reveal(tester, next);
+    await tester.tap(next);
+    await tester.pumpAndSettle();
     final schoolEntry = find.text('学校からもらって使います');
     await reveal(tester, schoolEntry);
     await tester.tap(schoolEntry);
@@ -671,6 +675,9 @@ void main() {
     final localEntry = find.byKey(const ValueKey('use-local-only-mode'));
     await reveal(tester, localEntry);
     await tester.tap(localEntry);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('game-tab-guide')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('game-tab-guide-dismiss')));
     await tester.pumpAndSettle();
     final schoolHome = find.byType(ScienceGameHomeScreen);
     expect(schoolHome, findsOneWidget);
@@ -682,7 +689,7 @@ void main() {
     expect(find.byKey(const ValueKey('league-open-lan-social')), findsNothing);
     expect(find.byKey(const ValueKey('player-status-streak')), findsNothing);
     expect(find.byKey(const ValueKey('player-status-gems')), findsNothing);
-    expect(find.bySemanticsLabel(RegExp('ハート、無制限')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('試行、無制限')), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('game-tab-profile')));
     await tester.pumpAndSettle();
@@ -793,7 +800,7 @@ void main() {
     expect(league.classCompleted, 1);
     expect(league.classTarget, 1);
     expect(league.onStartLocalWeeklyLeague, isNull);
-    expect(find.text('この端末の授業ミッション'), findsOneWidget);
+    expect(find.text('この端末の観察目標'), findsOneWidget);
     expect(find.text('クラス共同ミッション'), findsNothing);
     await tester.tap(find.byKey(const ValueKey('game-tab-path')));
     await tester.pumpAndSettle();
@@ -899,9 +906,9 @@ void main() {
     await reveal(tester, leagueSocial);
     expect(leagueSocial, findsOneWidget);
     expect(tester.getSize(leagueSocial).height, greaterThanOrEqualTo(48));
-    expect(find.text('実参加者リーグ'), findsOneWidget);
+    expect(find.text('実参加者の共同観測'), findsOneWidget);
     expect(find.textContaining('5人未満では順位も人数も表示しません'), findsOneWidget);
-    expect(find.textContaining('ブロンズからダイヤモンドまでの10段'), findsOneWidget);
+    expect(find.textContaining('観測級01から観測級10までの10段階'), findsOneWidget);
     expect(find.byKey(const ValueKey('league-progress')), findsNothing);
     expect(
       find.byKey(const ValueKey('local-weekly-league-panel')),
