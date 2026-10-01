@@ -40,7 +40,7 @@ String familyReviewPlan(LearningKarteView view) {
     ),
     t(
       '保護者の問い：「${next.label}の仕組みを、自分の言葉で教えて。どんな条件が大切？」',
-      'Parent prompt: “Teach me how ${next.label} works in your own words. Which conditions matter?”',
+      'Parent prompt: “Explain ‘${next.label}’ in your own words. Which conditions matter?”',
     ),
     t(
       '2. 新しい場面：「条件を一つ変えたら、予想はどう変わる？なぜ？」',
