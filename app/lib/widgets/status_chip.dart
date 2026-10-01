@@ -6,8 +6,7 @@ import '../ui/_material.dart';
 ///
 /// **色 + アイコン形状 + テキストラベルの3点セットが不可分な1単位** (SC 1.4.1)。
 /// 「色だけ」「アイコンだけ」で状態を伝える使い方はしない。
-/// 白背景では4状態のペア間 3:1 が原理的に不可能なので、色は補助でしかない
-/// （`attendance_system/DESIGN.md` §2.3 に証明がある）。
+/// 白背景では4状態のペア間 3:1 が原理的に不可能なので、色は補助でしかない。
 class StatusChip extends StatelessWidget {
   const StatusChip({super.key, required this.status, this.dense = false});
 
@@ -34,9 +33,7 @@ class StatusChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             statusLabel(status),
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
+            style: Theme.of(context).textTheme.bodyMedium
                 // チップ内は1行なので行間を持たせない（上下の余白が二重になる）
                 ?.copyWith(color: fg, height: 1.0, fontWeight: FontWeight.w600),
           ),

@@ -84,12 +84,17 @@ void main() {
 
     s.sendAudio(Uint8List.fromList([1, 2, 3, 4]));
     await Future<void>.delayed(const Duration(milliseconds: 100));
-    expect(server.received.where((m) => m.containsKey('realtimeInput')), isEmpty);
+    expect(
+      server.received.where((m) => m.containsKey('realtimeInput')),
+      isEmpty,
+    );
 
     s.beginSpeech();
     s.sendAudio(Uint8List.fromList([1, 2, 3, 4]));
     await Future<void>.delayed(const Duration(milliseconds: 100));
-    final sent = server.received.where((m) => m.containsKey('realtimeInput')).toList();
+    final sent = server.received
+        .where((m) => m.containsKey('realtimeInput'))
+        .toList();
     expect(sent.length, 2); // activityStart と audio
     await s.close();
   });

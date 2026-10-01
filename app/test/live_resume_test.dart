@@ -44,8 +44,9 @@ void main() {
       Future<void>.delayed(Duration(milliseconds: ms));
 
   /// Vertex が配る「続きから」の札。実機ではサーバを経由せず端末に届く
-  void sendHandle([String handle = 'h-1']) =>
-      server.say({'sessionResumptionUpdate': {'newHandle': handle}});
+  void sendHandle([String handle = 'h-1']) => server.say({
+    'sessionResumptionUpdate': {'newHandle': handle},
+  });
 
   /// 生徒が何か言った状態を作る。**繋ぎ直しで消えないこと**を見るため
   Future<void> saySomething() async {
@@ -65,8 +66,11 @@ void main() {
 
     expect(live.state, isNot(LiveState.done), reason: '9分で会話が終わってしまう');
     expect(tokens.lastResumeHandle, 'h-1', reason: '札を渡さないと会話を忘れる');
-    expect(live.transcript.where((u) => u.isStudent), hasLength(1),
-        reason: '繋ぎ直しで逐語が消えた');
+    expect(
+      live.transcript.where((u) => u.isStudent),
+      hasLength(1),
+      reason: '繋ぎ直しで逐語が消えた',
+    );
   });
 
   test('札が届いていなければ繋ぎ直さない', () async {
@@ -121,8 +125,10 @@ void main() {
     }
 
     expect(live.state, LiveState.done);
-    expect(tokens.reserveCalls,
-        lessThanOrEqualTo(1 + LiveSessionController.maxResumeAttempts));
+    expect(
+      tokens.reserveCalls,
+      lessThanOrEqualTo(1 + LiveSessionController.maxResumeAttempts),
+    );
   });
 
   test('自分から止めたときは繋ぎ直さない', () async {

@@ -6,13 +6,14 @@
 #   python tools/make-icon.py
 #
 # 出力:
+#   docs/store/icon-1024.png         iOS / 元画像
 #   docs/store/icon-512.png          Play の「アプリアイコン」
 #   docs/store/feature-1024x500.png  フィーチャーグラフィック
-#   app/android/app/src/main/res/mipmap-*/ic_launcher.png
+#   Android のlegacy / adaptive foregroundと、iOSの全ランチャーアイコン
 
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -20,7 +21,9 @@ ROOT = Path(__file__).resolve().parent.parent
 BODY = (0x5B, 0x62, 0xD6)
 FACE = (0xFF, 0xFF, 0xFF)
 ACCENT = (0xFF, 0xC4, 0x6B)
-BG = (0xF6, 0xF7, 0xF9)
+BG = (0xF6, 0xF2, 0xE9)
+INK = (0x1C, 0x23, 0x33)
+MUTED = (0x62, 0x67, 0x75)
 
 
 def draw_character(d: ImageDraw.ImageDraw, cx: float, cy: float, r: float) -> None:
@@ -67,12 +70,46 @@ def render(size: int, scale: int = 4) -> Image.Image:
     return img.resize((size, size), Image.LANCZOS)
 
 
+def adaptive_foreground(size: int, scale: int = 4) -> Image.Image:
+    """Android Adaptive Iconの108dp前景。安全領域の中へ図形だけを置く。"""
+    s = size * scale
+    img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    # マスクや端末ごとの視差移動で切れないよう、66dpの安全領域に収める。
+    draw_character(d, s / 2, s * 0.48, s * 0.18)
+    return img.resize((size, size), Image.LANCZOS)
+
+
+def launch_mascot(width: int, height: int, scale: int = 4) -> Image.Image:
+    """起動画面用の透明マスコット。文字や進捗表示は入れない。"""
+    w, h = width * scale, height * scale
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    draw_character(d, w / 2, h * 0.43, h * 0.235)
+    return img.resize((width, height), Image.LANCZOS)
+
+
 def feature_graphic() -> Image.Image:
     scale = 4
     w, h = 1024 * scale, 500 * scale
     img = Image.new("RGB", (w, h), BG)
     d = ImageDraw.Draw(img)
-    draw_character(d, w * 0.30, h * 0.42, h * 0.24)
+    draw_character(d, w * 0.25, h * 0.42, h * 0.24)
+
+    font_path = ROOT / "app" / "assets" / "fonts" / "NotoSansJP-Variable.ttf"
+    title = ImageFont.truetype(str(font_path), 48 * scale)
+    body = ImageFont.truetype(str(font_path), 22 * scale)
+    label = ImageFont.truetype(str(font_path), 16 * scale)
+
+    d.text((520 * scale, 102 * scale), "AIデキすぎ君", font=label, fill=MUTED)
+    d.text((520 * scale, 145 * scale), "覚える側から、", font=title, fill=INK)
+    d.text((520 * scale, 207 * scale), "教える側へ。", font=title, fill=INK)
+    d.text(
+        (520 * scale, 310 * scale),
+        "読んで、閉じて、AIに教える。",
+        font=body,
+        fill=MUTED,
+    )
     return img.resize((1024, 500), Image.LANCZOS)
 
 
@@ -80,20 +117,74 @@ def main() -> None:
     store = ROOT / "docs" / "store"
     store.mkdir(parents=True, exist_ok=True)
 
-    render(512).save(store / "icon-512.png")
+    render(1024).save(store / "icon-1024.png")
+    # Google Playのストアアイコンは32-bit PNGが必要。見た目は不透明でも
+    # alpha channelを持つRGBAで保存する。
+    render(512).convert("RGBA").save(store / "icon-512.png")
     feature_graphic().save(store / "feature-1024x500.png")
 
     # Android のランチャーアイコン。密度ごとの寸法は固定
     res = ROOT / "app" / "android" / "app" / "src" / "main" / "res"
-    for folder, px in [
-        ("mipmap-mdpi", 48), ("mipmap-hdpi", 72), ("mipmap-xhdpi", 96),
-        ("mipmap-xxhdpi", 144), ("mipmap-xxxhdpi", 192),
+    for folder, legacy_px, adaptive_px in [
+        ("mipmap-mdpi", 48, 108),
+        ("mipmap-hdpi", 72, 162),
+        ("mipmap-xhdpi", 96, 216),
+        ("mipmap-xxhdpi", 144, 324),
+        ("mipmap-xxxhdpi", 192, 432),
     ]:
         out = res / folder
         out.mkdir(parents=True, exist_ok=True)
-        render(px).save(out / "ic_launcher.png")
+        render(legacy_px).save(out / "ic_launcher.png")
+        adaptive_foreground(adaptive_px).save(out / "ic_launcher_foreground.png")
 
-    print("icon-512.png / feature-1024x500.png / mipmap-* を出力した")
+    launch = res / "drawable-nodpi"
+    launch.mkdir(parents=True, exist_ok=True)
+    # nodpiは端末密度で再拡大されないため、Android用は2倍で持つ。
+    launch_mascot(336, 370).save(launch / "launch_mascot.png")
+
+    ios = (
+        ROOT
+        / "app"
+        / "ios"
+        / "Runner"
+        / "Assets.xcassets"
+        / "AppIcon.appiconset"
+    )
+    for filename, px in [
+        ("Icon-App-20x20@1x.png", 20),
+        ("Icon-App-20x20@2x.png", 40),
+        ("Icon-App-20x20@3x.png", 60),
+        ("Icon-App-29x29@1x.png", 29),
+        ("Icon-App-29x29@2x.png", 58),
+        ("Icon-App-29x29@3x.png", 87),
+        ("Icon-App-40x40@1x.png", 40),
+        ("Icon-App-40x40@2x.png", 80),
+        ("Icon-App-40x40@3x.png", 120),
+        ("Icon-App-60x60@2x.png", 120),
+        ("Icon-App-60x60@3x.png", 180),
+        ("Icon-App-76x76@1x.png", 76),
+        ("Icon-App-76x76@2x.png", 152),
+        ("Icon-App-83.5x83.5@2x.png", 167),
+        ("Icon-App-1024x1024@1x.png", 1024),
+    ]:
+        render(px).save(ios / filename)
+
+    ios_launch = (
+        ROOT
+        / "app"
+        / "ios"
+        / "Runner"
+        / "Assets.xcassets"
+        / "LaunchImage.imageset"
+    )
+    for filename, scale in [
+        ("LaunchImage.png", 1),
+        ("LaunchImage@2x.png", 2),
+        ("LaunchImage@3x.png", 3),
+    ]:
+        launch_mascot(168 * scale, 185 * scale).save(ios_launch / filename)
+
+    print("store画像 / Android / iOS アイコンを出力した")
 
 
 if __name__ == "__main__":

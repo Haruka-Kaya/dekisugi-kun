@@ -12,6 +12,7 @@ import {
 } from '../../lib/team.js'
 import { tooManyContributions } from '../../lib/team-limit.js'
 import { contribute, myTeamId, readTeam } from '../../lib/team-store.js'
+import { schoolTestingEnabled } from '../../lib/school-access.js'
 
 /**
  * その日の貢献を送る。
@@ -35,6 +36,10 @@ export default async function handler(req: Req, res: Res) {
   const auth = verifyToken(bearer(req))
   if (!auth.ok) {
     res.status(401).json({ error: auth.reason === 'expired' ? 'token_expired' : 'unauthorized' })
+    return
+  }
+  if (!schoolTestingEnabled()) {
+    res.status(503).json({ error: 'school_features_unavailable' })
     return
   }
   if (!hasKv()) {

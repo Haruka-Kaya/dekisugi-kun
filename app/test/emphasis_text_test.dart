@@ -53,9 +53,9 @@ void main() {
 
   group('EmphasisText', () {
     Widget wrap(String text) => MaterialApp(
-          theme: buildAppTheme(Brightness.light),
-          home: Scaffold(body: EmphasisText(text)),
-        );
+      theme: buildAppTheme(Brightness.light),
+      home: Scaffold(body: EmphasisText(text)),
+    );
 
     testWidgets('画面に ** を出さない', (tester) async {
       // 解釈しないまま Text に渡すと記号がそのまま出た（実機で確認）
@@ -71,6 +71,19 @@ void main() {
       final widget = tester.widget<Text>(find.byType(Text));
       expect(widget.data, 'ふつうの文。');
       expect(widget.textSpan, isNull);
+    });
+
+    testWidgets('選択可能な教材でも記号を見せず文字選択を保つ', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: const Scaffold(
+            body: EmphasisText('これは**選べる強調**です。', selectable: true),
+          ),
+        ),
+      );
+      final widget = tester.widget<SelectableText>(find.byType(SelectableText));
+      expect(widget.textSpan?.toPlainText(), 'これは選べる強調です。');
     });
   });
 }

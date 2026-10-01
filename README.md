@@ -1,5 +1,5 @@
 <!--
-  このリポジトリは private。それでも次の2つは書かない:
+  このリポジトリは public（Shipaton 2026 Next Gen Award 提出用）。次の2つは書かない:
   - 導入を検討している相手の名前
   - 鍵・トークンの実体（secrets/ は gitignore 済み）
 
@@ -9,16 +9,93 @@
 
 # AIデキすぎ君
 
-**中高生が AI に「教える」ことで学ぶ学習アプリ。**
+**中高生がデキすぎ君に「教える」ことで学ぶ、端末内中心の理科学習アプリ。**
 
-一般的な学習アプリと逆で、AI は答えを教えない。
-生徒が教材を読み、**教材を画面から消して**、自分の言葉で AI に説明する。
+一般的な学習アプリと逆で、デキすぎ君は先に答えを教えない。
+生徒が教材を読み、**教材を画面から消して**、自分の言葉で説明する。
 
 ```
 教材を読む → 教材を隠す → 自分の言葉で説明する
-   → AI が「よくある考え違い」をわざと口にする
-   → 生徒が直せるか見る → 直せなかったところが復習に残る
+   → デキすぎ君が固定の問い返しをする
+   → 説明を言い直す → 固定needだけが復習に残る
 ```
+
+---
+
+## English quick start (for judges)
+
+**dekisugi-kun** is a Japanese middle/high-school science app where students
+*teach* an AI companion instead of being taught. The AI never gives the answer
+first: the student reads a fixed lesson, the lesson is hidden, the student
+explains by voice or text, and the AI asks a fixed follow-up question.
+Learning progress lives entirely on-device (SQLite); no account, no free-text
+upload, no LLM grading.
+
+The signature artifact is the **カルテ (misconception map)**: a canonical
+catalog of 35 misconceptions, one per concept, rendered as the companion's
+beliefs — students watch each recorded misconception flip to "corrected by
+your explanation". See [docs/product-overview-en.md](docs/product-overview-en.md)
+for the full design contract (C1–C9).
+
+![Dekisugi learning path](docs/store-shots-2026/devpost/shot-1179x2556.png)
+
+The English build on-device (Android emulator captures, `--dart-define=APP_LANG=en`):
+
+| Path | Teach-back | Story | Karte | Plus |
+|---|---|---|---|---|
+| ![EN path](docs/screenshots-en/path.png) | ![EN teach-back](docs/screenshots-en/teach-back.png) | ![EN story](docs/screenshots-en/story.png) | ![EN karte](docs/screenshots-en/karte.png) | ![EN plus](docs/screenshots-en/plus.png) |
+
+*The name:* in Japanese slang, *dekisugi* (デキすぎ) is the kid who is
+suspiciously good at everything — here it's the companion's persona: it knows
+the answers but is not allowed to reveal them, so the student has to teach it.
+
+**Live demo:** https://web-uxapnvfp.devinapps.com — the Flutter web build,
+running entirely in your browser against the bundled catalog (no server, no
+account, no network calls; local-mode toggle is in the entry screen). Switch
+to English with 表示言語 → English in Settings, or any lesson teaches you the
+loop end to end.
+
+- **Stack:** Flutter app (`app/`) + TypeScript server (`server/`, Vercel).
+  The app's core learning loop runs fully offline against the bundled
+  curriculum catalog — no server or credentials needed to run it.
+- **Bilingual:** the whole product runs in English too — every lesson,
+  practice stage, misconception follow-up, story, and notation task has a
+  canonical English build (`--dart-define=APP_LANG=en`, or the in-app
+  language toggle). The English catalog is machine-generated from the same
+  server source (`app/assets/catalog/units.en.json`), and `/api/units?lang=en`
+  serves it over the network; a coverage test fails the build on any
+  untranslated string.
+- **Monetization:** optional Plus *supporter plan* powered by the RevenueCat
+  SDK (`purchases_flutter`): purchase/restore grants the Aurora Mantle
+  companion skin, generated-AI reply prefaces via `/api/companion-line`
+  (consent-disclosed, catalog-verbatim pedagogy, deterministic fallback), and
+  a parent-facing karte report. Entitlement is verified on-device
+  (server-side re-verification via `server/lib/revenuecat.ts` +
+  `/api/revenuecat-webhook` is implemented and activates when restricted-data
+  processing is enabled — sending device IDs to RevenueCat is currently
+  held as minor-data processing). No learning content
+  is behind payment. The full purchase loop is exercise-able end-to-end with
+  RevenueCat's free Test Store — see
+  [docs/monetization-setup.md](docs/monetization-setup.md).
+
+### Run the app
+
+```bash
+cd app
+flutter pub get
+flutter run            # bundled-catalog mode works with no network
+# flutter run -d chrome also works for a quick look (no SQLite, no purchases)
+```
+
+### Run the tests
+
+```bash
+cd app && flutter test     # 1264 tests, no network
+cd server && npm install && npm test   # 399 tests, no network
+```
+
+Optional Live-AI research endpoints are disabled in production by design
+(minor-safety policy); they are not part of the shipped experience.
 
 ---
 
@@ -29,16 +106,16 @@
 自由記述の正誤判定は当てにならない。しかも外すのは
 「だいたい分かっているが説明が不完全な層」＝**主要ターゲットそのもの**。
 
-代わりに、**既知の誤概念を AI 自身が口にして、生徒が訂正するかを見る**。
-判定の的が「この説明は正しいか」から
-「**いま口にした X という主張を、生徒は否定したか**」に狭まる。
+代わりに、catalogに固定した問い返しだけを選択式で確認する。
+自由説明の長さ・語彙・意味類似を正誤判定せず、誤答時は正解を先出ししないまま
+ヒントを使った再説明と再生／再読を求める。
 
-> これは「LLM が判定しない」設計ではない。**判定の的が小さくなる**設計。
-> 実データでの精度は**まだ測れていない**（後述）。
-> だから判定に `unclear` を持たせ、**迷ったら unclear に倒す**。
+音声PCMと自由記述はRAMだけに置き、学習DBやAPIへ保存・送信しない。
+保存するのは、固定教材ID、canonical need、heart、進行・報酬の冪等台帳だけである。
 
-誤概念のカタログは Force Concept Inventory (Hestenes et al. 1992) 系列で
-繰り返し報告されているもののうち、中学理科の範囲に収まる8項目。
+教材は文部科学省「中学校学習指導要領（平成29年告示）解説 理科編」を正本に、
+力学・圧力／浮力・電流／磁界・物質・生命・天気・大地・化学変化とイオン・生命の連続性・科学技術と自然と人間まで12単元35概念を収録している。
+第1分野と第2分野を横断し、中学校理科の全領域を網羅した。
 
 ---
 
@@ -46,53 +123,61 @@
 
 | | 状態 |
 |---|---|
-| 音声での会話（Vertex AI Live） | **実機で確認済み**（Android 1機種） |
-| ホーム→教材→会話の導線 | **実機で確認済み**（音声は未確認） |
+| 音声／文字で教えるTeach-back | 教材を隠す→stage別の説明→実再生／明示再読→固定問い返し→必要なら訂正→自己比較まで実装。**物理端末の録音・再生QA待ち** |
+| 外部生成AIとのLive会話 | production 6タブから到達不能。対象年齢の外部規約・DPA・安全運用を解決するまで再接続しない |
 | まいにちの声かけ（通知） | 予約まで実機で確認。**着弾は未確認** |
 | 10分の壁（約9分の切断からの復帰） | 実装済み。**実機未確認** |
-| 教材を読む → 隠す → 説明する導線 | 動く |
-| 誤概念の誘発と観測 | 動く |
+| 教材を読む → 隠す → 説明する導線 | 動く。1文字入力や録音開始だけでは完了・XPを作らない |
+| 固定問い返しとRepair | 動く。誤答本文でなくcanonical needだけを保存し、exact Repairだけで解消する |
 | 復習（間隔・考査日からの逆算） | 動く |
 | 中断と再開 | 動く |
-| 文字での説明 | 動く。**音声と対等**（C8。未接続でも送ると自分で繋ぐ） |
-| iOS / iPadOS | **未ビルド。** 下ごしらえのみ（`docs/ios-build.md`） |
+| 文字での説明 | 動く。**音声と対等**。本人の明示再読を経て同じ固定問い返しへ進む |
+| iOS / iPadOS | **iPhone / iPad Simulatorで動作確認済み**。物理端末の音声は未確認 |
+| 任意の Plus 購入 | RevenueCat SDK とサーバー再照会を実装済み。有効化で限定マスコット「オーロラマント」が端末内に付く（`learning_cosmetic_grants`台帳）。**ストア商品・鍵・webhook は未設定** |
+| 通信しない端末内モード | 同梱教材→想起→条件／理由→具体場面→Teach-back→固定checkpointまで動く。**自由記述・音声・選択内容の送信／永続保存、自動採点、習得認定なし**。固定教材ID、進行・再開状態、完了日時、端末内報酬など必要最小限の状態だけを端末内に保存 |
+| ゲーム型学習UI | 学ぶ／物語／練習／記号／競う／自分の6タブと蛇行Learning Pathを実装済み。連続学習・結晶・ハート・quest入口は6タブ共通headerに固定し、学習画面へ入っても戻る／連続／結晶／ハートHUDを保持する。デキすぎ君は開始・思考・訂正・完了で反応を変え、保存成功後だけ実XP・実結晶・今回時間を祝福面へ出す。**最新画面のAndroid / iOS物理端末目視と初見学習者pilotは未実施** |
 | クラスの合計（チーム戦） | **実機で確認済み**（参加・表示） |
 | 先生用の管理画面 | **無い** |
-| 教材の量 | **3単元8節だけ。** 1人あたり2〜3日ぶん |
+| 教材の量 | **12単元35概念。** 化学変化と原子・分子、化学変化とイオン、生命の連続性、科学技術と自然と人間まで扱い、中学校理科の全領域を網羅 |
 
 ---
 
 ## 構成
 
-```
-                    ┌──────────────────────────────┐
-   端末 (Flutter)   │  server (Vercel / TypeScript) │
-  ┌──────────────┐  │                              │
-  │ 逐語         │  │  /api/register   端末トークン │
-  │ 理解カルテ   │◄─┤  /api/units      単元と教材   │
-  │ 会話の記録   │  │  /api/live-token 資格情報+枠  │
-  └──────┬───────┘  │  /api/director   次の一手     │
-         │          │  /api/survey     調査の回答   │
-         │          │  /api/team/*     チームの合計 │
-         │          └───────────┬──────────────────┘
-         │                      │
-         │  音声は端末と直結     │  Upstash Redis（枠・調査）
-         │  （サーバを経由しない）│
-         ▼                      ▼
-   Vertex AI Live API      Vertex AI（ディレクター）
+```text
+Flutter app
+  ├─ 同梱catalog schema v10（12単元35概念）
+  ├─ SQLite / Memory SessionStore（進行・need・heart・報酬）
+  ├─ 端末内Teach-back（RAM録音／文字、固定問い返し）
+  └─ 任意のLAN social client（成人online同意時だけ）
+
+TypeScript server
+  ├─ /api/units（同じcatalog正本）
+  ├─ /api/survey（匿名調査のexact schema）
+  └─ LAN coordinator（自己署名TLS＋pin、実参加者だけ）
 ```
 
-**サーバは状態を持たない。** 逐語と理解カルテは端末が保持し、
-リクエストごとに送る。DB もロックも要らない。
-
-**API キーは端末に無い。** 会話ごとにサーバが Vertex のアクセストークンを配る。
-リリース APK に `AIza` 文字列がゼロであることを確認済み。
+productionの必修Pathはネットワーク、外部生成AI、マイクのいずれが無くても完了できる。
+Teach-backの録音・自由文・選択内容はAPIへ渡さず、SQLiteにも保存しない。
+`/api/live-token`と旧Director/Talk実装は研究用コードとして残るが、現行6タブから到達不能で、
+production / previewの制限対象データ処理は安全側に停止する。
 
 ---
 
 ## 設計の要点
 
-### 二重ループ
+### ProductionのTeach-backループ
+
+1. 教材を読み、次の説明で拾うべき理由と条件だけを予告する。
+2. 教材と正解を隠し、stage別の問いへ音声または文字で説明する。
+3. 音声は実際に最後まで再生し、文字は本人が明示的に読み返す。
+4. catalog固定checkpointを1問だけ問い返す。
+5. 誤答ならneedとheartを一度だけ記録し、ヒント後に説明を言い直す。
+6. 自己比較後、保存成功したeventだけをXP・quest・Pathへ反映する。
+
+### 旧Live研究実装（二重ループ・production未接続）
+
+以下は旧Vertex Live研究で得た知見であり、現行の未成年向けproduction導線では動かさない。
 
 | | 速さ | 役目 |
 |---|---|---|
@@ -210,7 +295,7 @@ Xiaomi の実機で、AI の声をマイクが拾い、
 
 ### 必要なもの
 
-- Flutter 3.41+
+- Flutter 3.47.5（Dart 3.12+。CI と同一バージョン。Material ウィジェットは 3.44 で `material_ui` へ移行済み）
 - Node.js 24+
 - Vertex AI が有効な GCP プロジェクトと、`roles/aiplatform.user` のサービスアカウント
 
@@ -267,7 +352,7 @@ flutter build apk --release --target-platform android-arm64 \
 
 iOS / iPadOS は `docs/ios-build.md` を読むこと。**Mac が要る。**
 
-### 通信するテスト
+### 旧Live研究の通信テスト（production未接続）
 
 Vertex を実際に叩くので**料金がかかる**。**`DEKISUGI_LIVE=1` を付けたときだけ走る。**
 
@@ -287,8 +372,8 @@ DEKISUGI_LIVE=1 npx tsx --test test/jailbreak.live.test.ts  # 役を降ろせる
 ## 検証
 
 ```
-app     374 件   flutter test
-server  210 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
+app    1264 件   flutter test
+server  399 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
 ```
 
 **実機でしか出ない不具合を、実機なしで捕まえる**ようにしてある。
@@ -311,6 +396,9 @@ server  210 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 
 - 生徒は**リンクを開いて答えるだけ**。コードの受け渡しは無い
 - 1問終わるごとに送信するので、途中でやめても残る
 - ground truth は選択式2問。**そろったときだけ**確かなものとして数える
+- IP・User-Agent・言語・画面サイズ・client時刻は保存しない。氏名・学校名・連絡先fieldは拒否し、自由記述は入力どおり保存されることを画面で明示する
+- session 12件/時と全体240件/時で連投を抑え、回答一覧は最後の新着から90日で自動失効する
+- 保存成功はopaque receiptで確認し、管理取得とreceipt単位削除には管理トークンが要る
 
 ```powershell
 tools\fetch-survey.ps1 -CountOnly
@@ -325,7 +413,13 @@ python tools\misconception-survey\analyze.py tools\misconception-survey\response
 
 ---
 
-## 料金
+## 旧Live研究の料金（production未接続）
+
+以下は旧Live研究の費用見積もりであり、現行の端末内必修学習には発生しない。
+旧構想では1日2回まで無料、Live会話の上限を外すPlusを想定したが、現行配布ビルドでは
+外部AI会話もストア商品も有効化しない。
+
+### 運営コスト
 
 音声の Live API は**高い**。
 
@@ -351,28 +445,35 @@ python tools\misconception-survey\analyze.py tools\misconception-survey\response
 
 `docs/age-restriction.md` に一次ソースを引いてまとめてある。要点だけ:
 
-- Gemini Developer API の**18歳未満禁止は Vertex AI に及ばない**（規約に明示の除外）
-- Google Cloud 側に年齢の制限は**見当たらない**。
-  ただし**「見当たらない」は「許されている」ではない**
-- 越境移転（個情法28条）は3点開示が必要。同意画面で実装済み
-- 16歳未満は法定代理人の同意。**中学生は全員該当**
+- Google Cloud Service Specific Terms §20(d) は、18歳未満向け、または18歳未満が
+  アクセスする可能性が高いオンラインサービスでの生成AIサービス利用を禁止している
+- Google Cloud Services Summary は **Vertex AI API と Vertex AI Live API を生成AIサービスに含めている**
+- したがって、現在の Vertex ベースの構成を中高生向けに提供することは **No-Go**。
+  年齢ゲート、学校の承認、保護者同意だけでは規約上の禁止を解消できない
+- 18歳未満・学校向けの公開には、利用可能な別プロバイダーへの移行、または Google と
+  書面で合意した個別契約が必要
+- 現在のworktreeでは Vercel production / preview の `/api/live-token`、`/api/director`、学校 Team API を
+  コード上で強制停止する。公開環境では内部テスト用フラグを設定しても `503` のまま
+- この停止差分は本番に反映済み。`GET /api/live-token` は未認証で 401、認証済みでも
+  `generativeAiEnabled()` が production で常に false のため 503 を返す（環境変数では解除不可）
+- 学校・18歳未満は、年齢や同意を保存せず外部サービスProviderを持たない端末内モードだけを選べる。
+  これは固定教材による練習であり、AI評価や習得証明ではない
+- 海外での処理は、送信項目・国・委託先の措置を同意画面で表示済み
+- 個人情報保護法上の説明・同意は別途必要であり、プロバイダー規約違反を治癒するものではない
 
 ---
 
 ## 未解決
 
-- **iOS / iPadOS を一度もビルドしていない**
-- 教材が3単元しかない
-- 誘発の精度が測れていない（n=18）
-- エコーキャンセルは iOS で効くかもしれない。効けば半二重をやめられる
-- Vertex を未成年向けに使ってよいか、**Google に直接確認していない**
+- **Android / iOS物理端末でTeach-backの録音・実再生・権限拒否・background停止は未確認**
+- 教材は12単元35概念で中学理科の全分野を網羅したが、授業順・所要時間の教員pilotは未実施
+- 固定Teach-backが初見学習者に有効かはpilot未実施（旧誘発調査n=18は学習効果の証拠にしない）
+- 外部AI会話を将来再接続する場合の未成年向け契約・安全運用は未完了（現行必修学習には不要）
 - 先生用の管理画面が無い
-- **Vertex に ephemeral token が無い**ので、会話設定を端末が送る。
-  ペルソナと `[DIRECTOR]` の約束は端末から改変できる。
-  防ぐには音声を中継するしかない（していない）
+- 旧Vertex研究はephemeral tokenを持たず、会話設定改変を防げないためproductionへ再接続しない
 
 ---
 
 ## ライセンス
 
-未定。
+MIT（`LICENSE`）。

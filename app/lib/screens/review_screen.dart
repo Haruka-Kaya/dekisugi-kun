@@ -1,12 +1,13 @@
 import '../config/app_radius.dart';
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../models/review.dart';
-import '../models/streak.dart';
 import '../services/session_store.dart';
 import '../services/units_client.dart';
 import '../ui/_material.dart';
+import '../ui/adaptive.dart';
 import '../widgets/readable_width.dart';
-import '../widgets/streak_line.dart';
+import '../widgets/studio_ui.dart';
 import 'material_screen.dart';
 
 /// 復習の画面。
@@ -32,7 +33,7 @@ class ReviewScreen extends StatefulWidget {
 class _ReviewScreenState extends State<ReviewScreen> {
   List<ReviewItem>? _items;
   DateTime? _exam;
-  StreakView? _streak;
+  String? _readingKey;
 
   @override
   void initState() {
@@ -43,25 +44,21 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Future<void> _load() async {
     final items = await widget.store.reviewItems();
     final exam = await widget.store.examDate();
-    final days = await widget.store.days();
     if (!mounted) return;
     setState(() {
       _items = items;
       _exam = exam;
-      // **連続日数は保存しない。** 毎回ここで数える
-      _streak = computeStreak(
-          records: days, now: DateTime.now(), examDate: exam);
     });
   }
 
   Future<void> _pickExamDate() async {
     final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _exam ?? now.add(const Duration(days: 14)),
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
-      helpText: '次の定期考査はいつ？',
+    final picked = await pickDate(
+      context,
+      initial: _exam ?? now.add(const Duration(days: 14)),
+      first: now,
+      last: now.add(const Duration(days: 365)),
+      helpText: lang.t('次の定期考査はいつ？', 'When is your next exam?'),
     );
     if (picked == null) return;
     await widget.store.setExamDate(picked);
@@ -73,97 +70,196 @@ class _ReviewScreenState extends State<ReviewScreen> {
   /// **保存したものを先に見る。** 通信を待たせると、
   /// 電車の中で開いたときに読めないまま終わる。
   Future<void> _read(ReviewItem item) async {
+    if (_readingKey != null) return;
     final units = widget.units;
     if (units == null) return;
+    final key = '${item.unitId}/${item.conceptKey}';
+    setState(() => _readingKey = key);
+    try {
+      var unit = await units.cachedDetail(item.unitId);
+      unit ??= await units.detail(item.unitId);
+      if (!mounted) return;
 
-    var unit = await units.cachedDetail(item.unitId);
-    unit ??= await units.detail(item.unitId);
-    if (!mounted) return;
-
-    final section = unit?.sectionFor(item.conceptKey);
-    if (unit == null || section == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('この教材をまだ読み込めていません。')),
+      final section = unit?.sectionFor(item.conceptKey);
+      if (unit == null || section == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              lang.t('この教材をまだ読み込めていません。', 'This material is not loaded yet.'),
+            ),
+          ),
+        );
+        return;
+      }
+      final reviewed = await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(
+          builder: (_) => MaterialScreen(
+            unit: unit!,
+            focusConceptKey: item.conceptKey,
+            // **読み直すだけ。** ここから会話へは進ませない
+            review: true,
+            onDone: (_) {},
+          ),
+        ),
       );
-      return;
+      if (reviewed != true) return;
+      // 明示的に最後まで読んだときだけ、次の間隔を伸ばす。
+      // システムBackや上部の「もどる」は未完了なので数えない。
+      await widget.store.markReviewed(item.unitId, item.conceptKey);
+      await _load();
+    } finally {
+      if (mounted) setState(() => _readingKey = null);
     }
-    await Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (_) => MaterialScreen(
-        unit: unit!,
-        focusConceptKey: item.conceptKey,
-        // **読み直すだけ。** ここから会話へは進ませない
-        review: true,
-        onDone: () {},
-      ),
-    ));
-    // 読み終えて戻ってきた＝1回見直した。**次の間隔はここで伸びる**
-    await widget.store.markReviewed(item.unitId, item.conceptKey);
-    await _load();
   }
 
   @override
   Widget build(BuildContext context) {
     final items = _items;
+    final now = DateTime.now();
+    final ready = items
+        ?.where((item) => _isReady(item, now: now, exam: _exam))
+        .toList();
+    final later = items
+        ?.where((item) => !_isReady(item, now: now, exam: _exam))
+        .toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('もう一度見るところ')),
+      appBar: AppBar(title: Text(lang.t('次の話', 'Next conversation'))),
       body: items == null
           ? const Center(child: CircularProgressIndicator())
-          // padding を渡すと下のシステム余白が入らない。自分で足す
-          : ReadableWidth(
-              child: ListView(
-              padding: EdgeInsets.fromLTRB(
-                  0, 8, 0, 8 + MediaQuery.paddingOf(context).bottom),
-              children: [
-                _ExamCard(exam: _exam, onTap: _pickExamDate),
-                // 継続は**主役にしない**。考査の下に小さく置く
-                if (_streak case final s?) StreakLine(streak: s),
-                if (items.isEmpty)
-                  const _Empty()
-                else
-                  for (final item in items)
-                    _ReviewTile(
-                      item: item,
-                      exam: _exam,
-                      onRead: widget.units == null ? null : () => _read(item),
-                      onDone: () async {
-                        await widget.store
-                            .clearReview(item.unitId, item.conceptKey);
-                        await _load();
-                      },
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ReadableWidth(
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(
+                    18,
+                    8,
+                    18,
+                    24 + MediaQuery.paddingOf(context).bottom,
+                  ),
+                  children: [
+                    StudioPageIntro(
+                      eyebrow: lang.t('NEXT TALK  ·  次の話', 'NEXT TALK'),
+                      title: lang.t(
+                        '次に話すことを、\nひとつずつ整える。',
+                        'Get ready for your next\\nconversation, one step at a time.',
+                      ),
+                      body: lang.t(
+                        '戻るための復習ではなく、'
+                            'デキすぎ君にもう一度話すための準備です。',
+                        'This review prepares you to teach Dekisugi-kun again.',
+                      ),
                     ),
-              ],
+                    const SizedBox(height: 22),
+                    _ExamPlan(exam: _exam, onTap: _pickExamDate),
+                    const SizedBox(height: 32),
+                    if (items.isEmpty)
+                      const _Empty()
+                    else ...[
+                      if (ready!.isNotEmpty) ...[
+                        StudioSectionHeader(
+                          title: lang.t('いま整える話', 'Prepare now'),
+                          description: lang.t(
+                            '上から1つ。読み直したら、次に話す準備が進みます。',
+                            'Start with the first topic. Reread it to prepare for your next conversation.',
+                          ),
+                          leading: Icon(Icons.record_voice_over_outlined),
+                        ),
+                        const SizedBox(height: 14),
+                        for (final item in ready) ...[
+                          _ForwardStep(
+                            item: item,
+                            exam: _exam,
+                            readAvailable: widget.units != null,
+                            reading:
+                                _readingKey ==
+                                '${item.unitId}/${item.conceptKey}',
+                            onRead: widget.units == null || _readingKey != null
+                                ? null
+                                : () => _read(item),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ],
+                      if (later!.isNotEmpty) ...[
+                        if (ready.isNotEmpty) const SizedBox(height: 22),
+                        StudioSectionHeader(
+                          title: lang.t('この先に話すこと', 'Coming up'),
+                          description: lang.t(
+                            '忘れる前に、もう一度話す日を残しています。',
+                            'Your next review dates are saved so you can revisit these topics.',
+                          ),
+                          leading: Icon(Icons.calendar_month_outlined),
+                        ),
+                        const SizedBox(height: 14),
+                        for (final item in later) ...[
+                          _ForwardStep(
+                            item: item,
+                            exam: _exam,
+                            readAvailable: widget.units != null,
+                            reading:
+                                _readingKey ==
+                                '${item.unitId}/${item.conceptKey}',
+                            onRead: widget.units == null || _readingKey != null
+                                ? null
+                                : () => _read(item),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ],
+                    ],
+                  ],
+                ),
+              ),
             ),
-          ),
     );
   }
 }
 
-/// 考査日。**復習間隔をここから逆算する。**
-class _ExamCard extends StatelessWidget {
-  const _ExamCard({required this.exam, required this.onTap});
+bool _isReady(ReviewItem item, {required DateTime now, DateTime? exam}) {
+  final gap = nextGap(now: now, examDate: exam, timesSeen: item.timesSeen);
+  return !item.dueAt(gap).isAfter(now);
+}
+
+/// 考査日は「設定」ではなく、次に話す順番を作る手がかりとして置く。
+class _ExamPlan extends StatelessWidget {
+  const _ExamPlan({required this.exam, required this.onTap});
 
   final DateTime? exam;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context);
-    final days = exam?.difference(DateTime.now()).inDays;
+    final today = DateUtils.dateOnly(DateTime.now());
+    final days = exam == null
+        ? null
+        : DateUtils.dateOnly(exam!).difference(today).inDays;
 
-    return Card(
-      child: ListTile(
-        leading: const Icon(Icons.event),
-        title: Text(exam == null ? '次の考査日を決める' : '次の考査まで あと$days日'),
-        subtitle: Text(
-          exam == null
-              ? '考査日が分かると、見直す間隔をそこから逆算できます。'
-              : '${exam!.year}年${exam!.month}月${exam!.day}日',
-          style: t.textTheme.bodySmall,
-        ),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: onTap,
-      ),
+    return StudioActionTile(
+      icon: Icons.event_outlined,
+      title: exam == null
+          ? lang.t('考査日から、話す順番をつくる', 'Plan your talks around an exam')
+          : days! < 0
+          ? lang.t('次の考査日を入れ直す', 'Update your next exam date')
+          : days == 0
+          ? lang.t('きょうが考査日', 'Your exam is today')
+          : lang.t('考査まで あと$days日', '$days days until the exam'),
+      description: exam == null
+          ? lang.t(
+              '日付を入れると、もう一度話す日を逆算します。',
+              'Set a date to plan when to review.',
+            )
+          : days! < 0
+          ? lang.t(
+              '前の考査日は${exam!.year}年${exam!.month}月${exam!.day}日でした。',
+              'Your previous exam was on ${exam!.year}/${exam!.month}/${exam!.day}.',
+            )
+          : lang.t(
+              '${exam!.year}年${exam!.month}月${exam!.day}日に向けた順番です。',
+              'Your plan for the exam on ${exam!.year}/${exam!.month}/${exam!.day}.',
+            ),
+      onTap: onTap,
     );
   }
 }
@@ -174,35 +270,53 @@ class _Empty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(32),
+    final c = context.appColors;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
+      decoration: BoxDecoration(
+        color: c.coolSurface,
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.check_circle_outline,
-              size: 40, color: t.colorScheme.onSurfaceVariant),
-          const SizedBox(height: 12),
-          Text('いまは見直すところがありません',
-              style: t.textTheme.titleSmall, textAlign: TextAlign.center),
-          const SizedBox(height: 6),
-          Text('デキすぎ君に教えると、うまく説明しきれなかったところがここに残ります。',
-              style: t.textTheme.bodyMedium, textAlign: TextAlign.center),
+          Icon(Icons.forum_outlined, size: 28, color: c.onCoolSurface),
+          const SizedBox(height: 16),
+          Text(
+            lang.t('いま、整えておく話はありません。', 'Nothing to prepare right now.'),
+            style: t.textTheme.titleLarge
+                ?.copyWith(color: c.onCoolSurface)
+                .jaWeight(FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            lang.t('次に教えたいテーマをホームから選ぶと、', 'Choose a topic to teach from Home') +
+                lang.t(
+                  'デキすぎ君との次の話が始まります。',
+                  ' to start your next talk with Dekisugi-kun.',
+                ),
+            style: t.textTheme.bodyMedium?.copyWith(color: c.onCoolSurface),
+          ),
         ],
       ),
     );
   }
 }
 
-class _ReviewTile extends StatelessWidget {
-  const _ReviewTile({
+class _ForwardStep extends StatelessWidget {
+  const _ForwardStep({
     required this.item,
     required this.exam,
-    required this.onDone,
+    required this.readAvailable,
+    required this.reading,
     this.onRead,
   });
 
   final ReviewItem item;
   final DateTime? exam;
-  final VoidCallback onDone;
+  final bool readAvailable;
+  final bool reading;
 
   /// 教材を読み直す。取り出せないときは null（ボタンを出さない）
   final VoidCallback? onRead;
@@ -212,58 +326,78 @@ class _ReviewTile extends StatelessWidget {
     final t = Theme.of(context);
     final c = context.appColors;
     final now = DateTime.now();
-
-    // 理由で色を分ける。**どちらも「できていない」ではない**
     final status = item.reason == ReviewReason.notCorrected
         ? ExplainStatus.weak
         : ExplainStatus.shaky;
-    final fg = c.fgFor(status);
-
-    // **見直した回数を渡す。** ここを 0 に固定していたせいで、
-    // 考査日が未設定のときの階段が常に1日目から動かなかった
     final gap = nextGap(now: now, examDate: exam, timesSeen: item.timesSeen);
     final due = item.dueAt(gap);
     final ready = !due.isAfter(now);
+    final background = ready ? c.warmSurface : c.coolSurface;
+    final foreground = ready ? c.onWarmSurface : c.onCoolSurface;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+    return Semantics(
+      container: true,
+      label: lang.t(
+        '${item.label}。${item.reason.label}。${ready ? 'いま準備するテーマ' : 'この先に準備するテーマ'}。',
+        '${item.label}. ${item.reason.label}. ${ready ? 'Topic to prepare now' : 'Topic to prepare later'}.',
+      ),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
+        ),
         child: Column(
+          key: ValueKey('review-${item.unitId}-${item.conceptKey}'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                // 色だけで伝えない (SC 1.4.1)
-                Icon(statusIcon(status), size: 18, color: fg),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(item.label,
-                      style: t.textTheme.titleSmall?.jaWeight(FontWeight.w600)),
-                ),
                 _DueChip(ready: ready, due: due),
+                _ReasonChip(reason: item.reason, status: status),
               ],
             ),
-            const SizedBox(height: 6),
-            Text(item.reason.label,
-                style: t.textTheme.bodyMedium?.copyWith(color: fg)),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                // **読み直す先を出す。** 「ここが薄い」だけでは行き場が無い
-                if (onRead != null)
-                  FilledButton.tonalIcon(
-                    onPressed: onRead,
-                    icon: const Icon(Icons.menu_book, size: 18),
-                    label: const Text('読み直す'),
-                  ),
-                const SizedBox(width: 8),
-                OutlinedButton(
-                  onPressed: onDone,
-                  child: const Text('もう覚えた'),
+            const SizedBox(height: 16),
+            Text(
+              item.label,
+              style: t.textTheme.headlineSmall
+                  ?.copyWith(color: foreground, height: 1.4)
+                  .jaWeight(FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              ready
+                  ? lang.t(
+                      '次に話す前に、ここだけ読み直します。',
+                      'Reread this before your next talk.',
+                    )
+                  : lang.t('次に話す日のために、ここへ残しています。', 'Saved for your next talk.'),
+              style: t.textTheme.bodyMedium?.copyWith(color: foreground),
+            ),
+            const SizedBox(height: 18),
+            if (!readAvailable)
+              Text(
+                lang.t(
+                  '教材を読み込むと、ここから準備できます。',
+                  'Load the material to prepare here.',
                 ),
-              ],
-            ),
+                style: t.textTheme.bodySmall?.copyWith(color: foreground),
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: onRead,
+                  child: Text(
+                    reading
+                        ? lang.t('教材を開いています…', 'Opening material…')
+                        : lang.t('次に話す前に読む', 'Read before your next talk'),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -291,8 +425,48 @@ class _DueChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
-        ready ? 'いま' : 'あと${left + 1}日',
+        ready
+            ? lang.t('いま整える', 'Prepare now')
+            : lang.t('あと${left + 1}日', 'In ${left + 1} days'),
         style: t.textTheme.bodySmall?.copyWith(color: fg, height: 1.0),
+      ),
+    );
+  }
+}
+
+class _ReasonChip extends StatelessWidget {
+  const _ReasonChip({required this.reason, required this.status});
+
+  final ReviewReason reason;
+  final ExplainStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    final c = context.appColors;
+    final foreground = c.fgFor(status);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: c.chipFor(status),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(statusIcon(status), size: 16, color: foreground),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              reason.label,
+              style: t.textTheme.bodySmall?.copyWith(
+                color: foreground,
+                height: 1.2,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -22,5 +22,5 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["api/**/*.ts", "lib/**/*.ts", "test/**/*.ts"]
+  "include": ["api/**/*.ts", "lib/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"]
 }

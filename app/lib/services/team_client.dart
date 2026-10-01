@@ -29,14 +29,19 @@ class TeamClient {
     required this.identity,
     required SessionStore store,
     Dio? dio,
-  })  : _store = store,
-        _dio = dio ??
-            Dio(BaseOptions(
-              connectTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 15),
-              headers: {'Content-Type': 'application/json'},
-              validateStatus: (_) => true,
-            ));
+  }) : // 公開constructorの`store:`名を保つ。
+       // ignore: prefer_initializing_formals
+       _store = store,
+       _dio =
+           dio ??
+           Dio(
+             BaseOptions(
+               connectTimeout: const Duration(seconds: 10),
+               receiveTimeout: const Duration(seconds: 15),
+               headers: {'Content-Type': 'application/json'},
+               validateStatus: (_) => true,
+             ),
+           );
 
   final String baseUrl;
   final DeviceIdentity identity;
@@ -58,7 +63,8 @@ class TeamClient {
     if (raw == null || raw.isEmpty) return null;
     try {
       return TeamMembership.fromJson(
-          (jsonDecode(raw) as Map).cast<String, dynamic>());
+        (jsonDecode(raw) as Map).cast<String, dynamic>(),
+      );
     } catch (_) {
       return null;
     }
@@ -73,16 +79,21 @@ class TeamClient {
   Future<({TeamMembership? team, JoinFailure? error})> join(String code) async {
     if (!isConfigured) return (team: null, error: JoinFailure.network);
     try {
-      final res = await _send((h) => _dio.post<Object?>(
-            '$baseUrl/api/team/join',
-            data: {'inviteCode': code},
-            options: Options(headers: h),
-          ));
+      final res = await _send(
+        (h) => _dio.post<Object?>(
+          '$baseUrl/api/team/join',
+          data: {'inviteCode': code},
+          options: Options(headers: h),
+        ),
+      );
       final data = (res.data as Map?)?.cast<String, dynamic>();
       if (res.statusCode != 200 || data == null) {
         return (
           team: null,
-          error: JoinFailure.fromError(data?['error'] as String?, res.statusCode),
+          error: JoinFailure.fromError(
+            data?['error'] as String?,
+            res.statusCode,
+          ),
         );
       }
       final team = TeamMembership(
@@ -107,11 +118,13 @@ class TeamClient {
     await _remember(null);
     if (team == null || !isConfigured) return false;
     try {
-      final res = await _send((h) => _dio.post<Object?>(
-            '$baseUrl/api/team/leave',
-            data: {'teamId': team.id},
-            options: Options(headers: h),
-          ));
+      final res = await _send(
+        (h) => _dio.post<Object?>(
+          '$baseUrl/api/team/leave',
+          data: {'teamId': team.id},
+          options: Options(headers: h),
+        ),
+      );
       return res.statusCode == 200;
     } catch (e) {
       debugPrint('クラスを抜けられなかった: $e');
@@ -125,10 +138,12 @@ class TeamClient {
   Future<TeamSummary?> summary() async {
     if (!isConfigured || await saved() == null) return null;
     try {
-      final res = await _send((h) => _dio.get<Object?>(
-            '$baseUrl/api/team/summary',
-            options: Options(headers: h),
-          ));
+      final res = await _send(
+        (h) => _dio.get<Object?>(
+          '$baseUrl/api/team/summary',
+          options: Options(headers: h),
+        ),
+      );
       final data = (res.data as Map?)?.cast<String, dynamic>();
       if (res.statusCode == 404) {
         // サーバ側では抜けている。端末の控えを合わせる
@@ -162,11 +177,13 @@ class TeamClient {
     if (days.isEmpty) return true;
 
     try {
-      final res = await _send((h) => _dio.post<Object?>(
-            '$baseUrl/api/team/contribution',
-            data: {'days': days},
-            options: Options(headers: h),
-          ));
+      final res = await _send(
+        (h) => _dio.post<Object?>(
+          '$baseUrl/api/team/contribution',
+          data: {'days': days},
+          options: Options(headers: h),
+        ),
+      );
       return res.statusCode == 200;
     } catch (e) {
       debugPrint('クラスへの反映に失敗: $e');

@@ -4,28 +4,29 @@ import 'package:dekisugi/services/session_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 List<Utterance> turns(int n) => [
-      for (var i = 1; i <= n; i++)
-        Utterance(
-            id: 'u${i.toString().padLeft(2, '0')}',
-            isStudent: i.isEven,
-            text: '発話$i'),
-    ];
+  for (var i = 1; i <= n; i++)
+    Utterance(
+      id: 'u${i.toString().padLeft(2, '0')}',
+      isStudent: i.isEven,
+      text: '発話$i',
+    ),
+];
 
 Dossier dossier({int coverage = 30}) => Dossier.fromJson({
-      'unitId': 'force-motion',
-      'coverage': coverage,
-      'slots': [
-        {
-          'key': 'fall',
-          'label': '落下の速さ',
-          'status': 'thin',
-          'content': 'x',
-          'evidence': ['u02'],
-          'followUpHint': '',
-          'probes': const [],
-        }
-      ],
-    });
+  'unitId': 'force-motion',
+  'coverage': coverage,
+  'slots': [
+    {
+      'key': 'fall',
+      'label': '落下の速さ',
+      'status': 'thin',
+      'content': 'x',
+      'evidence': ['u02'],
+      'followUpHint': '',
+      'probes': const [],
+    },
+  ],
+});
 
 void main() {
   late SessionStore store;
@@ -90,14 +91,17 @@ void main() {
 
     test('積んで読み出せる', () async {
       await store.upsertReviews([item('fall'), item('inertia')]);
-      expect((await store.reviewItems()).map((r) => r.conceptKey),
-          containsAll(['fall', 'inertia']));
+      expect(
+        (await store.reviewItems()).map((r) => r.conceptKey),
+        containsAll(['fall', 'inertia']),
+      );
     });
 
     test('同じ概念は上書きする（同じものが増えない）', () async {
       await store.upsertReviews([item('fall')]);
-      await store.upsertReviews(
-          [item('fall', reason: ReviewReason.notCorrected)]);
+      await store.upsertReviews([
+        item('fall', reason: ReviewReason.notCorrected),
+      ]);
 
       final all = await store.reviewItems();
       expect(all, hasLength(1));
@@ -136,9 +140,10 @@ void main() {
 
     test('要素が壊れていても読める分だけ返す', () {
       final got = decodeTranscript(
-          '[{"id":"u01","speaker":"student","text":"a"},'
-          '{"speaker":"ai","text":"IDが無い"},'
-          '"ごみ"]');
+        '[{"id":"u01","speaker":"student","text":"a"},'
+        '{"speaker":"ai","text":"IDが無い"},'
+        '"ごみ"]',
+      );
       expect(got, hasLength(1));
       expect(got.single.id, 'u01');
       expect(got.single.isStudent, isTrue);
@@ -146,9 +151,31 @@ void main() {
 
     test('校正結果を残す', () {
       final got = decodeTranscript(
-          '[{"id":"u01","speaker":"student","text":"茶道水","corrected":"砂糖水"}]');
+        '[{"id":"u01","speaker":"student","text":"茶道水","corrected":"砂糖水"}]',
+      );
       expect(got.single.display, '砂糖水');
       expect(got.single.text, '茶道水', reason: '生の文字起こしが消えている');
+    });
+
+    test('challengeの印が壊れていても発話本体を失わない', () {
+      final got = decodeTranscript(
+        '[{"id":"u01","speaker":"ai","text":"質問",'
+        '"challengeLureId":42,"challengeLureText":42}]',
+      );
+
+      expect(got.single.text, '質問');
+      expect(got.single.challengeLureId, isNull);
+      expect(got.single.challengeLureText, isNull);
+    });
+
+    test('challenge検証に使った固定本文を残す', () {
+      final got = decodeTranscript(
+        '[{"id":"u01","speaker":"ai","text":"固定文",'
+        '"challengeLureId":"M01","challengeLureText":"固定文"}]',
+      );
+
+      expect(got.single.challengeLureId, 'M01');
+      expect(got.single.challengeLureText, '固定文');
     });
   });
 }

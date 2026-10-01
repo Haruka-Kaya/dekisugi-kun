@@ -1,7 +1,64 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dekisugi/services/mic_stream.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:record/record.dart';
+
+enum _FailureMode { none, synchronous, asynchronous }
+
+class _FakeRecorder implements MicRecorder {
+  final source = StreamController<Uint8List>.broadcast();
+  _FailureMode stopFailure = _FailureMode.none;
+  _FailureMode disposeFailure = _FailureMode.none;
+  bool recording = false;
+  bool disposed = false;
+  int stopCalls = 0;
+  int disposeCalls = 0;
+
+  Future<void> _fail(_FailureMode mode, String message) {
+    if (mode == _FailureMode.synchronous) throw StateError(message);
+    if (mode == _FailureMode.asynchronous) {
+      return Future<void>.error(StateError(message));
+    }
+    return Future<void>.value();
+  }
+
+  @override
+  Future<bool> hasPermission() => Future<bool>.value(true);
+
+  @override
+  Future<Stream<Uint8List>> startStream(RecordConfig config) {
+    recording = true;
+    return Future<Stream<Uint8List>>.value(source.stream);
+  }
+
+  @override
+  Future<bool> isRecording() => Future<bool>.value(recording);
+
+  @override
+  Future<void> stop() {
+    stopCalls++;
+    final failure = stopFailure;
+    if (failure != _FailureMode.none) {
+      return _fail(failure, 'recorder stop failed');
+    }
+    recording = false;
+    return Future<void>.value();
+  }
+
+  @override
+  Future<void> dispose() {
+    disposeCalls++;
+    final failure = disposeFailure;
+    if (failure != _FailureMode.none) {
+      return _fail(failure, 'recorder dispose failed');
+    }
+    disposed = true;
+    recording = false;
+    return source.close();
+  }
+}
 
 Uint8List ramp(int bytes, {int from = 0}) =>
     Uint8List.fromList(List.generate(bytes, (i) => (from + i) % 256));
@@ -127,6 +184,53 @@ void main() {
     test('入力は 16kHz、チャンクは 100ms', () {
       expect(MicStream.sampleRate, 16000);
       expect(MicStream.chunkBytes, 3200);
+    });
+  });
+
+  group('dispose best-effort', () {
+    test('非同期stop失敗後もrecorder disposeと両controller closeを完走する', () async {
+      final recorder = _FakeRecorder()..stopFailure = _FailureMode.asynchronous;
+      final mic = MicStream(recorder: recorder);
+      final chunksDone = Completer<void>();
+      final levelsDone = Completer<void>();
+      mic.chunks.listen((_) {}, onDone: chunksDone.complete);
+      mic.level.listen((_) {}, onDone: levelsDone.complete);
+      expect(await mic.start(), isTrue);
+
+      await expectLater(mic.dispose(), throwsA(isA<StateError>()));
+
+      expect(recorder.stopCalls, 1);
+      expect(recorder.disposeCalls, 1);
+      expect(recorder.disposed, isTrue);
+      expect(mic.isRecording, isFalse, reason: 'recorder dispose成功は停止保証になる');
+      await chunksDone.future;
+      await levelsDone.future;
+    });
+
+    test('同期stop・disposeが連続失敗してもcontrollerを閉じ、録音可能性は残す', () async {
+      final recorder = _FakeRecorder()
+        ..stopFailure = _FailureMode.synchronous
+        ..disposeFailure = _FailureMode.synchronous;
+      final mic = MicStream(recorder: recorder);
+      final chunksDone = Completer<void>();
+      final levelsDone = Completer<void>();
+      mic.chunks.listen((_) {}, onDone: chunksDone.complete);
+      mic.level.listen((_) {}, onDone: levelsDone.complete);
+      expect(await mic.start(), isTrue);
+
+      await expectLater(mic.dispose(), throwsA(isA<StateError>()));
+
+      expect(recorder.stopCalls, 1);
+      expect(recorder.disposeCalls, 1);
+      expect(recorder.disposed, isFalse);
+      expect(
+        mic.isRecording,
+        isTrue,
+        reason: 'native stopもdisposeも未保証なのにfalseへ偽装しない',
+      );
+      await chunksDone.future;
+      await levelsDone.future;
+      await recorder.source.close();
     });
   });
 }

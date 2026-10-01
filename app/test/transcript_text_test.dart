@@ -5,10 +5,7 @@ void main() {
   group('tidyJa', () {
     test('和文の切れ目の空白を落とす', () {
       // 実機で出たそのままの文字起こし
-      expect(
-        tidyJa('最近 さあ 人間 関係 に 悩ん で て さ'),
-        '最近さあ人間関係に悩んでてさ',
-      );
+      expect(tidyJa('最近 さあ 人間 関係 に 悩ん で て さ'), '最近さあ人間関係に悩んでてさ');
     });
 
     test('全角の空白も落とす', () {
@@ -44,6 +41,38 @@ void main() {
 
     test('空白しかなければ空になる', () {
       expect(tidyJa('   '), '');
+    });
+  });
+
+  group('challenge本文の正規化', () {
+    test('日本語ASRの空白・句読点差だけを吸収する', () {
+      expect(
+        isExactChallengeText(
+          'えっと じゃあ 重い もの の 方 が 速く 落ちる って こと?',
+          'えっと、じゃあ重いものの方が速く落ちるってこと？',
+        ),
+        isTrue,
+      );
+    });
+
+    test('英語の大小文字・約物差だけを吸収する', () {
+      expect(
+        isExactChallengeText(
+          'WAIT - so heavier things fall faster right',
+          'Wait — so heavier things fall faster, right?',
+        ),
+        isTrue,
+      );
+    });
+
+    test('自然な前後付加や単語の省略は一致にしない', () {
+      const lure = 'Wait — so heavier things fall faster, right?';
+      expect(isExactChallengeText('Well, $lure', lure), isFalse);
+      expect(
+        isExactChallengeText('Wait — so things fall faster, right?', lure),
+        isFalse,
+      );
+      expect(isExactChallengeText('', ''), isFalse);
     });
   });
 }

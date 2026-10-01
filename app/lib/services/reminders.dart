@@ -5,6 +5,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../models/reminder.dart';
 import 'session_store.dart';
+import '../config/app_language.dart';
 
 /// 端末の中だけで完結する通知。
 ///
@@ -21,9 +22,13 @@ import 'session_store.dart';
 /// 何日も開かなければ通知も止まるが、それは正しい —
 /// 何週間も来ていない生徒に毎晩「あと3つ」と送り続ける方がおかしい。
 class Reminders {
-  Reminders({required SessionStore store, FlutterLocalNotificationsPlugin? plugin})
-      : _store = store,
-        _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+  Reminders({
+    required SessionStore store,
+    FlutterLocalNotificationsPlugin? plugin,
+  }) : // 公開constructorの`store:`名を保つ。
+       // ignore: prefer_initializing_formals
+       _store = store,
+       _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   final SessionStore _store;
   final FlutterLocalNotificationsPlugin _plugin;
@@ -43,15 +48,21 @@ class Reminders {
     // 設定しないと、20:00 のつもりの予約が翌朝5時に立つ（実機で確認）。
     // 端末のずれから当てる — 名前を取る API が Flutter に無いため
     _setLocalFromDeviceOffset();
-    await _plugin.initialize(const InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(
-        // **起動時に権限を求めない。** 文脈のある場面で聞く
-        requestAlertPermission: false,
-        requestBadgePermission: false,
-        requestSoundPermission: false,
+    await _plugin.initialize(
+      const InitializationSettings(
+        // 通知のsmall iconは透明背景の単色シルエットだけを使う。
+        // 全面不透明のランチャー画像だと、通知欄では四角い塊になる。
+        android: AndroidInitializationSettings(
+          '@drawable/ic_launcher_monochrome',
+        ),
+        iOS: DarwinInitializationSettings(
+          // **起動時に権限を求めない。** 文脈のある場面で聞く
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        ),
       ),
-    ));
+    );
     _ready = true;
   }
 
@@ -74,11 +85,11 @@ class Reminders {
     debugPrint('端末のタイムゾーンに合う場所が見つからなかった');
   }
 
-  Future<bool> isEnabled() async =>
-      (await _store.getSetting(_kEnabled)) == '1';
+  Future<bool> isEnabled() async => (await _store.getSetting(_kEnabled)) == '1';
 
   Future<int> hour() async =>
-      int.tryParse(await _store.getSetting(_kHour) ?? '') ?? kDefaultReminderHour;
+      int.tryParse(await _store.getSetting(_kHour) ?? '') ??
+      kDefaultReminderHour;
 
   Future<void> setHour(int h) async {
     await _store.setSetting(_kHour, h.clamp(0, 23).toString());
@@ -97,13 +108,17 @@ class Reminders {
   Future<bool> requestPermission() async {
     await _init();
     try {
-      final android = _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (android != null) {
         return await android.requestNotificationsPermission() ?? false;
       }
-      final ios = _plugin.resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>();
+      final ios = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
       if (ios != null) {
         return await ios.requestPermissions(alert: true, sound: true) ?? false;
       }
@@ -143,20 +158,60 @@ class Reminders {
         kReminderTitle,
         text,
         _nextAt(await hour(), now ?? DateTime.now()),
-        const NotificationDetails(
+        NotificationDetails(
           android: AndroidNotificationDetails(
             'reminder',
-            'まいにちの声かけ',
-            channelDescription: '考査までに残っているところを1日1回だけ知らせます。',
+            t('まいにちの声かけ', 'Daily reminder'),
+            channelDescription: t(
+              '考査までに残っているところを1日1回だけ知らせます。',
+              "Once a day, lets you know what's left before your test.",
+            ),
             importance: Importance.defaultImportance,
             priority: Priority.defaultPriority,
           ),
-          iOS: DarwinNotificationDetails(),
+          iOS: const DarwinNotificationDetails(),
         ),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
     } catch (e) {
       debugPrint('通知を立てられなかった: $e');
+    }
+  }
+
+  /// 初回CLEARの直後、本人が望んだ場合だけ翌日のCASEを1件予約する。
+  ///
+  /// Homeの状態をまだ読み直していなくても、アプリを閉じる前に次の学習行為へ
+  /// 橋をかけられる。次回Homeを開けば通常の[reschedule]が同じIDへ上書きする。
+  Future<void> scheduleTomorrowCase(
+    String conceptLabel, {
+    DateTime? now,
+  }) async {
+    if (!await isEnabled()) return;
+    await _init();
+    try {
+      await _plugin.cancel(_id);
+      await _plugin.zonedSchedule(
+        _id,
+        kReminderTitle,
+        missionFollowUpText(conceptLabel),
+        _tomorrowAt(await hour(), now ?? DateTime.now()),
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            'reminder',
+            t('まいにちの声かけ', 'Daily reminder'),
+            channelDescription: t(
+              '考査までに残っているところを1日1回だけ知らせます。',
+              "Once a day, lets you know what's left before your test.",
+            ),
+            importance: Importance.defaultImportance,
+            priority: Priority.defaultPriority,
+          ),
+          iOS: const DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    } catch (e) {
+      debugPrint('翌日のCASE通知を立てられなかった: $e');
     }
   }
 
@@ -167,5 +222,11 @@ class Reminders {
     var at = tz.TZDateTime(local, n.year, n.month, n.day, hour);
     if (!at.isAfter(n)) at = at.add(const Duration(days: 1));
     return at;
+  }
+
+  static tz.TZDateTime _tomorrowAt(int hour, DateTime now) {
+    final local = tz.local;
+    final n = tz.TZDateTime.from(now, local);
+    return tz.TZDateTime(local, n.year, n.month, n.day + 1, hour);
   }
 }

@@ -36,13 +36,20 @@ void main() {
       test('$brightness のテーマの全スタイルに軸が刻まれている', () {
         final t = buildAppTheme(brightness).textTheme;
         final styles = <String, TextStyle?>{
-          'displayLarge': t.displayLarge, 'displayMedium': t.displayMedium,
-          'displaySmall': t.displaySmall, 'headlineLarge': t.headlineLarge,
-          'headlineMedium': t.headlineMedium, 'headlineSmall': t.headlineSmall,
-          'titleLarge': t.titleLarge, 'titleMedium': t.titleMedium,
-          'titleSmall': t.titleSmall, 'bodyLarge': t.bodyLarge,
-          'bodyMedium': t.bodyMedium, 'bodySmall': t.bodySmall,
-          'labelLarge': t.labelLarge, 'labelMedium': t.labelMedium,
+          'displayLarge': t.displayLarge,
+          'displayMedium': t.displayMedium,
+          'displaySmall': t.displaySmall,
+          'headlineLarge': t.headlineLarge,
+          'headlineMedium': t.headlineMedium,
+          'headlineSmall': t.headlineSmall,
+          'titleLarge': t.titleLarge,
+          'titleMedium': t.titleMedium,
+          'titleSmall': t.titleSmall,
+          'bodyLarge': t.bodyLarge,
+          'bodyMedium': t.bodyMedium,
+          'bodySmall': t.bodySmall,
+          'labelLarge': t.labelLarge,
+          'labelMedium': t.labelMedium,
           'labelSmall': t.labelSmall,
         };
 
@@ -52,13 +59,18 @@ void main() {
           expect(s!.fontFamily, kFontFamily, reason: '${e.key} が同梱フォントでない');
 
           final axis = s.fontVariations
-              ?.firstWhere((v) => v.axis == 'wght',
-                  orElse: () => const FontVariation('wght', -1))
+              ?.firstWhere(
+                (v) => v.axis == 'wght',
+                orElse: () => const FontVariation('wght', -1),
+              )
               .value;
           expect(axis, isNotNull, reason: '${e.key} に fontVariations が無い');
           // 軸の値が fontWeight とずれると、見た目と指定が食い違う
-          expect(axis, (s.fontWeight ?? FontWeight.w400).value.toDouble(),
-              reason: '${e.key} の wght 軸が fontWeight と一致しない');
+          expect(
+            axis,
+            (s.fontWeight ?? FontWeight.w400).value.toDouble(),
+            reason: '${e.key} の wght 軸が fontWeight と一致しない',
+          );
         }
       });
     }
@@ -70,5 +82,16 @@ void main() {
     expect(body.height, kBodyLineHeight);
     // M3 の既定 1.43 のまま残っていたら和文の行間が足りていない
     expect(body.height, greaterThan(1.43));
+  });
+
+  test('palt は見出しだけに適用し、本文には適用しない', () {
+    final textTheme = buildAppTheme(Brightness.light).textTheme;
+    const palt = FontFeature('palt');
+
+    expect(textTheme.titleLarge!.fontFeatures, contains(palt));
+    expect(
+      textTheme.bodyMedium!.fontFeatures ?? const <FontFeature>[],
+      isNot(contains(palt)),
+    );
   });
 }

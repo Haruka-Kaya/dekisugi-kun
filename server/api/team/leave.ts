@@ -3,6 +3,7 @@ import { bearer, parseBody, type Req, type Res } from '../../lib/http.js'
 import { hasKv } from '../../lib/kv.js'
 import { memberId } from '../../lib/team.js'
 import { leaveTeam, myTeamId } from '../../lib/team-store.js'
+import { schoolTestingEnabled } from '../../lib/school-access.js'
 
 /**
  * チームを抜ける。
@@ -24,6 +25,10 @@ export default async function handler(req: Req, res: Res) {
   const auth = verifyToken(bearer(req))
   if (!auth.ok) {
     res.status(401).json({ error: auth.reason === 'expired' ? 'token_expired' : 'unauthorized' })
+    return
+  }
+  if (!schoolTestingEnabled()) {
+    res.status(503).json({ error: 'school_features_unavailable' })
     return
   }
   if (!hasKv()) {

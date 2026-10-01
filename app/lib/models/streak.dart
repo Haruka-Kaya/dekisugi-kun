@@ -55,8 +55,8 @@ class DayRecord {
   /// > C5 が禁じている従事随伴報酬そのもの（内発動機を d = −0.40 で毀損）。
   ///
   /// > [!warning] 「新しい概念」だけにもしない
-  /// > 教材は3単元8節しかないので、8個を使い切った時点で
-  /// > **誰も連続を続けられなくなる**。
+  /// > 追加された教材もいつか学び切るため、新しい概念を使い切った時点で
+  /// > **誰も連続を続けられなくなる**。期限が来た復習も同じ1件として扱う。
   final int done;
 
   /// 文字で送った回数。音声を使えない生徒の割合を後で見るために取る
@@ -91,26 +91,26 @@ class ExplainedItem {
   /// 概念の名前（「落下の速さ」）
   final String label;
 
-  /// **生徒自身の説明**（校正済み）。ここが主役
+  /// **生徒自身の説明**（音声認識または文字入力の生記録）。ここが主役
   final String said;
 
   final DateTime at;
 
   Map<String, Object?> toRow() => {
-        'unit_id': unitId,
-        'concept_key': conceptKey,
-        'label': label,
-        'said': said,
-        'at': at.millisecondsSinceEpoch,
-      };
+    'unit_id': unitId,
+    'concept_key': conceptKey,
+    'label': label,
+    'said': said,
+    'at': at.millisecondsSinceEpoch,
+  };
 
   factory ExplainedItem.fromRow(Map<String, Object?> row) => ExplainedItem(
-        unitId: row['unit_id'] as String? ?? '',
-        conceptKey: row['concept_key'] as String? ?? '',
-        label: row['label'] as String? ?? '',
-        said: row['said'] as String? ?? '',
-        at: DateTime.fromMillisecondsSinceEpoch((row['at'] as int?) ?? 0),
-      );
+    unitId: row['unit_id'] as String? ?? '',
+    conceptKey: row['concept_key'] as String? ?? '',
+    label: row['label'] as String? ?? '',
+    said: row['said'] as String? ?? '',
+    at: DateTime.fromMillisecondsSinceEpoch((row['at'] as int?) ?? 0),
+  );
 }
 
 /// 画面に出す継続の状態。
@@ -152,8 +152,7 @@ class StreakView {
 /// > **1か月来ていない生徒にも「1日つづけています」と表示されてしまう**。
 /// > 事実でないことを画面が言うことになるので、0 まで落ちられるようにした。
 /// > 1日の抜けが 110 → 103 で済むという C6 の要求は満たしている。
-int streakAfterMiss(int current) =>
-    math.max(0, current - kMissPenaltyDays);
+int streakAfterMiss(int current) => math.max(0, current - kMissPenaltyDays);
 
 /// 考査の前日と当日。**欠席にも成立にも数えない。**
 ///

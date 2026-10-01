@@ -21,27 +21,45 @@ import 'package:flutter_pcm_sound/flutter_pcm_sound.dart';
 /// `gemini_live` の example はターン全体をバッファして WAV ヘッダを付けてから
 /// `audioplayers` で鳴らす。生成が終わるまで一切音が出ないので、会話には使えない。
 class PcmPlayer {
-  PcmPlayer({PcmSink? sink}) : _sink = sink ?? const FlutterPcmSink();
+  PcmPlayer({PcmSink? sink, this.playbackSampleRate = sampleRate})
+    : assert(playbackSampleRate > 0),
+      _sink = sink ?? const FlutterPcmSink();
 
   final PcmSink _sink;
 
   /// Gemini Live の出力レート。入力の 16kHz とは違うので取り違えないこと。
   static const int sampleRate = 24000;
 
+  /// このインスタンスが再生するPCMのサンプルレート。
+  ///
+  /// Live音声は既定の24kHz。端末マイクをそのまま聞き返す用途だけ、入力と同じ
+  /// 16kHzを明示する。PCMを別レートとして再生すると声の高さと長さが変わるため、
+  /// 暗黙の変換はしない。
+  final int playbackSampleRate;
+
   /// native のキューがこれを下回ったら補充する。
-  static const int _thresholdFrames = 1200; // 50ms @24kHz
+  int get _thresholdFrames => playbackSampleRate ~/ 20; // 50ms
 
   /// 1回の補充量。
-  static const int _chunkFrames = 1200; // 50ms @24kHz
+  int get _chunkFrames => playbackSampleRate ~/ 20; // 50ms
 
   /// 割り込み時に鳴り残る最大時間。**この値が割り込みの体感を決める。**
   static Duration get maxResidual => Duration(
-      microseconds:
-          ((_thresholdFrames + _chunkFrames) * 1000000 / sampleRate).round());
+    microseconds: ((sampleRate ~/ 10) * 1000000 / sampleRate).round(),
+  );
+
+  Duration get configuredMaxResidual => Duration(
+    microseconds:
+        ((_thresholdFrames + _chunkFrames) * 1000000 / playbackSampleRate)
+            .round(),
+  );
 
   final Queue<Uint8List> _pending = Queue<Uint8List>();
   final _level = StreamController<double>.broadcast();
   int _pendingBytes = 0;
+  Completer<bool>? _trackedDrain;
+  bool _trackedDrainFed = false;
+  int _trackedDrainFeedsInFlight = 0;
   bool _ready = false;
   bool _disposed = false;
 
@@ -62,7 +80,7 @@ class PcmPlayer {
   Future<void> init() async {
     if (_ready || _disposed) return;
     await _sink.setLogLevel(LogLevel.none);
-    await _sink.setup(sampleRate: sampleRate, channelCount: 1);
+    await _sink.setup(sampleRate: playbackSampleRate, channelCount: 1);
     await _sink.setFeedThreshold(_thresholdFrames);
     _sink.setFeedCallback(_onFeed);
     _ready = true;
@@ -80,12 +98,33 @@ class PcmPlayer {
     _sink.start();
   }
 
+  /// 1件のPCMを積み、nativeへ実際にfeedされたあとキューが空になるまで追跡する。
+  ///
+  /// 返るFutureがtrueになるのは、少なくとも1回[PcmSink.feed]へ渡し、その後の
+  /// native callbackが残り0 frameを報告した場合だけ。[stopNow]・[dispose]・次の
+  /// 追跡開始ではfalseになる。時間の推定だけで「聞き終えた」とは判定しない。
+  Future<bool> enqueueUntilDrained(Uint8List pcm) {
+    if (_disposed || pcm.length < 2) return Future<bool>.value(false);
+    _completeTrackedDrain(false);
+    final completer = Completer<bool>();
+    _trackedDrain = completer;
+    _trackedDrainFed = false;
+    try {
+      enqueue(pcm);
+    } catch (_) {
+      _completeTrackedDrain(false);
+      rethrow;
+    }
+    return completer.future;
+  }
+
   /// 割り込み。**再生待ちを捨てる。**
   ///
   /// すでに native に渡した分は鳴り切る（最大 [maxResidual]）。
   /// ここで `setup` をやり直せば即座に黙らせられるが、AudioTrack を作り直すので
   /// プツッと鳴るうえ、次の発話までの遅延が増える。割り切って捨てるだけにする。
   void stopNow() {
+    _completeTrackedDrain(false);
     _pending.clear();
     _pendingBytes = 0;
     // 捨てた瞬間に静かになったことを伝える。
@@ -97,23 +136,62 @@ class PcmPlayer {
     if (_disposed) return;
     stopNow();
     _disposed = true;
-    _sink.setFeedCallback(null);
-    if (_ready) await _sink.release();
+    if (_ready) {
+      _sink.setFeedCallback(null);
+      await _sink.release();
+    }
     _ready = false;
     await _level.close();
   }
 
   /// native から「キューが減った」と呼ばれる。要求量だけ渡す。
   void _onFeed(int remainingFrames) {
+    unawaited(_feedNext(remainingFrames));
+  }
+
+  Future<void> _feedNext(int remainingFrames) async {
     if (_disposed) return;
     final chunk = _take(_chunkFrames * 2);
     if (chunk == null) {
       // 渡すものが無い＝鳴り終わる。次の enqueue で start() が掛かる
       _level.add(0);
+      if (_trackedDrainFed &&
+          _trackedDrainFeedsInFlight == 0 &&
+          remainingFrames <= 0) {
+        _completeTrackedDrain(true);
+      }
       return;
     }
     _level.add(_peakOf(chunk));
-    _sink.feed(PcmArrayInt16(bytes: ByteData.sublistView(chunk)));
+    final tracker = _trackedDrain;
+    if (tracker != null && identical(_trackedDrain, tracker)) {
+      _trackedDrainFeedsInFlight++;
+    }
+    try {
+      await _sink.feed(PcmArrayInt16(bytes: ByteData.sublistView(chunk)));
+      // feed()を呼んだだけではnativeへ渡せた証拠にならない。非同期処理が実際に
+      // 完了し、かつ同じ追跡再生がまだ有効な場合だけdrain可能にする。
+      if (tracker != null && identical(_trackedDrain, tracker)) {
+        _trackedDrainFeedsInFlight--;
+        _trackedDrainFed = true;
+      }
+    } catch (_) {
+      if (tracker != null && identical(_trackedDrain, tracker)) {
+        _trackedDrainFeedsInFlight--;
+        _completeTrackedDrain(false);
+      }
+      // native callback上へ例外を投げ直すと呼び出し元のawaitでは回収できない。
+      // 追跡Futureをfalse完了し、所有側がfailedへ閉じる。
+      return;
+    }
+  }
+
+  void _completeTrackedDrain(bool completed) {
+    final tracker = _trackedDrain;
+    _trackedDrain = null;
+    _trackedDrainFed = false;
+    _trackedDrainFeedsInFlight = 0;
+    if (tracker != null && !tracker.isCompleted) tracker.complete(completed);
   }
 
   /// PCM16 リトルエンディアンのピークを 0.0〜1.0 で返す。
@@ -163,7 +241,7 @@ abstract class PcmSink {
   Future<void> setup({required int sampleRate, required int channelCount});
   Future<void> setFeedThreshold(int frames);
   void setFeedCallback(void Function(int remainingFrames)? cb);
-  void feed(PcmArrayInt16 buffer);
+  Future<void> feed(PcmArrayInt16 buffer);
   void start();
   Future<void> release();
 }
@@ -172,7 +250,8 @@ class FlutterPcmSink implements PcmSink {
   const FlutterPcmSink();
 
   @override
-  Future<void> setLogLevel(LogLevel level) => FlutterPcmSound.setLogLevel(level);
+  Future<void> setLogLevel(LogLevel level) =>
+      FlutterPcmSound.setLogLevel(level);
 
   @override
   Future<void> setup({required int sampleRate, required int channelCount}) =>
@@ -192,7 +271,7 @@ class FlutterPcmSink implements PcmSink {
       FlutterPcmSound.setFeedCallback(cb);
 
   @override
-  void feed(PcmArrayInt16 buffer) => FlutterPcmSound.feed(buffer);
+  Future<void> feed(PcmArrayInt16 buffer) => FlutterPcmSound.feed(buffer);
 
   @override
   void start() => FlutterPcmSound.start();
