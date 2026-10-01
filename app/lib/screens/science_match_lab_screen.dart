@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import 'dart:async';
 
 import '../config/app_language.dart';
@@ -307,7 +308,7 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
               backgroundColor: colors.canvas,
               foregroundColor: colors.ink,
               title: Text(
-                '対応づけ実験',
+                localize.t('対応づけ実験', "Matching Lab"),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
@@ -346,7 +347,10 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  対応づけ実験  /  任意',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  対応づけ実験  /  任意',
+            "LAB BRIEF / MATCHING LAB / OPTIONAL",
+          ),
           title: widget.conceptLabel,
           body: t(
             '${widget.content.pairs.length}組を$_initialSeconds秒で結びます。',
@@ -361,9 +365,15 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
         ScienceChallengeSurface(
           label: t('時間切れは失点なし', 'No penalty for running out of time'),
           icon: Icons.shield_outlined,
-          child: const Text(
-            '時間切れでは試行余力は減りません。組み合わせの誤答だけ、個人モードでは試行余力が1つ減ります。'
-            '探究ノート・連続観測・報酬は変わらず、学校モードは試行余力が無制限です。',
+          child: Text(
+            localize.t(
+                  '時間切れでは試行余力は減りません。組み合わせの誤答だけ、個人モードでは試行余力が1つ減ります。',
+                  "Timeouts cost no hearts. Only incorrect matches cost one heart in personal mode. ",
+                ) +
+                localize.t(
+                  '探究ノート・連続観測・報酬は変わらず、学校モードは試行余力が無制限です。',
+                  "Your learning path, streak and rewards stay unchanged. School mode has unlimited hearts.",
+                ),
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
@@ -474,7 +484,10 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  対応づけ実験  /  記録',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  対応づけ実験  /  記録',
+            "LAB BRIEF / MATCHING LAB / RECORD",
+          ),
           title: title,
           body: body,
           icon: cleared

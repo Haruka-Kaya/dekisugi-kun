@@ -5,14 +5,14 @@ predict an outcome, read the evidence, close the material, and explain the idea
 in your own words. A fixed follow-up asks you to apply it to a new case.
 
 **Next Gen reviewers:** [start here](docs/nextgen-review-guide.md) ·
-[English demo](docs/shipaton-demo-2026/shipaton-demo-v11.mp4) ·
+[English demo](docs/shipaton-demo-2026/shipaton-demo-v12.mp4) ·
 [product overview](docs/product-overview-en.md) · [MIT license](LICENSE).
 
-![English native demo](docs/shipaton-demo-2026/shipaton-demo-v11-poster.jpg)
+![English native demo](docs/shipaton-demo-2026/shipaton-demo-v12-poster.jpg)
 
 The video shows the current native Android app on an emulator, with editorial
 English narration and captions. It includes a completed **RevenueCat Test Store**
-purchase, an equipped Aurora Cape and a parent report; no real charge occurred.
+purchase and a family review report; no real charge occurred.
 The core lessons remain free. External generative AI is disabled.
 
 The core works offline, without an account or LLM grading. Free explanations and
@@ -21,10 +21,11 @@ record uses cataloged need codes. A matching repair activity can resolve an
 observed need. Rewriting alone does not mark it corrected.
 
 - **Built:** native Flutter Field Notebook UI; 12 units / 35 concepts; fixed
-  follow-ups, hint/retry, review; RevenueCat purchase and restore integration.
-- **English:** curriculum and main learning flow available; some secondary UI
-  labels remain Japanese.
-- **Evidence:** integrated baseline of 1,337 app and 399 server tests; real
+  follow-ups, hint/retry, review and a free understanding check; RevenueCat
+  purchase and restore with a local family review plan and shareable report.
+- **English:** curriculum, primary and secondary learning UI, and accessibility
+  descriptions are available in English.
+- **Evidence:** 1,340 app and 399 server tests; real
   native emulator interactions. Physical-device voice QA and learner pilots
   remain open. No measured learning gain or school rollout is claimed.
 
@@ -93,7 +94,7 @@ From the repository root:
 | 中断と再開 | 動く |
 | 文字での説明 | 動く。**音声と対等**。本人の明示再読を経て同じ固定問い返しへ進む |
 | iOS / iPadOS | **iPhone / iPad Simulatorで動作確認済み**。物理端末の音声は未確認 |
-| 任意の Plus 購入 | RevenueCat Test Storeで購入確認→端末内オーロラマント付与・装備→保護者レポート表示をAndroidエミュレーターで確認。現行UIの英語デモは [v11](docs/shipaton-demo-2026/README.md)。会話枠のサーバー反映は未確認。本番ストア鍵とwebhookは配布時に切替（`docs/monetization-setup.md`） |
+| 任意の Plus 購入 | RevenueCat Test Storeで購入確認→端末内オーロラマント付与・装備→保護者レポート表示をAndroidエミュレーターで確認。現行UIの英語デモは [v12](docs/shipaton-demo-2026/README.md)。会話枠のサーバー反映は未確認。本番ストア鍵とwebhookは配布時に切替（`docs/monetization-setup.md`） |
 | 通信しない端末内モード | 同梱教材→想起→条件／理由→具体場面→Teach-back→固定checkpointまで動く。**自由記述・音声・選択内容の送信／永続保存、自動採点、習得認定なし**。固定教材ID、進行・再開状態、完了日時、端末内報酬など必要最小限の状態だけを端末内に保存 |
 | 探究ノート型学習UI | 独自のField Notebookとして「探究／事件／実験／図解／共同／研究室」の6領域を実装。円形マスと蛇行を廃止した左の実験レール＋横長の探究ログ、全面彩色でないLab Brief、観測日／結晶／試行／予定の研究計器、放射・紙吹雪なしの観察記録票を使う。学習画面へ入っても戻る／研究計器HUDを保持し、デキすぎ君は開始・思考・訂正・完了で反応を変える。保存成功後だけ実際の探究記録・結晶・今回時間を返す。Android / iOSのアイコンと起動画面も同じruntimeキャラクター正本から生成する。**最新画面のAndroid / iOS物理端末目視と初見学習者pilotは未実施** |
 | クラスの合計（チーム戦） | **実機で確認済み**（参加・表示） |
@@ -332,7 +333,7 @@ DEKISUGI_LIVE=1 npx tsx --test test/jailbreak.live.test.ts  # 役を降ろせる
 ## 検証
 
 ```
-app    1337 件   flutter test
+app    1340 件   flutter test
 server  399 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
 ```
 

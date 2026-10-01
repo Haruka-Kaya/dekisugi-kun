@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
@@ -283,7 +284,7 @@ class _ScienceUnitLegendaryScreenState
               backgroundColor: colors.canvas,
               foregroundColor: colors.ink,
               title: Text(
-                '単元の高難度検証',
+                localize.t('単元の高難度検証', "Unit Advanced Check"),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
@@ -332,7 +333,10 @@ class _ScienceUnitLegendaryScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  単元の高難度検証  /  準備中',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  単元の高難度検証  /  準備中',
+            "LAB BRIEF / UNIT ADVANCED CHECK / PREPARING",
+          ),
           title: widget.unitTitle,
           body: lang.t(
             'この単元の全総合検証を終えた、次の学習日から開きます。',
@@ -365,7 +369,10 @@ class _ScienceUnitLegendaryScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  単元の高難度検証  /  $_questionNumber/$_questionCount',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  単元の高難度検証  /  $_questionNumber/$_questionCount',
+            'LAB BRIEF / UNIT ADVANCED CHECK / $_questionNumber/$_questionCount',
+          ),
           title: _challenge.conceptLabel,
           body: lang.t(
             '単元内${widget.challenges.length}概念を横断します。全問を確定するまで正本は開きません。',
@@ -414,7 +421,10 @@ class _ScienceUnitLegendaryScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  単元の高難度検証  /  $_questionNumber/$_questionCount',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  単元の高難度検証  /  $_questionNumber/$_questionCount',
+            'LAB BRIEF / UNIT ADVANCED CHECK / $_questionNumber/$_questionCount',
+          ),
           title: lang.t(
             '${_challenge.conceptLabel}の思い込み',
             'Misconception about ${_challenge.conceptLabel}',
@@ -477,7 +487,10 @@ class _ScienceUnitLegendaryScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  単元の高難度検証  /  比較',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  単元の高難度検証  /  比較',
+            "LAB BRIEF / UNIT ADVANCED CHECK / COMPARING",
+          ),
           title: lang.t(
             '単元全体を正本と比べる',
             'Compare the whole unit with model answers',
@@ -575,7 +588,10 @@ class _ScienceUnitLegendaryScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  単元の高難度検証  /  記録',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  単元の高難度検証  /  記録',
+            "LAB BRIEF / UNIT ADVANCED CHECK / RECORD",
+          ),
           title: _cleared
               ? lang.t('単元の高難度検証を完了', 'Unit advanced challenge cleared')
               : _stoppedAfterWrong

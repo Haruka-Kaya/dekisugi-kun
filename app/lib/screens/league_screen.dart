@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
@@ -180,8 +181,14 @@ class _LocalLeagueHistoryRow extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${week.tier.displayLabel} ・ $rankLabel ・ '
-                      '観察${week.meaningfulEventCount}件',
+                      localize.t(
+                            '${week.tier.displayLabel} ・ $rankLabel ・ ',
+                            '${week.tier.displayLabel} · $rankLabel · ',
+                          ) +
+                          localize.t(
+                            '観察${week.meaningfulEventCount}件',
+                            '${week.meaningfulEventCount} observations',
+                          ),
                       style: t.textTheme.titleSmall
                           ?.copyWith(color: colors.ink)
                           .jaWeight(FontWeight.w800),

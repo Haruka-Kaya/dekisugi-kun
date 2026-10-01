@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import 'dart:async';
 
 import '../config/app_language.dart' as lang;
@@ -615,8 +616,10 @@ class _PracticeHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ScienceChallengeHeader(
-              eyebrow:
-                  'ラボ・ブリーフ  /  総合検証  /  ${practiceStage.label}  /  $step/4',
+              eyebrow: localize.t(
+                'ラボ・ブリーフ  /  総合検証  /  ${practiceStage.label}  /  $step/4',
+                'LAB BRIEF / COMBINED CHECK / ${practiceStage.label}  /  $step/4',
+              ),
               title: conceptLabel,
               body: _missionLabel,
               icon: Icons.fitness_center_rounded,
@@ -1381,7 +1384,7 @@ class _StepTitle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '手順 $number',
+          localize.t('手順 $number', 'Step $number'),
           style: t.textTheme.labelMedium
               ?.copyWith(color: colors.pathReview)
               .jaWeight(FontWeight.w700),
@@ -1560,7 +1563,10 @@ class _Completion extends StatelessWidget {
         children: [
           ExcludeSemantics(
             child: ScienceChallengeHeader(
-              eyebrow: 'ラボ・ブリーフ  /  総合検証  /  記録',
+              eyebrow: localize.t(
+                'ラボ・ブリーフ  /  総合検証  /  記録',
+                "LAB BRIEF / COMBINED CHECK / RECORD",
+              ),
               title: conceptLabel,
               body: lang.t(
                 '自分で組んだ答えと教材の組み方を比べ、この課題を最後まで見直しました。',

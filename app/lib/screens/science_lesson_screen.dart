@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
@@ -157,7 +158,10 @@ class _ScienceLessonScreenState extends State<ScienceLessonScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '教材観察  /  ${widget.conceptLabel}',
+                            localize.t(
+                              '教材観察  /  ${widget.conceptLabel}',
+                              'MATERIAL EXPLORATION / ${widget.conceptLabel}',
+                            ),
                             style: Theme.of(context).textTheme.labelLarge
                                 ?.copyWith(
                                   color: context.gamePalette.pathActive,
@@ -359,7 +363,10 @@ class _ReadingStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _LessonLayout(
-    eyebrow: t('観察手順 2 / 3  ・  教材を読む', 'Observation 2 / 3  ·  Read the material'),
+    eyebrow: t(
+      '観察手順 2 / 3  ・  教材を読む',
+      'Observation 2 / 3  ·  Read the material',
+    ),
     title: section.title,
     body: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -370,8 +377,13 @@ class _ReadingStep extends StatelessWidget {
           key: const ValueKey('science-lesson-full-text'),
           tilePadding: const EdgeInsets.symmetric(horizontal: 14),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          title: Text('教材をくわしく読む'),
-          subtitle: Text('本文を開いて、言葉や条件を確かめられます。'),
+          title: Text(localize.t('教材をくわしく読む', "Read the full material")),
+          subtitle: Text(
+            localize.t(
+              '本文を開いて、言葉や条件を確かめられます。',
+              "Open the text to check terms and conditions.",
+            ),
+          ),
           children: [
             for (final paragraph in section.body) ...[
               Align(
@@ -742,7 +754,7 @@ class _DeferLessonButton extends StatelessWidget {
     key: const ValueKey('science-lesson-defer'),
     onPressed: onPressed,
     icon: const Icon(Icons.bookmark_add_outlined),
-    label: Text('このステップは後でやる'),
+    label: Text(localize.t('このステップは後でやる', "Do this step later")),
   );
 }
 

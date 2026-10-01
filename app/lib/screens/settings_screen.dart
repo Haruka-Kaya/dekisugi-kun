@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'understanding_check_screen.dart';
+
 import '../config/app_language.dart' as l10n;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
@@ -53,9 +55,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final ok = await widget.reminders.requestPermission();
       if (!ok) {
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(l10n.t('端末の設定で通知が切られています。', 'Notifications are turned off in your device settings.'))));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n.t(
+                  '端末の設定で通知が切られています。',
+                  'Notifications are turned off in your device settings.',
+                ),
+              ),
+            ),
+          );
         }
         return;
       }
@@ -100,10 +109,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   StudioPageIntro(
                     eyebrow: l10n.t('毎日のペース', 'Daily pace'),
-                    title: l10n.t('思い出すきっかけを、\nそっと一つだけ。', 'Just one gentle\nreminder.'),
-                    body:
-                        l10n.t('デキすぎ君は、何度も呼び戻しません。'
-                        '続きがある日に、1日1回だけ端末から知らせます。', 'Dekisugi-kun won\'t keep calling you back. ' 'On days you have something left, your device reminds you just once.'),
+                    title: l10n.t(
+                      '思い出すきっかけを、\nそっと一つだけ。',
+                      'Just one gentle\nreminder.',
+                    ),
+                    body: l10n.t(
+                      'デキすぎ君は、何度も呼び戻しません。'
+                          '続きがある日に、1日1回だけ端末から知らせます。',
+                      'Dekisugi-kun won\'t keep calling you back. '
+                          'On days you have something left, your device reminds you just once.',
+                    ),
                   ),
                   const SizedBox(height: 22),
                   _ReminderStudio(
@@ -114,17 +129,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 14),
                   const AppLanguageTile(),
+                  const SizedBox(height: 14),
+                  StudioActionTile(
+                    icon: Icons.science_outlined,
+                    title: l10n.t('理解を確かめる（無料）', 'Understanding check · Free'),
+                    description: l10n.t(
+                      '学ぶ前・教えた後・新しい場面を、保存せずに確かめる',
+                      'Compare before, after teaching, and a new situation. Nothing is saved.',
+                    ),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const UnderstandingCheckScreen(),
+                      ),
+                    ),
+                  ),
                   if (widget.onOpenPlus case final openPlus?) ...[
                     const SizedBox(height: 24),
                     StudioSectionHeader(
                       title: l10n.t('Plus（応援プラン）', 'Plus (supporter plan)'),
-                      description: l10n.t('無料の学び方は変えません。Plusは限定の見た目を受け取る応援プランです。', 'Learning stays free. Plus is a supporter plan that unlocks exclusive looks.'),
+                      description: l10n.t(
+                        '学びは無料。Plusは保護者と復習するためのプランです。',
+                        'Learning stays free. Plus helps families plan the next review.',
+                      ),
                     ),
                     const SizedBox(height: 12),
                     StudioActionTile(
                       icon: Icons.forum_outlined,
                       title: l10n.t('デキすぎ君 Plus', 'Dekisugi-kun Plus'),
-                      description: l10n.t('無料で全部学べます。Plusは限定マスコットの応援プラン', 'Everything is free to learn. Plus is a supporter plan with an exclusive mascot'),
+                      description: l10n.t(
+                        '保護者向け復習プラン・共有レポート・限定マスコット',
+                        'Family review plan, shareable report, and exclusive mascot',
+                      ),
                       onTap: () => unawaited(openPlus()),
                       warm: true,
                     ),
@@ -160,8 +195,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          l10n.t('お知らせは1日1回までです。考査が近づいても増えません。\n'
-                          '終わった日と、考査の前日・当日には送りません。', 'At most one reminder a day, even as exams get closer.\n' 'None on days you\'ve finished, or the day before or of an exam.'),
+                          l10n.t(
+                            'お知らせは1日1回までです。考査が近づいても増えません。\n'
+                                '終わった日と、考査の前日・当日には送りません。',
+                            'At most one reminder a day, even as exams get closer.\n'
+                                'None on days you\'ve finished, or the day before or of an exam.',
+                          ),
                           style: t.textTheme.bodySmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),
@@ -230,7 +269,10 @@ class _ReminderStudio extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        l10n.t('通知の主語は「やり残しがある」という事実だけです。', 'Reminders only say one thing: "there\'s something left to do."'),
+                        l10n.t(
+                          '通知の主語は「やり残しがある」という事実だけです。',
+                          'Reminders only say one thing: "there\'s something left to do."',
+                        ),
                         style: t.textTheme.bodySmall?.copyWith(
                           color: c.onCoolSurface.withValues(alpha: 0.82),
                         ),
@@ -253,7 +295,10 @@ class _ReminderStudio extends StatelessWidget {
                     .jaWeight(FontWeight.w700),
               ),
               subtitle: Text(
-                l10n.t('1日1回だけ。残っているところをお知らせします。', 'Once a day. We\'ll tell you what\'s left.'),
+                l10n.t(
+                  '1日1回だけ。残っているところをお知らせします。',
+                  'Once a day. We\'ll tell you what\'s left.',
+                ),
                 style: t.textTheme.bodySmall?.copyWith(
                   color: c.onCoolSurface.withValues(alpha: 0.82),
                 ),

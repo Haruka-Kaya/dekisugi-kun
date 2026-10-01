@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import 'dart:async';
 
 import '../config/app_language.dart' as l10n;
@@ -206,7 +207,10 @@ class _ConsentScreenState extends State<ConsentScreen> {
               const StudioWordmark(),
               const SizedBox(height: 24),
               Text(
-                'はじめる前の確認  ${_step.index + 1} / ${_ConsentStep.values.length}',
+                localize.t(
+                  'はじめる前の確認  ${_step.index + 1} / ${_ConsentStep.values.length}',
+                  'BEFORE YOU START ${_step.index + 1} / ${_ConsentStep.values.length}',
+                ),
                 style: t.textTheme.labelLarge
                     ?.copyWith(color: context.gamePalette.pathActive)
                     .jaWeight(FontWeight.w800),
@@ -344,7 +348,9 @@ class _ConsentScreenState extends State<ConsentScreen> {
                 OutlinedButton.icon(
                   onPressed: _previous,
                   icon: const Icon(Icons.arrow_back),
-                  label: Text('前の確認へ戻る'),
+                  label: Text(
+                    localize.t('前の確認へ戻る', "Back to the previous check"),
+                  ),
                 ),
               ] else ...[
                 if (_step != _ConsentStep.age)
@@ -352,7 +358,9 @@ class _ConsentScreenState extends State<ConsentScreen> {
                     key: const ValueKey('consent-previous'),
                     onPressed: _busy ? null : _previous,
                     icon: const Icon(Icons.arrow_back),
-                    label: Text('前の確認へ戻る'),
+                    label: Text(
+                      localize.t('前の確認へ戻る', "Back to the previous check"),
+                    ),
                   ),
                 if (_step != _ConsentStep.age) const SizedBox(height: 10),
                 FilledButton.icon(

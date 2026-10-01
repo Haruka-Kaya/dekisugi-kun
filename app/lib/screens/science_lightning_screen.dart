@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import 'dart:async';
 
 import '../config/app_language.dart';
@@ -319,7 +320,7 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
               backgroundColor: colors.canvas,
               foregroundColor: colors.ink,
               title: Text(
-                '連続観察',
+                localize.t('連続観察', "Observation Sprint"),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
@@ -358,7 +359,10 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  連続観察  /  任意',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  連続観察  /  任意',
+            "LAB BRIEF / OBSERVATION SPRINT / OPTIONAL",
+          ),
           title: widget.conceptLabel,
           body: t(
             '${widget.content.questions.length}問の固定列を$_initialSeconds秒で解きます。',
@@ -373,9 +377,15 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
         ScienceChallengeSurface(
           label: t('速さより、根拠', 'Reasons over speed'),
           icon: Icons.shield_outlined,
-          child: const Text(
-            '誤答か時間切れでその観察は終了します。時間切れでは試行余力は減らず、固定問題の誤答だけ、'
-            '個人モードでは1つ減ります。探究ノート・連続観測・報酬は変わらず、学校モードは試行余力が無制限です。',
+          child: Text(
+            localize.t(
+                  '誤答か時間切れでその観察は終了します。時間切れでは試行余力は減らず、固定問題の誤答だけ、',
+                  "A wrong answer or timeout ends the observation. Timeouts cost no hearts. Only a wrong answer to a fixed question ",
+                ) +
+                localize.t(
+                  '個人モードでは1つ減ります。探究ノート・連続観測・報酬は変わらず、学校モードは試行余力が無制限です。',
+                  "costs one heart in personal mode. Your learning path, streak and rewards stay unchanged. School mode has unlimited hearts.",
+                ),
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
@@ -485,7 +495,10 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  連続観察  /  記録',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  連続観察  /  記録',
+            "LAB BRIEF / OBSERVATION SPRINT / RECORD",
+          ),
           title: title,
           body: body,
           icon: cleared

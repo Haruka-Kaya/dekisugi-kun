@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -307,7 +308,7 @@ class _ObservationRecordHeader extends StatelessWidget {
                           const SizedBox(width: GameTokens.spaceSm),
                           Expanded(
                             child: Text(
-                              '観察記録を保存しました',
+                              localize.t('観察記録を保存しました', "Observation saved"),
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(color: colors.ink)
                                   .jaWeight(FontWeight.w900),

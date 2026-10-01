@@ -23,15 +23,12 @@ class AppLanguageTile extends StatelessWidget {
         title: Text(t('表示言語', 'Language')),
         trailing: SegmentedButton<AppLanguage>(
           showSelectedIcon: false,
-          segments: const [
+          segments: [
             ButtonSegment(
               value: AppLanguage.ja,
-              label: Text('日本語'),
+              label: Text(t('日本語', 'Japanese')),
             ),
-            ButtonSegment(
-              value: AppLanguage.en,
-              label: Text('EN'),
-            ),
+            const ButtonSegment(value: AppLanguage.en, label: Text('EN')),
           ],
           selected: {controller.language},
           onSelectionChanged: (selection) {

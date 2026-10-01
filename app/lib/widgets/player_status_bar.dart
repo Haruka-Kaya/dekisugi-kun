@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
@@ -354,7 +355,9 @@ class _QuestButton extends StatelessWidget {
               onTap: onTap,
               child: SizedBox(
                 width: 58,
-                height: 58,
+                height: (32 + MediaQuery.textScalerOf(context).scale(13)) < 58
+                    ? 58
+                    : 32 + MediaQuery.textScalerOf(context).scale(13),
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
@@ -368,7 +371,9 @@ class _QuestButton extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '予定',
+                          localize.t('予定', "Plan"),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(color: colors.inkMuted, height: 1)
                               .jaWeight(FontWeight.w600),
@@ -620,8 +625,14 @@ class _QuestCard extends StatelessWidget {
             : lang.t('記録済み', 'Completed'),
     };
     final semantic =
-        '$kindの観察予定、${quest.title}。${quest.description}。'
-        '${quest.target}回中${quest.current}回。$state';
+        localize.t(
+          '$kindの観察予定、${quest.title}。${quest.description}。',
+          '$kind observation plan, ${quest.title}. ${quest.description}. ',
+        ) +
+        localize.t(
+          '${quest.target}回中${quest.current}回。$state',
+          '${quest.target} total, ${quest.current}. $state',
+        );
 
     return Semantics(
       container: true,
@@ -714,7 +725,10 @@ class _QuestCard extends StatelessWidget {
                     const SizedBox(height: GameTokens.spaceSm),
                     TextButton(
                       onPressed: onTap,
-                      child: Text(quest.actionLabel ?? 'この予定を開く'),
+                      child: Text(
+                        quest.actionLabel ??
+                            localize.t('この予定を開く', "Open this plan"),
+                      ),
                     ),
                   ],
                 ],

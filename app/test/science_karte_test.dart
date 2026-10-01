@@ -165,18 +165,12 @@ void main() {
     });
 
     test('needCodeの接尾辞が日本語の種類ラベルに写る', () {
-      expect(
-        learningKarteNeedKindLabel('science.fall.foundation'),
-        '仕組みの土台',
-      );
+      expect(learningKarteNeedKindLabel('science.fall.foundation'), '仕組みの土台');
       expect(
         learningKarteNeedKindLabel('science.fall.notation.graphRead'),
         'グラフの読み取り',
       );
-      expect(
-        learningKarteNeedKindLabel('science.fall.unknown'),
-        'unknown',
-      );
+      expect(learningKarteNeedKindLabel('science.fall.unknown'), 'unknown');
     });
   });
 
@@ -253,10 +247,7 @@ void main() {
       expect(find.text('デキすぎ君のカルテ'), findsOneWidget);
       expect(find.textContaining('迷い中 1'), findsOneWidget);
       expect(find.text('落下'), findsOneWidget);
-      expect(
-        find.textContaining('止まっている物には力がはたらかない'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('止まっている物には力がはたらかない'), findsOneWidget);
       expect(find.text('仕組みの土台'), findsOneWidget);
       expect(find.text('迷い中'), findsWidgets);
       await tester.scrollUntilVisible(
@@ -306,9 +297,7 @@ void main() {
       expect(find.textContaining('つり合っている'), findsOneWidget);
     });
 
-    testWidgets('paywall導線が無ければ保護者レポートカード自体を出さない', (
-      tester,
-    ) async {
+    testWidgets('paywall導線が無ければ保護者レポートカード自体を出さない', (tester) async {
       final store = MemorySessionStore();
       await tester.pumpWidget(wrap(store));
       await tester.pumpAndSettle();
@@ -319,32 +308,21 @@ void main() {
       );
     });
 
-    testWidgets('サポーターでなければレポートカードはpaywallへ橋渡しする', (
-      tester,
-    ) async {
+    testWidgets('サポーターでなければレポートカードはpaywallへ橋渡しする', (tester) async {
       final store = MemorySessionStore();
       var plusOpened = 0;
-      await tester.pumpWidget(
-        wrap(store, onOpenPlus: () => plusOpened++),
-      );
+      await tester.pumpWidget(wrap(store, onOpenPlus: () => plusOpened++));
       await tester.pumpAndSettle();
 
       expect(find.text('Plusサポーター特典'), findsOneWidget);
-      await tester.tap(
-        find.byKey(const ValueKey('science-karte-report-plus')),
-      );
+      await tester.tap(find.byKey(const ValueKey('science-karte-report-plus')));
       await tester.pumpAndSettle();
 
       expect(plusOpened, 1);
-      expect(
-        find.byKey(const ValueKey('science-karte-report')),
-        findsNothing,
-      );
+      expect(find.byKey(const ValueKey('science-karte-report')), findsNothing);
     });
 
-    testWidgets('サポーターは保護者レポートを開いて思い込みの変化を見られる', (
-      tester,
-    ) async {
+    testWidgets('サポーターは保護者レポートを開いて思い込みの変化を見られる', (tester) async {
       final store = MemorySessionStore();
       await store.commitLearningEvent(
         needEvent(
@@ -382,24 +360,25 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Plusサポーター特典'), findsNothing);
-      await tester.tap(
-        find.byKey(const ValueKey('science-karte-report-open')),
-      );
+      await tester.tap(find.byKey(const ValueKey('science-karte-report-open')));
       await tester.pumpAndSettle();
 
       expect(
         find.byKey(const ValueKey('science-karte-report')),
         findsOneWidget,
       );
-      expect(
+      expect(find.byKey(const ValueKey('family-review-plan')), findsOneWidget);
+      await tester.scrollUntilVisible(
         find.text('お子さまの説明で分かってもらえた思い込み（1件）'),
-        findsOneWidget,
+        250,
       );
-      expect(
-        find.textContaining('止まっている物には力がはたらかない'),
-        findsWidgets,
-      );
+      expect(find.text('お子さまの説明で分かってもらえた思い込み（1件）'), findsOneWidget);
+      expect(find.textContaining('止まっている物には力がはたらかない'), findsWidgets);
       expect(find.textContaining('つり合っている'), findsWidgets);
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('science-karte-report-copy')),
+        250,
+      );
       expect(
         find.byKey(const ValueKey('science-karte-report-copy')),
         findsOneWidget,

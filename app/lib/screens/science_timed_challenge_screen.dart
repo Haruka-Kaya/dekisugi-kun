@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import 'dart:async';
 
 import '../config/app_language.dart';
@@ -391,7 +392,10 @@ class _TimedIntro extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  時間観察  /  任意',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  時間観察  /  任意',
+            "LAB BRIEF / TIME CHALLENGE / OPTIONAL",
+          ),
           title: conceptLabel,
           body: t(
             '固定の2問を$seconds秒で解きます。速さは学習の代わりにはなりません。',
@@ -406,9 +410,15 @@ class _TimedIntro extends StatelessWidget {
         ScienceChallengeSurface(
           label: t('時間切れは失点なし', 'No penalty for running out of time'),
           icon: Icons.shield_outlined,
-          child: const Text(
-            '時間切れでは試行余力は減りません。固定問題の誤答だけ、個人モードでは試行余力が1つ減ります。'
-            '探究ノート・連続観測・報酬・学校課題は変わらず、学校モードは試行余力が無制限です。',
+          child: Text(
+            localize.t(
+                  '時間切れでは試行余力は減りません。固定問題の誤答だけ、個人モードでは試行余力が1つ減ります。',
+                  "Timeouts cost no hearts. In personal mode, only wrong answers to fixed questions cost one heart. ",
+                ) +
+                localize.t(
+                  '探究ノート・連続観測・報酬・学校課題は変わらず、学校モードは試行余力が無制限です。',
+                  "Your learning path, streak, rewards and school assignments stay unchanged. School mode has unlimited hearts.",
+                ),
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
@@ -719,7 +729,10 @@ class _TimedResult extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  時間観察  /  記録',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  時間観察  /  記録',
+            "LAB BRIEF / TIME CHALLENGE / RECORD",
+          ),
           title: title,
           body: body,
           icon: icon,
@@ -760,9 +773,15 @@ class _TimedResult extends StatelessWidget {
         ScienceChallengeSurface(
           label: t('進行と報酬はそのまま', 'Progress and rewards unchanged'),
           icon: Icons.shield_outlined,
-          child: const Text(
-            '探究ノート・連続観測・報酬・学校課題は増減しません。時間切れでは試行余力も減らず、'
-            '固定問題に誤答した場合だけ個人モードの試行余力が1つ減ります。',
+          child: Text(
+            localize.t(
+                  '探究ノート・連続観測・報酬・学校課題は増減しません。時間切れでは試行余力も減らず、',
+                  "Your learning path, streak, rewards and school assignments stay unchanged. Timeouts cost no hearts. ",
+                ) +
+                localize.t(
+                  '固定問題に誤答した場合だけ個人モードの試行余力が1つ減ります。',
+                  "Only wrong answers to fixed questions cost one heart in personal mode.",
+                ),
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
