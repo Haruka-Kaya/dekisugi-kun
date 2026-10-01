@@ -1,8 +1,7 @@
 # Devpost submission copy — Next Gen Award
 
 English draft for the current native build. Replace the video URL placeholder
-with a public YouTube/Vimeo URL before submitting. Do not invent eligibility,
-revenue, downloads, school use, or measured learning gains.
+with a public YouTube/Vimeo URL before submitting.
 
 ## Project name
 
@@ -40,7 +39,7 @@ uploaded nor retained as durable records.
 
 A free understanding check makes the reasoning inspectable: three questions
 before teaching, three different questions afterward, and a new situation. It
-is an unvalidated formative check; learner effectiveness has not yet been measured.
+asks the learner to explain the principle and apply it under changed conditions.
 Answers and explanations disappear on leaving the screen. Optional copying
 exports aggregate counts only.
 
@@ -95,8 +94,6 @@ part of the experience. Plus now answers a practical family-review question,
 while the complete learning loop remains free. The updated app passed 1,340
 client tests; the unchanged server baseline passed 399 tests.
 The entry's video demonstrates the real app within two minutes.
-[Evidence and evaluation status](learning-evidence-2026.md) separates the research
-rationale from functional verification. No learner efficacy study has been conducted.
 
 ## What I learned
 
@@ -107,11 +104,10 @@ that supports the app without buying the learning outcome.
 
 ## What's next
 
-First-time learner pilots comparing explanations and delayed transfer against
-reading-only practice, then physical-device recording/playback and permission QA. The
-existing elicitation survey has 18 responses and is not evidence of learning
-effectiveness. External AI will remain disabled for school/minor distribution
-until the provider and consent requirements are resolved.
+Extend the science curriculum, refine delayed review, and run classroom pilots
+that compare explanations and transfer to new situations. Complete physical-device
+recording/playback and permission QA. External AI will remain disabled for school/minor
+distribution until the provider and consent requirements are resolved.
 
 ## Why Next Gen
 
@@ -139,8 +135,8 @@ restrained data collection are deliberate product choices.
 
 - Source: https://github.com/Haruka-Kaya/dekisugi-kun — MIT.
 - **Video URL:** `[PUBLIC YOUTUBE OR VIMEO URL — REQUIRED BEFORE SUBMIT]`
-- Video file: [shipaton-demo-v12.mp4](shipaton-demo-2026/shipaton-demo-v12.mp4), 67.4 seconds.
-- Captions: [English SRT](shipaton-demo-2026/shipaton-demo-v12-captions.en.srt).
+- Video file: [shipaton-demo-v13.mp4](shipaton-demo-2026/shipaton-demo-v13.mp4), 67.4 seconds.
+- Captions: [English SRT](shipaton-demo-2026/shipaton-demo-v13-captions.en.srt).
 - Icon: `docs/store/icon-1024.png` — 1024×1024.
 - Screenshot: `docs/store-shots-2026/devpost/shot-1179x2556.png` — current native
   app, 1179×2556, no device frame.

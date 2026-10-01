@@ -1,0 +1,157 @@
+{
+  "01-start": {
+    "shots": [
+      {
+        "file": "path.mp4",
+        "start": 0.2,
+        "duration": 3.2
+      },
+      {
+        "file": "source.mp4",
+        "start": 4,
+        "duration": 2.8
+      }
+    ]
+  },
+  "02-evidence": {
+    "shots": [
+      {
+        "file": "source.mp4",
+        "start": 68.8,
+        "duration": 2.5
+      },
+      {
+        "file": "material-motion.mp4",
+        "start": 0,
+        "duration": 3.9
+      }
+    ]
+  },
+  "03-hide": {
+    "shots": [
+      {
+        "file": "retained-explain.mp4",
+        "start": 0,
+        "duration": 3.2,
+        "crop_y": 300,
+        "crop_h": 1550
+      }
+    ]
+  },
+  "04-type": {
+    "shots": [
+      {
+        "file": "retained-explain.mp4",
+        "start": 25.3,
+        "duration": 8.8,
+        "speed": 1.25,
+        "crop_y": 300,
+        "crop_h": 1550
+      }
+    ]
+  },
+  "05-reflect": {
+    "shots": [
+      {
+        "file": "retained-explain.mp4",
+        "start": 76.7,
+        "duration": 2.3,
+        "crop_y": 300,
+        "crop_h": 1550
+      },
+      {
+        "file": "retained-explain.mp4",
+        "start": 128.5,
+        "duration": 2.9,
+        "crop_y": 300,
+        "crop_h": 1550
+      }
+    ]
+  },
+  "06-question": {
+    "shots": [
+      {
+        "file": "retained-followup.mp4",
+        "start": 1.6,
+        "duration": 3.2,
+        "crop_y": 300,
+        "crop_h": 1550
+      }
+    ]
+  },
+  "07-rethink": {
+    "shots": [
+      {
+        "file": "retained-wrong-pick.mp4",
+        "start": 1.8,
+        "duration": 3.2,
+        "crop_y": 300,
+        "crop_h": 1550
+      },
+      {
+        "file": "retained-hint.png",
+        "start": 0,
+        "duration": 2.1,
+        "crop_y": 300,
+        "crop_h": 1550
+      },
+      {
+        "file": "retained-retry-clean.png",
+        "start": 0,
+        "duration": 2.3,
+        "crop_y": 300,
+        "crop_h": 1550
+      }
+    ]
+  },
+  "08-record": {
+    "shots": [
+      {
+        "file": "retained-record.mp4",
+        "start": 1.2,
+        "duration": 3.2
+      }
+    ]
+  },
+  "09-plus": {
+    "shots": [
+      {
+        "file": "plus-current.mp4",
+        "start": 0.5,
+        "duration": 2
+      },
+      {
+        "file": "plus-current.mp4",
+        "start": 30,
+        "duration": 4
+      },
+      {
+        "file": "family-current.mp4",
+        "start": 2,
+        "duration": 6
+      },
+      {
+        "file": "family-current.mp4",
+        "start": 19.1,
+        "duration": 2.8
+      }
+    ]
+  },
+  "10-close": {
+    "duration": 2
+  },
+  "11-check": {
+    "shots": [
+      {
+        "file": "check-after.mp4",
+        "start": 10,
+        "duration": 3.5
+      },
+      {
+        "file": "check-after.mp4",
+        "start": 75.5,
+        "duration": 3.5
+      }
+    ]
+  }
+}

@@ -1,0 +1,264 @@
+{
+  "duration_seconds": 67.4,
+  "video": {
+    "codec": "h264",
+    "size": [
+      1080,
+      1920
+    ],
+    "frame_rate": "30/1",
+    "frames": 2022,
+    "pixel_format": "yuv420p"
+  },
+  "audio": {
+    "codec": "aac",
+    "channels": 2,
+    "sample_rate": "48000",
+    "background_music": false
+  },
+  "full_decode_exit_code": 0,
+  "unordered_dts_packets": 0,
+  "captions": {
+    "count": 18,
+    "minimum_hold_seconds": 1.195,
+    "matches_complete_narration": true
+  },
+  "source_hashes_match": true,
+  "source_timeline_frame_checks": [
+    {
+      "scene": "01-start",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 1.85
+    },
+    {
+      "scene": "01-start",
+      "shot": 0,
+      "local_seconds": 2.9,
+      "mean_absolute_rgb_error": 2.09
+    },
+    {
+      "scene": "01-start",
+      "shot": 1,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 1.953
+    },
+    {
+      "scene": "01-start",
+      "shot": 1,
+      "local_seconds": 2.5,
+      "mean_absolute_rgb_error": 1.966
+    },
+    {
+      "scene": "02-evidence",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 1.965
+    },
+    {
+      "scene": "02-evidence",
+      "shot": 0,
+      "local_seconds": 2.2,
+      "mean_absolute_rgb_error": 2.127
+    },
+    {
+      "scene": "02-evidence",
+      "shot": 1,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 2.69
+    },
+    {
+      "scene": "02-evidence",
+      "shot": 1,
+      "local_seconds": 3.6,
+      "mean_absolute_rgb_error": 2.141
+    },
+    {
+      "scene": "03-hide",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 2.183
+    },
+    {
+      "scene": "03-hide",
+      "shot": 0,
+      "local_seconds": 2.9,
+      "mean_absolute_rgb_error": 2.055
+    },
+    {
+      "scene": "04-type",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 1.929
+    },
+    {
+      "scene": "04-type",
+      "shot": 0,
+      "local_seconds": 8.5,
+      "mean_absolute_rgb_error": 2.241
+    },
+    {
+      "scene": "05-reflect",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 2.064
+    },
+    {
+      "scene": "05-reflect",
+      "shot": 0,
+      "local_seconds": 2.0,
+      "mean_absolute_rgb_error": 2.046
+    },
+    {
+      "scene": "05-reflect",
+      "shot": 1,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 2.04
+    },
+    {
+      "scene": "05-reflect",
+      "shot": 1,
+      "local_seconds": 2.6,
+      "mean_absolute_rgb_error": 2.09
+    },
+    {
+      "scene": "06-question",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 2.041
+    },
+    {
+      "scene": "06-question",
+      "shot": 0,
+      "local_seconds": 2.9,
+      "mean_absolute_rgb_error": 2.005
+    },
+    {
+      "scene": "07-rethink",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 2.091
+    },
+    {
+      "scene": "07-rethink",
+      "shot": 0,
+      "local_seconds": 2.9,
+      "mean_absolute_rgb_error": 2.211
+    },
+    {
+      "scene": "07-rethink",
+      "shot": 1,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 2.085
+    },
+    {
+      "scene": "07-rethink",
+      "shot": 1,
+      "local_seconds": 1.8,
+      "mean_absolute_rgb_error": 2.083
+    },
+    {
+      "scene": "07-rethink",
+      "shot": 2,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 2.05
+    },
+    {
+      "scene": "07-rethink",
+      "shot": 2,
+      "local_seconds": 2.0,
+      "mean_absolute_rgb_error": 2.05
+    },
+    {
+      "scene": "08-record",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 1.881
+    },
+    {
+      "scene": "08-record",
+      "shot": 0,
+      "local_seconds": 2.9,
+      "mean_absolute_rgb_error": 1.989
+    },
+    {
+      "scene": "09-plus",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 1.937
+    },
+    {
+      "scene": "09-plus",
+      "shot": 0,
+      "local_seconds": 1.7,
+      "mean_absolute_rgb_error": 1.943
+    },
+    {
+      "scene": "09-plus",
+      "shot": 1,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 1.807
+    },
+    {
+      "scene": "09-plus",
+      "shot": 1,
+      "local_seconds": 3.7,
+      "mean_absolute_rgb_error": 1.924
+    },
+    {
+      "scene": "09-plus",
+      "shot": 2,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 2.012
+    },
+    {
+      "scene": "09-plus",
+      "shot": 2,
+      "local_seconds": 5.7,
+      "mean_absolute_rgb_error": 2.142
+    },
+    {
+      "scene": "09-plus",
+      "shot": 3,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 1.789
+    },
+    {
+      "scene": "09-plus",
+      "shot": 3,
+      "local_seconds": 2.5,
+      "mean_absolute_rgb_error": 1.855
+    },
+    {
+      "scene": "11-check",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 1.889
+    },
+    {
+      "scene": "11-check",
+      "shot": 0,
+      "local_seconds": 3.2,
+      "mean_absolute_rgb_error": 1.888
+    },
+    {
+      "scene": "11-check",
+      "shot": 1,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 1.913
+    },
+    {
+      "scene": "11-check",
+      "shot": 1,
+      "local_seconds": 3.2,
+      "mean_absolute_rgb_error": 1.945
+    }
+  ],
+  "maximum_frame_comparison_error": 2.69,
+  "integrated_loudness_lufs": -16.25,
+  "true_peak_dbfs": -1.44,
+  "held_screenshot_seconds": 4.4,
+  "end_card_seconds": 2,
+  "sha256": "0a35f8125c7a8bc2b417e11aa6462aa3771bf8ab2718048b93c76571818b10c6",
+  "visual_review": "All scene starts and ends inspected. The free-check segment shows native questions and selection in a new situation; no result-score still. Retained teaching shots crop the prior metrics bar."
+}

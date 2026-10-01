@@ -1,0 +1,213 @@
+{
+  "source_commit": "c9887bd",
+  "capture": "Real native v8/v10 teaching and need recordings plus new v12 English prediction, purchase, family-plan and self-check interactions. Retained teaching clips crop the unrelated metrics bar; new captures show current English UI. No fabricated UI or seeded progress. Separate adult Test Store profile; no real charge. The free-check shots show native question selection and application to a changed situation.",
+  "narrator": "Local Kokoro af_sarah; separate editorial voice; no music",
+  "duration": 67.4,
+  "held_screenshot_seconds": 4.4,
+  "end_card_seconds": 2,
+  "sources": {
+    "check-after.mp4": "b69f215d672259acee082d1fdf08be56b6d090b4283eb5f972d4a93c72103f98",
+    "family-current.mp4": "470b6ccf5ab693d2a1f24e46156086f1180cf225de7e297f90b477d3e4160bbf",
+    "material-motion.mp4": "5417d8623de3c8453fa58a9fb482181ce77dba660998441e66ff8d0b2c6d47bf",
+    "path.mp4": "8700d8f1d30985cc7ba4dee6ea0d8d04dcc14c83a09e1c86585c354d36e418fc",
+    "plus-current.mp4": "00649b41da3b07dbe5b0537416fdc880f2184316e0d1c2f111a3305ed1b1a050",
+    "retained-explain.mp4": "3b8cd20d2f75fa367e591a2a6e8cb1b39156b131fbd4042735bb2c215b824b4a",
+    "retained-followup.mp4": "fc26483ad88ec024a8ac54504ca410885c58753239221e40ba94638ee85096cb",
+    "retained-hint.png": "e0c327658df74313d2f14ed0a1a8f4602646a3b165530fc9d7b0812bbb31f8a1",
+    "retained-record.mp4": "df24e5ef2ed1ad51a2dadcf3904798e82c651969aeddb1a14678b1db9ca3def3",
+    "retained-retry-clean.png": "a3ccd23daf20b15a90c7dee20f96a0b863108468b5e7827cbeba8155a8c8ba2c",
+    "retained-wrong-pick.mp4": "a5c6f6c7bd116727c26af19412b2d05b684fd2c530c909929e7a6a9379defccb",
+    "source.mp4": "f11a50fb71093ad87ec293c540e704a91893153b4c00a5bee62e292e7d5a6294"
+  },
+  "scenes": [
+    {
+      "scene": "01-start",
+      "start": 0,
+      "duration": 6.0,
+      "shots": [
+        {
+          "file": "path.mp4",
+          "start": 0.2,
+          "duration": 3.2
+        },
+        {
+          "file": "source.mp4",
+          "start": 4,
+          "duration": 2.8
+        }
+      ]
+    },
+    {
+      "scene": "02-evidence",
+      "start": 6.0,
+      "duration": 6.4,
+      "shots": [
+        {
+          "file": "source.mp4",
+          "start": 68.8,
+          "duration": 2.5
+        },
+        {
+          "file": "material-motion.mp4",
+          "start": 0,
+          "duration": 3.9
+        }
+      ]
+    },
+    {
+      "scene": "03-hide",
+      "start": 12.4,
+      "duration": 3.2,
+      "shots": [
+        {
+          "file": "retained-explain.mp4",
+          "start": 0,
+          "duration": 3.2,
+          "crop_y": 300,
+          "crop_h": 1550
+        }
+      ]
+    },
+    {
+      "scene": "04-type",
+      "start": 15.6,
+      "duration": 8.8,
+      "shots": [
+        {
+          "file": "retained-explain.mp4",
+          "start": 25.3,
+          "duration": 8.8,
+          "speed": 1.25,
+          "crop_y": 300,
+          "crop_h": 1550
+        }
+      ]
+    },
+    {
+      "scene": "05-reflect",
+      "start": 24.4,
+      "duration": 5.2,
+      "shots": [
+        {
+          "file": "retained-explain.mp4",
+          "start": 76.7,
+          "duration": 2.3,
+          "crop_y": 300,
+          "crop_h": 1550
+        },
+        {
+          "file": "retained-explain.mp4",
+          "start": 128.5,
+          "duration": 2.9,
+          "crop_y": 300,
+          "crop_h": 1550
+        }
+      ]
+    },
+    {
+      "scene": "06-question",
+      "start": 29.6,
+      "duration": 3.2,
+      "shots": [
+        {
+          "file": "retained-followup.mp4",
+          "start": 1.6,
+          "duration": 3.2,
+          "crop_y": 300,
+          "crop_h": 1550
+        }
+      ]
+    },
+    {
+      "scene": "07-rethink",
+      "start": 32.8,
+      "duration": 7.6,
+      "shots": [
+        {
+          "file": "retained-wrong-pick.mp4",
+          "start": 1.8,
+          "duration": 3.2,
+          "crop_y": 300,
+          "crop_h": 1550
+        },
+        {
+          "file": "retained-hint.png",
+          "start": 0,
+          "duration": 2.1,
+          "crop_y": 300,
+          "crop_h": 1550
+        },
+        {
+          "file": "retained-retry-clean.png",
+          "start": 0,
+          "duration": 2.3,
+          "crop_y": 300,
+          "crop_h": 1550
+        }
+      ]
+    },
+    {
+      "scene": "08-record",
+      "start": 40.4,
+      "duration": 3.2,
+      "shots": [
+        {
+          "file": "retained-record.mp4",
+          "start": 1.2,
+          "duration": 3.2
+        }
+      ]
+    },
+    {
+      "scene": "09-plus",
+      "start": 43.6,
+      "duration": 14.8,
+      "shots": [
+        {
+          "file": "plus-current.mp4",
+          "start": 0.5,
+          "duration": 2
+        },
+        {
+          "file": "plus-current.mp4",
+          "start": 30,
+          "duration": 4
+        },
+        {
+          "file": "family-current.mp4",
+          "start": 2,
+          "duration": 6
+        },
+        {
+          "file": "family-current.mp4",
+          "start": 19.1,
+          "duration": 2.8
+        }
+      ]
+    },
+    {
+      "scene": "11-check",
+      "start": 58.4,
+      "duration": 7.0,
+      "shots": [
+        {
+          "file": "check-after.mp4",
+          "start": 10,
+          "duration": 3.5
+        },
+        {
+          "file": "check-after.mp4",
+          "start": 75.5,
+          "duration": 3.5
+        }
+      ]
+    },
+    {
+      "scene": "10-close",
+      "start": 65.4,
+      "duration": 2.0,
+      "shots": []
+    }
+  ],
+  "sha256": "0a35f8125c7a8bc2b417e11aa6462aa3771bf8ab2718048b93c76571818b10c6"
+}

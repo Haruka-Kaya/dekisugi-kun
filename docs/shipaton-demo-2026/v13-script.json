@@ -1,0 +1,110 @@
+{
+  "title": "Dekisugi-kun \u2014 Learn science by teaching",
+  "source_commit": "c9887bd",
+  "capture": "Real native v8/v10 teaching and need recordings plus new v12 English prediction, purchase, family-plan and self-check interactions. Retained teaching clips crop the unrelated metrics bar; new captures show current English UI. No fabricated UI or seeded progress. Separate adult Test Store profile; no real charge. The free-check shots show native question selection and application to a changed situation.",
+  "scenes": [
+    {
+      "id": "01-start",
+      "chapter": "LEARN BY TEACHING",
+      "title": "Can you explain why things fall?",
+      "tag": "Actual native app \u00b7 English build",
+      "narration": [
+        "Can you explain why things fall? Dekisugi-kun turns that question into a lesson you teach."
+      ]
+    },
+    {
+      "id": "02-evidence",
+      "chapter": "PREDICT \u2192 READ",
+      "title": "Predict. Read. Check conditions.",
+      "tag": "Same height \u00b7 Air resistance negligible",
+      "narration": [
+        "Predict first. Then read the principle and its conditions.",
+        "Here, air resistance must be negligible."
+      ]
+    },
+    {
+      "id": "03-hide",
+      "chapter": "HIDE THE MATERIAL",
+      "title": "Hide the material.",
+      "tag": "Core learning works offline \u00b7 No account",
+      "narration": [
+        "Now, hide the material and teach it back."
+      ]
+    },
+    {
+      "id": "04-type",
+      "chapter": "EXPLAIN IN YOUR OWN WORDS",
+      "title": "Explain in your own words.",
+      "tag": "Text alongside voice \u00b7 No external AI grading",
+      "narration": [
+        "I explain in my own words.",
+        "Text is a full route, alongside voice. Student explanations stay on the device."
+      ]
+    },
+    {
+      "id": "05-reflect",
+      "chapter": "REREAD \u2192 REFLECT",
+      "title": "Reread. Reflect.",
+      "tag": "Key-term coverage is not a mastery score",
+      "narration": [
+        "I reread my explanation. Key terms prompt reflection, not a mastery score."
+      ]
+    },
+    {
+      "id": "06-question",
+      "chapter": "APPLY THE IDEA",
+      "title": "Apply the idea.",
+      "tag": "A fixed question \u00b7 The learner does the thinking",
+      "narration": [
+        "A fixed follow-up asks me to apply the idea."
+      ]
+    },
+    {
+      "id": "07-rethink",
+      "chapter": "CHOOSE \u2192 RETHINK",
+      "title": "A hint. Another try.",
+      "tag": "Wrong choice \u2192 hint \u2192 revised explanation",
+      "narration": [
+        "A wrong choice brings a hint about the vacuum condition.",
+        "I rethink my explanation and try again."
+      ]
+    },
+    {
+      "id": "08-record",
+      "chapter": "KEEP A PURPOSE FOR REVIEW",
+      "title": "Keep a purpose for review.",
+      "tag": "Rewriting alone does not clear an observed need",
+      "narration": [
+        "Uncertain ideas stay in the record for review."
+      ]
+    },
+    {
+      "id": "09-plus",
+      "chapter": "OPTIONAL PLUS / REVENUECAT",
+      "title": "Plus helps families review.",
+      "tag": "Separate Test Store demo \u00b7 No real charge \u00b7 Core lessons free",
+      "narration": [
+        "RevenueCat powers optional Plus. This is a Test Store purchase, without a real charge.",
+        "Parents get a next-review topic, questions to ask, and a shareable report. Core lessons stay free."
+      ]
+    },
+    {
+      "id": "11-check",
+      "chapter": "APPLY IT TO A NEW SITUATION",
+      "title": "A free understanding check.",
+      "tag": "Free \u00b7 Explain the principle \u00b7 Apply it to a new situation",
+      "narration": [
+        "A free self-check asks me to explain the principle, then apply it to a new situation."
+      ]
+    },
+    {
+      "id": "10-close",
+      "chapter": "DEKISUGI-KUN / NEXT GEN",
+      "title": "Learn by teaching.",
+      "tag": "Native Flutter \u00b7 12 science units \u00b7 MIT source",
+      "narration": [
+        "Learn by teaching."
+      ]
+    }
+  ]
+}

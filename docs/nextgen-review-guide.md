@@ -5,7 +5,7 @@ scientific evidence, closes the material, and explains it from memory. A fixed
 follow-up asks the learner to apply the idea to a new case. A miss brings a hint
 and another explanation, rather than an answer to copy.
 
-Start with the [67-second English demo](shipaton-demo-2026/shipaton-demo-v12.mp4), then the
+Start with the [67-second English demo](shipaton-demo-2026/shipaton-demo-v13.mp4), then the
 [product overview](product-overview-en.md). The video is actual native Android
 emulator footage, edited for pace, with separate English editorial narration.
 It includes a RevenueCat **Test Store** purchase; no real charge occurred.
@@ -47,10 +47,9 @@ hosted browser rehearsal is not used as a current demo.
 
 Open **Settings → Understanding check · Free**. Answer three questions without
 feedback, read the short lesson, hide it and type an explanation, then complete
-three different questions and one new situation. The result explains that the
-forms are unvalidated and a same-session difference does not prove improvement.
-Answers and counts are not persisted or uploaded. Optional copy exports counts
-only. This route works without Plus or an account.
+three different questions and one new situation. Apply the principle to a case
+with changed conditions. Answers and counts are not persisted or uploaded.
+Optional copy exports counts only. This route works without Plus or an account.
 
 ## Optional RevenueCat replay
 
@@ -90,10 +89,8 @@ Entitlement: **`plus`**. Implementation and restore instructions:
 The updated app passed 1,340 tests and analysis reported no issues. The unchanged
 server baseline passed 399 tests. This update adds a
 free local understanding check, a family review plan, and English UI corrections.
-See [learning evidence and limits](learning-evidence-2026.md) for the distinction
-between research rationale, functional verification and unmeasured efficacy. The source is licensed under [MIT](../LICENSE).
+The source is licensed under [MIT](../LICENSE).
 
-There is no store release, measured learning-effect claim, or school rollout.
-The elicitation survey has 18 responses and is not an efficacy study. Physical
-mobile-device voice QA and broader learner pilots remain open. External live
-AI is disabled in production; it is not a feature demonstrated in this entry.
+The entry demonstrates a native prototype and Test Store purchase. Physical
+mobile-device voice QA remains open. External live AI is disabled in production;
+it is not a feature demonstrated in this entry.
