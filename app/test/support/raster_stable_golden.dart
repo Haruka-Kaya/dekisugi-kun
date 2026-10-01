@@ -1,5 +1,16 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+/// Text rasterization differs between macOS releases. Each supported host
+/// uses its reviewed baseline, with the same pixel comparison threshold.
+String macOSGoldenFile(String filename) =>
+    switch (Platform.environment['DEKISUGI_GOLDEN_PLATFORM']) {
+      null || '' => 'goldens/$filename',
+      'macos15' => 'goldens/macos15/$filename',
+      final value => throw ArgumentError('Unsupported golden platform: $value'),
+    };
 
 /// Allows only the tiny anti-aliasing drift observed between Flutter's macOS
 /// and Linux software rasterizers. Layout, palette, typography, and component

@@ -8,6 +8,8 @@ import 'package:dekisugi/widgets/dekisugi_character_art.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/raster_stable_golden.dart';
+
 const _sourceKey = ValueKey<String>('native-brand-source');
 
 Directory get _appRoot {
@@ -54,7 +56,11 @@ Future<void> _expectSourceGolden(
   await tester.pump();
   await expectLater(
     find.byKey(_sourceKey),
-    matchesGoldenFile('goldens/$filename'),
+    matchesGoldenFile(
+      filename == 'native_brand_feature.png'
+          ? macOSGoldenFile(filename)
+          : 'goldens/$filename',
+    ),
   );
 }
 

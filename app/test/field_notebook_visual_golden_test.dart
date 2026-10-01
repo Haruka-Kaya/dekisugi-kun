@@ -540,7 +540,7 @@ void main() {
     expect(find.byKey(const ValueKey('game-tab-rail')), findsNothing);
     await expectLater(
       find.byKey(key),
-      matchesGoldenFile('goldens/field_notebook_shell_path_phone.png'),
+      matchesGoldenFile(macOSGoldenFile('field_notebook_shell_path_phone.png')),
     );
   });
 
@@ -564,7 +564,7 @@ void main() {
     );
     await expectLater(
       find.byKey(key),
-      matchesGoldenFile('goldens/field_notebook_shell_path_wide.png'),
+      matchesGoldenFile(macOSGoldenFile('field_notebook_shell_path_wide.png')),
     );
   });
 
@@ -593,7 +593,9 @@ void main() {
     expect(find.byKey(const ValueKey('notation-lab-hero')), findsNWidgets(2));
     await expectLater(
       find.byKey(key),
-      matchesGoldenFile('goldens/field_notebook_content_hubs_phone.png'),
+      matchesGoldenFile(
+        macOSGoldenFile('field_notebook_content_hubs_phone.png'),
+      ),
     );
   });
 
@@ -619,7 +621,9 @@ void main() {
     );
     await expectLater(
       find.byKey(key),
-      matchesGoldenFile('goldens/field_notebook_social_hubs_phone.png'),
+      matchesGoldenFile(
+        macOSGoldenFile('field_notebook_social_hubs_phone.png'),
+      ),
     );
   });
 
@@ -659,7 +663,7 @@ void main() {
     expect(find.textContaining('結果を予測する'), findsNWidgets(2));
     await expectLater(
       find.byKey(key),
-      matchesGoldenFile('goldens/field_notebook_activity_phone.png'),
+      matchesGoldenFile(macOSGoldenFile('field_notebook_activity_phone.png')),
     );
   });
 
@@ -683,7 +687,7 @@ void main() {
     expect(find.byKey(const ValueKey('completion-ledger')), findsNWidgets(2));
     await expectLater(
       find.byKey(key),
-      matchesGoldenFile('goldens/field_notebook_completion_phone.png'),
+      matchesGoldenFile(macOSGoldenFile('field_notebook_completion_phone.png')),
     );
   });
 }

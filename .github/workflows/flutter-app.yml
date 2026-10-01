@@ -137,6 +137,8 @@ jobs:
       # on their canonical platform instead of widening the tolerance.
       - name: Verify macOS visual baselines
         working-directory: app
+        env:
+          DEKISUGI_GOLDEN_PLATFORM: macos15
         run: flutter test --no-pub --tags macos-golden
 
       - name: Save visual differences for review
