@@ -1,0 +1,25 @@
+{
+  "devpost": "https://devpost.com/software/dekisugi-kun",
+  "images": [
+    {
+      "file": "01-predict-1179x2556.png",
+      "caption": "Predict first: the learner commits to an idea before opening the lesson.",
+      "sha256": "9261c24bf46e75f227d91040ace3395b90263b2007750b33fb5519c68a4e195a"
+    },
+    {
+      "file": "02-explain-with-source-hidden.png",
+      "caption": "Teach the principle in your own words, with the material hidden.",
+      "sha256": "cbb1e4799bfc896923ca7607f0a4a411008e0ccf26ff16e01af29f95ae5c504b"
+    },
+    {
+      "file": "03-plus-family-review-plan.png",
+      "caption": "Plus: the next family review topic, a parent question, and a new situation.",
+      "sha256": "2da5f9e4cc7140b4b11dcf34ccccd244cfd44cfddde4c6e034c35a372cc265af"
+    },
+    {
+      "file": "04-app-icon-1024x1024.png",
+      "caption": "Dekisugi-kun app icon — 1024 × 1024, uncropped.",
+      "sha256": "db2b71d171f659bc4058978a9c0729ac5110bfe6ba1fddf548f83ce49a575b4c"
+    }
+  ]
+}

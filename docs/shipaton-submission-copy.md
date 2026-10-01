@@ -12,123 +12,53 @@ Don't just recognize the answer. Teach the science.
 
 ## Inspiration
 
-“Heavier things always fall faster.” It sounds plausible until you have to
-explain a feather and a hammer falling together on the Moon. Recognizing an
-answer and explaining its conditions are different tasks. I built Dekisugi-kun
-around that gap: the learner teaches a companion that needs their explanation,
-then tests the idea in another situation.
+**A student can choose the right answer and still struggle to explain why it is right.**
+
+“Heavier things fall faster” sounds convincing. Then a feather and a hammer fall together on the Moon. What changed? Remembering the answer is one task; explaining the conditions is another.
+
+I built Dekisugi-kun around that moment. Instead of asking a companion to explain science, the learner has to teach it.
 
 ## What it does
 
-The central interaction is a teach-back loop for middle and high-school science.
-The learner predicts an outcome, reads a
-focused lesson, and then explains it with the material hidden. Text is a full
-learning route alongside voice. The learner rereads or replays their explanation
-before the companion asks a fixed follow-up from the lesson catalog.
+Dekisugi-kun is a native science app for middle and high-school learners. Its central interaction is simple: **predict, read, hide the material, explain, and apply.**
 
-Key-term coverage prompts reflection; it does not claim to grade understanding.
-A wrong choice brings a hint and another explanation, rather than an answer to
-copy. The companion's misconception record keeps uncertain ideas available for
-a matching repair activity. Rewriting alone does not mark a need corrected.
+The learner makes a prediction, explores a focused lesson, and then explains the idea in their own words with the source hidden. They reread their text or replay their voice before the companion asks a fixed follow-up question from the lesson catalog. If they miss a condition, the app offers a hint and asks them to try again. Uncertain ideas remain available for a matching repair activity.
 
-This is a working native Field Notebook app, with 12 science units and 35 concepts, story
-cases, diagram activities and review. Core learning works on-device without an
-account. In the demonstrated route, free explanation text and voice are neither
-uploaded nor retained as durable records.
+The 67-second demo follows this loop through falling objects, then shows a free understanding check that asks the learner to explain a principle and apply it in a different situation. The reasoning becomes something the learner can inspect and revise, rather than an answer they can copy.
 
-A free understanding check makes the reasoning inspectable: three questions
-before teaching, three different questions afterward, and a new situation. It
-asks the learner to explain the principle and apply it under changed conditions.
-Answers and explanations disappear on leaving the screen. Optional copying
-exports aggregate counts only.
+The current build includes 12 science units and 35 concepts, with Japanese and English curriculum, story cases, diagram activities, and review. **Core lessons work offline without an account. Text is a complete learning route alongside voice.** In the demonstrated route, explanations and voice recordings stay on-device and are not retained as durable records.
+
+## Why someone would buy Plus
+
+A family reviewing science together has two practical questions: **“What should we review next?” and “What should I ask?”**
+
+Plus turns the companion’s record into a local family review plan. It chooses a topic, explains the choice, gives a parent a useful question, and changes one condition to check whether the learner can apply the idea. A shareable report carries the review plan without answer text, audio, or personal scores. The Aurora Cape adds a visible supporter benefit.
+
+Core lessons, text input, review, and understanding checks stay free. The paid value is a more convenient family review routine. The demo shows a RevenueCat Test Store purchase unlocking Plus and the family report, with no real charge.
 
 ## How I built it
 
-Flutter provides the native app, with a bundled Japanese/English curriculum and
-SQLite-backed progress. The TypeScript/Vercel server serves the same catalog.
-Fixed catalog checkpoints and canonical need codes connect an observed gap to
-an appropriate repair activity; no external LLM grades student writing.
+Flutter powers the native app, a bundled bilingual curriculum, and SQLite-backed progress. TypeScript on Vercel serves the catalog. Fixed checkpoints and canonical need codes connect an observed gap to its repair activity. Key-term coverage prompts reflection; it is not presented as a grade for understanding. External live AI is disabled in the current production build.
 
-RevenueCat's `purchases_flutter` SDK provides store packages, purchase, restore
-and the `plus` entitlement. The payer's job is concrete: “What should we review,
-and what should I ask?” Plus adds a local family review plan that selects a topic,
-explains why it was selected, supplies a parent question, and changes one condition
-to test transfer. The report can be copied without answer text, audio or personal
-scores. Aurora Cape adds a visible supporter benefit. Core lessons, text, review
-and understanding checks stay free.
+RevenueCat’s `purchases_flutter` SDK handles packages, purchase, restore, and the `plus` entitlement. Family review is a local plan and a report the user can copy; it does not require cloud-linked parent and child accounts.
 
-The video shows a native RevenueCat Test Store purchase and the family report in
-a separate adult test profile. No real charge occurred. Family review is a local
-plan and shareable report, not cloud-linked parent/child accounts. The current
-supporter grant is retained after a subscription lapses; I do not claim that
-recurring willingness to pay has been validated.
+## Challenges and what I learned
 
-The repository includes the product constitution, tests, native run
-instructions, English submission assets, and reproducible capture/edit tools.
-The demo uses actual native Android emulator interactions, edited for pace,
-with separate locally generated English narration and captions.
+The hardest design problem was keeping the companion helpful while leaving the thinking with the learner. Hiding the source, requiring rereading or playback, and offering a condition hint after a miss made that principle visible in the interface.
 
-## Challenges
+I learned to judge a feature by what it asks the learner to do. That changed both the learning loop and monetization: explaining and applying remain free, while Plus helps a family decide what to revisit.
 
-The important design challenge was making the learner do the explaining while
-keeping the companion helpful. Hiding the material, requiring a reread/replay,
-and giving a condition hint after a miss make that choice visible in the UI.
+## Accomplishments and what’s next
 
-Another challenge was matching claims to what the build actually does. External
-live AI stays disabled in production while the minor-safe provider path remains
-unresolved. Text supports the complete learning route. A key-term match is not
-reported as mastery, and an observed need remains open until its matching repair
-activity resolves it.
+I built a working native flow from prediction through explanation, follow-up, repair, and review. The app passed 1,340 client tests, with 399 server tests in the unchanged baseline. The English demo uses actual native Android emulator interactions, edited for pace, with separate editorial narration and captions.
 
-The purchase route uses store-supplied prices and billing terms, rather than
-invented trial promises. The current monetization claim is the demonstrated
-supporter benefit; production-store revenue and live-conversation allowance
-sync are not claimed.
+Next I will extend the curriculum, refine delayed review, run classroom pilots comparing explanations and transfer to new situations, and complete physical-device recording and permission checks.
 
-## Accomplishments
+## For reviewers
 
-A working native learning loop connects prediction, evidence, explanation,
-follow-up, hints and review. The current interface makes the companion's record
-part of the experience. Plus now answers a practical family-review question,
-while the complete learning loop remains free. The updated app passed 1,340
-client tests; the unchanged server baseline passed 399 tests.
-The entry's video demonstrates the real app within two minutes.
+Watch the [67-second English demo](https://vimeo.com/1232117345), explore the [MIT source](https://github.com/Haruka-Kaya/dekisugi-kun), or follow the [native run and Test Store guide](https://github.com/Haruka-Kaya/dekisugi-kun/blob/main/docs/nextgen-review-guide.md).
 
-## What I learned
-
-The most useful product constraint was to ask what the learner must actually
-do, rather than how much the companion can say. That led to hidden-source
-explanations, equal text access, explicit rereading, fixed questions, and payment
-that supports the app without buying the learning outcome.
-
-## What's next
-
-Extend the science curriculum, refine delayed review, and run classroom pilots
-that compare explanations and transfer to new situations. Complete physical-device
-recording/playback and permission QA. External AI will remain disabled for school/minor
-distribution until the provider and consent requirements are resolved.
-
-## Why Next Gen
-
-This entry focuses on a clear product idea and meaningful progress toward a
-working native app: a learner produces an explanation, applies the conditions,
-and keeps uncertain ideas available for review. The demo shows the actual
-interaction; the MIT repository exposes the implementation and its product
-constitution. RevenueCat supports a specific family convenience while keeping
-core learning free. Native interaction, offline access, equal text access, and
-restrained data collection are deliberate product choices.
-
-## RevenueCat integration / additional information
-
-- Android package / application ID: **`jp.dekisugi.dekisugi`**
-- SDK: **`purchases_flutter`**; entitlement: **`plus`**.
-- Demo transaction: **RevenueCat Test Store, no real charge**.
-- Purchase/restore adapter: `app/lib/services/revenuecat_purchase_adapter.dart`.
-- Native run and Test Store replay: [reviewer guide](nextgen-review-guide.md).
-- Server re-verification and webhook are implemented; production-store purchase
-  and live-conversation allowance sync are not claimed.
-- No store release is required for this Next Gen entry. The app has English curriculum, UI and accessibility descriptions; the demo
-  and submission explanation are in English.
+Android application ID: `jp.dekisugi.dekisugi`.
 
 ## Submission assets
 
@@ -139,6 +69,7 @@ restrained data collection are deliberate product choices.
 - Icon: `docs/store/icon-1024.png` — 1024×1024.
 - Screenshot: `docs/store-shots-2026/devpost/shot-1179x2556.png` — current native
   app, 1179×2556, no device frame.
+- Devpost gallery: [four images and captions](shipaton-demo-2026/gallery/manifest.json).
 - Confirm active student eligibility, qualifying academic account email, and
   guardian consent if applicable. These are personal eligibility requirements,
   not facts established by the code or video.
