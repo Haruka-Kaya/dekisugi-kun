@@ -93,7 +93,7 @@ jobs:
 
       - name: Test
         working-directory: app
-        run: flutter test --no-pub
+        run: flutter test --no-pub --exclude-tags macos-golden
 
       - name: Build Android debug APK
         working-directory: app
@@ -131,6 +131,13 @@ jobs:
       - name: Install iOS pods from lockfile
         working-directory: app/ios
         run: bundle exec pod install --deployment
+
+      # Noto Sans JP golden baselines are authored on macOS. Comparing them on
+      # Linux changes glyph rasterization; enforce the same strict comparison
+      # on their canonical platform instead of widening the tolerance.
+      - name: Verify macOS visual baselines
+        working-directory: app
+        run: flutter test --no-pub --tags macos-golden
 
       - name: Build iOS Simulator app
         working-directory: app

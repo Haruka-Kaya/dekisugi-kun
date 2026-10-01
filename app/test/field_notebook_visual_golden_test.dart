@@ -1,3 +1,8 @@
+// Noto Sans JP text rasterization is platform-dependent. CI validates these
+// baselines on macOS, where they are authored, without relaxing comparisons.
+@Tags(['macos-golden'])
+library;
+
 import 'package:dekisugi/config/app_theme.dart';
 import 'package:dekisugi/config/game_tokens.dart';
 import 'package:dekisugi/config/motion.dart';

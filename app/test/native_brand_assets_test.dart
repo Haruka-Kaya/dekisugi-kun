@@ -209,7 +209,7 @@ void main() {
       filename: 'native_brand_feature.png',
       child: _featureGraphic(),
     );
-  });
+  }, tags: ['macos-golden']);
 
   group('native brand PNG contract', () {
     const androidSizes = <String, (int, int)>{
