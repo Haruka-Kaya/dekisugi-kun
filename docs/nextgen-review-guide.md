@@ -5,7 +5,7 @@ scientific evidence, closes the material, and explains it from memory. A fixed
 follow-up asks the learner to apply the idea to a new case. A miss brings a hint
 and another explanation, rather than an answer to copy.
 
-Start with the [56-second English demo](shipaton-demo-2026/shipaton-demo-v10.mp4), then the
+Start with the [53-second English demo](shipaton-demo-2026/shipaton-demo-v11.mp4), then the
 [product overview](product-overview-en.md). The video is actual native Android
 emulator footage, edited for pace, with separate English editorial narration.
 It includes a RevenueCat **Test Store** purchase; no real charge occurred.

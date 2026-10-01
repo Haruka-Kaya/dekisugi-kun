@@ -1,0 +1,253 @@
+{
+  "duration_seconds": 52.8,
+  "video": {
+    "codec": "h264",
+    "size": [
+      1080,
+      1920
+    ],
+    "frame_rate": "30/1",
+    "frames": 1584,
+    "pixel_format": "yuv420p"
+  },
+  "audio": {
+    "codec": "aac",
+    "channels": 2,
+    "sample_rate": "48000",
+    "background_music": false
+  },
+  "full_decode_exit_code": 0,
+  "unordered_dts_packets": 0,
+  "captions": {
+    "count": 14,
+    "minimum_hold_seconds": 1.195,
+    "matches_complete_narration": true
+  },
+  "source_hashes_match": true,
+  "source_timeline_frame_checks": [
+    {
+      "scene": "01-start",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 0.296
+    },
+    {
+      "scene": "01-start",
+      "shot": 0,
+      "local_seconds": 2.9,
+      "mean_absolute_rgb_error": 0.184
+    },
+    {
+      "scene": "02-evidence",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 0.285
+    },
+    {
+      "scene": "02-evidence",
+      "shot": 0,
+      "local_seconds": 2.2,
+      "mean_absolute_rgb_error": 0.302
+    },
+    {
+      "scene": "02-evidence",
+      "shot": 1,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 0.288
+    },
+    {
+      "scene": "02-evidence",
+      "shot": 1,
+      "local_seconds": 2.2,
+      "mean_absolute_rgb_error": 0.44
+    },
+    {
+      "scene": "02-evidence",
+      "shot": 2,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 0.331
+    },
+    {
+      "scene": "02-evidence",
+      "shot": 2,
+      "local_seconds": 1.1,
+      "mean_absolute_rgb_error": 0.439
+    },
+    {
+      "scene": "03-hide",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 0.387
+    },
+    {
+      "scene": "03-hide",
+      "shot": 0,
+      "local_seconds": 2.9,
+      "mean_absolute_rgb_error": 0.384
+    },
+    {
+      "scene": "04-type",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 0.312
+    },
+    {
+      "scene": "04-type",
+      "shot": 0,
+      "local_seconds": 8.5,
+      "mean_absolute_rgb_error": 0.379
+    },
+    {
+      "scene": "05-reflect",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 0.34
+    },
+    {
+      "scene": "05-reflect",
+      "shot": 0,
+      "local_seconds": 2.0,
+      "mean_absolute_rgb_error": 0.403
+    },
+    {
+      "scene": "05-reflect",
+      "shot": 1,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 0.405
+    },
+    {
+      "scene": "05-reflect",
+      "shot": 1,
+      "local_seconds": 2.6,
+      "mean_absolute_rgb_error": 0.374
+    },
+    {
+      "scene": "06-question",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 0.332
+    },
+    {
+      "scene": "06-question",
+      "shot": 0,
+      "local_seconds": 2.9,
+      "mean_absolute_rgb_error": 0.397
+    },
+    {
+      "scene": "07-rethink",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 0.341
+    },
+    {
+      "scene": "07-rethink",
+      "shot": 0,
+      "local_seconds": 2.9,
+      "mean_absolute_rgb_error": 0.386
+    },
+    {
+      "scene": "07-rethink",
+      "shot": 1,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 2.623
+    },
+    {
+      "scene": "07-rethink",
+      "shot": 1,
+      "local_seconds": 1.8,
+      "mean_absolute_rgb_error": 2.626
+    },
+    {
+      "scene": "07-rethink",
+      "shot": 2,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 2.759
+    },
+    {
+      "scene": "07-rethink",
+      "shot": 2,
+      "local_seconds": 2.0,
+      "mean_absolute_rgb_error": 2.759
+    },
+    {
+      "scene": "08-record",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 0.342
+    },
+    {
+      "scene": "08-record",
+      "shot": 0,
+      "local_seconds": 2.9,
+      "mean_absolute_rgb_error": 0.433
+    },
+    {
+      "scene": "09-plus",
+      "shot": 0,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 0.258
+    },
+    {
+      "scene": "09-plus",
+      "shot": 0,
+      "local_seconds": 1.7,
+      "mean_absolute_rgb_error": 0.355
+    },
+    {
+      "scene": "09-plus",
+      "shot": 1,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 0.298
+    },
+    {
+      "scene": "09-plus",
+      "shot": 1,
+      "local_seconds": 1.7,
+      "mean_absolute_rgb_error": 0.34
+    },
+    {
+      "scene": "09-plus",
+      "shot": 2,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 2.097
+    },
+    {
+      "scene": "09-plus",
+      "shot": 2,
+      "local_seconds": 0.9,
+      "mean_absolute_rgb_error": 2.099
+    },
+    {
+      "scene": "09-plus",
+      "shot": 3,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 0.265
+    },
+    {
+      "scene": "09-plus",
+      "shot": 3,
+      "local_seconds": 1.7,
+      "mean_absolute_rgb_error": 0.269
+    },
+    {
+      "scene": "09-plus",
+      "shot": 4,
+      "local_seconds": 0.3,
+      "mean_absolute_rgb_error": 0.338
+    },
+    {
+      "scene": "09-plus",
+      "shot": 4,
+      "local_seconds": 2.5,
+      "mean_absolute_rgb_error": 0.248
+    }
+  ],
+  "maximum_frame_comparison_error": 2.759,
+  "integrated_loudness_lufs": -16.23,
+  "true_peak_dbfs": -1.5,
+  "held_screenshot_seconds": 5.6,
+  "end_card_seconds": 2,
+  "sha256": "b8d32f24a1420e260a2e573cbaf00633b451bc46f3f5b43c4d8ff61a6fd7353a",
+  "visual_review": "Single full native view and captions inspected across all scene starts/ends; native tap/typing/scroll timings compared with original source.",
+  "playback_limit": "Checks verify playback timing and composition, not subjective voice taste or physical-device behavior."
+}

@@ -117,8 +117,8 @@ benefits; it does not gate core science lessons or sell correct answers.
 
 - Source: https://github.com/Haruka-Kaya/dekisugi-kun — MIT.
 - **Video URL:** `[PUBLIC YOUTUBE OR VIMEO URL — REQUIRED BEFORE SUBMIT]`
-- Video file: [shipaton-demo-v10.mp4](shipaton-demo-2026/shipaton-demo-v10.mp4), 56.1 seconds.
-- Captions: [English SRT](shipaton-demo-2026/shipaton-demo-v10-captions.en.srt).
+- Video file: [shipaton-demo-v11.mp4](shipaton-demo-2026/shipaton-demo-v11.mp4), 52.8 seconds.
+- Captions: [English SRT](shipaton-demo-2026/shipaton-demo-v11-captions.en.srt).
 - Icon: `docs/store/icon-1024.png` — 1024×1024.
 - Screenshot: `docs/store-shots-2026/devpost/shot-1179x2556.png` — current native
   app, 1179×2556, no device frame.
