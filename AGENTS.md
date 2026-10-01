@@ -23,10 +23,10 @@
 
 | 項目 | 状態 |
 |---|---|
-| 安定ブランチ | `main`（本番。統合前HEAD `f52ba7b`） |
-| 作業ブランチ | `codex/integrate-field-notebook`（最新main＋Field Notebook統合） |
+| 安定ブランチ | `main`（本番。最新HEADは `git log -1` で確認） |
+| 作業ブランチ | 日常作業は `dev`、個別の統合・修正は `codex/*` |
 | UIフェーズ | Field Notebookへ統合・自動検証済み。物理端末QA待ち |
-| テスト | `app` 1264件・`server` 399件（いずれも通信なし） |
+| テスト | `app` 1337件・`server` 399件（外部API呼び出しなし） |
 | 年齢規約問題 | **未解決** — 外部AI会話は学校・未成年に配布禁止（`docs/age-restriction.md` §3） |
 | アンケート n数 | 18件（目標40件。設計根拠がまだデータで支えられていない） |
 | iOS実機確認 | 未実施（シミュレータのみ）|
@@ -80,7 +80,7 @@ docs/
 
 ```bash
 # テスト
-cd app && flutter test                          # 1264件・約20秒
+cd app && flutter test                          # 1337件。CI基準はFlutter 3.47.5
 cd server && npm test                           # 399件・2.6秒
 DEKISUGI_LIVE=1 npx tsx --test test/grant.live.test.ts   # 本番接続・課金あり
 
