@@ -1,3 +1,4 @@
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_economy.dart';
@@ -74,7 +75,10 @@ class ScienceChallengeHeader extends StatelessWidget {
     return Semantics(
       container: true,
       header: true,
-      label: '$eyebrow。$title。$body。デキすぎ君。${mascotReaction.semanticsLabel}',
+      label: t(
+        '$eyebrow。$title。$body。デキすぎ君。${mascotReaction.semanticsLabel}',
+        '$eyebrow. $title. $body. Dekisugi-kun. ${mascotReaction.semanticsLabel}',
+      ),
       child: ExcludeSemantics(
         child: Container(
           key: const ValueKey('science-challenge-lab-brief'),
@@ -217,7 +221,10 @@ class ScienceActivityMascotBadge extends StatelessWidget {
     final resolvedMascotStyle =
         mascotStyle ?? GameActivityScaffold.mascotStyleOf(context);
     return Semantics(
-      label: 'デキすぎ君。${mascotReaction.semanticsLabel}',
+      label: t(
+        'デキすぎ君。${mascotReaction.semanticsLabel}',
+        'Dekisugi-kun. ${mascotReaction.semanticsLabel}',
+      ),
       child: ExcludeSemantics(
         child: SizedBox.square(
           key: const ValueKey('science-activity-mascot-badge'),
@@ -382,7 +389,10 @@ class ScienceChallengePrivacyNote extends StatelessWidget {
     final colors = context.gamePalette;
     return Semantics(
       container: true,
-      label: '回答は保存も送信もせず、復習コードだけを端末に保存し、成績や理解度の認定には使いません',
+      label: t(
+        '回答は保存も送信もせず、復習コードだけを端末に保存し、成績や理解度の認定には使いません',
+        'Answers are not saved or sent. Only a review code is saved on this device, and it is never used for grades or to certify understanding',
+      ),
       child: ExcludeSemantics(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,7 +401,10 @@ class ScienceChallengePrivacyNote extends StatelessWidget {
             const SizedBox(width: GameTokens.spaceSm),
             Expanded(
               child: Text(
-                '回答・選択内容は保存も送信もしません。復習が必要な場合も、固定の復習コードだけをこの端末に保存し、成績や理解度の認定には使いません。',
+                t(
+                  '回答・選択内容は保存も送信もしません。復習が必要な場合も、固定の復習コードだけをこの端末に保存し、成績や理解度の認定には使いません。',
+                  'Your answers and choices are not saved or sent. If a review is needed, only a fixed review code is saved on this device. It is never used for grades or to certify understanding.',
+                ),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colors.inkMuted,
                 ),
@@ -433,28 +446,33 @@ class ScienceChallengeComparison extends StatelessWidget {
         CognitiveTaskResponseSummary(
           prompt: task.prompt,
           response: response,
-          label: 'あなたの組み方',
+          label: t('あなたの組み方', 'Your approach'),
         ),
         const SizedBox(height: GameTokens.spaceMd),
         ScienceChallengeSurface(
-          label: '教材の組み方',
+          label: t('教材の組み方', 'The lesson approach'),
           icon: Icons.account_tree_outlined,
           child: Text(cognitiveTaskSolutionSummary(task)),
         ),
         const SizedBox(height: GameTokens.spaceMd),
         ScienceChallengeSurface(
-          label: '観察と理由',
+          label: t('観察と理由', 'Observation and reason'),
           icon: Icons.science_outlined,
           child: Text('$expectedOutcome\n\n$expectedReason'),
         ),
         const SizedBox(height: GameTokens.spaceMd),
         ScienceChallengeSurface(
-          label: '思い込みの直し方',
+          label: t('思い込みの直し方', 'Fixing the misconception'),
           icon: Icons.fact_check_outlined,
           child: Text(
-            'あなたの判断：${selected?.text ?? '未回答'}\n'
-            '教材の判断：${correct?.text ?? ''}\n\n'
-            '${checkpoint.explanation}',
+            t(
+              'あなたの判断：${selected?.text ?? '未回答'}\n'
+                  '教材の判断：${correct?.text ?? ''}\n\n'
+                  '${checkpoint.explanation}',
+              'Your answer: ${selected?.text ?? 'No answer'}\n'
+                  'Lesson answer: ${correct?.text ?? ''}\n\n'
+                  '${checkpoint.explanation}',
+            ),
           ),
         ),
       ],

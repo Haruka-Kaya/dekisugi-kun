@@ -6,9 +6,11 @@ import 'package:dekisugi/config/app_theme.dart';
 import 'package:dekisugi/config/motion.dart';
 import 'package:dekisugi/learning/domain/learning_heart.dart';
 import 'package:dekisugi/learning/domain/learning_need.dart';
+import 'package:dekisugi/learning/services/local_companion_voice.dart';
 import 'package:dekisugi/models/unit.dart';
 import 'package:dekisugi/screens/science_speak_listen_screen.dart';
 import 'package:dekisugi/services/local_narration.dart';
+import 'package:dekisugi/services/local_pronunciation_practice.dart';
 import 'package:dekisugi/services/local_voice_practice.dart';
 import 'package:dekisugi/services/mic_stream.dart';
 import 'package:dekisugi/services/pcm_player.dart';
@@ -58,8 +60,9 @@ LocalPracticeVariant _variant(LocalPracticeStage stage, String marker) =>
       recallPrompt: '$marker：原理を教材なしで思い出してください。',
       reasoningPrompt: '$marker：理由と成立条件を足してください。',
       transferPrompt: '$marker：別の場面で起きることを予想してください。',
-      expectedOutcome: '$marker：教材の観察結果です。',
-      expectedReason: '$marker：教材の理由と条件です。',
+      // 聞き取り確認のcue正本。説明はこれらの言葉を点在させて届く。
+      expectedOutcome: '$marker：空気抵抗を無視すれば落下の速さは重さによらない。',
+      expectedReason: '$marker：重力と空気抵抗で落下が変わる。',
       cognitiveTask: _task,
       checkpoint: _checkpoint(stage),
     );
@@ -185,6 +188,50 @@ class _FakeSink implements PcmSink {
   Future<void> release() async => released = true;
 }
 
+class _FixedEngine implements CompanionVoiceEngine {
+  _FixedEngine(this.ack);
+
+  final String ack;
+  int calls = 0;
+
+  @override
+  Future<String?> generateAck({
+    required String explanation,
+    required List<String> heardTerms,
+    required String conceptLabel,
+  }) async {
+    calls++;
+    return ack;
+  }
+}
+
+/// デフォルトは「落下と重力」が届く認識成功を返す。
+class _FakeEchoRecognizer implements OnDeviceSpeechRecognizer {
+  _FakeEchoRecognizer({
+    this.result = const OnDeviceSpeechResult(
+      status: OnDeviceSpeechStatus.recognized,
+      candidates: ['落下と重力の関係を説明した'],
+    ),
+  });
+
+  OnDeviceSpeechResult result;
+  int recognizeCalls = 0;
+
+  @override
+  Future<OnDeviceSpeechResult> recognize({
+    String languageTag = 'ja-JP',
+  }) async {
+    recognizeCalls++;
+    return result;
+  }
+
+  @override
+  Future<void> stop() async {}
+
+  @override
+  Future<void> cancel() async {}
+}
+
 class _HoldingNarration implements LocalNarration {
   final List<LocalNarrationRequest> requests = [];
   Completer<LocalNarrationResult>? _pending;
@@ -254,6 +301,7 @@ Widget _wrap({
   int practiceAttempt = 0,
   required LocalVoicePractice voice,
   LocalNarration? narration,
+  OnDeviceSpeechRecognizer? speechRecognizer,
   VoidCallback? onCompleted,
   VoidCallback? onReturnToPath,
   LearningNeedEvidenceReported? onNeedEvidence,
@@ -261,6 +309,8 @@ Widget _wrap({
   double textScale = 1,
   bool disableAnimations = false,
   Brightness brightness = Brightness.light,
+  CompanionVoice? companionVoice,
+  Future<bool> Function()? supporterCheck,
 }) => MaterialApp(
   theme: buildAppTheme(brightness),
   builder: (context, child) => MediaQuery(
@@ -280,6 +330,9 @@ Widget _wrap({
     onHeartLoss: onHeartLoss,
     narration: narration ?? FakeLocalNarration(),
     voicePractice: voice,
+    speechRecognizer: speechRecognizer ?? _FakeEchoRecognizer(),
+    companionVoice: companionVoice,
+    supporterCheck: supporterCheck,
   ),
 );
 
@@ -334,6 +387,13 @@ Future<void> _recordVoiceAndFinishPlayback(
   audio.sink.requestFeed();
   await _flush(tester);
   audio.sink.requestFeed();
+  await _flush(tester);
+}
+
+/// 聞き取り確認を通過する。fake認識器はcue付き成功を返す前提。
+Future<void> _passEcho(WidgetTester tester) async {
+  await _flush(tester);
+  await _tapVisible(tester, const ValueKey('science-explain-echo-advance'));
   await _flush(tester);
 }
 
@@ -599,6 +659,7 @@ void main() {
     expect(tester.widget<FilledButton>(submit).onPressed, isNotNull);
 
     await _tapVisible(tester, const ValueKey('science-explain-submit-voice'));
+    await _passEcho(tester);
     expect(
       find.byKey(const ValueKey('science-explain-follow-up')),
       findsOneWidget,
@@ -618,6 +679,7 @@ void main() {
     );
     await _recordVoiceAndFinishPlayback(tester, audio);
     await _tapVisible(tester, const ValueKey('science-explain-submit-voice'));
+    await _passEcho(tester);
     await _answerFollowUp(tester, 'light');
     await _tapVisible(tester, const ValueKey('science-explain-start-revision'));
 
@@ -646,6 +708,7 @@ void main() {
     await _flush(tester);
     expect(tester.widget<FilledButton>(submit).onPressed, isNotNull);
     await _tapVisible(tester, const ValueKey('science-explain-submit-voice'));
+    await _passEcho(tester);
 
     expect(find.text('言い直した説明と、教材を比べる'), findsOneWidget);
     expect(needs, hasLength(1));
@@ -667,6 +730,7 @@ void main() {
       );
       await _recordVoiceAndFinishPlayback(tester, audio);
       await _tapVisible(tester, const ValueKey('science-explain-submit-voice'));
+      await _passEcho(tester);
       await _answerFollowUp(tester, 'heavy');
       await _tapVisible(
         tester,
@@ -751,6 +815,7 @@ void main() {
     );
     await _recordVoiceAndFinishPlayback(tester, audio);
     await _tapVisible(tester, const ValueKey('science-explain-submit-voice'));
+    await _passEcho(tester);
     await _answerFollowUp(tester, 'heavy');
     await _tapVisible(tester, const ValueKey('science-explain-start-revision'));
     await _tapVisible(
@@ -815,7 +880,7 @@ void main() {
     expect(find.textContaining('マイクを使えませんでした'), findsOneWidget);
 
     await _tapVisible(tester, const ValueKey('science-explain-use-text'));
-    await _teachByText(tester, '文字でも同じ原理、条件、別場面を説明する。', chooseRoute: false);
+    await _teachByText(tester, '文字でも同じ落下と重力の関係を説明する。', chooseRoute: false);
     await _answerFollowUp(tester, 'same');
     await _tapVisible(tester, const ValueKey('science-explain-keep'));
     await _flush(tester);
@@ -833,7 +898,7 @@ void main() {
     await tester.pumpWidget(
       _wrap(voice: textAudio.practice, narration: narration),
     );
-    await _teachByText(tester, '背景へ移る前の説明。');
+    await _teachByText(tester, '背景へ移る前に落下と重力を説明した。');
     expect(narration.requests, hasLength(1));
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
@@ -956,7 +1021,7 @@ void main() {
         onReturnToPath: () => returned++,
       ),
     );
-    await _teachByText(tester, '結果、理由と条件、別場面の予想を説明する。');
+    await _teachByText(tester, '落下と重力の結果、別場面の予想を説明する。');
     await _answerFollowUp(tester, 'same');
     await _tapVisible(tester, const ValueKey('science-explain-keep'));
     await _flush(tester);
@@ -993,7 +1058,7 @@ void main() {
       ),
     );
 
-    await _teachByText(tester, '大きな文字でも、理由と条件まで説明する。');
+    await _teachByText(tester, '大きな文字でも、落下と重力の条件まで説明する。');
     await _answerFollowUp(tester, 'heavy');
     final revise = find.byKey(const ValueKey('science-explain-start-revision'));
     await tester.scrollUntilVisible(revise, 180, scrollable: _pageScroll);
@@ -1003,7 +1068,7 @@ void main() {
 
     await tester.enterText(
       find.byKey(const ValueKey('science-explain-text-input')),
-      '大きな文字でも、重さによらない条件まで言い直す。',
+      '大きな文字でも、落下が重力によらない条件まで言い直す。',
     );
     await tester.pump();
     await _tapVisible(tester, const ValueKey('science-explain-review-text'));
@@ -1076,6 +1141,251 @@ void main() {
     final ios = File('ios/Runner/AppDelegate.swift').readAsStringSync();
     expect(ios, contains('supportsOnDeviceRecognition'));
     expect(ios, contains('requiresOnDeviceRecognition = true'));
+  });
+
+  testWidgets('大事な言葉が届かない説明はもう一度聞き、届けば問い返しへ進む', (
+    tester,
+  ) async {
+    final audio = _voice();
+    await tester.pumpWidget(_wrap(voice: audio.practice));
+
+    await _tapVisible(tester, const ValueKey('science-explain-choose-text'));
+    await tester.enterText(
+      find.byKey(const ValueKey('science-explain-text-input')),
+      'あいうえおかきくけこ',
+    );
+    await tester.pump();
+    await _tapVisible(tester, const ValueKey('science-explain-review-text'));
+    expect(
+      find.byKey(const ValueKey('science-explain-coverage')),
+      findsOneWidget,
+    );
+    expect(find.text('まだ大事な言葉が届いていないみたい'), findsOneWidget);
+
+    await _tapVisible(tester, const ValueKey('science-explain-submit-text'));
+    await _flush(tester);
+
+    expect(
+      find.byKey(const ValueKey('science-explain-follow-up')),
+      findsNothing,
+      reason: '無関係な文は「もう少し聞かせて」と返して進ませない',
+    );
+    expect(find.textContaining('もう少し聞かせて'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('science-explain-text-input')),
+      '空気抵抗を無視すると落下は重さによらない。',
+    );
+    await tester.pump();
+    await _tapVisible(tester, const ValueKey('science-explain-review-text'));
+    await _tapVisible(tester, const ValueKey('science-explain-submit-text'));
+    await _flush(tester);
+
+    expect(
+      find.byKey(const ValueKey('science-explain-follow-up')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('読み返した説明の中で聞き取れた言葉が見える', (tester) async {
+    final audio = _voice();
+    await tester.pumpWidget(_wrap(voice: audio.practice));
+
+    await _tapVisible(tester, const ValueKey('science-explain-choose-text'));
+    await tester.enterText(
+      find.byKey(const ValueKey('science-explain-text-input')),
+      '空気抵抗を無視すると速さが同じになる。',
+    );
+    await tester.pump();
+    await _tapVisible(tester, const ValueKey('science-explain-review-text'));
+
+    expect(
+      find.text('デキすぎ君が聞き取れた言葉'),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('science-explain-cue-空気抵抗')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('science-explain-cue-無視')),
+      findsOneWidget,
+    );
+    // 届いていない語は答えを漏らすので画面に出さない。
+    expect(
+      find.byKey(const ValueKey('science-explain-cue-落下')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('声の説明は要点の聞き取りが届いてから問い返しへ進む', (tester) async {
+    final audio = _voice();
+    final echo = _FakeEchoRecognizer();
+    await tester.pumpWidget(
+      _wrap(voice: audio.practice, speechRecognizer: echo),
+    );
+
+    await _recordVoiceAndFinishPlayback(tester, audio);
+    await _tapVisible(tester, const ValueKey('science-explain-submit-voice'));
+    await _flush(tester);
+
+    expect(echo.recognizeCalls, 1);
+    expect(
+      find.byKey(const ValueKey('science-explain-echo')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('science-explain-cue-落下')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('science-explain-follow-up')),
+      findsNothing,
+      reason: '声の説明も聞き取り確認を通ってから問い返しへ進む',
+    );
+
+    await _passEcho(tester);
+    expect(
+      find.byKey(const ValueKey('science-explain-follow-up')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('認識を使えない端末では文字で同じ聞き取りを確かめる', (tester) async {
+    final audio = _voice();
+    await tester.pumpWidget(
+      _wrap(
+        voice: audio.practice,
+        speechRecognizer: _FakeEchoRecognizer(
+          result: const OnDeviceSpeechResult(
+            status: OnDeviceSpeechStatus.unavailable,
+          ),
+        ),
+      ),
+    );
+
+    await _recordVoiceAndFinishPlayback(tester, audio);
+    await _tapVisible(tester, const ValueKey('science-explain-submit-voice'));
+    await _flush(tester);
+
+    expect(
+      find.byKey(const ValueKey('science-explain-echo-text-input')),
+      findsOneWidget,
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('science-explain-echo-text-input')),
+      '落下と重力',
+    );
+    await tester.pump();
+    await _tapVisible(
+      tester,
+      const ValueKey('science-explain-echo-submit-text'),
+    );
+    await _passEcho(tester);
+
+    expect(
+      find.byKey(const ValueKey('science-explain-follow-up')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('無関係な声の要点はもう一度聞き、閉じ込めず逃がす', (tester) async {
+    final audio = _voice();
+    await tester.pumpWidget(
+      _wrap(
+        voice: audio.practice,
+        speechRecognizer: _FakeEchoRecognizer(
+          result: const OnDeviceSpeechResult(
+            status: OnDeviceSpeechStatus.recognized,
+            candidates: ['さっきの天気の話'],
+          ),
+        ),
+      ),
+    );
+
+    await _recordVoiceAndFinishPlayback(tester, audio);
+    await _tapVisible(tester, const ValueKey('science-explain-submit-voice'));
+    await _flush(tester);
+
+    expect(
+      find.byKey(const ValueKey('science-explain-follow-up')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('science-explain-echo-voice')),
+      findsOneWidget,
+    );
+    // 1回目は聞き直すだけ。2回届かなければ「このまま進む」を開く。
+    await _tapVisible(tester, const ValueKey('science-explain-echo-voice'));
+    await _flush(tester);
+    expect(
+      find.byKey(const ValueKey('science-explain-echo-bypass')),
+      findsOneWidget,
+    );
+    await _tapVisible(tester, const ValueKey('science-explain-echo-bypass'));
+    await _flush(tester);
+    expect(
+      find.byKey(const ValueKey('science-explain-follow-up')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Plusサポーターは説明を読んだ生成前置きが問い返しに乗る', (
+    tester,
+  ) async {
+    final audio = _voice();
+    final engine = _FixedEngine('「ふむ、空気抵抗まで見てるのか」');
+    await tester.pumpWidget(
+      _wrap(
+        voice: audio.practice,
+        companionVoice: CompanionVoice(engine: engine),
+        supporterCheck: () async => true,
+      ),
+    );
+
+    await _teachByText(tester, '空気抵抗を無視すると落下は重さによらない。');
+    expect(
+      find.byKey(const ValueKey('science-explain-follow-up')),
+      findsOneWidget,
+    );
+    await _flush(tester);
+
+    final question = tester
+        .widget<Text>(
+          find.byKey(const ValueKey('science-explain-spoken-question')),
+        )
+        .data!;
+    expect(question, startsWith('ふむ、空気抵抗まで見てるのか'));
+    expect(question, contains(_section.localPracticeVariants[0].checkpoint.lure));
+  });
+
+  testWidgets('サポーターでなければ生成経路を呼ばず固定文へ退避する', (
+    tester,
+  ) async {
+    final audio = _voice();
+    final engine = _FixedEngine('「ふむ、空気抵抗まで見てるのか」');
+    await tester.pumpWidget(
+      _wrap(
+        voice: audio.practice,
+        companionVoice: CompanionVoice(engine: engine),
+        supporterCheck: () async => false,
+      ),
+    );
+
+    await _teachByText(tester, '空気抵抗を無視すると落下は重さによらない。');
+    expect(
+      find.byKey(const ValueKey('science-explain-follow-up')),
+      findsOneWidget,
+    );
+    await _flush(tester);
+
+    expect(engine.calls, 0);
+    final question = tester
+        .widget<Text>(
+          find.byKey(const ValueKey('science-explain-spoken-question')),
+        )
+        .data!;
+    expect(question, startsWith('教えてくれてありがとう。'));
   });
 
   test('StoryとSpeakingは旧AppColors・ColorSchemeへ戻らない', () {

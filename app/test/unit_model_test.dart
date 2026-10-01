@@ -1041,10 +1041,10 @@ void main() {
     test('v10同梱カタログの全coverage・Story・Notation・固定needが揃う', () async {
       final c = UnitsClient(baseUrl: '', store: MemorySessionStore());
       final list = await c.list();
-      expect(list, hasLength(8));
+      expect(list, hasLength(12));
       expect(
         list.fold<int>(0, (count, unit) => count + unit.concepts.length),
-        23,
+        35,
       );
 
       final currentMagnetism = list.firstWhere(
@@ -1208,13 +1208,13 @@ void main() {
           }
         }
       }
-      expect(cognitiveNeedCount, 69);
-      expect(wrongNeedCount, 138);
-      expect(notationNeedCount, 80);
+      expect(cognitiveNeedCount, 105);
+      expect(wrongNeedCount, 210);
+      expect(notationNeedCount, 116);
       expect(notationTraceCount, 22);
-      expect(practiceNeedCodes, hasLength(69));
-      expect(notationNeedCodes, hasLength(80));
-      expect(storyTitles, hasLength(23));
+      expect(practiceNeedCodes, hasLength(105));
+      expect(notationNeedCodes, hasLength(116));
+      expect(storyTitles, hasLength(35));
       expect(curriculumFields, UnitCurriculumField.values.toSet());
     });
 

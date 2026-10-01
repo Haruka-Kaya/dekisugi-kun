@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../config/motion.dart';
@@ -141,14 +142,17 @@ class _EmptyPath extends StatelessWidget {
             ),
             const SizedBox(height: GameTokens.spaceLg),
             Text(
-              '探究ノートを準備しています',
+              lang.t('探究ノートを準備しています', 'Preparing your learning path'),
               style: Theme.of(context).textTheme.headlineSmall
                   ?.copyWith(color: colors.ink)
                   .jaWeight(FontWeight.w800),
             ),
             const SizedBox(height: GameTokens.spaceSm),
             Text(
-              '教材を読み込めると、ここに次の観察記録が現れます。',
+              lang.t(
+                '教材を読み込めると、ここに次の観察記録が現れます。',
+                'Once the lessons load, your next step will appear here.',
+              ),
               style: Theme.of(
                 context,
               ).textTheme.bodyLarge?.copyWith(color: colors.inkMuted),
@@ -226,13 +230,18 @@ class _UnitBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     final colors = context.gamePalette;
-    final progressLabel = '${unit.totalSteps}個中${unit.completedSteps}個完了';
+    final progressLabel = lang.t(
+      '${unit.totalSteps}個中${unit.completedSteps}個完了',
+      '${unit.completedSteps} of ${unit.totalSteps} done',
+    );
 
     return Semantics(
       container: true,
       explicitChildNodes: true,
-      label:
-          'ユニット${unit.ordinal}、${unit.title}。${unit.objective}。$progressLabel',
+      label: lang.t(
+        'ユニット${unit.ordinal}、${unit.title}。${unit.objective}。$progressLabel',
+        'Unit ${unit.ordinal}, ${unit.title}. ${unit.objective}. $progressLabel',
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: colors.surface,
@@ -274,7 +283,10 @@ class _UnitBanner extends StatelessWidget {
                 if (onGuidebookOpen != null) ...[
                   const SizedBox(width: GameTokens.spaceSm),
                   Semantics(
-                    label: '${unit.guidebookTitle}を開く',
+                    label: lang.t(
+                      '${unit.guidebookTitle}を開く',
+                      'Open ${unit.guidebookTitle}',
+                    ),
                     button: true,
                     child: IconButton(
                       key: ValueKey<String>('unit-guidebook-${unit.id}'),
@@ -303,7 +315,10 @@ class _UnitBanner extends StatelessWidget {
               children: [
                 Expanded(
                   child: Semantics(
-                    label: 'ユニットの進み、$progressLabel',
+                    label: lang.t(
+                      'ユニットの進み、$progressLabel',
+                      'Unit progress, $progressLabel',
+                    ),
                     child: ExcludeSemantics(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(
@@ -360,7 +375,10 @@ class _CharacterReaction extends StatelessWidget {
     final colors = context.gamePalette;
     return Semantics(
       container: true,
-      label: '${mascotStyle.label}。$message',
+      label: lang.t(
+        '${mascotStyle.label}。$message',
+        '${mascotStyle.label}. $message',
+      ),
       child: ExcludeSemantics(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -426,11 +444,19 @@ class PathMascotPreview extends StatelessWidget {
         gameColors.legendary,
         gameColors.onLegendary,
       ),
+      LearningPathMascotStyle.aurora => (
+        DekisugiCharacterDecoration.aurora,
+        gameColors.pathReview,
+        gameColors.story,
+      ),
     };
     return Semantics(
       container: true,
       image: true,
-      label: '${style.label}、${reaction.semanticsLabel}',
+      label: lang.t(
+        '${style.label}、${reaction.semanticsLabel}',
+        '${style.label}, ${reaction.semanticsLabel}',
+      ),
       child: ExcludeSemantics(
         child: SizedBox.square(
           dimension: size,
@@ -974,42 +1000,61 @@ IconData _nodeIcon(GamePathNode node) => switch (node.state) {
 };
 
 String _nodeBadge(GamePathNode node) => switch (node.state) {
-  GamePathNodeState.locked => '未解放',
-  GamePathNodeState.available => '次',
+  GamePathNodeState.locked => lang.t('未解放', 'Locked'),
+  GamePathNodeState.available => lang.t('次', 'Next'),
   GamePathNodeState.inProgress =>
     '${node.completedLessons}/${node.totalLessons}',
-  GamePathNodeState.completed => '完了',
-  GamePathNodeState.reviewDue => '復習',
-  GamePathNodeState.legendaryAvailable => '高難度',
-  GamePathNodeState.legendaryCompleted => '高難度 完了',
+  GamePathNodeState.completed => lang.t('完了', 'Done'),
+  GamePathNodeState.reviewDue => lang.t('復習', 'Review'),
+  GamePathNodeState.legendaryAvailable => lang.t('高難度', 'Hard'),
+  GamePathNodeState.legendaryCompleted => lang.t('高難度 完了', 'Hard done'),
 };
 
 String _kindLabel(GamePathNodeKind kind) => switch (kind) {
-  GamePathNodeKind.lesson => '教材観察',
-  GamePathNodeKind.story => '理科事件簿',
-  GamePathNodeKind.listening => '聞き取り観察',
-  GamePathNodeKind.speaking => '教え返し',
-  GamePathNodeKind.practice => '再観察',
-  GamePathNodeKind.challenge => '総合検証',
-  GamePathNodeKind.legendary => '高難度検証',
+  GamePathNodeKind.lesson => lang.t('教材観察', 'Science lesson'),
+  GamePathNodeKind.story => lang.t('理科事件簿', 'Science story'),
+  GamePathNodeKind.listening => lang.t('聞き取り観察', 'Listening'),
+  GamePathNodeKind.speaking => lang.t('教え返し', 'Explaining'),
+  GamePathNodeKind.practice => lang.t('再観察', 'Review'),
+  GamePathNodeKind.challenge => lang.t('総合検証', 'Chapter boss'),
+  GamePathNodeKind.legendary => lang.t('高難度検証', 'Hard challenge'),
 };
 
 String _stateLabel(GamePathNode node) => switch (node.state) {
-  GamePathNodeState.locked => '未解放。前の観察記録を終えると開きます',
-  GamePathNodeState.available => '次に進めます',
-  GamePathNodeState.inProgress =>
+  GamePathNodeState.locked => lang.t(
+    '未解放。前の観察記録を終えると開きます',
+    'Locked. Finish the previous lesson to open it',
+  ),
+  GamePathNodeState.available => lang.t('次に進めます', 'Ready to go'),
+  GamePathNodeState.inProgress => lang.t(
     '${node.totalLessons}回中${node.completedLessons}回完了。続きから進めます',
-  GamePathNodeState.completed => '完了。もう一度取り組めます',
-  GamePathNodeState.reviewDue => '復習する時期です',
-  GamePathNodeState.legendaryAvailable => '高難度課題に挑戦できます',
-  GamePathNodeState.legendaryCompleted => '高難度課題を完了。もう一度取り組めます',
+    '${node.completedLessons} of ${node.totalLessons} done. Pick up where you left off',
+  ),
+  GamePathNodeState.completed => lang.t(
+    '完了。もう一度取り組めます',
+    'Done. You can do it again',
+  ),
+  GamePathNodeState.reviewDue => lang.t('復習する時期です', 'Time to review'),
+  GamePathNodeState.legendaryAvailable => lang.t(
+    '高難度課題に挑戦できます',
+    'You can try the hard challenge',
+  ),
+  GamePathNodeState.legendaryCompleted => lang.t(
+    '高難度課題を完了。もう一度取り組めます',
+    'Hard challenge done. You can do it again',
+  ),
 };
 
-String _nodeSemanticLabel(GamePathNode node, {required bool current}) =>
-    '${_kindLabel(node.kind)}「${node.title}」。'
-    '${current ? '現在位置。' : ''}'
-    '${_stateLabel(node)}。'
-    '${node.canOpen ? 'タップして詳細を開きます' : ''}';
+String _nodeSemanticLabel(GamePathNode node, {required bool current}) => lang.t(
+  '${_kindLabel(node.kind)}「${node.title}」。'
+      '${current ? '現在位置。' : ''}'
+      '${_stateLabel(node)}。'
+      '${node.canOpen ? 'タップして詳細を開きます' : ''}',
+  '${_kindLabel(node.kind)} "${node.title}". '
+      '${current ? 'You are here. ' : ''}'
+      '${_stateLabel(node)}. '
+      '${node.canOpen ? 'Tap to open details' : ''}',
+);
 
 Future<void> _showNodeSheet(
   BuildContext context, {
@@ -1059,7 +1104,7 @@ class _NodeDetailSheet extends StatelessWidget {
     return Semantics(
       container: true,
       namesRoute: true,
-      label: '${node.title}の詳細',
+      label: lang.t('${node.title}の詳細', 'Details for ${node.title}'),
       child: SingleChildScrollView(
         key: const ValueKey('game-node-sheet'),
         padding: EdgeInsets.fromLTRB(
@@ -1097,7 +1142,7 @@ class _NodeDetailSheet extends StatelessWidget {
                 const SizedBox(width: GameTokens.spaceSm),
                 IconButton(
                   key: const ValueKey('game-node-sheet-close'),
-                  tooltip: '閉じる',
+                  tooltip: lang.t('閉じる', 'Close'),
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close_rounded),
                 ),
@@ -1128,7 +1173,10 @@ class _NodeDetailSheet extends StatelessWidget {
                   const SizedBox(width: GameTokens.spaceSm),
                   Expanded(
                     child: Text(
-                      '目安 ${node.estimatedMinutes}分',
+                      lang.t(
+                        '目安 ${node.estimatedMinutes}分',
+                        'About ${node.estimatedMinutes} min',
+                      ),
                       style: t.textTheme.bodyMedium?.copyWith(
                         color: colors.inkMuted,
                       ),
@@ -1140,7 +1188,7 @@ class _NodeDetailSheet extends StatelessWidget {
             if (node.learningActions.isNotEmpty) ...[
               const SizedBox(height: GameTokens.spaceXl),
               Text(
-                'この観察でやること',
+                lang.t('この観察でやること', 'What you will do in this lesson'),
                 style: t.textTheme.titleMedium
                     ?.copyWith(color: colors.ink)
                     .jaWeight(FontWeight.w800),
@@ -1172,7 +1220,10 @@ class _NodeDetailSheet extends StatelessWidget {
             if (node.rewardLabel != null) ...[
               const SizedBox(height: GameTokens.spaceMd),
               Text(
-                '完了時 ${node.rewardLabel}',
+                lang.t(
+                  '完了時 ${node.rewardLabel}',
+                  'On completion: ${node.rewardLabel}',
+                ),
                 style: t.textTheme.labelLarge
                     ?.copyWith(color: colors.inkMuted)
                     .jaWeight(FontWeight.w700),
@@ -1193,11 +1244,20 @@ class _NodeDetailSheet extends StatelessWidget {
                 ),
                 child: Text(switch (node.state) {
                   GamePathNodeState.completed ||
-                  GamePathNodeState.legendaryCompleted => 'もう一度やる',
-                  GamePathNodeState.inProgress => '続きから進める',
-                  GamePathNodeState.reviewDue => '復習をはじめる',
-                  GamePathNodeState.legendaryAvailable => '高難度に挑戦',
-                  _ => '観察を始める',
+                  GamePathNodeState.legendaryCompleted => lang.t(
+                    'もう一度やる',
+                    'Do it again',
+                  ),
+                  GamePathNodeState.inProgress => lang.t('続きから進める', 'Continue'),
+                  GamePathNodeState.reviewDue => lang.t(
+                    '復習をはじめる',
+                    'Start review',
+                  ),
+                  GamePathNodeState.legendaryAvailable => lang.t(
+                    '高難度に挑戦',
+                    'Try the hard challenge',
+                  ),
+                  _ => lang.t('観察を始める', 'Start lesson'),
                 }, textAlign: TextAlign.center),
               ),
             ],

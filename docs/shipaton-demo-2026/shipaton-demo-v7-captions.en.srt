@@ -1,0 +1,39 @@
+1
+00:00:05,200 --> 00:00:12,800
+Your learning path — 12 science units, 35 concepts
+
+2
+00:00:13,200 --> 00:00:23,800
+Study the material once — it hides when it's your turn to explain
+
+3
+00:00:24,200 --> 00:00:35,800
+Explain it to Dekisugi-kun in your own words — text is a first-class input
+
+4
+00:00:36,200 --> 00:00:41,300
+It listens for the key ideas in YOUR explanation
+
+5
+00:00:41,700 --> 00:00:51,300
+Then it asks a follow-up — the questions real students fumble
+
+6
+00:00:51,700 --> 00:01:02,300
+A wrong pick costs a heart — and earns a hint, never the answer
+
+7
+00:01:02,700 --> 00:01:12,300
+The record — misconceptions cataloged from real classroom surveys
+
+8
+00:01:12,700 --> 00:01:21,300
+A shareable report for parents — the core learning loop stays on-device
+
+9
+00:01:21,700 --> 00:01:35,500
+Dekisugi-kun Plus — supporter tier via RevenueCat
+
+10
+00:01:35,900 --> 00:01:48,100
+A real purchase, end to end — packages, Test Store checkout, entitlement

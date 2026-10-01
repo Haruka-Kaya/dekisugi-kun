@@ -1,4 +1,5 @@
 import '../config/app_radius.dart';
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../models/unit.dart';
 import '../services/units_client.dart';
@@ -47,7 +48,9 @@ class _UnitPickerScreenState extends State<UnitPickerScreen> {
     if (!mounted) return;
     setState(() {
       _list = list;
-      _error = list.isEmpty ? '単元を取ってこられませんでした。' : null;
+      _error = list.isEmpty
+          ? lang.t('単元を取ってこられませんでした。', 'Could not load units.')
+          : null;
     });
   }
 
@@ -68,8 +71,11 @@ class _UnitPickerScreenState extends State<UnitPickerScreen> {
       setState(() {
         _loading = null;
         _error =
-            '「${concept.label}」の教材を読み込めませんでした。'
-            '通信を確かめてもう一度どうぞ。';
+            lang.t(
+              '「${concept.label}」の教材を読み込めませんでした。',
+              'Could not load the material for "${concept.label}".',
+            ) +
+            lang.t('通信を確かめてもう一度どうぞ。', ' Check your connection and try again.');
       });
       return;
     }
@@ -100,12 +106,18 @@ class _UnitPickerScreenState extends State<UnitPickerScreen> {
               children: [
                 _PickerNavigation(onOpenReview: widget.onOpenReview),
                 const SizedBox(height: 22),
-                const StudioPageIntro(
+                StudioPageIntro(
                   eyebrow: 'LEARNING MISSION  /  SELECT',
-                  title: '挑むミッションを選ぼう',
+                  title: lang.t('挑むミッションを選ぼう', 'Choose a mission'),
                   body:
-                      '1回の挑戦は、1つの考え方だけ。'
-                      '教材で確かめたあと、デキすぎ君の思い込みを見破ろう。',
+                      lang.t(
+                        '1回の挑戦は、1つの考え方だけ。',
+                        'Focus on one idea per mission.',
+                      ) +
+                      lang.t(
+                        '教材で確かめたあと、デキすぎ君の思い込みを見破ろう。',
+                        ' Explore the material, then spot Dekisugi-kun\'s misconception.',
+                      ),
                 ),
                 const SizedBox(height: 18),
                 const _LearningRoute(),
@@ -148,12 +160,12 @@ class _PickerNavigation extends StatelessWidget {
         IconButton(
           onPressed: () => Navigator.of(context).maybePop(),
           icon: const Icon(Icons.arrow_back),
-          tooltip: 'もどる',
+          tooltip: lang.t('もどる', 'Back'),
         ),
         const SizedBox(width: 4),
         Expanded(
           child: Text(
-            '今日挑むミッション',
+            lang.t('今日挑むミッション', 'Today\'s mission'),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: t.textTheme.titleSmall?.copyWith(
@@ -165,7 +177,7 @@ class _PickerNavigation extends StatelessWidget {
           IconButton(
             onPressed: onOpenReview,
             icon: const Icon(Icons.bookmark_outline),
-            tooltip: 'もう一度見るところ',
+            tooltip: lang.t('もう一度見るところ', 'What to review'),
           ),
       ],
     );
@@ -190,14 +202,17 @@ class _LearningRoute extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'ミッションの流れ',
+            lang.t('ミッションの流れ', 'How missions work'),
             style: t.textTheme.labelMedium
                 ?.copyWith(color: scheme.primary)
                 .jaWeight(FontWeight.w700),
           ),
           const SizedBox(height: 4),
           Text(
-            '対象を選ぶ  →  教材で確かめる  →  思い込みを見破る',
+            lang.t(
+              '対象を選ぶ  →  教材で確かめる  →  思い込みを見破る',
+              'Choose a topic  →  Explore the material  →  Spot the misconception',
+            ),
             style: t.textTheme.bodyMedium?.jaWeight(FontWeight.w700),
           ),
         ],
@@ -240,13 +255,16 @@ class _ContentsSheet extends StatelessWidget {
               runSpacing: 4,
               children: [
                 Text(
-                  'MISSION LIST  /  挑戦一覧',
+                  lang.t('MISSION LIST  /  挑戦一覧', 'MISSION LIST'),
                   style: t.textTheme.labelMedium
                       ?.copyWith(color: scheme.onSurfaceVariant)
                       .jaWeight(FontWeight.w700),
                 ),
                 Text(
-                  '全${units.fold<int>(0, (sum, unit) => sum + unit.concepts.length)}ミッション',
+                  lang.t(
+                    '全${units.fold<int>(0, (sum, unit) => sum + unit.concepts.length)}ミッション',
+                    '${units.fold<int>(0, (sum, unit) => sum + unit.concepts.length)} missions total',
+                  ),
                   style: t.textTheme.labelMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
@@ -333,7 +351,7 @@ class _ContentsEntry extends StatelessWidget {
           if (unit.concepts.isNotEmpty) ...[
             const SizedBox(height: 18),
             Text(
-              'この単元のミッション',
+              lang.t('この単元のミッション', 'Missions in this unit'),
               style: t.textTheme.labelMedium
                   ?.copyWith(color: scheme.onSurfaceVariant)
                   .jaWeight(FontWeight.w700),
@@ -393,9 +411,15 @@ class _ConceptMission extends StatelessWidget {
       button: true,
       enabled: onTap != null,
       label:
-          'ミッション「${concept.label}」を始める。'
-          '教材で確かめて、デキすぎ君の思い込みを見破る。',
-      value: busy ? '教材を読み込み中' : null,
+          lang.t(
+            'ミッション「${concept.label}」を始める。',
+            'Start the "${concept.label}" mission.',
+          ) +
+          lang.t(
+            '教材で確かめて、デキすぎ君の思い込みを見破る。',
+            ' Explore the material and spot Dekisugi-kun\'s misconception.',
+          ),
+      value: busy ? lang.t('教材を読み込み中', 'Loading material') : null,
       child: ExcludeSemantics(
         child: Material(
           color: busy ? scheme.primaryContainer : scheme.surfaceContainerLow,
@@ -423,13 +447,19 @@ class _ConceptMission extends StatelessWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      '対象：${concept.label}',
+                      lang.t('対象：${concept.label}', 'Topic: ${concept.label}'),
                       style: t.textTheme.titleMedium?.jaWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      'この考え方を自分の言葉で説明し、'
-                      'デキすぎ君の思い込みを見破る',
+                      lang.t(
+                            'この考え方を自分の言葉で説明し、',
+                            'Explain this idea in your own words and',
+                          ) +
+                          lang.t(
+                            'デキすぎ君の思い込みを見破る',
+                            ' spot Dekisugi-kun\'s misconception',
+                          ),
                       style: t.textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -440,7 +470,9 @@ class _ConceptMission extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            busy ? '教材を準備中…' : '教材を読んで挑戦',
+                            busy
+                                ? lang.t('教材を準備中…', 'Preparing material…')
+                                : lang.t('教材を読んで挑戦', 'Read and try'),
                             style: t.textTheme.labelMedium
                                 ?.copyWith(color: scheme.primary)
                                 .jaWeight(FontWeight.w700),
@@ -504,7 +536,10 @@ class _EmptyContents extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: scheme.outlineVariant),
       ),
-      child: Text('単元がまだありません。', style: t.textTheme.bodyMedium),
+      child: Text(
+        lang.t('単元がまだありません。', 'No units yet.'),
+        style: t.textTheme.bodyMedium,
+      ),
     );
   }
 }
@@ -545,7 +580,10 @@ class _ErrorNote extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          TextButton(onPressed: onRetry, child: const Text('やり直す')),
+          TextButton(
+            onPressed: onRetry,
+            child: Text(lang.t('やり直す', 'Try again')),
+          ),
         ],
       ),
     );

@@ -113,6 +113,12 @@ abstract interface class LearningProgressStore {
     required DateTime occurredAt,
   });
 
+  /// Plus entitlement確認時に、Plus限定の見た目を所有へ付ける。
+  Future<LearningCosmeticState> grantPlusCosmetics({
+    required LearningScope scope,
+    required DateTime occurredAt,
+  });
+
   Future<LearningChallengePassPurchaseResult> purchaseChallengePassWithGems({
     required LearningScope scope,
     required String spendId,
@@ -309,6 +315,16 @@ final class SessionLearningProgressStore implements LearningProgressStore {
   }) => _store.equipLearningCosmetic(
     scope: scope,
     productId: productId,
+    occurredAt: occurredAt,
+    catalog: economyCatalog,
+  );
+
+  @override
+  Future<LearningCosmeticState> grantPlusCosmetics({
+    required LearningScope scope,
+    required DateTime occurredAt,
+  }) => _store.grantLearningPlusCosmetics(
+    scope: scope,
     occurredAt: occurredAt,
     catalog: economyCatalog,
   );

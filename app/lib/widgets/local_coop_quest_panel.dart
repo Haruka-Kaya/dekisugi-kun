@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_progress.dart';
@@ -55,14 +56,17 @@ class LocalCoopQuestPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'ふたりの共同観察',
+                      lang.t('ふたりの共同観察', 'On-device pair quest'),
                       style: t.textTheme.titleLarge
                           ?.copyWith(color: colors.ink)
                           .jaWeight(FontWeight.w900),
                     ),
                     const SizedBox(height: GameTokens.spaceXs),
                     Text(
-                      '実在する2人がこの端末を手渡し、それぞれ観察記録を1件ずつ残します。名前・回答・正誤は保存しません。',
+                      lang.t(
+                        '実在する2人がこの端末を手渡し、それぞれ観察記録を1件ずつ残します。名前・回答・正誤は保存しません。',
+                        'Two real people pass this device and each finish one lesson. Names, answers, and results are not saved.',
+                      ),
                       style: t.textTheme.bodySmall?.copyWith(
                         color: colors.inkMuted,
                       ),
@@ -81,7 +85,7 @@ class LocalCoopQuestPanel extends StatelessWidget {
                   key: const ValueKey('local-coop-start'),
                   onPressed: unavailableReason == null ? onStart : null,
                   icon: const Icon(Icons.group_add_outlined),
-                  label: const Text('ふたりの観察を準備する'),
+                  label: Text(lang.t('ふたりの観察を準備する', 'Create a 2-person quest')),
                 ),
                 if (unavailableReason case final reason?) ...[
                   const SizedBox(height: GameTokens.spaceSm),
@@ -138,7 +142,10 @@ class LocalCoopQuestPanel extends StatelessWidget {
                   const SizedBox(width: GameTokens.spaceSm),
                   Expanded(
                     child: Text(
-                      'ふたりの観察記録がそろいました。報酬は端末内の個人の結晶残高へ一度だけ記録済みです。',
+                      lang.t(
+                        'ふたりの観察記録がそろいました。報酬は端末内の個人の結晶残高へ一度だけ記録済みです。',
+                        'Both learners are done. The reward was recorded once to the personal wallet on this device.',
+                      ),
                       style: t.textTheme.bodyMedium?.copyWith(
                         color: colors.ink,
                       ),
@@ -148,7 +155,7 @@ class LocalCoopQuestPanel extends StatelessWidget {
               )
             else ...[
               Text(
-                '次に観察する人を選ぶ',
+                lang.t('次に観察する人を選ぶ', 'Choose who learns next'),
                 style: t.textTheme.titleSmall
                     ?.copyWith(color: colors.ink)
                     .jaWeight(FontWeight.w800),
@@ -170,8 +177,14 @@ class LocalCoopQuestPanel extends StatelessWidget {
               ],
               Text(
                 selectedParticipantId == null
-                    ? '人を選んでから探究ノートへ戻り、初回観察または期限の来た再観察を1件終えてください。'
-                    : '選択中です。次に完了した意味のある観察1件だけを、この枠へ記録します。',
+                    ? lang.t(
+                        '人を選んでから探究ノートへ戻り、初回観察または期限の来た再観察を1件終えてください。',
+                        'Choose a person, then go back to the Path and finish one new lesson or due review.',
+                      )
+                    : lang.t(
+                        '選択中です。次に完了した意味のある観察1件だけを、この枠へ記録します。',
+                        'Selected. Only the next meaningful lesson finished will be recorded to this slot.',
+                      ),
                 style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
               ),
             ],
@@ -199,7 +212,7 @@ class _ParticipantButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = '$slotNumber人目';
+    final label = lang.t('$slotNumber人目', 'Person $slotNumber');
     return Semantics(
       button: !contributed,
       enabled: !contributed,
@@ -224,10 +237,10 @@ class _ParticipantButton extends StatelessWidget {
           ),
           label: Text(
             contributed
-                ? '$label ・ 記録済み'
+                ? lang.t('$label ・ 記録済み', '$label · Recorded')
                 : selected
-                ? '$label ・ 選択中'
-                : '$labelを選ぶ',
+                ? lang.t('$label ・ 選択中', '$label · Selected')
+                : lang.t('$labelを選ぶ', 'Choose $label'),
           ),
         ),
       ),

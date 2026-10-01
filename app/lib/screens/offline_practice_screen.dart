@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../config/motion.dart';
@@ -16,7 +17,10 @@ import '../widgets/readable_width.dart';
 import '../widgets/science_challenge_support.dart';
 import '../widgets/prediction_result_compare.dart';
 
-const _fallbackCheckpointHint = '教材の成立条件と、選んだ説明の理由を見直す。';
+String get _fallbackCheckpointHint => lang.t(
+  '教材の成立条件と、選んだ説明の理由を見直す。',
+  'Review the conditions in the material and the reason for your choice.',
+);
 
 /// 通信や生成AIを使わず、教材を読んだ直後の学習行為を最後まで続ける画面。
 ///
@@ -101,8 +105,10 @@ class _OfflinePracticeScreenState extends State<OfflinePracticeScreen> {
   String get _solutionSummary =>
       cognitiveTaskSolutionSummary(_variant.cognitiveTask);
 
-  String get _comparisonOutcome =>
-      '教材の組み方\n$_solutionSummary\n\n現象の結果\n${_variant.expectedOutcome}';
+  String get _comparisonOutcome => lang.t(
+    '教材の組み方\n$_solutionSummary\n\n現象の結果\n${_variant.expectedOutcome}',
+    'Material\'s build\n$_solutionSummary\n\nResult\n${_variant.expectedOutcome}',
+  );
 
   String get _correctCheckpointText =>
       _checkpoint.optionFor(_checkpoint.correctOptionId)?.text ?? '';
@@ -400,7 +406,9 @@ class _OfflinePracticeScreenState extends State<OfflinePracticeScreen> {
               foregroundColor: colors.ink,
               surfaceTintColor: Colors.transparent,
               title: Text(
-                widget.missionKind == MissionKind.caseRetry ? '総合検証' : '端末内で練習',
+                widget.missionKind == MissionKind.caseRetry
+                    ? lang.t('総合検証', 'Chapter boss')
+                    : lang.t('端末内で練習', 'On-device practice'),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.jaWeight(FontWeight.w700),
@@ -539,7 +547,10 @@ class _LocalOnlyNotice extends StatelessWidget {
     final colors = context.gamePalette;
     return Semantics(
       container: true,
-      label: '端末内だけの練習。入力は送信も保存もされません',
+      label: lang.t(
+        '端末内だけの練習。入力は送信も保存もされません',
+        'On-device practice only. Your input is not sent or saved',
+      ),
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         decoration: BoxDecoration(
@@ -556,7 +567,10 @@ class _LocalOnlyNotice extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'この練習は端末内だけで進みます。入力は送信・保存されません。',
+                lang.t(
+                  'この練習は端末内だけで進みます。入力は送信・保存されません。',
+                  'This practice runs only on your device. Your input is not sent or saved.',
+                ),
                 style: t.textTheme.bodyMedium?.copyWith(color: colors.ink),
               ),
             ),
@@ -592,7 +606,10 @@ class _PracticeHeader extends StatelessWidget {
       key: ValueKey('offline-practice-step-$step'),
       container: true,
       liveRegion: true,
-      label: '端末内練習、4段階のうち$step段階目',
+      label: lang.t(
+        '端末内練習、4段階のうち$step段階目',
+        'On-device practice, step $step of 4',
+      ),
       child: ExcludeSemantics(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -622,9 +639,9 @@ class _PracticeHeader extends StatelessWidget {
   }
 
   String get _missionLabel => switch (missionKind) {
-    MissionKind.teach => '自分の言葉で説明',
-    MissionKind.repair => '説明を組み直す',
-    MissionKind.caseRetry => '別の場面で確かめる',
+    MissionKind.teach => lang.t('自分の言葉で説明', 'Explain in your own words'),
+    MissionKind.repair => lang.t('説明を組み直す', 'Rebuild your explanation'),
+    MissionKind.caseRetry => lang.t('別の場面で確かめる', 'Test it in a new scenario'),
   };
 }
 
@@ -647,17 +664,21 @@ class _RecallStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       container: true,
-      label: '第1段階、教材を見ずに説明する',
+      label: lang.t('第1段階、教材を見ずに説明する', 'Step 1: explain without the material'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _StepTitle(number: '01', title: '教材を閉じたまま、説明する', body: prompt),
+          _StepTitle(
+            number: '01',
+            title: lang.t('教材を閉じたまま、説明する', 'Explain with the material closed'),
+            body: prompt,
+          ),
           const SizedBox(height: 18),
           _PracticeInput(
             key: const ValueKey('offline-recall-input'),
             controller: controller,
-            label: '自分の説明',
-            hint: '結論から書いてみる',
+            label: lang.t('自分の説明', 'Your explanation'),
+            hint: lang.t('結論から書いてみる', 'Start with your conclusion'),
             onChanged: onChanged,
           ),
           const SizedBox(height: 10),
@@ -667,7 +688,7 @@ class _RecallStep extends StatelessWidget {
             key: const ValueKey('offline-recall-next'),
             onPressed: canContinue ? onNext : null,
             icon: const Icon(Icons.arrow_forward),
-            label: const Text('説明を書いた'),
+            label: Text(lang.t('説明を書いた', 'I\'ve written it')),
           ),
         ],
       ),
@@ -701,17 +722,31 @@ class _TaskStep extends StatelessWidget {
     return Semantics(
       container: true,
       label: rewritingAfterResult
-          ? '第2段階へ戻り、教材の結果を閉じて科学タスクを組み直す'
-          : '第2段階、具体場面を科学タスクで考える',
+          ? lang.t(
+              '第2段階へ戻り、教材の結果を閉じて科学タスクを組み直す',
+              'Back to step 2: hide the result and rebuild the science task',
+            )
+          : lang.t(
+              '第2段階、具体場面を科学タスクで考える',
+              'Step 2: work through a real scenario with a science task',
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _StepTitle(
             number: '02',
-            title: rewritingAfterResult ? '結果を閉じて、組み直す' : '科学タスクを、組む',
+            title: rewritingAfterResult
+                ? lang.t('結果を閉じて、組み直す', 'Hide the result and rebuild')
+                : lang.t('科学タスクを、組む', 'Build the science task'),
             body: rewritingAfterResult
-                ? 'さっき見た結果は表示しません。カードを使って、自分の答えをもう一度組みます。'
-                : '文章を写す代わりに、選ぶ・分類する・順に組む操作で考えます。',
+                ? lang.t(
+                    'さっき見た結果は表示しません。カードを使って、自分の答えをもう一度組みます。',
+                    'The result you just saw is hidden. Use the cards to build your answer again.',
+                  )
+                : lang.t(
+                    '文章を写す代わりに、選ぶ・分類する・順に組む操作で考えます。',
+                    'Instead of copying text, think by choosing, sorting, and ordering.',
+                  ),
           ),
           const SizedBox(height: 18),
           _TryIt(situation: prompt),
@@ -726,14 +761,23 @@ class _TaskStep extends StatelessWidget {
             key: const ValueKey('offline-task-next'),
             onPressed: canContinue ? onNext : null,
             icon: const Icon(Icons.arrow_forward),
-            label: Text(rewritingAfterResult ? '組み直した答えに理由を足す' : 'この答えに理由を足す'),
+            label: Text(
+              rewritingAfterResult
+                  ? lang.t(
+                      '組み直した答えに理由を足す',
+                      'Add a reason to your rebuilt answer',
+                    )
+                  : lang.t('この答えに理由を足す', 'Add a reason to this answer'),
+            ),
           ),
           if (!rewritingAfterResult) ...[
             const SizedBox(height: 6),
             TextButton.icon(
               onPressed: onBack,
               icon: const Icon(Icons.arrow_back),
-              label: const Text('最初の説明を書き直す'),
+              label: Text(
+                lang.t('最初の説明を書き直す', 'Rewrite your first explanation'),
+              ),
             ),
           ],
         ],
@@ -767,19 +811,29 @@ class _ReasoningStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       container: true,
-      label: '第3段階、組んだ答えの根拠を一つ書く',
+      label: lang.t(
+        '第3段階、組んだ答えの根拠を一つ書く',
+        'Step 3: write one reason for your answer',
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _StepTitle(number: '03', title: '決め手を、1つ書く', body: prompt),
+          _StepTitle(
+            number: '03',
+            title: lang.t('決め手を、1つ書く', 'Write one key reason'),
+            body: prompt,
+          ),
           const SizedBox(height: 18),
           CognitiveTaskResponseSummary(prompt: taskPrompt, response: response),
           const SizedBox(height: 18),
           _PracticeInput(
             key: const ValueKey('offline-reasoning-input'),
             controller: controller,
-            label: 'この答えにした理由',
-            hint: '条件・力の向き・変化の順など、決め手を1つ',
+            label: lang.t('この答えにした理由', 'Why you chose this answer'),
+            hint: lang.t(
+              '条件・力の向き・変化の順など、決め手を1つ',
+              'One key reason: a condition, force direction, order of change, etc.',
+            ),
             onChanged: onChanged,
           ),
           const SizedBox(height: 10),
@@ -789,13 +843,13 @@ class _ReasoningStep extends StatelessWidget {
             key: const ValueKey('offline-reasoning-next'),
             onPressed: canContinue ? onNext : null,
             icon: const Icon(Icons.arrow_forward),
-            label: const Text('チェックポイントへ'),
+            label: Text(lang.t('チェックポイントへ', 'To the checkpoint')),
           ),
           const SizedBox(height: 6),
           TextButton.icon(
             onPressed: onBack,
             icon: const Icon(Icons.arrow_back),
-            label: const Text('科学タスクを組み直す'),
+            label: Text(lang.t('科学タスクを組み直す', 'Rebuild the science task')),
           ),
         ],
       ),
@@ -846,20 +900,23 @@ class _CheckpointStep extends StatelessWidget {
     return Semantics(
       key: const ValueKey('offline-checkpoint-step'),
       container: true,
-      label: '第4段階、固定の思い込みを見破る',
+      label: lang.t('第4段階、固定の思い込みを見破る', 'Step 4: catch the misconception'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _StepTitle(
+          _StepTitle(
             number: '04',
-            title: '思い込みを、見破る',
-            body: 'ある生徒のメモを読んで、科学的に正しく直している選択肢を1つ選んでください。',
+            title: lang.t('思い込みを、見破る', 'Catch the misconception'),
+            body: lang.t(
+              'ある生徒のメモを読んで、科学的に正しく直している選択肢を1つ選んでください。',
+              'Read a student\'s note and choose the one option that fixes it correctly, scientifically.',
+            ),
           ),
           const SizedBox(height: 18),
           _CheckpointLure(lure: checkpoint.lure),
           const SizedBox(height: 20),
           Text(
-            '正しく直しているのはどれ？',
+            lang.t('正しく直しているのはどれ？', 'Which one fixes it correctly?'),
             style: t.textTheme.titleMedium?.jaWeight(FontWeight.w700),
           ),
           const SizedBox(height: 10),
@@ -891,15 +948,21 @@ class _CheckpointStep extends StatelessWidget {
               keyboardType: TextInputType.multiline,
               textInputAction: TextInputAction.newline,
               onChanged: (_) => onCorrectionChanged(),
-              decoration: const InputDecoration(
-                labelText: '訂正メモ',
-                hintText: 'このメモのどこを、どう直すかを1文で書く',
+              decoration: InputDecoration(
+                labelText: lang.t('訂正メモ', 'Correction note'),
+                hintText: lang.t(
+                  'このメモのどこを、どう直すかを1文で書く',
+                  'In one sentence, write what to fix in this note and how',
+                ),
                 alignLabelWithHint: true,
               ),
             ),
             const SizedBox(height: 9),
             Text(
-              'この訂正メモも送信・保存しません。書いたあと、教材の直し方と見比べます。',
+              lang.t(
+                'この訂正メモも送信・保存しません。書いたあと、教材の直し方と見比べます。',
+                'This correction note isn\'t sent or saved either. After writing it, compare it with the material\'s fix.',
+              ),
               style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
             ),
           ],
@@ -909,14 +972,16 @@ class _CheckpointStep extends StatelessWidget {
               key: const ValueKey('offline-checkpoint-retry'),
               onPressed: canRetry ? onRetry : null,
               icon: const Icon(Icons.compare_arrows_outlined),
-              label: const Text('訂正メモと答えを比べる'),
+              label: Text(
+                lang.t('訂正メモと答えを比べる', 'Compare your note with the answer'),
+              ),
             )
           else
             FilledButton.icon(
               key: const ValueKey('offline-checkpoint-submit'),
               onPressed: selectedOptionId == null ? null : onSubmit,
               icon: const Icon(Icons.fact_check_outlined),
-              label: const Text('この直し方で決める'),
+              label: Text(lang.t('この直し方で決める', 'Go with this fix')),
             ),
           const SizedBox(height: 9),
           Row(
@@ -926,7 +991,10 @@ class _CheckpointStep extends StatelessWidget {
               const SizedBox(width: 7),
               Expanded(
                 child: Text(
-                  'これは固定3択の確認です。この結果だけで習得とは判定しません。',
+                  lang.t(
+                    'これは固定3択の確認です。この結果だけで習得とは判定しません。',
+                    'This is a fixed 3-choice check. This result alone doesn\'t mean you\'ve mastered it.',
+                  ),
                   style: t.textTheme.bodySmall?.copyWith(
                     color: colors.inkMuted,
                   ),
@@ -939,7 +1007,12 @@ class _CheckpointStep extends StatelessWidget {
             TextButton.icon(
               onPressed: onBack,
               icon: const Icon(Icons.arrow_back),
-              label: const Text('科学タスクの根拠を書き直す'),
+              label: Text(
+                lang.t(
+                  '科学タスクの根拠を書き直す',
+                  'Rewrite your reason for the science task',
+                ),
+              ),
             ),
         ],
       ),
@@ -969,9 +1042,12 @@ class _CheckpointResolution extends StatelessWidget {
       key: const ValueKey('offline-checkpoint-resolution'),
       container: true,
       liveRegion: liveRegion,
-      label:
-          '${learnerCorrection == null ? '' : 'あなたの訂正メモ。$learnerCorrection。'}'
-          '思い込みの直し方。$correction。理由。$explanation',
+      label: lang.t(
+        '${learnerCorrection == null ? '' : 'あなたの訂正メモ。$learnerCorrection。'}'
+            '思い込みの直し方。$correction。理由。$explanation',
+        '${learnerCorrection == null ? '' : 'Your correction note. $learnerCorrection. '}'
+            'How to fix the misconception. $correction. Reason. $explanation',
+      ),
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.fromLTRB(15, 14, 15, 15),
@@ -989,7 +1065,7 @@ class _CheckpointResolution extends StatelessWidget {
                   const SizedBox(width: 9),
                   Expanded(
                     child: Text(
-                      '思い込みの直し方',
+                      lang.t('思い込みの直し方', 'How to fix the misconception'),
                       style: t.textTheme.titleSmall
                           ?.copyWith(color: colors.ink)
                           .jaWeight(FontWeight.w700),
@@ -1000,7 +1076,7 @@ class _CheckpointResolution extends StatelessWidget {
               const SizedBox(height: 9),
               if (learnerCorrection case final learner?) ...[
                 Text(
-                  'あなたの訂正メモ',
+                  lang.t('あなたの訂正メモ', 'Your correction note'),
                   style: t.textTheme.labelMedium
                       ?.copyWith(color: colors.ink)
                       .jaWeight(FontWeight.w700),
@@ -1013,7 +1089,7 @@ class _CheckpointResolution extends StatelessWidget {
                 const SizedBox(height: 12),
               ],
               Text(
-                '教材の直し方',
+                lang.t('教材の直し方', 'Material\'s fix'),
                 style: t.textTheme.labelMedium
                     ?.copyWith(color: colors.ink)
                     .jaWeight(FontWeight.w700),
@@ -1047,7 +1123,7 @@ class _CheckpointLure extends StatelessWidget {
     final colors = context.gamePalette;
     return Semantics(
       container: true,
-      label: '見破る思い込み。$lure',
+      label: lang.t('見破る思い込み。$lure', 'Misconception to catch. $lure'),
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 15, 16, 16),
@@ -1068,7 +1144,7 @@ class _CheckpointLure extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'ある生徒のメモ',
+                      lang.t('ある生徒のメモ', 'A student\'s note'),
                       style: t.textTheme.labelLarge
                           ?.copyWith(color: colors.onLegendary)
                           .jaWeight(FontWeight.w700),
@@ -1110,14 +1186,19 @@ class _CheckpointChoice extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     final colors = context.gamePalette;
-    final reviewedLabel = reviewed ? ' 前回、見直した選択肢です。' : '';
+    final reviewedLabel = reviewed
+        ? lang.t(' 前回、見直した選択肢です。', ' You reviewed this option last time.')
+        : '';
     return Semantics(
       key: ValueKey('offline-checkpoint-option-${option.id}'),
       button: true,
       enabled: onTap != null,
       selected: selected,
       onTap: onTap,
-      label: '選択肢${index + 1}。${option.text}$reviewedLabel',
+      label: lang.t(
+        '選択肢${index + 1}。${option.text}$reviewedLabel',
+        'Option ${index + 1}. ${option.text}$reviewedLabel',
+      ),
       child: ExcludeSemantics(
         child: Material(
           color: selected ? colors.pathActive : colors.surface,
@@ -1186,7 +1267,10 @@ class _CheckpointHint extends StatelessWidget {
     return Semantics(
       container: true,
       liveRegion: true,
-      label: 'まだ決着していません。選んだ考え、$attemptedOption。見直す観点、$hint。訂正メモを書いてから再検証します',
+      label: lang.t(
+        'まだ決着していません。選んだ考え、$attemptedOption。見直す観点、$hint。訂正メモを書いてから再検証します',
+        'Not settled yet. Your choice: $attemptedOption. What to review: $hint. Write a correction note, then try again',
+      ),
       child: ExcludeSemantics(
         child: Container(
           key: const ValueKey('offline-checkpoint-hint'),
@@ -1205,7 +1289,7 @@ class _CheckpointHint extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'まだ決着していません',
+                      lang.t('まだ決着していません', 'Not settled yet'),
                       style: t.textTheme.labelLarge
                           ?.copyWith(color: colors.pathReview)
                           .jaWeight(FontWeight.w700),
@@ -1215,7 +1299,7 @@ class _CheckpointHint extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               _FeedbackLine(
-                label: '選んだ考え',
+                label: lang.t('選んだ考え', 'Your choice'),
                 text: attemptedOption,
                 foreground: colors.pathReview,
               ),
@@ -1226,13 +1310,16 @@ class _CheckpointHint extends StatelessWidget {
               ),
               const SizedBox(height: 9),
               _FeedbackLine(
-                label: '見直す観点',
+                label: lang.t('見直す観点', 'What to review'),
                 text: hint,
                 foreground: colors.pathReview,
               ),
               const SizedBox(height: 7),
               Text(
-                '別の選択肢を試す前に、このメモの直し方を一文にします。',
+                lang.t(
+                  '別の選択肢を試す前に、このメモの直し方を一文にします。',
+                  'Before trying another option, write in one sentence how to fix this note.',
+                ),
                 style: t.textTheme.bodySmall?.copyWith(
                   color: colors.pathReview,
                 ),
@@ -1353,7 +1440,10 @@ class _InputRequirement extends StatelessWidget {
         const SizedBox(width: 7),
         Expanded(
           child: Text(
-            '自分の言葉を1つ以上書くと、次へ進めます。',
+            lang.t(
+              '自分の言葉を1つ以上書くと、次へ進めます。',
+              'Write at least one thing in your own words to continue.',
+            ),
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: colors.inkMuted),
@@ -1389,7 +1479,7 @@ class _TryIt extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'この場面を考える',
+                  lang.t('この場面を考える', 'Think about this scenario'),
                   style: t.textTheme.labelLarge
                       ?.copyWith(color: colors.pathReview)
                       .jaWeight(FontWeight.w700),
@@ -1459,9 +1549,12 @@ class _Completion extends StatelessWidget {
       key: const ValueKey('offline-practice-complete'),
       container: true,
       liveRegion: true,
-      label:
-          '端末内練習を完了。${completionReference == null ? '' : '教材番号$completionReference。'}'
-          'この課題を最後まで見直しました',
+      label: lang.t(
+        '端末内練習を完了。${completionReference == null ? '' : '教材番号$completionReference。'}'
+            'この課題を最後まで見直しました',
+        'On-device practice complete. ${completionReference == null ? '' : 'Material No. $completionReference. '}'
+            'You reviewed this task to the end',
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1469,7 +1562,10 @@ class _Completion extends StatelessWidget {
             child: ScienceChallengeHeader(
               eyebrow: 'ラボ・ブリーフ  /  総合検証  /  記録',
               title: conceptLabel,
-              body: '自分で組んだ答えと教材の組み方を比べ、この課題を最後まで見直しました。',
+              body: lang.t(
+                '自分で組んだ答えと教材の組み方を比べ、この課題を最後まで見直しました。',
+                'You compared your build with the material\'s and reviewed this task to the end.',
+              ),
               icon: Icons.fact_check_outlined,
               accent: colors.pathComplete,
               onAccent: colors.onPathComplete,
@@ -1481,7 +1577,10 @@ class _Completion extends StatelessWidget {
             Semantics(
               key: const ValueKey('offline-completion-reference'),
               container: true,
-              label: '完了確認。教材番号$completionReference。この課題を最後まで見直しました',
+              label: lang.t(
+                '完了確認。教材番号$completionReference。この課題を最後まで見直しました',
+                'Completion check. Material No. $completionReference. You reviewed this task to the end',
+              ),
               child: ExcludeSemantics(
                 child: Container(
                   padding: const EdgeInsets.fromLTRB(15, 13, 15, 14),
@@ -1502,14 +1601,20 @@ class _Completion extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '教材番号 $completionReference',
+                              lang.t(
+                                '教材番号 $completionReference',
+                                'Material No. $completionReference',
+                              ),
                               style: t.textTheme.titleSmall
                                   ?.copyWith(color: colors.ink)
                                   .jaWeight(FontWeight.w700),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'この課題を最後まで見直しました。',
+                              lang.t(
+                                'この課題を最後まで見直しました。',
+                                'You reviewed this task to the end.',
+                              ),
                               style: t.textTheme.bodyMedium?.copyWith(
                                 color: colors.ink,
                               ),
@@ -1585,7 +1690,7 @@ class _Completion extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '教材の結果と理由',
+                        lang.t('教材の結果と理由', 'Material\'s result and reason'),
                         style: t.textTheme.labelLarge
                             ?.copyWith(color: colors.ink)
                             .jaWeight(FontWeight.w700),
@@ -1595,7 +1700,7 @@ class _Completion extends StatelessWidget {
                 ),
                 const SizedBox(height: 9),
                 Text(
-                  '教材の組み方',
+                  lang.t('教材の組み方', 'Material\'s build'),
                   style: t.textTheme.labelMedium
                       ?.copyWith(color: colors.ink)
                       .jaWeight(FontWeight.w700),
@@ -1609,7 +1714,7 @@ class _Completion extends StatelessWidget {
                 Container(height: 1, color: colors.ink.withValues(alpha: 0.24)),
                 const SizedBox(height: 9),
                 Text(
-                  '教材で確かめた結果',
+                  lang.t('教材で確かめた結果', 'Result confirmed by the material'),
                   style: t.textTheme.labelMedium
                       ?.copyWith(color: colors.ink)
                       .jaWeight(FontWeight.w700),
@@ -1623,7 +1728,7 @@ class _Completion extends StatelessWidget {
                 Container(height: 1, color: colors.ink.withValues(alpha: 0.24)),
                 const SizedBox(height: 9),
                 Text(
-                  '教材の理由',
+                  lang.t('教材の理由', 'Material\'s reason'),
                   style: t.textTheme.labelMedium
                       ?.copyWith(color: colors.ink)
                       .jaWeight(FontWeight.w700),
@@ -1656,8 +1761,11 @@ class _Completion extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          '自由記述は送信・保存していません。固定3択は習得判定ではなく、'
-                          'カードの選択・分類・順序も保存せず、理解度や会話枠も更新しません。',
+                          lang.t(
+                            '自由記述は送信・保存していません。固定3択は習得判定ではなく、'
+                                'カードの選択・分類・順序も保存せず、理解度や会話枠も更新しません。',
+                            'Your free-text answers weren\'t sent or saved. The fixed 3-choice check doesn\'t judge how well you\'ve learned it. Card choices, sorting, and order aren\'t saved, and your understanding level and conversation slots aren\'t updated.',
+                          ),
                           style: t.textTheme.bodyMedium?.copyWith(
                             color: colors.ink,
                           ),
@@ -1681,8 +1789,14 @@ class _Completion extends StatelessWidget {
                           Expanded(
                             child: Text(
                               isClassroomCompletion
-                                  ? '授業の完了確認を、この端末に残しています。'
-                                  : '練習済みの印を、この端末に残しています。',
+                                  ? lang.t(
+                                      '授業の完了確認を、この端末に残しています。',
+                                      'Class completion is saved on this device.',
+                                    )
+                                  : lang.t(
+                                      '練習済みの印を、この端末に残しています。',
+                                      'A practiced mark is saved on this device.',
+                                    ),
                               style: t.textTheme.bodySmall?.copyWith(
                                 color: colors.ink,
                               ),
@@ -1693,11 +1807,17 @@ class _Completion extends StatelessWidget {
                     else if (progressSaved)
                       Text(
                         isClassroomCompletion
-                            ? '教材番号・概念・A/B/C・完了状態・日時だけを、'
-                                  'この端末に授業の完了確認として残しました。'
-                                  '回答内容と理解は記録・確認していません。'
-                            : '教材と概念、完了回数、最終完了日時だけを、'
-                                  'この端末に練習済みの印として残しました。',
+                            ? lang.t(
+                                '教材番号・概念・A/B/C・完了状態・日時だけを、'
+                                    'この端末に授業の完了確認として残しました。'
+                                    '回答内容と理解は記録・確認していません。',
+                                'Only the material No., concept, A/B/C, completion status, and date were saved on this device as class completion. Your answers and understanding were not recorded or checked.',
+                              )
+                            : lang.t(
+                                '教材と概念、完了回数、最終完了日時だけを、'
+                                    'この端末に練習済みの印として残しました。',
+                                'Only the material, concept, completion count, and last completion date were saved on this device as a practiced mark.',
+                              ),
                         style: t.textTheme.bodySmall?.copyWith(
                           color: colors.ink,
                         ),
@@ -1705,10 +1825,16 @@ class _Completion extends StatelessWidget {
                     else if (progressSaveFailed) ...[
                       Text(
                         isClassroomCompletion
-                            ? '授業の完了確認を保存できませんでした。'
-                                  '回答内容は保存されていません。'
-                            : '練習済みの印を保存できませんでした。'
-                                  '自由記述は保存されていません。',
+                            ? lang.t(
+                                '授業の完了確認を保存できませんでした。'
+                                    '回答内容は保存されていません。',
+                                'Couldn\'t save class completion. Your answers were not saved.',
+                              )
+                            : lang.t(
+                                '練習済みの印を保存できませんでした。'
+                                    '自由記述は保存されていません。',
+                                'Couldn\'t save the practiced mark. Your free-text answers were not saved.',
+                              ),
                         style: t.textTheme.bodySmall?.copyWith(
                           color: colors.ink,
                         ),
@@ -1719,15 +1845,24 @@ class _Completion extends StatelessWidget {
                         onPressed: onRetryProgress,
                         child: Text(
                           isClassroomCompletion
-                              ? '授業の完了確認だけ、もう一度保存する'
-                              : '練習済みの印だけ、もう一度保存する',
+                              ? lang.t(
+                                  '授業の完了確認だけ、もう一度保存する',
+                                  'Save class completion again',
+                                )
+                              : lang.t(
+                                  '練習済みの印だけ、もう一度保存する',
+                                  'Save practiced mark again',
+                                ),
                         ),
                       ),
                     ],
                   ] else ...[
                     const SizedBox(height: 8),
                     Text(
-                      'この経路では、練習済みの印も更新していません。',
+                      lang.t(
+                        'この経路では、練習済みの印も更新していません。',
+                        'On this path, the practiced mark isn\'t updated either.',
+                      ),
                       style: t.textTheme.bodySmall?.copyWith(color: colors.ink),
                     ),
                   ],
@@ -1749,11 +1884,14 @@ class _Completion extends StatelessWidget {
             key: const ValueKey('offline-practice-home'),
             onPressed: progressSaving ? null : onHome,
             icon: const Icon(Icons.check),
-            label: const Text('練習を完了'),
+            label: Text(lang.t('練習を完了', 'Finish practice')),
           ),
           const SizedBox(height: 8),
           Text(
-            'この画面を閉じると、ここに書いた内容は消えます。',
+            lang.t(
+              'この画面を閉じると、ここに書いた内容は消えます。',
+              'What you\'ve written here disappears when you close this screen.',
+            ),
             style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
             textAlign: TextAlign.center,
           ),
@@ -1800,21 +1938,32 @@ class _SelfCheck extends StatelessWidget {
         initiallyExpanded: false,
         leading: const Icon(Icons.menu_book_outlined),
         title: Text(
-          '練習全体を見返す',
+          lang.t('練習全体を見返す', 'Review the whole practice'),
           style: t.textTheme.titleSmall?.jaWeight(FontWeight.w700),
         ),
-        subtitle: const Text('入力はこの画面を閉じると消えます'),
+        subtitle: Text(
+          lang.t(
+            '入力はこの画面を閉じると消えます',
+            'Your input disappears when you close this screen',
+          ),
+        ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 2, 16, 18),
         expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Divider(),
           const SizedBox(height: 13),
           Text(
-            'これは採点結果ではありません。予想と教材を比べて、自分で見つけたことの控えです。',
+            lang.t(
+              'これは採点結果ではありません。予想と教材を比べて、自分で見つけたことの控えです。',
+              'This isn\'t a score. It\'s a note of what you found by comparing your prediction with the material.',
+            ),
             style: t.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
           ),
           const SizedBox(height: 16),
-          Text('教材', style: t.textTheme.labelLarge?.jaWeight(FontWeight.w700)),
+          Text(
+            lang.t('教材', 'Material'),
+            style: t.textTheme.labelLarge?.jaWeight(FontWeight.w700),
+          ),
           const SizedBox(height: 7),
           for (final paragraph in section.body) ...[
             EmphasisText(
@@ -1826,13 +1975,16 @@ class _SelfCheck extends StatelessWidget {
           ],
           const SizedBox(height: 4),
           Text(
-            '自分が書いたこと',
+            lang.t('自分が書いたこと', 'What you wrote'),
             style: t.textTheme.labelLarge?.jaWeight(FontWeight.w700),
           ),
           const SizedBox(height: 8),
-          _CheckRow(label: '説明', text: recall),
-          _CheckRow(label: '科学タスクで組んだ答え', text: taskResponse),
-          _CheckRow(label: '答えにした理由', text: reasoning),
+          _CheckRow(label: lang.t('説明', 'Explanation'), text: recall),
+          _CheckRow(
+            label: lang.t('科学タスクで組んだ答え', 'Your science task answer'),
+            text: taskResponse,
+          ),
+          _CheckRow(label: lang.t('答えにした理由', 'Your reason'), text: reasoning),
           _CheckRow(
             label: comparisonDecision.reflectionLabel,
             text: reflection,

@@ -5,6 +5,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../models/reminder.dart';
 import 'session_store.dart';
+import '../config/app_language.dart';
 
 /// 端末の中だけで完結する通知。
 ///
@@ -157,15 +158,18 @@ class Reminders {
         kReminderTitle,
         text,
         _nextAt(await hour(), now ?? DateTime.now()),
-        const NotificationDetails(
+        NotificationDetails(
           android: AndroidNotificationDetails(
             'reminder',
-            'まいにちの声かけ',
-            channelDescription: '考査までに残っているところを1日1回だけ知らせます。',
+            t('まいにちの声かけ', 'Daily reminder'),
+            channelDescription: t(
+              '考査までに残っているところを1日1回だけ知らせます。',
+              "Once a day, lets you know what's left before your test.",
+            ),
             importance: Importance.defaultImportance,
             priority: Priority.defaultPriority,
           ),
-          iOS: DarwinNotificationDetails(),
+          iOS: const DarwinNotificationDetails(),
         ),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
@@ -191,15 +195,18 @@ class Reminders {
         kReminderTitle,
         missionFollowUpText(conceptLabel),
         _tomorrowAt(await hour(), now ?? DateTime.now()),
-        const NotificationDetails(
+        NotificationDetails(
           android: AndroidNotificationDetails(
             'reminder',
-            'まいにちの声かけ',
-            channelDescription: '考査までに残っているところを1日1回だけ知らせます。',
+            t('まいにちの声かけ', 'Daily reminder'),
+            channelDescription: t(
+              '考査までに残っているところを1日1回だけ知らせます。',
+              "Once a day, lets you know what's left before your test.",
+            ),
             importance: Importance.defaultImportance,
             priority: Priority.defaultPriority,
           ),
-          iOS: DarwinNotificationDetails(),
+          iOS: const DarwinNotificationDetails(),
         ),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );

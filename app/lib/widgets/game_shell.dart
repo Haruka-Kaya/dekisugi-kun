@@ -1,3 +1,4 @@
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../config/motion.dart';
@@ -12,21 +13,21 @@ typedef GameQuestTabResolver = GameTab Function(GameQuest quest);
 
 extension on GameTab {
   String get shortLabel => switch (this) {
-    GameTab.path => '探究',
-    GameTab.stories => '事件',
-    GameTab.practice => '実験',
-    GameTab.notation => '図解',
-    GameTab.league => '共同',
-    GameTab.profile => '研究室',
+    GameTab.path => t('探究', 'Explore'),
+    GameTab.stories => t('事件', 'Cases'),
+    GameTab.practice => t('実験', 'Experiments'),
+    GameTab.notation => t('図解', 'Diagrams'),
+    GameTab.league => t('共同', 'Together'),
+    GameTab.profile => t('研究室', 'My Lab'),
   };
 
   String get semanticsLabel => switch (this) {
-    GameTab.path => '探究ノート',
-    GameTab.stories => '理科事件簿',
-    GameTab.practice => '再現実験',
-    GameTab.notation => '記号と図解',
-    GameTab.league => '共同観測',
-    GameTab.profile => '自分の研究室',
+    GameTab.path => t('探究ノート', 'Field Notebook'),
+    GameTab.stories => t('理科事件簿', 'Science Cases'),
+    GameTab.practice => t('再現実験', 'Experiments'),
+    GameTab.notation => t('記号と図解', 'Symbols and Diagrams'),
+    GameTab.league => t('共同観測', 'Shared Observations'),
+    GameTab.profile => t('自分の研究室', 'My Lab'),
   };
 
   IconData get icon => switch (this) {
@@ -217,37 +218,60 @@ class _GameTabGuideState extends State<GameTabGuide> {
   var _index = 0;
 
   List<_TabGuideItem> get _items => [
-    const _TabGuideItem(
+    _TabGuideItem(
       icon: Icons.article_outlined,
-      title: '探究ノート',
-      body: '今日の教材を開く場所です。まず予想を置き、教材の根拠と比べます。',
+      title: t('探究ノート', 'Field Notebook'),
+      body: t(
+        '今日の教材を開く場所です。まず予想を置き、教材の根拠と比べます。',
+        'Open today\'s material, make a prediction, and compare it with the evidence.',
+      ),
     ),
-    const _TabGuideItem(
+    _TabGuideItem(
       icon: Icons.folder_open_outlined,
-      title: '理科事件簿',
-      body: '身近な出来事を手がかりに、理由と条件を考える場所です。',
+      title: t('理科事件簿', 'Science Cases'),
+      body: t(
+        '身近な出来事を手がかりに、理由と条件を考える場所です。',
+        'Use everyday events to think about reasons and conditions.',
+      ),
     ),
-    const _TabGuideItem(
+    _TabGuideItem(
       icon: Icons.biotech_outlined,
-      title: '再現実験',
-      body: '選ぶ・並べる・分ける課題で、教材の考え方を確かめる場所です。',
+      title: t('再現実験', 'Experiments'),
+      body: t(
+        '選ぶ・並べる・分ける課題で、教材の考え方を確かめる場所です。',
+        'Check ideas from the material by choosing, ordering, and classifying.',
+      ),
     ),
-    const _TabGuideItem(
+    _TabGuideItem(
       icon: Icons.schema_outlined,
-      title: '記号と図解',
-      body: '図や式の意味を、言葉と対応づけて読み直す場所です。',
+      title: t('記号と図解', 'Symbols and Diagrams'),
+      body: t(
+        '図や式の意味を、言葉と対応づけて読み直す場所です。',
+        'Connect diagrams and equations with words to check their meaning.',
+      ),
     ),
     _TabGuideItem(
       icon: Icons.groups_outlined,
-      title: widget.schoolMode ? '共同観測' : '共同観測',
+      title: widget.schoolMode
+          ? t('共同観測', 'Shared Observations')
+          : t('共同観測', 'Shared Observations'),
       body: widget.schoolMode
-          ? '同じ端末で順番に取り組む授業用の観察を開く場所です。'
-          : '友だちと同じテーマを観察します。回答本文や名前は共有しません。',
+          ? t(
+              '同じ端末で順番に取り組む授業用の観察を開く場所です。',
+              'Open class observations and take turns on this device.',
+            )
+          : t(
+              '友だちと同じテーマを観察します。回答本文や名前は共有しません。',
+              'Observe the same topic with friends. Names and answers are not shared.',
+            ),
     ),
-    const _TabGuideItem(
+    _TabGuideItem(
       icon: Icons.space_dashboard_outlined,
-      title: '自分の研究室',
-      body: 'これまでの観察と、あとでやる教材を振り返る場所です。',
+      title: t('自分の研究室', 'My Lab'),
+      body: t(
+        'これまでの観察と、あとでやる教材を振り返る場所です。',
+        'Review your observations and material you plan to try later.',
+      ),
     ),
   ];
 
@@ -296,14 +320,14 @@ class _GameTabGuideState extends State<GameTabGuide> {
                     child: TextButton(
                       key: const ValueKey('game-tab-guide-dismiss'),
                       onPressed: widget.onDismissed,
-                      child: const Text('あとで見る'),
+                      child: Text('あとで見る'),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: GameTokens.spaceMd),
               Semantics(
-                label: '6ページ中${_index + 1}ページ目',
+                label: t('6ページ中${_index + 1}ページ目', 'Page ${_index + 1} of 6'),
                 child: LinearProgressIndicator(
                   value: (_index + 1) / _items.length,
                   minHeight: 8,
@@ -377,7 +401,11 @@ class _GameTabGuideState extends State<GameTabGuide> {
                       ? Icons.check_rounded
                       : Icons.arrow_forward_rounded,
                 ),
-                label: Text(_index == _items.length - 1 ? '探究を始める' : '次へ'),
+                label: Text(
+                  _index == _items.length - 1
+                      ? t('探究を始める', 'Start exploring')
+                      : t('次へ', 'Next'),
+                ),
               ),
             ],
           ),
@@ -674,10 +702,12 @@ class _GameTabRail extends StatelessWidget {
 }
 
 String _semanticLabel(GameTab tab, {required bool schoolMode}) =>
-    schoolMode && tab == GameTab.league ? 'この端末の共同観測' : tab.semanticsLabel;
+    schoolMode && tab == GameTab.league
+    ? t('この端末の共同観測', "This device's class goal")
+    : tab.semanticsLabel;
 
 String _shortLabel(GameTab tab, {required bool schoolMode}) =>
-    schoolMode && tab == GameTab.league ? '共同' : tab.shortLabel;
+    schoolMode && tab == GameTab.league ? t('共同', 'Together') : tab.shortLabel;
 
 IconData _iconFor(
   GameTab tab, {

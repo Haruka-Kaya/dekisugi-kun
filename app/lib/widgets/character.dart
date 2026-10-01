@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/motion.dart';
 import '../services/live_session.dart';
@@ -175,13 +176,37 @@ class _CharacterState extends State<Character> with TickerProviderStateMixin {
   };
 
   static String _semanticsLabel(LiveState state) => switch (state) {
-    LiveState.idle => 'デキすぎ君が本を開いて、教わる準備をしています',
-    LiveState.connecting => 'デキすぎ君がアンテナを上げて、接続を待っています',
-    LiveState.listening => 'デキすぎ君が手を耳に添えて、聞いています',
-    LiveState.thinking => 'デキすぎ君があごに手を添えて、考えています',
-    LiveState.speaking => 'デキすぎ君が手を広げて、話しています',
-    LiveState.done => 'デキすぎ君がノートを持って、完了を祝っています',
-    LiveState.outOfTime => 'デキすぎ君が時計を持って、きょうの時間切れを知らせています',
-    LiveState.failed => 'デキすぎ君が手を差し出して、再挑戦を案内しています',
+    LiveState.idle => t(
+      'デキすぎ君が本を開いて、教わる準備をしています',
+      'Dekisugi-kun opens a book, ready to be taught',
+    ),
+    LiveState.connecting => t(
+      'デキすぎ君がアンテナを上げて、接続を待っています',
+      'Dekisugi-kun raises an antenna, waiting to connect',
+    ),
+    LiveState.listening => t(
+      'デキすぎ君が手を耳に添えて、聞いています',
+      'Dekisugi-kun cups a hand to his ear, listening',
+    ),
+    LiveState.thinking => t(
+      'デキすぎ君があごに手を添えて、考えています',
+      'Dekisugi-kun rests his chin on his hand, thinking',
+    ),
+    LiveState.speaking => t(
+      'デキすぎ君が手を広げて、話しています',
+      'Dekisugi-kun spreads his hands, speaking',
+    ),
+    LiveState.done => t(
+      'デキすぎ君がノートを持って、完了を祝っています',
+      'Dekisugi-kun holds his notebook, celebrating',
+    ),
+    LiveState.outOfTime => t(
+      'デキすぎ君が時計を持って、きょうの時間切れを知らせています',
+      "Dekisugi-kun holds a clock: today's time is up",
+    ),
+    LiveState.failed => t(
+      'デキすぎ君が手を差し出して、再挑戦を案内しています',
+      'Dekisugi-kun reaches out, inviting you to try again',
+    ),
   };
 }

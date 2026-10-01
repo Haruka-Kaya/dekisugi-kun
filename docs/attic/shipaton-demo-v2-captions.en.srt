@@ -1,0 +1,39 @@
+1
+00:00:00,300 --> 00:00:06,000
+Dekisugi-kun: middle-school science as a quest map — advance by teaching, not answering
+
+2
+00:00:06,100 --> 00:00:09,300
+TEACH BACK node: you explain to Dekisugi-kun — the textbook stays hidden
+
+3
+00:00:09,300 --> 00:00:14,300
+Students teach in their own words — voice or text; never auto-graded or sent
+
+4
+00:00:14,300 --> 00:00:16,100
+Re-reading your own explanation is required first
+
+5
+00:00:16,100 --> 00:00:28,000
+Dekisugi-kun returns one fixed follow-up question
+
+6
+00:00:28,000 --> 00:00:34,500
+"Heating created new atoms" — pick the scientifically corrected idea
+
+7
+00:00:34,500 --> 00:00:40,500
+Then compare your explanation with the textbook's observation
+
+8
+00:00:40,500 --> 00:00:47,500
+Your own words are replayed next to the model answer — you spot the gap
+
+9
+00:00:47,500 --> 00:00:50,500
+Complete: +10 XP, next node unlocks — fully on-device, no external AI calls
+
+10
+00:00:50,500 --> 00:00:54,400
+Optional Plus supporter plan via RevenueCat — paywall: app/lib/screens/plus_screen.dart

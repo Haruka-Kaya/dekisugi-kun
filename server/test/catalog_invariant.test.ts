@@ -72,6 +72,18 @@ const EXPECTED_STORY_SIGNATURES = {
   pressurePatternsWind: ['等圧線ぎゅうぎゅう区画の強風予告', '気象資料室。過去の天気図で等圧線間隔と同時刻の観測風速を照合している。', '等圧線は通行止めロープではなく、風の坂道の等高線でした。'],
   volcanoEarthquakes: ['火山マークと震央マークの別行動', '防災学習室。公的な火山・震央・プレート境界の過去分布図を重ねている。', '地図ではご近所、事件簿では別々の担当でした。'],
   dailyMotionSeasons: ['星空カレンダー一日と一年の混線', 'プラネタリウム教室。同じ場所の一晩と、同時刻で月を変えた星空シミュレーションを比べる。', '星空カレンダー、24時間欄と12か月欄を同じマスに書いていました。'],
+  combinationDecomposition: ['混ぜただけ粉チームの冤罪事件', '家庭科室の資料棚。鉄粉と硫黄を混ぜた粉末と、加熱後の黒いかたまりの観察記録が並ぶ。', '瞬間化合説、磁石の前で見事に散りました。'],
+  oxidationReduction: ['赤い汚れの正体を追え', '昇降口のフェンスの写真と、学校で保存されたさびの観察記録が開かれている。', '犯人は空で合ってた！でも手口は「酸素と結びつく」でした。'],
+  massConservation: ['消えた1.1グラムの密室', '理科室の測定記録。開いた容器と密閉袋で同じ反応をさせた二つの表が残る。', '消えた質量、実は窓から出ていった二酸化炭素でした。密室でも何でもない！'],
+  electrolyte: ['消えた豆電球の容疑者たち', '理科室の資料机。食塩水では光り、砂糖水では消えた豆電球の実験記録と写真が並ぶ。', '甘さ仮説は溶解！真犯人は「イオンがいるかどうか」でした。'],
+  acidAlkali: ['三色に分かれた液の身元', '放送室の資料画面。3つの液にBTB溶液を加えた記録で、黄・緑・青に分かれている。', '黄色はレモン味のサインじゃなくて、水素イオンのサインでした。飲まなくてよかった！'],
+  neutralizationBattery: ['果物電池に宿った電気の行方', '図書室の資料端末。レモンに亜鉛板と銅板を差して電流が流れた記録と、乾電池の写真がある。', '電気は果汁に宿ってたんじゃなくて、金属たちの「なりたさ」の差で流れてました。レモンさん、疑ってごめん！'],  reproduction: ['親そっくり署のジャガイモ偽装事件', '理科準備室の棚。発芽したジャガイモと、受精して育つカエルの観察記録が並んでいる。', 'ジャガイモは恋しなくても増えるってことか！親そっくり署、無性生殖の線で結論です！'],
+  heredity: ['しわしわ種子の突然復帰事件', '理科準備室の実験台。エンドウの交配記録カードが広げられ、丸の親からしわの子が出た一行が強調されている。', 'しわは消えてなかった！親の中にかくれて、孫でカムバック。記録係さんごめん、君は正しかった！'],
+  evolution: ['化石ラインナップの順番入れ替え事件', '放課後の理科室。地層ごとの化石写真が時代順に並べられ、古い層と新しい層で姿が違うことが確認されている。', '努力で首が伸びたんじゃなくて、長い首の仲間が多く残ったのか！キリンさん、頑張り屋さんでごめん！'],
+  energyResources: ['電気製造工場の原材料不明事件', '理科室の資料棚。「発電方法別の割合」の円グラフと、ある月の電気料金明細が開かれている。', '電気の原材料は「エネルギー」でした！工場長、材料発注は地球頼みだ！'],
+  natureBalance: ['池の数表、連鎖反応事件', '学校近くの池の生き物調査記録。水草・草食魚・肉食魚の数が3年分並んでいる。', '池の数表は「連鎖のお知らせ」だった！水草さん、見放してごめん！'],
+  sustainableSociety: ['台風を消す装置の設計図事件', '防災学習室。地域のハザードマップと過去の浸水記録が開かれている。', '台風消去装置は開発中止！ハザードマップと避難計画、ぼくの名案は「備え」だった！'],
+
 } as const
 
 type PublicConcept = {
@@ -162,8 +174,8 @@ describe('学習ミッションのカタログ不変条件', () => {
       'earth-history': ['strataRelativeAge', 'volcanoEarthquakes', 'dailyMotionSeasons'],
     } as const
 
-    assert.equal(UNITS.length, 8)
-    assert.equal(UNITS.flatMap((unit) => unit.concepts).length, 23)
+    assert.equal(UNITS.length, 12)
+    assert.equal(UNITS.flatMap((unit) => unit.concepts).length, 35)
     for (const [unitId, conceptKeys] of Object.entries(expectedStage1)) {
       const unit = unitById(unitId)
       assert.ok(unit, `${unitId}: Stage 1 unitが無い`)
@@ -178,12 +190,12 @@ describe('学習ミッションのカタログ不変条件', () => {
     }
   })
 
-  it('23概念のSpeaking目標を正本化し、欠落・未知field・短文・重複を拒否する', () => {
+  it('35概念のSpeaking目標を正本化し、欠落・未知field・短文・重複を拒否する', () => {
     const sections = UNITS.flatMap((unit) => unit.sections)
-    assert.equal(sections.length, 23)
+    assert.equal(sections.length, 35)
     assert.equal(
       new Set(sections.map((section) => section.conceptKey)).size,
-      23,
+      35,
       'Speaking目標が概念と1対1でない',
     )
     for (const section of sections) {
@@ -254,11 +266,11 @@ describe('学習ミッションのカタログ不変条件', () => {
     }
   })
 
-  it('全23conceptが3周で異なる問い・正答位置・誤答だけのヒントを持つ', () => {
+  it('全35conceptが3周で異なる問い・正答位置・誤答だけのヒントを持つ', () => {
     assert.deepEqual(validateCatalog(), [])
 
     const sections = UNITS.flatMap((unit) => unit.sections)
-    assert.equal(sections.length, 23)
+    assert.equal(sections.length, 35)
     const correctPositions = new Set<number>()
 
     for (const section of sections) {
@@ -370,14 +382,14 @@ describe('学習ミッションのカタログ不変条件', () => {
       }
     }
 
-    assert.equal(cognitiveCount, 69)
-    assert.equal(wrongOptionCount, 138)
-    assert.equal(notationCount, 80)
-    assert.equal(practiceCodes.size, 69)
-    assert.equal(notationCodes.size, 80)
+    assert.equal(cognitiveCount, 105)
+    assert.equal(wrongOptionCount, 210)
+    assert.equal(notationCount, 116)
+    assert.equal(practiceCodes.size, 105)
+    assert.equal(notationCodes.size, 116)
   })
 
-  it('全23concept×3stageのListening聞き取り/意味needを別codeで公開する', () => {
+  it('全35concept×3stageのListening聞き取り/意味needを別codeで公開する', () => {
     const codes = new Set<string>()
     let variantCount = 0
     for (const unit of UNITS) {
@@ -408,14 +420,14 @@ describe('学習ミッションのカタログ不変条件', () => {
         }
       }
     }
-    assert.equal(variantCount, 69)
-    assert.equal(codes.size, 138)
+    assert.equal(variantCount, 105)
+    assert.equal(codes.size, 210)
     assert.throws(() => scienceListeningNeedCodes('unknown-concept', 'foundation'))
   })
 
-  it('全23conceptのNotationをcanonical tagged unionへ損失なく公開し、6種類を網羅する', () => {
+  it('全35conceptのNotationをcanonical tagged unionへ損失なく公開し、6種類を網羅する', () => {
     const sections = UNITS.flatMap((unit) => unit.sections)
-    assert.equal(sections.length, 23)
+    assert.equal(sections.length, 35)
     assert.deepEqual(
       new Set(Object.keys(NOTATION_LABS)),
       new Set(sections.map((section) => section.conceptKey)),
@@ -458,12 +470,12 @@ describe('学習ミッションのカタログ不変条件', () => {
       })
     }
 
-    assert.equal(taskCount, 80)
+    assert.equal(taskCount, 116)
     assert.deepEqual([...usedKinds].sort(), [...NOTATION_TASK_KINDS].sort())
     assert.equal(notationLabFor('unknown-concept'), undefined)
   })
 
-  it('全23 Storyが固有の事件名・舞台・落ちを持ち、foundation正本へ完全一致する', () => {
+  it('全35 Storyが固有の事件名・舞台・落ちを持ち、foundation正本へ完全一致する', () => {
     const seenLineIds = new Set<string>()
     const publishedStories = []
     for (const unit of UNITS) {
@@ -519,11 +531,11 @@ describe('学習ミッションのカタログ不変条件', () => {
         publishedStories.push(publicStory)
       }
     }
-    assert.equal(publishedStories.length, 23)
-    assert.equal(new Set(publishedStories.map((story) => story.id)).size, 23)
-    assert.equal(new Set(publishedStories.map((story) => story.title)).size, 23)
-    assert.equal(new Set(publishedStories.map((story) => story.setting)).size, 23)
-    assert.equal(new Set(publishedStories.map((story) => story.punchline.text)).size, 23)
+    assert.equal(publishedStories.length, 35)
+    assert.equal(new Set(publishedStories.map((story) => story.id)).size, 35)
+    assert.equal(new Set(publishedStories.map((story) => story.title)).size, 35)
+    assert.equal(new Set(publishedStories.map((story) => story.setting)).size, 35)
+    assert.equal(new Set(publishedStories.map((story) => story.punchline.text)).size, 35)
   })
 
   it('既存22 trace taskを維持し、不正なtrace・taskを拒否する', () => {
@@ -623,7 +635,7 @@ describe('学習ミッションのカタログ不変条件', () => {
     assert.ok(validateNotationLab(badChoice).some((problem) => problem.includes('choices')))
   })
 
-  it('69variantが監査どおり異なる認知操作を持ち、表示順で正答を示さない', () => {
+  it('105variantが監査どおり異なる認知操作を持ち、表示順で正答を示さない', () => {
     const expected = {
       fall: [
         ['singleSelect', 'prediction'],
@@ -740,6 +752,66 @@ describe('学習ミッションのカタログ不変条件', () => {
         ['sequence', 'causalOrder'],
         ['singleSelect', 'prediction'],
       ],
+      combinationDecomposition: [
+        ['classify', 'conditionClassify'],
+        ['singleSelect', 'experimentPlan'],
+        ['sequence', 'causalOrder'],
+      ],
+      oxidationReduction: [
+        ['singleSelect', 'prediction'],
+        ['classify', 'conditionClassify'],
+        ['sequence', 'causalOrder'],
+      ],
+      massConservation: [
+        ['classify', 'conditionClassify'],
+        ['singleSelect', 'quantityCompare'],
+        ['singleSelect', 'experimentPlan'],
+      ],
+      electrolyte: [
+        ['classify', 'conditionClassify'],
+        ['singleSelect', 'experimentPlan'],
+        ['sequence', 'causalOrder'],
+      ],
+      acidAlkali: [
+        ['singleSelect', 'prediction'],
+        ['classify', 'conditionClassify'],
+        ['singleSelect', 'quantityCompare'],
+      ],
+      neutralizationBattery: [
+        ['sequence', 'causalOrder'],
+        ['singleSelect', 'prediction'],
+        ['singleSelect', 'experimentPlan'],
+      ],
+      reproduction: [
+        ['sequence', 'causalOrder'],
+        ['classify', 'conditionClassify'],
+        ['singleSelect', 'prediction'],
+      ],
+      heredity: [
+        ['singleSelect', 'prediction'],
+        ['classify', 'conditionClassify'],
+        ['sequence', 'causalOrder'],
+      ],
+      evolution: [
+        ['sequence', 'causalOrder'],
+        ['singleSelect', 'prediction'],
+        ['classify', 'conditionClassify'],
+      ],
+      energyResources: [
+        ['sequence', 'causalOrder'],
+        ['singleSelect', 'prediction'],
+        ['classify', 'conditionClassify'],
+      ],
+      natureBalance: [
+        ['singleSelect', 'prediction'],
+        ['classify', 'conditionClassify'],
+        ['singleSelect', 'prediction'],
+      ],
+      sustainableSociety: [
+        ['sequence', 'causalOrder'],
+        ['singleSelect', 'prediction'],
+        ['classify', 'conditionClassify'],
+      ],
     } as const
     const directSignals: Readonly<Record<string, readonly RegExp[]>> = {
       fall: [/平らな紙.*丸めた紙/, /着地時刻.*空気.*抵抗/, /質量.*高さ.*着く時刻/],
@@ -824,6 +896,66 @@ describe('学習ミッションのカタログ不変条件', () => {
         /一晩.*同時刻.*月.*公転.*自転/,
         /円弧.*地球が西から東.*天球が東から西/,
         /地軸の傾き.*日射角度.*昼の長さ/,
+      ],
+      combinationDecomposition: [
+        /鉄粉と硫黄を混ぜて加熱.*磁石に引かれない.*化学変化.*物理的な変化/,
+        /色だけを見て.*磁石へ近づけ.*鉄の性質/,
+        /化学変化と判断.*反応前後の物質の性質を比較.*違う性質がないか/,
+      ],
+      oxidationReduction: [
+        /燃えたので銅板は軽く.*酸素と結びついた分だけ重く/,
+        /木や炭が燃える.*鉄がさびる.*呼吸.*氷がとける.*酸化/,
+        /赤い光沢の銅.*酸化銅に炭素を混ぜて加熱.*酸素が炭素へ移り.*二酸化炭素/,
+      ],
+      massConservation: [
+        /原子の種類.*結びつき方.*原子の数.*質量の和/,
+        /逃げた気体の分を含めれば.*質量の総和は等しい/,
+        /開いた容器で気体を逃がして.*密閉した容器で反応させて全体を測る/,
+      ],
+      electrolyte: [
+        /食塩を溶かした水.*砂糖を溶かした水.*うすい塩酸.*電気を通す液.*電気を通さない液/,
+        /液の色を見て.*においをかいで.*電極を入れて電圧をかけ.*物質ができるか/,
+        /電極に新しい物質が生成.*電圧をかける.*イオンが電極へ移動/,
+      ],
+      acidAlkali: [
+        /BTB溶液を加えると黄色.*青色.*緑色/,
+        /ぬるぬる.*BTB溶液が黄色.*炭酸水素ナトリウム.*リトマス紙.*水素イオン.*水酸化物イオン/,
+        /pH5の液のほうが.*酸性の強さは同じ.*pH3の液のほうが/,
+      ],
+      neutralizationBattery: [
+        /塩の結晶ができる.*水素イオンと水酸化物イオンが結びつく.*酸とアルカリの性質が打ち消される/,
+        /何も残らない.*塩の結晶が残る.*酸そのものが結晶/,
+        /イオンへのなりやすさが違う2種類の金属板.*同じ金属の板を2枚.*電気を溜めた容器/,
+      ],
+      reproduction: [
+        /細胞が2つに分かれ.*染色体が写し取られる.*成長し.*2つの核へ分けられる/,
+        /カエルの受精卵.*ジャガイモの芽.*イチゴのランナー.*ニワトリの受精卵/,
+        /有性生殖で育った畑は形質にばらつき.*同じ強さをもつ.*生き残る株の差は出ない/,
+      ],
+      heredity: [
+        /すべて優性形質.*およそ3：1.*半々/,
+        /組合せがaa.*組合せがAA.*組合せがAa.*もう一組/,
+        /受精し、受精卵ができる.*形質が現れる.*染色体を半分にする.*体細胞分裂を繰り返し/,
+      ],
+      evolution: [
+        /世代を経て集団の形質の割合が変わる.*ばらつきがある.*姿が変わり.*多く子を残す/,
+        /明るい色の蛾が目立たず増える.*割合は変わらない.*暗色の蛾が見つかりにくく/,
+        /首を伸ばした姿が子に伝わった.*ばらつきがあり、長い個体が多く子を残した.*暗い色の蛾が見つかりにくく.*足を使わなくなった/,
+      ],
+      energyResources: [
+        /蒸気.*化学エネルギー.*発電機.*タービン/,
+        /再生可能エネルギーは枯れない.*自然条件と設備の規模.*化石燃料は地中/,
+        /石油.*天然ガス.*太陽光.*地熱.*枯渇性資源.*再生可能エネルギー/,
+      ],
+      natureBalance: [
+        /水草が減ると水草を食べる魚も減り.*他の生物に影響はない.*消費者の数は変わらない/,
+        /光合成をする植物.*ウサギ.*菌類.*タカ.*生産者.*消費者.*分解者/,
+        /鳥が減っても虫の数は変わらない.*虫の数は一定に保たれる.*食べられる側の虫が増える/,
+      ],
+      sustainableSociety: [
+        /危険な場所.*構造物や避難計画で備える.*過去の災害記録.*ハザードマップに示して共有/,
+        /過去の記録とデータに基づく予測.*必ず災害が起き.*住民の感覚/,
+        /化石燃料から再生可能エネルギー.*省エネ.*同じ割合.*変えない.*持続可能な選択.*持続可能でない選択/,
       ],
     }
     const usedKinds = new Set<string>()
@@ -911,7 +1043,7 @@ describe('学習ミッションのカタログ不変条件', () => {
 
     assert.deepEqual([...usedKinds].sort(), [...COGNITIVE_TASK_KINDS].sort())
     assert.deepEqual([...usedOperations].sort(), [...COGNITIVE_OPERATIONS].sort())
-    assert.deepEqual(selectPositions, [7, 7, 7])
+    assert.deepEqual(selectPositions, [13, 12, 12])
   })
 
   it('全conceptにsectionと固定misconceptionがちょうど1つずつ対応する', () => {
@@ -949,13 +1081,13 @@ describe('学習ミッションのカタログ不変条件', () => {
     }
   })
 
-  it('23conceptのcoverage metadataをMEXT本文の印刷ページ番号（PageLabels）・前提・安全条件と1対1で公開する', () => {
+  it('35conceptのcoverage metadataをMEXT本文の印刷ページ番号（PageLabels）・前提・安全条件と1対1で公開する', () => {
     const conceptKeys = UNITS.flatMap((unit) =>
       unit.concepts.map((concept) => concept.key),
     )
     const coverageEntries = Object.values(CURRICULUM_COVERAGE_MANIFEST)
     assert.deepEqual(new Set(Object.keys(CURRICULUM_COVERAGE_MANIFEST)), new Set(conceptKeys))
-    assert.equal(coverageEntries.length, 23)
+    assert.equal(coverageEntries.length, 35)
     assert.deepEqual(
       new Set(coverageEntries.map((entry) => entry.field)),
       new Set(CURRICULUM_FIELDS),
@@ -1102,8 +1234,8 @@ describe('学習ミッションのカタログ不変条件', () => {
     )
     assert.equal(
       new Set(listed.flatMap((unit) => unit.concepts.map((concept) => concept.storyTitle))).size,
-      23,
-      'Story一覧で23件の固有事件名を公開していない',
+      35,
+      'Story一覧で35件の固有事件名を公開していない',
     )
 
     for (const summary of listed) {
@@ -1280,7 +1412,7 @@ describe('学習ミッションのカタログ不変条件', () => {
     assert.match(induction.tryIt, /電源はつながず/)
   })
 
-  it('2・3周目も23conceptの成立条件を外さず、別の科学的判断を要求する', () => {
+  it('2・3周目も35conceptの成立条件を外さず、別の科学的判断を要求する', () => {
     function text(unitId: string, conceptKey: string): string {
       const unit = unitById(unitId)!
       const section = unit.sections.find((candidate) => candidate.conceptKey === conceptKey)!
@@ -1380,7 +1512,7 @@ describe('学習ミッションのカタログ不変条件', () => {
     assert.match(sky, /北半球.*南半球.*地軸が傾いたまま公転.*太陽距離/)
   })
 
-  it('69の具体場面それぞれに、checkpointと別の直接な結果と理由が対応する', () => {
+  it('105の具体場面それぞれに、checkpointと別の直接な結果と理由が対応する', () => {
     const signals: Readonly<Record<string, readonly RegExp[]>> = {
       fall: [
         /丸めた紙が先.*平らな紙.*遅く/,
@@ -1496,6 +1628,66 @@ describe('学習ミッションのカタログ不変条件', () => {
         /一晩に星が東から西.*月を進める.*自転.*公転/,
         /北の空.*天の北極.*円弧.*南の空.*東から昇って西/,
         /Nは夏.*Sは冬.*地軸が傾いたまま公転.*太陽距離.*ほぼ同じ/,
+      ],
+      combinationDecomposition: [
+        /鉄粉と硫黄.*加熱.*磁石に引かれず.*硫化鉄/,
+        /1種類の物質.*複数の物質に分かれ.*分解.*1種類から2種類以上/,
+        /石灰石.*分解.*砂と鉄粉.*物理的な操作.*磁石での分離.*性質がそのまま残る/,
+      ],
+      oxidationReduction: [
+        /酸化銅.*炭素.*赤い光沢の銅.*二酸化炭素.*酸素が炭素へ移り.*還元/,
+        /銅板.*酸素と結びついた分だけ重く.*木炭.*二酸化炭素.*酸素をやりとりする酸化/,
+        /鉄鉱石から酸素を取り除いて鉄.*還元.*さびるのが酸化.*酸素の移動する向きが逆/,
+      ],
+      massConservation: [
+        /密閉した袋.*気体が発生しても.*質量は反応前と等しい.*原子.*袋内に残る/,
+        /開いた容器.*気体が測定範囲外.*密閉袋.*気体も測定に含まれる.*関わる物質すべて/,
+        /酸素が銅へ結びついた分だけ増え.*二酸化炭素が外へ出た分だけ減.*総和は等しい.*すべてを測れば質量は保存/,
+      ],
+      electrolyte: [
+        /食塩水.*電流が流れ.*砂糖水.*流れず.*イオンに分かれ/,
+        /陽極と陰極に決まった物質が生成.*イオン.*電極へ引かれ.*電極の変化がイオンの存在/,
+        /食塩は溶けるとイオンに分かれて電気を通し.*砂糖やエタノールはイオンにならず.*固い食塩はイオンが動けない/,
+      ],
+      acidAlkali: [
+        /BTB溶液.*うすい塩酸は黄色.*水酸化ナトリウム水溶液は青色.*水素イオン.*水酸化物イオン/,
+        /pHが小さいほど酸性が強い.*pH3のほうが強い酸.*pHが大きいほど強いアルカリ性/,
+        /どちらにも気体が発生した.*水素イオンが反応.*勢いの違いは酸の強さ.*水素イオンの仕事/,
+      ],
+      neutralizationBattery: [
+        /中性になるまで混ぜて乾燥させた.*塩化ナトリウム.*水素イオンと水酸化物イオンが結びついて水/,
+        /pH7ではなくても.*水素イオンと水酸化物イオンは水になり.*生成した塩と余った酸/,
+        /亜鉛が電子を放出して亜鉛イオン.*回路を通って銅板へ流れ.*イオンへのなりやすさの差/,
+      ],
+      reproduction: [
+        /タマネギの根端.*染色体が写し取られ.*細胞の数が増え.*成長/,
+        /両親の染色体を組み合わせてもち.*親と同じ染色体.*減数分裂で半分になった生殖細胞が受精/,
+        /ほぼ同じ形質.*ばらつきがあって耐性のある個体.*集団の形質がそろい/,
+      ],
+      heredity: [
+        /すべて丸の種子になり.*およそ3：1.*優性形質.*劣性形質/,
+        /両親はともにaをもつAa.*AA・Aa・Aa・aa.*優性形質を示す親はAAとは限らず/,
+        /減数分裂で染色体が半分になり.*両親の染色体を受け継ぎ.*染色体にのって生殖細胞/,
+      ],
+      evolution: [
+        /古い層から新しい層.*姿の異なる生物.*段階的に並ぶ.*種類が時間とともに変わってきた証拠/,
+        /ばらつきのあった蛾.*暗色の蛾が鳥に見つかりにくく.*暗色の個体の割合が増え/,
+        /首の長さにばらつきがあり.*多く子を残した.*集団の形質の割合の変化/,
+      ],
+      energyResources: [
+        /位置エネルギー.*化学エネルギー.*変換.*姿を変えるだけ/,
+        /枯渇性資源.*再生可能エネルギー.*埋蔵量.*二酸化炭素/,
+        /変換効率.*燃料.*環境負荷.*利用できない熱.*損失/,
+      ],
+      natureBalance: [
+        /光合成.*消費者.*分解者.*循環.*二酸化炭素/,
+        /魚が増えて水草が減り.*相互に影響.*自然界のつり合い/,
+        /鳥.*虫.*連鎖.*回復力を超える/,
+      ],
+      sustainableSociety: [
+        /発生は止められません.*観測.*予測.*被害を小さく.*避難計画/,
+        /過去の洪水の記録.*地形と標高.*降水量.*ハザードマップ.*予測/,
+        /枯渇性資源の消費を減らし.*二酸化炭素.*持続可能.*省エネ/,
       ],
     }
 

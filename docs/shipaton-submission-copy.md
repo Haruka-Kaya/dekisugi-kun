@@ -1,27 +1,22 @@
-# Shipaton 2026 submission copy
+# Shipaton 2026 submission copy — Next Gen Award
 
-> [!CAUTION]
-> **ARCHIVED RESEARCH / LEGACY SUBMISSION CANDIDATE — DO NOT SUBMIT.**
-> This is not the current production source of truth. Its Live-AI,
-> free-response, RevenueCat, and demo wording is preserved only as historical
-> material and must not be distributed or pasted into Devpost or store copy.
-
-Updated: 2026-08-10
+Track: **Next Gen Award** (student-only; judged on the demo video and the public
+open-source repository — no store release required).
 
 This file is the English source of truth for the Devpost submission. Do not add
-store URLs, revenue, installs, retention, ZDR approval, or school availability
-until each claim has been verified in the published build.
+claims that are not true of the current build (no live-AI claims, no store
+availability, no revenue or install numbers).
 
 Official requirements: [Shipaton 2026 rules](https://revenuecat-shipaton-2026.devpost.com/rules)
 
 ## Project name
 
-Dekisugi
+Dekisugi (AI デキすぎ君)
 
 ## One-line pitch
 
-Learn science by teaching it: explain one idea, catch a student's misconception,
-and prove you can use the idea in a new case.
+Learn science by teaching it: explain an idea in your own words, answer the AI's
+fixed follow-up question, and apply the idea to a new case.
 
 ## Short description
 
@@ -29,145 +24,157 @@ Most study apps reward recognizing the right answer. Dekisugi asks learners to
 produce an explanation instead.
 
 Each short mission focuses on one science concept. The learner reads a compact
-source, closes it, chooses a teaching tactic, and explains the idea by voice or
-text to an AI junior student. The junior then voices a cataloged misconception.
-The mission clears only when the learner rejects that misconception and supplies
-a correct idea, condition, or reason. An unresolved attempt becomes a focused
-repair mission; a successful explanation later returns as a new-case mission.
+lesson, predicts what will happen, and then — with the lesson hidden — explains
+the idea by voice or text to an AI study companion. Before the explanation is
+accepted, the app checks on-device whether the learner's own words touched the
+key terms of the lesson — a voice explanation is echoed back for confirmation,
+and either path must be re-read before continuing. Only then does the
+companion ask one fixed follow-up question from the lesson catalog. A wrong
+answer records a canonical misconception and costs a heart, but never reveals
+the correct answer: the learner gets a scientific hint and must explain again.
 
-There are no coins, loot boxes, leaderboards, or streak-loss pressure. The
-reward is the learner's own sentence, stored on the device as evidence of what
-they can explain. The full learning loop remains free. Optional Plus removes the
-daily live-mission limit through RevenueCat without locking lessons, text input,
-repair missions, accessibility, or saved learning notes behind payment.
+Story missions let the learner catch cataloged misconceptions the companion
+voices in context; notation labs train formula and diagram reasoning; spaced
+review and an exam-date countdown bring completed ideas back as new cases.
 
-When a live connection is unavailable, bundled lessons and a private on-device
-practice path still support recall, adding a condition or reason, applying the
-idea to a concrete case, and correcting a fixed misconception with a cataloged
-three-choice checkpoint. A wrong choice gives a scientific hint and requires a
-retry; it does not reveal or award a mastery result. These entries are neither
-uploaded nor falsely counted as mastery.
+The signature screen is the **カルテ (misconception map)** on the profile tab:
+a canonical catalog of 35 misconceptions, one per concept, shown as beliefs
+the companion holds. Each misconception a student's explanation corrects
+flips to "corrected by your explanation" and reveals the canonical correct
+idea — progress rendered as what the learner changed in the AI, not a score.
+Only cataloged need codes persist there; answer text and voice are never
+stored.
+
+The core loop is entirely on-device: no account, no free-text upload, no LLM
+grading of student writing. In the current build, voice audio and free text
+stay in RAM; the device stores only lesson IDs, canonical misconception flags,
+hearts, and progress.
+Optional Plus, powered by the RevenueCat SDK, is a supporter plan: it grants an
+exclusive Aurora Mantle look for the study companion immediately, and lifts the
+daily limit on guided live-conversation sessions once that feature resumes —
+live conversation is kept disabled for minors pending a provider contract, so
+nothing a student needs to learn is behind payment.
 
 ## What was built during Shipaton
 
-- A three-part TEACH / REPAIR / CASE mission path, limited to one concept at a time.
-- A misconception challenge that must actually be spoken before it can be evaluated.
-- Evidence-based completion that rejects bare denial and model-invented corrections.
-- Voice and text as equal input paths.
-- On-device learning records and a no-network lesson/practice path that does not
-  create an identity, start purchase services, upload answers, or claim mastery.
-- A RevenueCat-powered optional Plus entitlement, purchase, restore, and server sync flow.
-- Honest failure recovery for interrupted sessions and failed local saves.
-- Responsive Japanese UI tested at 320 dp and 200% text size, with semantic live regions.
+- A six-tab game UI with a serpentine learning path: learn / stories / practice /
+  notation / compete / profile.
+- The signature teach-back loop: read → hide → explain by voice or text →
+  replay/re-read → fixed catalog checkpoint → hint-and-retry on miss.
+- 12 curriculum units (35 concepts) aligned to Japan's national science
+  curriculum guidelines, including the stage-2 chemistry units added this period.
+- Misconception story missions, notation labs, spaced retrieval, hearts with
+  timed recovery, daily XP caps that prevent grinding.
+- The カルテ (misconception map): the 35-entry canonical misconception catalog
+  surfaced as the companion's record, with observed vs. resolved needs drawn
+  from durable on-device need state — the protégé effect made visible.
+- A RevenueCat-powered optional Plus supporter plan: purchase and restore
+  grant an exclusive Aurora Mantle companion skin on-device, a generated-AI
+  reply preface that reads the student's explanation (`/api/companion-line`,
+  consent-disclosed, catalog-verbatim pedagogy, deterministic fallback), plus
+  a shareable 「保護者の方へのレポート」 card on the カルテ screen that
+  summarizes the misconceptions the student's explanations have corrected.
+  Server-side entitlement re-verification (`/api/revenuecat-webhook`,
+  `/api/subscription-sync`) is implemented and unit-tested; it gates the
+  live-conversation quota, which is held disabled pending a minor-safe AI
+  provider agreement.
+- A deliberately safe posture for minors: the live-session generative-AI
+  endpoints (`/api/live-token`, `/api/director`) return 503 in production, and
+  the app's required path works with no network.
 
 ## RevenueCat integration
 
-Dekisugi uses RevenueCat for one optional entitlement: `plus`. The core learning
-loop is available without a purchase; Plus removes the daily live-mission limit
-while per-device rate limits and per-session time limits remain.
+Dekisugi uses the RevenueCat SDK (`purchases_flutter`) for one optional
+entitlement: `plus`. Purchase, restore, and entitlement state are implemented
+end-to-end in `app/lib/services/revenuecat_purchase_adapter.dart`. Server-side
+re-verification is implemented and unit-tested (`server/lib/revenuecat.ts`,
+`/api/subscription-sync` called by
+`app/lib/services/subscription_sync_client.dart`, and a webhook at
+`/api/revenuecat-webhook`); it currently gates only the live-conversation
+quota, which is disabled in the shipped build, so the supporter perks (the
+Aurora Mantle skin, the generated-AI reply preface, and the parent report)
+are granted on-device from the RevenueCat entitlement listener.
 
-The paywall displays only the price and subscription period returned by the
-store. It explains automatic renewal and cancellation, exposes restore and
-subscription-management actions, and links to the applicable store terms and
-privacy policy. If price, period, offering, or public SDK configuration is
-missing, purchase fails closed instead of inventing billing information.
+The paywall shows only the price and period returned by the store, explains
+renewal and cancellation, exposes restore and subscription-management actions,
+and fails closed when configuration is missing rather than inventing billing
+information. RevenueCat receives a random app-scoped UUID and store transaction
+data — never a learner's name, email, advertising ID, voice, transcript, or
+answers. The privacy policy is served from the app's own Vercel deployment
+(the project predates the rename: `rika-chousa.vercel.app` is this app's
+server, the same host the API uses).
 
-RevenueCat receives a random app-scoped UUID and store transaction data. It does
-not receive a learner's name, email, advertising ID, voice recording, transcript,
-or science answer as a customer attribute.
+Plus is a supporter plan, not a paywall for learning: it grants the exclusive
+Aurora Mantle companion skin, the generated-AI reply preface (gated to
+supporter devices via `/api/companion-line`), and a shareable parent report
+card on the misconception map, and will lift the daily live-conversation
+limit when that feature resumes. Live conversation is disabled in the shipped build
+pending a minor-safe AI provider agreement, so the purchase is fully optional
+and the entire learning loop is free.
 
-## RevenueCat Design Award
+## Demo video notes
 
-Dekisugi turns assessment state into the interface itself. The learner always
-sees the current action—not a dashboard of scores: prepare an explanation,
-teach, catch a misconception, repair a gap, or apply the idea to a new case.
-The source disappears before teaching to prevent reading aloud. The AI junior's
-expression and the three-stage mission surface provide immediate feedback, while
-the completion screen gives visual priority to the learner's exact sentence.
+The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v7.mp4`, ~114s) is
+filmed on the English build of the app on an Android emulator in portrait:
+a short hook card, then the learning path, a lesson node (the material hides
+when it is time to explain — C2), a typed English teach-back explanation, the
+on-device key-term coverage panel, the companion's fixed follow-up question,
+a wrong pick costing a heart and earning a hint instead of the answer, the
+misconception record screen ("Corrected / Still unsure"), the shareable
+parent report, and the Plus screen. English captions overlay the English UI;
+there is no audio track. The whole loop shown is on-device — no LLM, no
+cloud, nothing a student writes leaves the phone.
 
-The visual system uses solid paper, warm note, and cool studio surfaces instead
-of generic cards or game currency. Motion communicates a change of learning
-state and respects Reduce Motion. Judges should look at the 30-second local
-tutorial, the transition into the misconception challenge, the live mission HUD,
-and the signed learner note on completion.
+The on-device coverage check is a vocabulary floor, not a grader: it verifies
+that the key terms from the expected explanation appear in the student's own
+words (stem-matched, normalization applied) before the follow-up question
+proceeds. Correctness is still decided by the fixed 3-choice correction, so a
+missed term asks for more detail instead of wrongly blocking a right answer.
 
-## Best Game Award
+The closing segment is a real purchase: the Plus screen lists live Test Store
+packages (Monthly $9.99 / Yearly $79.98 / Lifetime $99.99), the native Test
+Store checkout dialog completes, the `plus` entitlement confirms, and the
+Aurora Mantle + parent report unlock. The project's Test Store public key is in
+docs/monetization-setup.md — judges can replay the same loop with the
+`--dart-define` command in "Testing instructions". The one honest caveat shown
+on screen is the quota-sync retry banner: a Test Store purchase cannot be
+verified against the real backend, and the app says so instead of faking it.
 
-The gameplay is the learning action rather than a decorative points layer:
+Earlier cuts (Japanese-UI v4 with the airplane-mode beat, v3, v2, and the
+web-build v1, and the pre-purchase v6) are archived under `docs/attic/`; the submitted video is the
+English-build v7 capture.
 
-1. Prepare one concept and choose a teaching tactic.
-2. Recall the idea without the source.
-3. Teach a junior student.
-4. Notice the junior's misconception.
-5. Defend the explanation with a condition or reason.
-6. Return later and transfer the idea to a different case.
+## Testing instructions (for judges)
 
-Wrong or incomplete attempts create a targeted repair mission rather than taking
-away a life. Success creates a harder transfer mission rather than an endless
-level number. The loop is replayable because the learner's task changes with
-the evidence they have produced.
+0. **Fastest:** open the live demo at https://web-uxapnvfp.devinapps.com — the
+   Flutter web build runs the full loop in the browser against the bundled
+   catalog (no server, no account). Settings → 表示言語 → English toggles the
+   whole product to English live.
+1. Clone the public repository.
+2. `cd app && flutter pub get && flutter run` — the bundled-catalog mode needs
+   no network, server, or credentials. The app also ships a full English build:
+   `flutter run --dart-define=APP_LANG=en`, or toggle 表示言語 → English in
+   Settings at runtime. Every lesson, practice stage, misconception follow-up,
+   story, and notation task renders in English; the English catalog is
+   machine-generated from the same server source (`assets/catalog/units.en.json`)
+   and served over the network at `/api/units?lang=en`.
+3. On the learning path, open any lesson node, read the material, hide it, type
+   an explanation, re-read it, and answer the checkpoint.
+4. Deliberately answer one checkpoint wrong to see the hint + re-explain flow.
+5. Open the profile tab → 「思い込みの記録を見る」 to see the カルテ: the
+   companion's misconception map with observed/corrected need states.
+6. Optional: run with the project's Test Store key (in docs/monetization-setup.md)
+   `--dart-define=REVENUECAT_USE_TEST_STORE=true --dart-define=REVENUECAT_TEST_PUBLIC_SDK_KEY=test_UtdJreIqsGoYiqdCBrGBdTOOwje`
+   to see the Plus paywall and a real Test Store purchase that grants the
+   Aurora Mantle companion skin in the cosmetic picker.
 
-Monetization fits the loop by selling additional daily live practice, not answers,
-power, accessibility, or protection from punishment.
+## Evidence checklist for the submission form
 
-## RevenueCat Peace Prize
-
-Dekisugi is designed for learners who can recognize an answer but struggle to
-explain why it is true. Teach-back makes hidden gaps visible without publicly
-ranking students. Voice helps learners who prefer speaking; equal text input
-keeps the same mission usable in a classroom, library, train, or noisy home.
-
-The app minimizes personal data, keeps online transcripts and concept records on
-the device, and gives teachers no individual transcript or leaderboard. Offline
-lessons and practice keep the learning action available when connectivity or a
-paid AI session is unavailable. Free responses and selected answers are neither
-uploaded nor retained; the device stores only the lesson ID, concept ID,
-completion count, and last-completed time needed to rotate the next practice.
-
-Under-18 and school users can enter that device-only path without accepting an
-overseas-transfer disclosure. The path contains no live AI, school-server,
-purchase, upload, identity, or mastery-recording dependency. Its minimal local
-rotation marker can be cleared in the app. It is practice—not a claim that an
-automated system has certified understanding.
-
-School and under-18 distribution remains disabled until the selected AI provider,
-data processor, consent flow, age assurance, safety monitoring, and escalation
-process have all been verified. This is a deliberate safety boundary, not a
-claim that a client-side age checkbox makes an AI service suitable for minors.
-
-## Demo video description
-
-In under two minutes, the on-device cut shows a learner correcting a
-misconception, choosing a one-concept mission, closing the source, recalling it,
-adding a reason, applying it to a case, and completing a private checkpoint that
-is explicitly not scored as mastery. It ends with the optional RevenueCat Plus
-offer and the free-core boundary. A live-AI cut may replace that middle section
-only after the provider and public-build gates in the capture sheet are green.
-
-## Testing instructions
-
-Replace every bracketed item before submission.
-
-1. Install the public build from `[STORE URL]`.
-2. Use the app as an adult individual user and complete the disclosure screen.
-3. Finish the local 30-second tutorial; it requires no network or account.
-4. Open `[CONCEPT NAME]`, read to the end, and choose `[TACTIC]`.
-5. Teach by text using `[SAFE TEST EXPLANATION]`, then correct the displayed misconception.
-6. Open Plus and redeem `[PROMO CODE OR TRIAL INSTRUCTION]`.
-7. Confirm the store price/period, purchase state, restore action, and subscription-management link.
-
-Do not submit these instructions until the public build, US availability, premium
-access path, and every named screen have been tested from a clean installation.
-
-## Evidence still required before submission
-
-- `[APP STORE / PLAY URL]`
-- `[PUBLIC PRIVACY URL]`
-- `[PUBLIC SUPPORT URL]`
-- `[YOUTUBE OR VIMEO VIDEO UNDER 2:00]`
-- `[PROMO CODE OR FREE TRIAL]`
-- RevenueCat dashboard evidence for the live `plus` entitlement and offering
-- A real purchase and restore in the store build
-- Final marketing screenshot set from the verified current-build capture path
-- If claiming Grand Prize: verified launch date, installs, active users, revenue,
-  conversion, retention, and the experiments that caused those results
+- `[PUBLIC REPO URL]` — https://github.com/Haruka-Kaya/dekisugi-kun
+- `[YOUTUBE OR VIMEO VIDEO UNDER 2:00, ENGLISH CAPTIONS]`
+- `docs/store/icon-1024.png` — 1024×1024 icon
+- One 1179×2556 screenshot, no device frame, plus optional gallery shots of the
+  teach-back screens and the Aurora Mantle equipped state (see
+  `docs/store-shots-2026/devpost/`)
+- Student/academic email on the Devpost account
+- If a minor: parent/guardian consent form submitted before the deadline

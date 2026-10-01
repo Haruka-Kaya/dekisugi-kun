@@ -43,6 +43,19 @@ Shipaton公式ルール §4 Submission Requirements は、端末枠なしの`117
 9:16推奨とは別契約です。iPhone 15 Pro Simulatorの生framebufferがこの寸法なので、
 `shipaton/iphone-1179x2556/`はリサイズ・切り抜き・端末枠合成をせずに直接撮影します。
 
+Devpost提出用の実際のスクリーンショットは `devpost/` に置き、上記のストア用
+パイプラインとは別に管理します。現物はAndroidエミュレータで `wm size 1179x2556`
+に設定した実画面の `adb screencap`（リサイズ・端末枠なし、必須提出画像はRGB化済み）です。
+
+| ファイル | 内容 |
+|---|---|
+| `devpost/shot-1179x2556.png` | 学習パス進行中（必須提出・1179x2556・RGB） |
+| `devpost/shot-1179x2556-teachback.png` | TEACH BACK導入画面（教材非表示・声/文字選択） |
+| `devpost/shot-1179x2556-teachback-input.png` | 教材を隠した説明入力画面 |
+| `devpost/shot-1179x2556-aurora.png` | オーロラマント装備中（Plus特典の可視状態）。RevenueCat Test Store で**実際に購入**した直後の実機キャプチャ（商品→チェックアウト→`plus` entitlement→装備までの実経路。`docs/shipaton-demo-2026/shipaton-demo-v7.mp4` に同じ経路を収録） |
+| `devpost/karte-1179x2556.png` | デキすぎ君のカルテ（誤概念マップ）上部: サマリ「訂正できた2・迷い中4」+ 概念カード。撮影注記: `learning_need_state` に観測・解消行を手動挿入した実画面（表示コードは実経路と同一） |
+| `devpost/karte-units-1179x2556.png` | カルテの単元別並び: 「これから」「訂正できた」chip付き概念カード |
+
 ### Google Play
 
 - 受理条件はJPEGまたは24-bit PNG（alphaなし）。

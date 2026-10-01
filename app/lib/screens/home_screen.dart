@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../config/app_language.dart' as l10n;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../models/exam_plan.dart';
@@ -220,21 +221,27 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final leave = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('クラスから抜けますか？'),
-        content: const Text(
-          'いままでの分はクラスの合計に残りますが、'
-          'あなたの記録は消えます。\n\n'
-          '入り直せるのは1週間後です。'
-          '同じ日をもう一度数えられないようにするためです。',
+        title: Text(l10n.t('クラスから抜けますか？', 'Leave the class?')),
+        content: Text(
+          l10n.t(
+            'いままでの分はクラスの合計に残りますが、'
+                'あなたの記録は消えます。\n\n'
+                '入り直せるのは1週間後です。'
+                '同じ日をもう一度数えられないようにするためです。',
+            'What you\'ve done so far stays in the class total, '
+                'but your own record will be deleted.\n\n'
+                'You can rejoin after one week. '
+                'This keeps the same day from being counted twice.',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('クラスに残る'),
+            child: Text(l10n.t('クラスに残る', 'Stay in class')),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('クラスから抜ける'),
+            child: Text(l10n.t('クラスから抜ける', 'Leave class')),
           ),
         ],
       ),
@@ -251,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       initial: _plan?.examDate ?? now.add(const Duration(days: 14)),
       first: now,
       last: now.add(const Duration(days: 365)),
-      helpText: '次の定期考査はいつ？',
+      helpText: l10n.t('次の定期考査はいつ？', 'When is your next exam?'),
     );
     if (picked == null) return;
     await widget.store.setExamDate(picked);
@@ -345,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             children: [
               StudioWordmark(
                 action: widget.reminders == null ? null : _openSettings,
-                actionTooltip: '設定',
+                actionTooltip: l10n.t('設定', 'Settings'),
               ),
               const SizedBox(height: 22),
               _TodayStudio(
@@ -358,24 +365,33 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               const SizedBox(height: 32),
               _SaidItList(items: _said),
               const SizedBox(height: 32),
-              const StudioSectionHeader(
-                title: '次にできること',
-                description: '見直すか、別のテーマを自分で選べます。',
+              StudioSectionHeader(
+                title: l10n.t('次にできること', 'What you can do next'),
+                description: l10n.t(
+                  '見直すか、別のテーマを自分で選べます。',
+                  'Review, or pick another topic yourself.',
+                ),
               ),
               const SizedBox(height: 14),
               StudioActionTile(
                 icon: Icons.replay,
-                title: 'もう一度見るところ',
+                title: l10n.t('もう一度見るところ', 'To review'),
                 description: plan.due.isEmpty
-                    ? 'いま見直すものはありません'
-                    : '${plan.due.length}件を、忘れる前に見直す',
+                    ? l10n.t('いま見直すものはありません', 'Nothing to review right now')
+                    : l10n.t(
+                        '${plan.due.length}件を、忘れる前に見直す',
+                        'Review ${plan.due.length} before you forget',
+                      ),
                 onTap: _openReviewOnce,
               ),
               const SizedBox(height: 10),
               StudioActionTile(
                 icon: Icons.auto_stories_outlined,
-                title: '教えるテーマを選ぶ',
-                description: 'ほかの単元から、自分で選んで始める',
+                title: l10n.t('教えるテーマを選ぶ', 'Choose a topic to teach'),
+                description: l10n.t(
+                  'ほかの単元から、自分で選んで始める',
+                  'Pick from other units and start',
+                ),
                 onTap: _openPickerOnce,
                 warm: true,
               ),
@@ -383,8 +399,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 const SizedBox(height: 10),
                 StudioActionTile(
                   icon: Icons.forum_outlined,
-                  title: '会話の回数を広げる',
-                  description: '学び方はそのまま。Plusで1日の会話回数だけ上限なしにする',
+                  title: l10n.t('デキすぎ君 Plus', 'Dekisugi-kun Plus'),
+                  description: l10n.t(
+                    '学び方はそのまま。Plusは限定マスコットの応援プラン',
+                    'Learning stays the same. Plus is a supporter plan with an exclusive mascot',
+                  ),
                   onTap: () => unawaited(_openPlusOnce()),
                 ),
               ],
@@ -396,8 +415,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   padding: const EdgeInsets.only(top: 10),
                   child: StudioActionTile(
                     icon: Icons.groups_outlined,
-                    title: 'クラスに入る',
-                    description: '誰かと競わず、クラス全体の説明を集める',
+                    title: l10n.t('クラスに入る', 'Join a class'),
+                    description: l10n.t(
+                      '誰かと競わず、クラス全体の説明を集める',
+                      'No competing. Build up explanations as a whole class',
+                    ),
                     onTap: _openTeam,
                   ),
                 ),
@@ -459,11 +481,20 @@ class _TodayStudio extends StatelessWidget {
             Expanded(
               child: Text(
                 task == null
-                    ? 'TODAY MISSION  ·  きょう'
+                    ? l10n.t('TODAY MISSION  ·  きょう', 'TODAY MISSION  ·  Today')
                     : switch (task.missionKind) {
-                        MissionKind.teach => 'TODAY MISSION  ·  きょうの挑戦',
-                        MissionKind.repair => 'REPAIR MISSION  ·  決着をつける',
-                        MissionKind.caseRetry => 'CASE MISSION  ·  別の場面でたしかめる',
+                        MissionKind.teach => l10n.t(
+                          'TODAY MISSION  ·  きょうの挑戦',
+                          'TODAY MISSION  ·  Today\'s challenge',
+                        ),
+                        MissionKind.repair => l10n.t(
+                          'REPAIR MISSION  ·  決着をつける',
+                          'REPAIR MISSION  ·  Settle it',
+                        ),
+                        MissionKind.caseRetry => l10n.t(
+                          'CASE MISSION  ·  別の場面でたしかめる',
+                          'CASE MISSION  ·  Test it in a new situation',
+                        ),
                       },
                 style: t.textTheme.labelMedium
                     ?.copyWith(color: c.heroMuted)
@@ -475,12 +506,20 @@ class _TodayStudio extends StatelessWidget {
         const SizedBox(height: 10),
         Text(
           task == null
-              ? 'きょうのミッションは\nクリア。'
+              ? l10n.t('きょうのミッションは\nクリア。', 'Today\'s mission\ncleared.')
               : switch (task.missionKind) {
-                  MissionKind.teach => '「${task.label}」を教えて、\n最後の思い込みを見破ろう。',
-                  MissionKind.repair =>
+                  MissionKind.teach => l10n.t(
+                    '「${task.label}」を教えて、\n最後の思い込みを見破ろう。',
+                    'Teach "${task.label}"\nand spot the last misconception.',
+                  ),
+                  MissionKind.repair => l10n.t(
                     '「${task.label}」の説明を組み直し、\n今度こそ決着をつけよう。',
-                  MissionKind.caseRetry => '「${task.label}」を、\n別の場面でも使ってみよう。',
+                    'Rebuild your explanation of "${task.label}"\nand settle it this time.',
+                  ),
+                  MissionKind.caseRetry => l10n.t(
+                    '「${task.label}」を、\n別の場面でも使ってみよう。',
+                    'Try using "${task.label}"\nin a different situation.',
+                  ),
                 },
           style:
               (compact ? t.textTheme.headlineSmall : t.textTheme.headlineMedium)
@@ -490,11 +529,23 @@ class _TodayStudio extends StatelessWidget {
         const SizedBox(height: 9),
         Text(
           task == null
-              ? '今日はここまででも大丈夫。また話したくなったら、ここにいます。'
+              ? l10n.t(
+                  '今日はここまででも大丈夫。また話したくなったら、ここにいます。',
+                  'It\'s fine to stop here today. I\'ll be here when you want to talk again.',
+                )
               : switch (task.missionKind) {
-                  MissionKind.teach => '作戦を選び、自分の言葉で説明して、デキすぎ君の反論に答えます。',
-                  MissionKind.repair => '前に曖昧だった条件や理由を、自分の言葉でつなぎ直します。',
-                  MissionKind.caseRetry => '教材の答えを見ず、具体場面の予想と理由を説明します。',
+                  MissionKind.teach => l10n.t(
+                    '作戦を選び、自分の言葉で説明して、デキすぎ君の反論に答えます。',
+                    'Pick a strategy, explain in your own words, and answer Dekisugi-kun\'s pushback.',
+                  ),
+                  MissionKind.repair => l10n.t(
+                    '前に曖昧だった条件や理由を、自分の言葉でつなぎ直します。',
+                    'Reconnect the conditions and reasons that were fuzzy last time, in your own words.',
+                  ),
+                  MissionKind.caseRetry => l10n.t(
+                    '教材の答えを見ず、具体場面の予想と理由を説明します。',
+                    'Without looking at the lesson, predict a real situation and explain why.',
+                  ),
                 },
           style: t.textTheme.bodySmall?.copyWith(color: c.heroMuted),
         ),
@@ -508,11 +559,11 @@ class _TodayStudio extends StatelessWidget {
             ),
             child: Text(
               busy
-                  ? 'ミッションを開いています…'
+                  ? l10n.t('ミッションを開いています…', 'Opening mission…')
                   : switch (task.missionKind) {
-                      MissionKind.teach => 'ミッション開始',
-                      MissionKind.repair => 'リペア開始',
-                      MissionKind.caseRetry => 'ケース開始',
+                      MissionKind.teach => l10n.t('ミッション開始', 'Start mission'),
+                      MissionKind.repair => l10n.t('リペア開始', 'Start repair'),
+                      MissionKind.caseRetry => l10n.t('ケース開始', 'Start case'),
                     },
               textAlign: TextAlign.center,
             ),
@@ -595,12 +646,18 @@ class _UnavailableHome extends StatelessWidget {
               24 + MediaQuery.paddingOf(context).bottom,
             ),
             children: [
-              StudioWordmark(action: onOpenSettings, actionTooltip: '設定'),
+              StudioWordmark(
+                action: onOpenSettings,
+                actionTooltip: l10n.t('設定', 'Settings'),
+              ),
               const SizedBox(height: 30),
-              const StudioPageIntro(
+              StudioPageIntro(
                 eyebrow: 'CONVERSATION STUDIO',
-                title: '教材を、まだ開けません。',
-                body: '通信を確かめて、もう一度読み込んでください。端末に保存済みの教材があれば、通信なしでも開けます。',
+                title: l10n.t('教材を、まだ開けません。', 'Can\'t open the lessons yet.'),
+                body: l10n.t(
+                  '通信を確かめて、もう一度読み込んでください。端末に保存済みの教材があれば、通信なしでも開けます。',
+                  'Check your connection and reload. Lessons already saved on this device open without internet.',
+                ),
               ),
               const SizedBox(height: 22),
               Container(
@@ -615,14 +672,20 @@ class _UnavailableHome extends StatelessWidget {
                     Icon(Icons.cloud_off_outlined, color: c.onCoolSurface),
                     const SizedBox(height: 14),
                     Text(
-                      '「きょうは終わり」ではありません。',
+                      l10n.t(
+                        '「きょうは終わり」ではありません。',
+                        'This doesn\'t mean you\'re done for today.',
+                      ),
                       style: t.textTheme.titleMedium
                           ?.copyWith(color: c.onCoolSurface)
                           .jaWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '教材を読み込めたら、ここに今日の話が出ます。',
+                      l10n.t(
+                        '教材を読み込めたら、ここに今日の話が出ます。',
+                        'Once the lessons load, today\'s topic will show up here.',
+                      ),
                       style: t.textTheme.bodyMedium?.copyWith(
                         color: c.onCoolSurface,
                       ),
@@ -633,7 +696,7 @@ class _UnavailableHome extends StatelessWidget {
                       child: FilledButton.icon(
                         onPressed: onRetry,
                         icon: const Icon(Icons.refresh),
-                        label: const Text('もう一度読み込む'),
+                        label: Text(l10n.t('もう一度読み込む', 'Reload')),
                       ),
                     ),
                   ],
@@ -693,21 +756,36 @@ class _ExamCard extends StatelessWidget {
                   children: [
                     Text(
                       left == null
-                          ? '次の考査日を入れると、そこから逆算します'
+                          ? l10n.t(
+                              '次の考査日を入れると、そこから逆算します',
+                              'Enter your next exam date to plan backward from it',
+                            )
                           : left < 0
-                          ? '次の考査日を入れ直す'
+                          ? l10n.t('次の考査日を入れ直す', 'Set the next exam date')
                           : left == 0
-                          ? 'きょうが考査日'
-                          : '考査まで あと$left日',
+                          ? l10n.t('きょうが考査日', 'Exam day is today')
+                          : l10n.t(
+                              '考査まで あと$left日',
+                              '$left days until the exam',
+                            ),
                       style: t.textTheme.titleSmall?.jaWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       left != null && left < 0
-                          ? '前の考査日は終了しています'
+                          ? l10n.t(
+                              '前の考査日は終了しています',
+                              'Your last exam date has passed',
+                            )
                           : plan.remaining == 0
-                          ? '説明していないところはありません'
-                          : 'まだ説明していないところが ${plan.remaining} つ',
+                          ? l10n.t(
+                              '説明していないところはありません',
+                              'You\'ve explained everything',
+                            )
+                          : l10n.t(
+                              'まだ説明していないところが ${plan.remaining} つ',
+                              '${plan.remaining} left to explain',
+                            ),
                       style: t.textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -746,8 +824,11 @@ class _SaidItList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         StudioSectionHeader(
-          title: '言えるようになったこと',
-          description: '点数ではなく、あなたが実際に話した言葉です。',
+          title: l10n.t('言えるようになったこと', 'Things you can now explain'),
+          description: l10n.t(
+            '点数ではなく、あなたが実際に話した言葉です。',
+            'Not scores: the actual words you said.',
+          ),
           leading: Icon(Icons.format_quote, size: 22, color: scheme.primary),
         ),
         const SizedBox(height: 14),
@@ -771,7 +852,10 @@ class _SaidItList extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '最初の説明が、ここに残ります。',
+                  l10n.t(
+                    '最初の説明が、ここに残ります。',
+                    'Your first explanation will be kept here.',
+                  ),
                   style: t.textTheme.titleMedium
                       ?.copyWith(color: context.appColors.onWarmSurface)
                       .jaWeight(FontWeight.w700),
@@ -800,7 +884,7 @@ class _SaidItList extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '「${items.first.said}」',
+                  l10n.t('「${items.first.said}」', '"${items.first.said}"'),
                   style: t.textTheme.titleMedium
                       ?.copyWith(
                         color: context.appColors.onWarmSurface,
@@ -826,7 +910,7 @@ class _SaidItList extends StatelessWidget {
                   const SizedBox(height: 3),
                   // **生徒自身の言葉が主役。** ここを要約に置き換えない
                   Text(
-                    '「${e.said}」',
+                    l10n.t('「${e.said}」', '"${e.said}"'),
                     style: t.textTheme.bodyLarge?.jaWeight(FontWeight.w500),
                   ),
                   const SizedBox(height: 14),
@@ -839,7 +923,7 @@ class _SaidItList extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              'ほか ${items.length - 5} 件',
+              l10n.t('ほか ${items.length - 5} 件', '${items.length - 5} more'),
               style: t.textTheme.labelSmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),

@@ -1,6 +1,7 @@
 import 'learning_event.dart';
 import 'learning_economy.dart';
 import '../../models/league_ladder.dart';
+import '../../config/app_language.dart';
 
 enum LearningNodeState {
   inProgress,
@@ -99,6 +100,31 @@ final class LearningActiveNeed {
   final String firstObservedDay;
   final String lastObservedDay;
   final DateTime lastObservedAt;
+}
+
+/// 理解カルテが表示するneed状態。activeと解消済みtombstoneの両方を含む。
+///
+/// 誤答本文・選択肢ID・音声は持たない。`resolvedDay`が非nullなら
+/// 構造練習で解消済みとして扱う。
+final class LearningNeedStateView {
+  const LearningNeedStateView({
+    required this.scope,
+    required this.skillId,
+    required this.needCode,
+    required this.firstObservedDay,
+    required this.lastObservedDay,
+    required this.resolvedDay,
+  });
+
+  final LearningScope scope;
+  final String skillId;
+  final String needCode;
+  final String? firstObservedDay;
+  final String? lastObservedDay;
+  final String? resolvedDay;
+
+  bool get resolved => resolvedDay != null;
+  bool get active => !resolved && lastObservedDay != null;
 }
 
 final class LearningDay {
@@ -470,10 +496,10 @@ enum LearningLeagueTier {
   String get wire => name;
 
   String get label => switch (this) {
-    LearningLeagueTier.observer => '観察者',
-    LearningLeagueTier.experimenter => '実験者',
-    LearningLeagueTier.investigator => '探究者',
-    LearningLeagueTier.researchLead => '研究主任',
+    LearningLeagueTier.observer => t('観察者', 'Observer'),
+    LearningLeagueTier.experimenter => t('実験者', 'Experimenter'),
+    LearningLeagueTier.investigator => t('探究者', 'Investigator'),
+    LearningLeagueTier.researchLead => t('研究主任', 'Lead Researcher'),
   };
 
   static LearningLeagueTier? parse(Object? value) {

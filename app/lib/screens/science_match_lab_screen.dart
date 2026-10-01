@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_heart.dart';
@@ -347,7 +348,10 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
         ScienceChallengeHeader(
           eyebrow: 'ラボ・ブリーフ  /  対応づけ実験  /  任意',
           title: widget.conceptLabel,
-          body: '${widget.content.pairs.length}組を$_initialSeconds秒で結びます。',
+          body: t(
+            '${widget.content.pairs.length}組を$_initialSeconds秒で結びます。',
+            'Match ${widget.content.pairs.length} pairs in $_initialSeconds seconds.',
+          ),
           icon: Icons.hub_outlined,
           accent: colors.pathReview,
           onAccent: colors.onPathReview,
@@ -355,7 +359,7 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
-          label: '時間切れは失点なし',
+          label: t('時間切れは失点なし', 'No penalty for running out of time'),
           icon: Icons.shield_outlined,
           child: const Text(
             '時間切れでは試行余力は減りません。組み合わせの誤答だけ、個人モードでは試行余力が1つ減ります。'
@@ -364,7 +368,7 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
-          label: '学習する場面',
+          label: t('学習する場面', 'Learning scenario'),
           icon: Icons.science_outlined,
           child: Text(
             '${_variant.transferPrompt}\n\n'
@@ -374,7 +378,7 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('match-start'),
-          label: '対応づけ実験を始める',
+          label: t('対応づけ実験を始める', 'Start Match Lab'),
           icon: Icons.play_arrow_rounded,
           onPressed: _start,
           backgroundColor: colors.pathReview,
@@ -395,11 +399,17 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
         ScienceMiniGameCountdown(
           remainingSeconds: _remainingSeconds,
           totalSeconds: _initialSeconds,
-          stepLabel: '${_pairIndex + 1}/${widget.content.pairs.length}組目',
+          stepLabel: t(
+            '${_pairIndex + 1}/${widget.content.pairs.length}組目',
+            'Pair ${_pairIndex + 1}/${widget.content.pairs.length}',
+          ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
-          label: 'この概念に合う条件・結果は？',
+          label: t(
+            'この概念に合う条件・結果は？',
+            'Which condition or result fits this concept?',
+          ),
           icon: Icons.psychology_alt_outlined,
           child: Text(
             pair.concept,
@@ -426,7 +436,7 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('match-submit'),
-          label: 'この組み合わせで決定',
+          label: t('この組み合わせで決定', 'Lock in this match'),
           icon: Icons.link_rounded,
           onPressed: _selectedTargetId == null ? null : _submit,
           backgroundColor: colors.pathReview,
@@ -442,15 +452,23 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
     final colors = context.gamePalette;
     final cleared = _outcome == _MatchOutcome.cleared;
     final title = switch (_outcome!) {
-      _MatchOutcome.cleared => 'すべて結べました',
-      _MatchOutcome.needsReview => '今回はここまで',
-      _MatchOutcome.timeUp => '時間になりました',
+      _MatchOutcome.cleared => t('すべて結べました', 'All matched'),
+      _MatchOutcome.needsReview => t('今回はここまで', 'That\'s it for this round'),
+      _MatchOutcome.timeUp => t('時間になりました', 'Time\'s up'),
     };
     final body = switch (_outcome!) {
-      _MatchOutcome.cleared => '概念と条件・結果を対応させました。',
-      _MatchOutcome.needsReview =>
+      _MatchOutcome.cleared => t(
+        '概念と条件・結果を対応させました。',
+        'You matched concepts to conditions and results.',
+      ),
+      _MatchOutcome.needsReview => t(
         '同じ問題の残りの選択肢は開きません。教材で条件を確認してから、もう一度対応づけられます。',
-      _MatchOutcome.timeUp => '未回答の正解は表示しません。落ち着いて通常練習へ戻れます。',
+        'The remaining choices for this question stay locked. Check the conditions in the material, then try again.',
+      ),
+      _MatchOutcome.timeUp => t(
+        '未回答の正解は表示しません。落ち着いて通常練習へ戻れます。',
+        'Answers to unanswered questions aren\'t shown. You can calmly return to regular practice.',
+      ),
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -472,15 +490,20 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
-          label: '学習記録への影響',
+          label: t('学習記録への影響', 'Effect on your record'),
           icon: Icons.shield_outlined,
-          child: const Text('この結果だけでは探究ノート・連続観測・報酬は変わりません。回答と残り時間も保存しません。'),
+          child: Text(
+            t(
+              'この結果だけでは探究ノート・連続観測・報酬は変わりません。回答と残り時間も保存しません。',
+              'This result alone doesn\'t change your Path, streak, or rewards. Answers and remaining time aren\'t saved.',
+            ),
+          ),
         ),
         if (cleared) ...[
           const SizedBox(height: GameTokens.spaceLg),
           ScienceChallengePrimaryButton(
             key: const ValueKey('match-complete'),
-            label: '対応づけ実験を完了する',
+            label: t('対応づけ実験を完了する', 'Finish Match Lab'),
             icon: Icons.check_rounded,
             onPressed: _completionCalled ? null : _complete,
             backgroundColor: colors.pathComplete,
@@ -496,7 +519,11 @@ class _ScienceMatchLabScreenState extends State<ScienceMatchLabScreen>
               foregroundColor: colors.ink,
             ),
             icon: const Icon(Icons.refresh_rounded),
-            label: Text(_retryChecking ? '試行余力を確認中…' : '最初からもう一度'),
+            label: Text(
+              _retryChecking
+                  ? t('試行余力を確認中…', 'Checking hearts…')
+                  : t('最初からもう一度', 'Start over'),
+            ),
           ),
         ],
         const SizedBox(height: GameTokens.spaceLg),

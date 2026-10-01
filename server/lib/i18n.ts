@@ -903,6 +903,400 @@ const EN_STAGE1_UNITS = mergeStage1UnitTexts(
 
 const EN_UNITS: Record<string, UnitText> = {
   ...EN_STAGE1_UNITS,
+  'chemical-change': {
+    title: 'Chemical Change, Atoms and Molecules',
+    brief:
+      'Treat combination, decomposition, oxidation and reduction as rearrangements of atoms, '
+      + 'and explain the amounts with the law of conservation of mass.',
+    concepts: {
+      combinationDecomposition: {
+        label: 'Combination and decomposition',
+        intent:
+          'That decomposition is one substance splitting into two or more different substances, '
+          + 'and combination is two or more substances joining into a different substance. '
+          + 'Complete only when the learner can judge a change by evidence that the product has '
+          + 'different properties, distinguishing it from separating a mixture or a state change.',
+      },
+      oxidationReduction: {
+        label: 'Oxidation and reduction',
+        intent:
+          'That oxidation is a substance combining with oxygen and reduction is removing oxygen '
+          + 'from an oxide — opposite reactions exchanging oxygen. Complete only when the learner '
+          + 'can explain that burning, rusting and respiration are oxidation, and that the mass gain '
+          + 'of an oxidized substance comes from the oxygen that joined it.',
+      },
+      massConservation: {
+        label: 'Conservation of mass',
+        intent:
+          'That the total mass of all substances involved is equal before and after a chemical '
+          + 'change, explained by atoms being rearranged. Complete only when the learner can also '
+          + 'explain the apparent gain or loss in an open system by whether the substances that '
+          + 'moved in or out were included in the measurement.',
+      },
+    },
+    sections: {
+      combinationDecomposition: {
+        title: 'Just mixed together, or a different substance?',
+        localSpeakingPractice: {
+          targetPhrase: 'Combination joins substances; decomposition splits them',
+          acceptedTranscripts: [
+            'Combination joins substances; decomposition splits them',
+          ],
+        },
+        body: [
+          'Mix iron filings and powdered sulfur well, and each grain is still iron or sulfur — '
+          + 'a magnet still picks out the iron grains. But heat the mixture and a reaction runs: '
+          + 'the result is iron sulfide, a black substance the magnet ignores. '
+          + 'Mixing and combining are not the same thing.',
+          'When two or more substances join into a different substance, the change is called '
+          + '**combination**; when one substance splits into two or more different substances, '
+          + 'it is **decomposition**. Heating sodium hydrogen carbonate into sodium carbonate, '
+          + 'water and carbon dioxide is a decomposition. Both are chemical changes: the kinds '
+          + 'of substance present before and after differ.',
+          'Ice melting or salt dissolving in water does not change the kind of substance, so '
+          + 'those are not chemical changes. To tell one apart, check whether a substance with '
+          + 'different properties was produced. Color, smell, bubbles and temperature shifts are '
+          + 'clues, but in the end the properties of the product decide.',
+          'In the atom and molecule model, a chemical change is a change in how atoms are '
+          + '**combined**. The atoms themselves are neither destroyed nor created. That is why '
+          + 'the products have properties the reactants did not.',
+        ],
+        tryIt:
+          'Using the distributed lab record "iron filings and sulfur mixture, before and after '
+          + 'heating", write down two ways the response to a magnet and the appearance differ '
+          + 'before and after, and explain the evidence that a different substance was produced. '
+          + 'Do not heat anything or mix chemicals at home.',
+        localCheckpoint: {
+          lure: 'Once iron filings and sulfur powder are well mixed, the iron is already combined with the sulfur.',
+          options: [
+            {
+              id: 'mixture-not-compound',
+              text: 'Mixing alone leaves the grains as iron and sulfur; only after a reaction such as heating produces a differently-behaving substance has combination occurred.',
+            },
+            {
+              id: 'mixed-means-combined',
+              text: 'A well-mixed powder has its grains in contact, so combination has already happened.',
+              hint: 'What happens to the iron grains when a magnet is brought near the unheated mixture?',
+            },
+            {
+              id: 'heating-restores',
+              text: 'The changed color from heating returns when it cools, so the kind of substance stays the same.',
+              hint: 'Does the heated substance still respond to a magnet, or is the change more than appearance?',
+            },
+          ],
+          correctOptionId: 'mixture-not-compound',
+          explanation:
+            'In a mixture the iron and sulfur grains keep their own properties. Once heating causes '
+            + 'a chemical change and iron sulfide — a substance the magnet ignores — is produced, '
+            + 'combination has occurred.',
+        },
+      },
+      oxidationReduction: {
+        title: 'The surprising link between burning and rusting',
+        localSpeakingPractice: {
+          targetPhrase: 'Oxidation is combining with oxygen and reduction is removing oxygen',
+          acceptedTranscripts: [
+            'Oxidation is combining with oxygen and reduction is removing oxygen',
+          ],
+        },
+        body: [
+          'Heated copper turns black on its surface; iron left in air develops red rust. '
+          + 'Both are chemical changes in which a substance combines with oxygen — **oxidation**. '
+          + 'Oxidation that runs violently with flame is combustion; oxidation that creeps along '
+          + 'is rusting. Respiration is a form of oxidation too.',
+          'The substance made by oxidation is called an **oxide**: copper oxide, iron oxide, '
+          + 'magnesium oxide. An oxide has properties the original substance did not, and the '
+          + 'mass of the oxidized substance grows by the amount of oxygen that joined it.',
+          'The chemical change that removes oxygen from an oxide is called **reduction**. '
+          + 'Heat powdered copper oxide mixed with carbon and the oxygen moves to the carbon, '
+          + 'leaving shiny red copper and carbon dioxide. Oxidation and reduction are opposite '
+          + 'reactions passing oxygen back and forth.',
+          'Rust looks like dirt stuck on the surface, but the iron itself has combined with '
+          + 'oxygen and become a different substance. And although burned things look lighter, '
+          + 'the picture changes once the joined oxygen and the escaped gases are counted too.',
+        ],
+        tryIt:
+          'Safely observe a place near home where iron is rusty (a gate, a fence, a bicycle '
+          + 'frame) and compare the color and surface of rusted and non-rusted parts in writing. '
+          + 'Give one observation showing that rust is a substance with different properties '
+          + 'from iron. Wash your hands after touching rust, and never touch sharp or '
+          + 'deteriorating parts.',
+        localCheckpoint: {
+          lure: 'Rust is just red dirt stuck on the surface — the iron has not combined with oxygen.',
+          options: [
+            {
+              id: 'surface-dirt',
+              text: 'Rust is dirt attached from outside, so scraping it off leaves the iron completely unchanged.',
+              hint: 'Does the metal keep its original mass and hardness once the rust is removed?',
+            },
+            {
+              id: 'rust-is-oxide',
+              text: 'Rust is an oxide formed when iron combines with oxygen — a different substance from the original iron.',
+            },
+            {
+              id: 'rust-is-reduction',
+              text: 'Rust forms when oxygen leaves iron, so it is a kind of reduction.',
+              hint: 'Which of oxidation and reduction is the reaction that gains oxygen?',
+            },
+          ],
+          correctOptionId: 'rust-is-oxide',
+          explanation:
+            'Rust is an oxide produced when iron slowly reacts with oxygen and moisture — it has '
+            + 'different properties from iron. It is not surface dirt; the iron itself has become '
+            + 'a different substance through oxidation.',
+        },
+      },
+      massConservation: {
+        title: 'Burned or decomposed — mass never goes anywhere',
+        localSpeakingPractice: {
+          targetPhrase: 'In a chemical change the total mass of all substances involved does not change',
+          acceptedTranscripts: [
+            'In a chemical change the total mass of all substances involved does not change',
+          ],
+        },
+        body: [
+          'Add hydrochloric acid to sodium hydrogen carbonate and carbon dioxide is produced. '
+          + 'In an open vessel the gas escapes and the mass seems to drop — but if the gas is '
+          + 'counted too, the total mass before and after the reaction is equal.',
+          'Before and after a chemical change, the total mass of all substances taking part is '
+          + 'equal. This is the **law of conservation of mass**. A chemical change only rearranges '
+          + 'how atoms are combined; the atoms themselves are never destroyed or created.',
+          'There are examples that look the opposite. Copper heated in air gains mass — by the '
+          + 'amount of oxygen that joined it. If the air is left out of "the whole thing being '
+          + 'measured", it looks like a gain; include it and the books balance.',
+          'What matters is how far "everything being measured" extends. Open and closed systems '
+          + 'seem to give different results only because the substances that moved in or out were '
+          + 'or were not included in the measurement — not because the law has exceptions.',
+        ],
+        tryIt:
+          'Using the distributed lab records, read the two mass records from reacting '
+          + '"hydrochloric acid plus sodium hydrogen carbonate" once in an open vessel and once '
+          + 'in a sealed bag that lets no gas escape, and explain the different readings by how '
+          + 'much was included in the measurement. Do not mix chemicals or heat anything at home.',
+        localCheckpoint: {
+          lure: 'For reactions that produce an escaping gas, conservation of mass does not hold.',
+          options: [
+            {
+              id: 'gas-no-mass',
+              text: 'Gases have no mass, so any gas produced can be left out of the mass calculation.',
+              hint: 'Do gases have mass? Check with an inflated balloon or a pump.',
+            },
+            {
+              id: 'conservation-fails',
+              text: 'The mass drops in an open vessel because part of the substance disappeared in the reaction.',
+              hint: 'Did it disappear, or did it move outside the range being measured?',
+            },
+            {
+              id: 'count-escaped-gas',
+              text: 'If the escaped gas is measured too, the total mass before and after the reaction is equal.',
+            },
+          ],
+          correctOptionId: 'count-escaped-gas',
+          explanation:
+            'In an open vessel the reading drops because the produced gas left the measured range. '
+            + 'Gases have mass, so sealing the system and measuring everything makes the totals '
+            + 'before and after equal.',
+        },
+      },
+    },
+  },
+  'chemical-change-ions': {
+    title: 'Chemical Change and Ions',
+    brief:
+      'Explain why some aqueous solutions conduct electricity using ions — '
+      + 'tiny charged particles — and connect that model to acids, alkalis, '
+      + 'neutralization and batteries.',
+    concepts: {
+      electrolyte: {
+        label: 'Electrolytes and ions',
+        intent:
+          'That some aqueous solutions conduct electricity and some do not, because a dissolved '
+          + 'electrolyte has split into charged particles called ions that carry the current. '
+          + 'Complete only when the learner can link the substances forming at the electrodes '
+          + 'to the existence of ions and to how atoms are built.',
+      },
+      acidAlkali: {
+        label: 'Acids and alkalis',
+        intent:
+          'That the properties of acids come from hydrogen ions and those of alkalis from '
+          + 'hydroxide ions, discovered through the color change of an indicator. Complete only '
+          + 'when the learner can compare acidity and alkalinity using pH and describe the '
+          + 'properties of everyday liquids.',
+      },
+      neutralizationBattery: {
+        label: 'Neutralization and batteries',
+        intent:
+          'That in neutralization hydrogen ions and hydroxide ions join into water while a salt '
+          + 'remains, explained with the ion model. Complete only when the learner can also '
+          + 'explain a battery: the difference in how easily metals become ions drives electrons '
+          + 'through the circuit, converting chemical energy into electrical energy.',
+      },
+    },
+    sections: {
+      electrolyte: {
+        title: 'Sugar that dissolves but carries no current',
+        localSpeakingPractice: {
+          targetPhrase: 'An electrolyte splits into ions when dissolved and conducts',
+          acceptedTranscripts: [
+            'An electrolyte splits into ions when dissolved and conducts',
+          ],
+        },
+        body: [
+          'Water with dissolved salt carries an electric current; water with dissolved sugar '
+          + 'does not. Both are clear and both dissolved well. Dissolving in water and conducting '
+          + 'electricity are different things.',
+          'A substance whose solution conducts is an **electrolyte**; one whose solution does '
+          + 'not is a **non-electrolyte**. When an electrolyte dissolves it splits into tiny '
+          + 'charged particles called **ions**. The moving ions are what carries the current.',
+          'Apply a voltage to an electrolyte solution and definite substances appear at the '
+          + 'anode and cathode — gas on both electrodes with dilute hydrochloric acid, red copper '
+          + 'on the cathode with copper chloride solution. The substances forming at the '
+          + 'electrodes reveal the invisible ions.',
+          'Ions are particles made when atoms exchange electrons. An atom is built from '
+          + 'electrons and a nucleus (protons and neutrons); lose electrons and it becomes a '
+          + 'positive cation, gain them and it becomes a negative anion, written as formulas '
+          + 'like Na⁺ and Cl⁻.',
+        ],
+        tryIt:
+          'Using the distributed record "voltage applied to various aqueous solutions", sort '
+          + 'the liquids into those that carried a current and those that did not, and write '
+          + 'down two things that happened at the electrodes in the conducting liquids. Do not '
+          + 'apply voltage to solutions or use chemicals or wall outlets at home.',
+        localCheckpoint: {
+          lure: 'Any substance that dissolves in water produces a solution that conducts electricity.',
+          options: [
+            {
+              id: 'conduct-any-solution',
+              text: 'Once dissolved the particles spread out, so even sugar water conducts a little.',
+              hint: 'Did the bulb light in sugar water? Check the record.',
+            },
+            {
+              id: 'solid-conducts',
+              text: 'Even solid salt conducts electricity, so its solution does too.',
+              hint: 'Can ions move while the salt is still solid?',
+            },
+            {
+              id: 'ions-carry',
+              text: 'Only a liquid split into ions conducts; a liquid like sugar water with no charged particles does not.',
+            },
+          ],
+          correctOptionId: 'ions-carry',
+          explanation:
+            'Only a solution of an electrolyte — a substance that split into ions when it '
+            + 'dissolved — conducts. Sugar dissolves without forming ions, and solid salt\'s '
+            + 'ions cannot move, so neither carries a current.',
+        },
+      },
+      acidAlkali: {
+        title: 'A color-changing liquid reveals invisible particles',
+        localSpeakingPractice: {
+          targetPhrase: 'Acids act through hydrogen ions and alkalis through hydroxide ions',
+          acceptedTranscripts: [
+            'Acids act through hydrogen ions and alkalis through hydroxide ions',
+          ],
+        },
+        body: [
+          'Add BTB solution to dilute hydrochloric acid and it turns yellow; add it to dilute '
+          + 'sodium hydroxide solution and it turns blue. A neutral liquid stays green. The '
+          + 'indicator\'s color change is the clue that tells acids and alkalis apart.',
+          'The properties every acid shares — dissolving metals, releasing gas from sodium '
+          + 'hydrogen carbonate — are the work of the **hydrogen ions** every acid contains. '
+          + 'The properties alkalis share are the work of **hydroxide ions**.',
+          'The strength of an acid or alkali is written as **pH**: 7 is neutral, smaller means '
+          + 'a stronger acid, larger a stronger alkali. Vinegar and lemon juice are acids too; '
+          + 'danger depends on the kind and the strength.',
+          'The indicator changes color because hydrogen ions or hydroxide ions are present in '
+          + 'the liquid. It is not "acid means dangerous": everyday liquids include acids and '
+          + 'alkalis alike. The kinds and amounts of ions decide a liquid\'s properties.',
+        ],
+        tryIt:
+          'Read labels at home: on items like vinegar, citric acid, baking soda or soap, note '
+          + 'any words related to "acid", "alkali" or "pH" (without opening or mixing any '
+          + 'containers). Then, using the distributed record of indicator color changes, '
+          + 'classify each liquid as acidic, alkaline or neutral.',
+        localCheckpoint: {
+          lure: 'Every acidic liquid is dangerous, and nothing at home contains an acid.',
+          options: [
+            {
+              id: 'acid-everywhere',
+              text: 'Acids vary in strength and vinegar and lemon juice are acids; danger depends on the kind and strength.',
+            },
+            {
+              id: 'all-acid-danger',
+              text: 'An acid is a dangerous liquid that dissolves anything, so household foods contain no acids.',
+              hint: 'Check the vinegar label for the word "acetic acid".',
+            },
+            {
+              id: 'alkali-safe',
+              text: 'Alkaline liquids are safe, so it is fine to get soap solution in your eyes.',
+              hint: 'Alkalis also vary in strength — think whether safety changes with strength.',
+            },
+          ],
+          correctOptionId: 'acid-everywhere',
+          explanation:
+            'Both acids and alkalis come in a range of strengths. Vinegar and lemon juice are '
+            + 'everyday acids, and soap solution is alkaline but still dangerous in the eyes. '
+            + 'Judge danger by the kind and the strength (pH).',
+        },
+      },
+      neutralizationBattery: {
+        title: 'Powers that cancel, and a trick that draws out electricity',
+        localSpeakingPractice: {
+          targetPhrase: 'In neutralization hydrogen and hydroxide ions join to form water and a salt',
+          acceptedTranscripts: [
+            'In neutralization hydrogen and hydroxide ions join to form water and a salt',
+          ],
+        },
+        body: [
+          'Mix dilute hydrochloric acid and dilute sodium hydroxide solution until just '
+          + 'neutral, then remove the water, and white crystals remain — table salt, sodium '
+          + 'chloride.',
+          'When an acid and an alkali mix, the acid\'s hydrogen ions and the alkali\'s '
+          + 'hydroxide ions join into water, canceling each other\'s properties — this is '
+          + '**neutralization**. The leftover sodium ions and chloride ions form a **salt**. '
+          + 'Even if the amounts do not match and the liquid is not neutral, the mixed part '
+          + 'has still neutralized.',
+          'Put a metal into an electrolyte solution and different metals turn into ions with '
+          + 'different ease — zinc, for example, becomes an ion more easily than copper. A '
+          + 'metal that ionizes easily releases electrons; the less-eager metal is where the '
+          + 'electrons are accepted.',
+          'The Daniell cell uses this difference: electrons released from the zinc plate flow '
+          + 'through the circuit to the copper plate, and a current is drawn outside. A battery '
+          + 'turns the power of chemical change into electrical energy — dry cells, lead-acid '
+          + 'batteries and fuel cells all work on the same idea.',
+        ],
+        tryIt:
+          'Look at a dry-cell battery at home (a used one is fine; never open it or put it in '
+          + 'fire) and record the + and − markings. Then read the distributed record of the '
+          + '"Daniell cell" and explain, by how easily each metal becomes an ion, which metal '
+          + 'the electrons flowed from and to.',
+        localCheckpoint: {
+          lure: 'Mixing an acid and an alkali always produces a neutral liquid, whatever the proportions.',
+          options: [
+            {
+              id: 'neutral-guaranteed',
+              text: 'Mixing always gives a neutral liquid, so any proportion produces a safe liquid.',
+              hint: 'If extra acid remains, is the liquid really neutral?',
+            },
+            {
+              id: 'partial-neutralization',
+              text: 'The mixed part has neutralized, but with unmatched amounts the liquid is not neutral and the leftover side\'s properties remain.',
+            },
+            {
+              id: 'no-reaction-unless-neutral',
+              text: 'If the liquid is not neutral, no neutralization happened and no salt formed.',
+              hint: 'Do water and salt form for the portion that did react?',
+            },
+          ],
+          correctOptionId: 'partial-neutralization',
+          explanation:
+            'Neutralization always happens for the portion that mixed, producing water and a '
+            + 'salt. With unmatched amounts one side is left over, so the liquid is not '
+            + 'neutral — but the salt is still there.',
+        },
+      },
+    },
+  },
   'force-motion': {
     title: 'Force and Motion',
     brief:
@@ -1629,6 +2023,415 @@ const EN_UNITS: Record<string, UnitText> = {
       },
     },
   },
+  'life-continuity': {
+    title: 'Continuity of Life',
+    brief:
+      'Read how cell division and reproduction work, decode the rules by which '
+      + 'traits pass from parent to child, and connect them to the evidence '
+      + 'that living things have changed over long spans of time.',
+    concepts: {
+      reproduction: {
+        label: 'Cell division and reproduction',
+        intent:
+          'That cells increase by dividing, that multicellular organisms grow '
+          + 'through cell division plus the growth of each cell, and that '
+          + 'sexual reproduction passes on chromosomes from both parents '
+          + 'through meiosis and fertilization while asexual reproduction '
+          + 'produces offspring with the same chromosomes as the parent.',
+      },
+      heredity: {
+        label: 'The rules of heredity',
+        intent:
+          'That contrasting traits pass from parents to offspring through '
+          + 'combinations of genes, that recessive traits can appear in the '
+          + 'children of parents who both show the dominant trait, and that '
+          + 'genes ride on chromosomes with DNA as their substance.',
+      },
+      evolution: {
+        label: 'Change and evolution of living things',
+        intent:
+          'That fossils record different forms of life in order of the age of '
+          + 'their strata as evidence that living things have changed, that '
+          + 'natural selection keeps the variations best fitted to the '
+          + 'environment, and how this differs from the idea that traits an '
+          + 'individual acquires by effort are passed on.',
+      },
+    },
+    sections: {
+      reproduction: {
+        title: 'Cells divide, and bodies and kin multiply',
+        localSpeakingPractice: {
+          targetPhrase: 'Cells increase by division, and reproduction is sexual or asexual',
+          acceptedTranscripts: [
+            'Cells increase by division, and reproduction is sexual or asexual',
+            'Cell division grows the body, and reproduction comes in sexual and asexual forms',
+          ],
+        },
+        body: [
+          'Under a microscope, the tip of an onion root shows chromosomes being '
+          + 'copied inside the nucleus and then divided between two cells. '
+          + 'A cell splits into two, and more cells of the same kind appear.',
+          'A multicellular organism does not grow because its cells keep '
+          + 'getting bigger. Cells repeat **mitosis** to increase in number, '
+          + 'and each new cell then grows.',
+          'Living things leave offspring through **reproduction**, which comes '
+          + 'in two routes. **Sexual reproduction**, as in frogs, runs through '
+          + 'meiosis and fertilization, so the fertilized egg carries '
+          + 'chromosomes from both parents. **Asexual reproduction**, as in '
+          + 'dividing paramecia or potatoes and strawberries, grows a new '
+          + 'individual directly from part of the parent.',
+          'A child of sexual reproduction inherits chromosomes from each '
+          + 'parent, so its combination differs a little from either parent '
+          + 'or sibling. A child of asexual reproduction carries the same '
+          + 'chromosomes as the parent, so its traits are nearly identical.',
+        ],
+        tryIt:
+          'Safely watch a sprouting potato or a strawberry runner and note '
+          + 'over several days which part of the parent the new individual '
+          + 'grows from (do not eat or cut it up). '
+          + 'Or read the school handout "mitosis photo record" and write down '
+          + 'two things about how the chromosomes are shared out.',
+        localCheckpoint: {
+          lure: 'When living things make offspring, sperm and egg cells always fertilize.',
+          options: [
+            {
+              id: 'fertilization-always',
+              text: 'Fertilization is always needed, so the potato sprout is also a result of fertilization.',
+              hint: 'Look at where on the parent the potato sprout actually emerges.',
+            },
+            {
+              id: 'asexual-same-chromosomes',
+              text: 'In asexual reproduction such as division and vegetative propagation, a child with the same chromosomes grows from part of the parent.',
+            },
+            {
+              id: 'sexual-identical',
+              text: 'A fertilized child carries exactly the same chromosomes as both parents, so its traits are always the same.',
+              hint: 'Check whether sexual reproduction combines chromosomes received from each parent.',
+            },
+          ],
+          correctOptionId: 'asexual-same-chromosomes',
+          explanation:
+            'In asexual reproduction a new individual with the same chromosomes '
+            + 'grows from part of the parent. Fertilization that combines '
+            + 'chromosomes from both parents is sexual reproduction.',
+        },
+      },
+      heredity: {
+        title: 'What passes from parent to child, and the invisible rules',
+        localSpeakingPractice: {
+          targetPhrase: 'Gene pairs decide traits; recessive children can come from dominant parents',
+          acceptedTranscripts: [
+            'Gene pairs decide traits; recessive children can come from dominant parents',
+            'Traits follow gene pairs, so recessive children can come from dominant parents',
+          ],
+        },
+        body: [
+          'Pea seeds come as round or wrinkled. When one trait shows two '
+          + 'forms and an individual displays only one of them, the pair is '
+          + 'called **contrasting traits**.',
+          'Pure round lines make round children and pure wrinkled lines make '
+          + 'wrinkled children, but crossing a pure round line with a pure '
+          + 'wrinkled line makes all children round. The trait that appears '
+          + 'in the children is the **dominant trait**; the one that stays '
+          + 'hidden is the **recessive trait**.',
+          'The element that carries a trait is a **gene**, and genes ride on '
+          + 'chromosomes from parent to child. Genes work in pairs: writing '
+          + 'the round gene as A and the wrinkled gene as a, a child has '
+          + 'one of AA, Aa or aa. With A the seed is round (dominant); only '
+          + 'aa shows wrinkles (recessive).',
+          'When two round children (Aa) are crossed, the offspring '
+          + 'combinations are AA, Aa, Aa and aa, so round and wrinkled appear '
+          + 'in a ratio of about 3:1. Recessive children can appear even '
+          + 'from dominant parents because the parents carried a. '
+          + 'The substance of genes is DNA.',
+        ],
+        tryIt:
+          'Compare traits in your own family — earlobe shape, eyelids and so '
+          + 'on — and note two differences that look like contrasting traits. '
+          + 'Then read the school handout "pea cross record" and explain with '
+          + 'gene letters (A, a) why round to wrinkled comes out about 3:1.',
+        localCheckpoint: {
+          lure: 'If parents who both show the dominant trait are crossed, the recessive trait can never appear in the children.',
+          options: [
+            {
+              id: 'dominant-only',
+              text: 'Parents who show the dominant trait carry no recessive gene, so all children are dominant.',
+              hint: 'A parent showing the dominant trait can still have the combination Aa.',
+            },
+            {
+              id: 'recessive-reappears',
+              text: 'If dominant parents are both Aa, an aa child can be formed and the recessive trait appears.',
+            },
+            {
+              id: 'half-blend',
+              text: 'Parental traits blend half and half, so children of dominant parents become intermediate.',
+              hint: 'Check whether traits blend into an intermediate or appear as one of the two.',
+            },
+          ],
+          correctOptionId: 'recessive-reappears',
+          explanation:
+            'An individual showing the dominant trait is not always AA; it '
+            + 'can be Aa. In an Aa×Aa cross an aa child forms about a quarter '
+            + 'of the time, and the recessive trait appears.',
+        },
+      },
+      evolution: {
+        title: 'What fossils tell us about change over deep time',
+        localSpeakingPractice: {
+          targetPhrase: 'Fitting variation survives; living things evolve over long spans of time',
+          acceptedTranscripts: [
+            'Fitting variation survives; living things evolve over long spans of time',
+            'Natural selection keeps fitting traits; life changes over long spans',
+          ],
+        },
+        body: [
+          'Deeper strata are older, and the fossils in them record the forms '
+          + 'of life from that era. Following the layers from oldest to '
+          + 'newest shows the forms of living things gradually changing.',
+          'Even within one species, individuals show **variation** in their '
+          + 'traits. Individuals whose traits fit the environment leave more '
+          + 'offspring, and those that do not fit leave fewer — this '
+          + 'mechanism is called **natural selection**.',
+          'When this selection accumulates over long spans of time, the '
+          + 'form of the species changes and new, diverse living things '
+          + 'appear. This is **evolution**.',
+          'There was also an idea that individuals change to fit their '
+          + 'environment and pass that change to their children. But '
+          + 'evolution is not individuals changing; it is the survival of '
+          + 'traits that already existed as variation. The long-necked '
+          + 'giraffe is explained by variation in neck length among its '
+          + 'ancestors, where longer-necked individuals could eat high '
+          + 'leaves and left more offspring.',
+        ],
+        tryIt:
+          'Read the school handout "fossil list by stratum" or a fossil page '
+          + 'in a field guide, and write down two differences between the '
+          + 'forms in an old layer and a new layer. Check that you can '
+          + 'explain the difference as "a change in which traits survived" '
+          + 'rather than "a change in individuals".',
+        localCheckpoint: {
+          lure: 'Living things change their own bodies to fit the environment, and the changed form passes to their children.',
+          options: [
+            {
+              id: 'effort-inherited',
+              text: 'Individuals that stretched their necks to reach high leaves pass that form on, and that is evolution.',
+              hint: 'Distinguish an individual changing from which traits in a population get left behind.',
+            },
+            {
+              id: 'selection-variation',
+              text: 'Among the variation already present, the traits that fit the environment leave more offspring, so the population’s form changes.',
+            },
+            {
+              id: 'species-fixed',
+              text: 'Species have never changed since they appeared, so differences in fossils are just mixed-in other species.',
+              hint: 'Think about how to explain records where forms change in order of the layers’ age.',
+            },
+          ],
+          correctOptionId: 'selection-variation',
+          explanation:
+            'Evolution does not come from effort changing individuals. From '
+            + 'variation that already existed, the traits fitting the '
+            + 'environment are left behind. Fossils are the evidence that '
+            + 'forms have changed in order from older to newer layers.',
+        },
+      },
+    },
+  },
+  'energy-society': {
+    title: 'Science, Nature, and Humanity',
+    brief:
+      'Understand power generation as energy conversion, see the balance of nature in food webs '
+      + 'and material cycles, and use records and choices to think about disasters and a sustainable society.',
+    concepts: {
+      energyResources: {
+        label: 'Energy Conversion and Resources',
+        intent:
+          'That electricity is not manufactured but converted from another form of energy, that resources '
+          + 'include exhaustible energy resources and renewable energy, and that the amount generated is '
+          + 'limited by the amount of resource and by efficiency. Complete only when the learner can explain '
+          + 'that even energy that never runs out has a limit set by conditions and equipment scale.',
+      },
+      natureBalance: {
+        label: 'The Balance of Nature',
+        intent:
+          'That the balance of nature is kept by food-web links and material cycles, so a change in one '
+          + 'species propagates to other species, and that the power to recover has limits. Complete only '
+          + 'when the learner can explain records of mutually fluctuating numbers and that an extinct '
+          + 'species never returns.',
+      },
+      sustainableSociety: {
+        label: 'Disasters and a Sustainable Society',
+        intent:
+          'That disasters cannot be prevented but their damage can be reduced by observation, forecasting, '
+          + 'structures, and evacuation planning, and that a sustainable society is brought about by '
+          + 'technology plus the choices of society and individuals. Complete only when the learner can '
+          + 'explain that technology alone does not automatically make society sustainable.',
+      },
+    },
+    sections: {
+      energyResources: {
+        title: 'Where does the electricity come from before it reaches the outlet?',
+        localSpeakingPractice: {
+          targetPhrase: 'Generation is conversion to electricity, and the source and its limits differ',
+          acceptedTranscripts: [
+            'Generation is conversion to electricity, and the source and its limits differ',
+          ],
+        },
+        body: [
+          'The electricity in an outlet is not made inside the power station. Generation is a change '
+          + 'of form: the **chemical energy** of fuel becomes thermal energy in combustion, turns a '
+          + 'turbine, and the generator converts **motion energy** into **electrical energy**. In '
+          + 'hydropower, the water’s potential energy becomes motion energy before becoming electricity.',
+          'The resources behind generation are of two kinds. **Exhaustible energy resources** — coal, '
+          + 'oil, and natural gas — are used up. **Renewable energy** — sunlight, wind, water, and '
+          + 'geothermal heat — is supplied again and again and does not run out. Many countries still '
+          + 'generate most of their electricity by thermal generation that burns exhaustible resources.',
+          'Resources that never run out do not mean unlimited generation. Even sunlight and wind are '
+          + 'limited by natural conditions and the scale of the facilities. And each conversion passes '
+          + 'part of the energy into heat and other forms we cannot use, so raising **conversion '
+          + 'efficiency** decides how far a resource can be used.',
+        ],
+        tryIt:
+          'Read the breakdown of power sources in your home electricity bill or a school-distributed '
+          + 'chart of generation methods, and divide the sources into exhaustible resources and '
+          + 'renewable energy. Which type does your country or region rely on most?',
+        localCheckpoint: {
+          lure:
+            'A power station is a factory that makes electricity, so with enough effort we could make as much electricity as we like.',
+          options: [
+            {
+              id: 'manufacture-unlimited',
+              text: 'A power station manufactures electricity, so the amount made can be increased as much as we want.',
+              hint: 'Think about what “material” electricity is made from.',
+            },
+            {
+              id: 'conversion-limited',
+              text: 'Generation is a conversion of energy, and the amount generated is limited by the resource amount and efficiency.',
+            },
+            {
+              id: 'thermal-only-source',
+              text: 'Electricity exists only where thermal generation runs, so natural power cannot make electricity.',
+              hint: 'Remember that solar panels and windmills also produce electricity.',
+            },
+          ],
+          correctOptionId: 'conversion-limited',
+          explanation:
+            'Generation is a conversion that turns another form of energy into electrical energy. '
+            + 'Because the amount that can be generated is set by the resource amount and by '
+            + 'efficiency, electricity cannot be made without limit.',
+        },
+      },
+      natureBalance: {
+        title: 'How are the pond’s living things connected?',
+        localSpeakingPractice: {
+          targetPhrase: 'Nature’s balance rests on the links of the food web',
+          acceptedTranscripts: [
+            'Nature’s balance rests on the links of the food web',
+          ],
+        },
+        body: [
+          'In a pond ecosystem, plants photosynthesize, herbivorous fish eat the plants, and carnivorous '
+          + 'fish eat them — this eat-and-be-eaten chain of links is called a **food chain**. When several '
+          + 'chains overlap, the whole is called a **food web**.',
+          'Carbon and other materials circulate between the organisms and the environment: carbon taken in '
+          + 'by photosynthesis is passed on by eating, **decomposers** such as bacteria and fungi break the '
+          + 'remains and droppings into inorganic matter, and it returns to the environment as carbon '
+          + 'dioxide and nutrients. This circulation is called **material cycling**.',
+          'The numbers of the eaters and the eaten influence each other and fluctuate, so the whole is '
+          + 'kept roughly in **balance**. If water plants increase, the fish that eat them increase too; '
+          + 'when the fish increase, the plants decrease. But this power to recover has a **limit**: when '
+          + 'one species declines sharply or disappears, the connected species are affected, and a species '
+          + 'that becomes extinct never returns.',
+          'Natural changes such as typhoons and climate shift the balance without any human involvement, '
+          + 'and human activity — development and introductions of outside species — also moves it. '
+          + 'Observing the environment and recording the numbers of living things helps us notice '
+          + 'those changes early.',
+        ],
+        tryIt:
+          'Take a school-distributed field survey record of one pond, list one food chain such as '
+          + '“water plants → herbivorous fish → carnivorous fish”, and write down which species is '
+          + 'affected when the numbers in between change.',
+        localCheckpoint: {
+          lure:
+            'Nature always returns to normal on its own after any change, so there is no need to care about the balance.',
+          options: [
+            {
+              id: 'recover-anyway',
+              text: 'Whatever change happens, nature automatically returns to its original balance after enough time.',
+              hint: 'Think about whether an extinct species can come back.',
+            },
+            {
+              id: 'only-humans-change',
+              text: 'The balance of nature changes only through human activity.',
+              hint: 'Remember that natural events such as typhoons and climate also move the balance.',
+            },
+            {
+              id: 'linked-balance',
+              text: 'The balance is kept by links, and when one species changes, connected species are affected.',
+            },
+          ],
+          correctOptionId: 'linked-balance',
+          explanation:
+            'The balance of nature is kept by food-web links and material cycling, so a change in '
+            + 'one species propagates to connected species. Because the power to recover has '
+            + 'limits, some changes never return to the original state.',
+        },
+      },
+      sustainableSociety: {
+        title: 'How do we live with disasters and shrinking resources?',
+        localSpeakingPractice: {
+          targetPhrase: 'We cannot stop disasters, but we can reduce the damage through observation',
+          acceptedTranscripts: [
+            'We cannot stop disasters, but we can reduce the damage through observation',
+          ],
+        },
+        body: [
+          'Earthquakes and typhoons are natural events that we cannot stop from happening. What science '
+          + 'can do is reduce the damage: observe and measure to forecast, communicate risk with '
+          + '**hazard maps** and warnings, and prepare with structures and evacuation plans. This way of '
+          + 'thinking is called **disaster mitigation**.',
+          'Behind disasters and environmental problems lie the burden we place on the environment. '
+          + 'The carbon dioxide emitted when we use energy accumulates in the atmosphere and is linked '
+          + 'to climate change, and the load on the environment from resource use and waste has limits. '
+          + 'Whether the environment can keep supporting the life of living things is shown by its '
+          + '**environmental capacity**.',
+          'The idea of a **sustainable society** — one that keeps using the environment’s support for a '
+          + 'long time — is built both by technology, such as shifting to renewable energy and saving '
+          + 'energy, and by the choices of society and individuals, such as how we use resources. '
+          + 'Advancing technology alone does not automatically make society sustainable.',
+        ],
+        tryIt:
+          'Using a disaster-prevention study book distributed at school or your region’s hazard map, '
+          + 'find one hazard that could affect your home or school and write down where to check and '
+          + 'what to prepare.',
+        localCheckpoint: {
+          lure:
+            'Once science and technology advance far enough, we will be able to stop earthquakes and typhoons from happening at all.',
+          options: [
+            {
+              id: 'mitigate-not-prevent',
+              text: 'We cannot stop disasters from occurring; reducing the damage through forecasting and planning is the scientific response.',
+            },
+            {
+              id: 'stop-disasters',
+              text: 'As technology advances, we will be able to stop earthquakes and typhoons from occurring.',
+              hint: 'Think about whether we can change natural phenomena themselves.',
+            },
+            {
+              id: 'technology-fixes-all',
+              text: 'Advancing technology solves every environmental problem, so individual choices do not matter.',
+              hint: 'Think about whether changing technology alone can reduce the load on the environment.',
+            },
+          ],
+          correctOptionId: 'mitigate-not-prevent',
+          explanation:
+            'We cannot change the occurrence of natural phenomena themselves. The scientific '
+            + 'response is to reduce the damage by observing, forecasting, building structures, '
+            + 'and planning evacuations.',
+        },
+      },
+    },
+  },
 }
 
 // ── 誤概念 ──────────────────────────────────────────────────
@@ -1829,6 +2632,99 @@ const EN_MISCONCEPTIONS: Record<string, MisconceptionText> = {
       'Seasons occur because Earth moves closer to the Sun in summer and farther away in winter.',
     lure:
       'Summer is hot and winter is cold because Earth moves closer to the Sun in summer — right?',
+  },
+  M24: {
+    correct:
+      'Iron filings and sulfur simply mixed stay a mixture whose grains keep their properties. '
+      + 'Only once a chemical change such as heating produces iron sulfide, a differently-behaving '
+      + 'substance, has combination occurred.',
+    misconception: 'Mixing substances thoroughly creates a new substance (a compound).',
+    lure: 'So if you mix iron and sulfur really well, that’s already iron sulfide, right?',
+  },
+  M25: {
+    correct:
+      'Rust is an oxide iron forms by slowly reacting with oxygen and moisture — a different '
+      + 'substance from iron. Oxidation covers not only combustion but slow combinations with '
+      + 'oxygen such as rusting and respiration.',
+    misconception: 'Rust is dirt stuck to the surface; the iron has not combined with oxygen.',
+    lure: 'Rust is just red stuff stuck on the surface — it’s not iron bonded with oxygen, is it?',
+  },
+  M26: {
+    correct:
+      'Gases have mass, and when the gas produced or escaping is included in the measurement, '
+      + 'the total mass before and after a chemical change is equal.',
+    misconception: 'Gases have no mass, so in reactions that emit gas or burn, mass is not conserved.',
+    lure: 'Gases weigh nothing, so when smoke comes out, mass drops by that much — right?',
+  },
+  M27: {
+    correct:
+      'Even when a substance dissolves, liquids like sugar water or ethanol solution carry no '
+      + 'current because they never split into ions. Only a solution whose solute split into ions '
+      + '— an electrolyte — conducts; solid salt does not conduct because its ions cannot move.',
+    misconception: 'Every solution of a substance that dissolves in water conducts electricity.',
+    lure: 'As long as it dissolves in water, the liquid conducts electricity — right?',
+  },
+  M28: {
+    correct:
+      'Acids come in a range of strengths, and everyday liquids like vinegar and lemon juice '
+      + 'are acids too. Whether something is dangerous depends on its kind and strength (pH), '
+      + 'and alkalis vary in strength as well.',
+    misconception: 'Every acid is a dangerous liquid that dissolves anything, and no household food contains an acid.',
+    lure: 'Acids are scary liquids that dissolve anything, so drinks can’t contain acid, right?',
+  },
+  M29: {
+    correct:
+      'Neutralization always happens for the portion that mixes. If the amounts do not match '
+      + 'the liquid does not turn neutral, but water and a salt are still produced.',
+    misconception: 'Mixing an acid and an alkali always yields a neutral liquid, and if it does not turn neutral no reaction happened.',
+    lure: 'Mixing an acid and an alkali always makes a neutral liquid, doesn’t it?',
+  },
+  M30: {
+    correct:
+      'In asexual reproduction an individual with the same chromosomes grows '
+      + 'from part of the parent. Inheriting chromosomes from both parents '
+      + 'through fertilization is sexual reproduction.',
+    misconception: 'Whenever living things make offspring, male and female reproductive cells always fertilize.',
+    lure: 'When living things increase, fertilization always happens, doesn’t it?',
+  },
+  M31: {
+    correct:
+      'If parents showing the dominant trait are both Aa, an aa child can '
+      + 'form and the recessive trait appears about a quarter of the time.',
+    misconception: 'If parents who both show the dominant trait are crossed, the recessive trait can never appear in the children.',
+    lure: 'Children of parents that only have the dominant form can never show the recessive form, right?',
+  },
+  M32: {
+    correct:
+      'In evolution, among the variation already present, the traits that '
+      + 'fit the environment leave more offspring, and the population’s mix '
+      + 'of traits changes. Traits an individual gains by effort are not '
+      + 'passed on.',
+    misconception: 'Living things change their own bodies to fit the environment, and the changed form passes to their children.',
+    lure: 'Giraffes’ necks got long because they worked hard to reach high leaves, so their children also have long necks, right?',
+  },
+  M33: {
+    correct:
+      'Generation converts another form of energy into electrical energy. Because resources are '
+      + 'limited and part of the energy becomes unusable heat in the conversion, electricity '
+      + 'cannot be made without limit.',
+    misconception: 'Generation creates energy itself, so with enough effort we could make as much electricity as we like.',
+    lure: 'The power station makes electricity, so we could make unlimited amounts depending on how we run it — right?',
+  },
+  M34: {
+    correct:
+      'The balance of nature is kept by food-web links and material cycling, but the power to '
+      + 'recover has limits. An extinct species or a greatly changed environment may never '
+      + 'return to its original state.',
+    misconception: 'Whatever change happens, nature automatically returns to its original balance after enough time.',
+    lure: 'Nature returns to normal on its own, so changing it a bit is no problem — right?',
+  },
+  M35: {
+    correct:
+      'We cannot stop disasters from occurring. Observing and forecasting, warning, adapting '
+      + 'structures, and planning evacuations reduce the damage — that is the scientific response.',
+    misconception: 'As science and technology advance far enough, we will be able to stop earthquakes and typhoons from occurring at all.',
+    lure: 'Once science advances, we’ll be able to stop earthquakes and typhoons themselves — right?',
   },
 }
 

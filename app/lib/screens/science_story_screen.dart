@@ -10,6 +10,7 @@ import '../services/local_narration.dart';
 import '../ui/_material.dart';
 import '../widgets/readable_width.dart';
 import '../widgets/science_challenge_support.dart';
+import '../config/app_language.dart';
 
 /// 固定教材だけで完結する、3幕の科学ストーリー。
 ///
@@ -119,9 +120,16 @@ class _ScienceStoryScreenState extends State<ScienceStoryScreen>
     if (!mounted || epoch != _narrationEpoch) return;
     setState(() => _speaking = false);
     if (!completed) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('端末の読み上げを使えません。文字で続けられます。')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t(
+              '端末の読み上げを使えません。文字で続けられます。',
+              'Text-to-speech isn\'t available on this device. You can continue with text.',
+            ),
+          ),
+        ),
+      );
     }
   }
 
@@ -447,7 +455,7 @@ class _SituationAct extends StatelessWidget {
   Widget build(BuildContext context) {
     return _ActLayout(
       key: const ValueKey('science-story-situation'),
-      eyebrow: '第1幕  /  事件発生',
+      eyebrow: t('第1幕  /  事件発生', 'Act 1  /  The case'),
       title: story.title,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -469,7 +477,7 @@ class _SituationAct extends StatelessWidget {
       ),
       action: _PrimaryAction(
         buttonKey: const ValueKey('science-story-open-judgment'),
-        label: 'デキすぎ君の考えを聞く',
+        label: t('デキすぎ君の考えを聞く', 'Hear Dekisugi-kun\'s idea'),
         icon: Icons.arrow_forward,
         onPressed: onContinue,
       ),
@@ -500,8 +508,8 @@ class _JudgmentAct extends StatelessWidget {
   Widget build(BuildContext context) {
     return _ActLayout(
       key: const ValueKey('science-story-judgment'),
-      eyebrow: '第2幕  /  判断',
-      title: 'デキすぎ君の説明を見破る',
+      eyebrow: t('第2幕  /  判断', 'Act 2  /  Decision'),
+      title: t('デキすぎ君の説明を見破る', 'See through Dekisugi-kun\'s explanation'),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -518,7 +526,10 @@ class _JudgmentAct extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            'どの説明なら、観察と条件を結び付けられる？',
+            t(
+              'どの説明なら、観察と条件を結び付けられる？',
+              'Which explanation connects the observation and the conditions?',
+            ),
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.jaWeight(FontWeight.w700),
@@ -538,7 +549,7 @@ class _JudgmentAct extends StatelessWidget {
       ),
       action: _PrimaryAction(
         buttonKey: const ValueKey('science-story-submit-judgment'),
-        label: 'この判断で観察へ進む',
+        label: t('この判断で観察へ進む', 'Go to the observation with this choice'),
         icon: Icons.arrow_forward,
         onPressed: onSubmit,
       ),
@@ -573,8 +584,10 @@ class _ReactionAct extends StatelessWidget {
     final colors = context.gamePalette;
     return _ActLayout(
       key: const ValueKey('science-story-reaction'),
-      eyebrow: '第2幕  /  人物の反応',
-      title: selectedCorrect ? 'その判断に、事件班がうなずいた' : 'その判断に、事件班から待った',
+      eyebrow: t('第2幕  /  人物の反応', 'Act 2  /  Reactions'),
+      title: selectedCorrect
+          ? t('その判断に、事件班がうなずいた', 'The case team nodded at your choice')
+          : t('その判断に、事件班から待った', 'The case team said "wait" to your choice'),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -601,7 +614,7 @@ class _ReactionAct extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '選んだ説明',
+                  t('選んだ説明', 'Your chosen explanation'),
                   style: theme.textTheme.labelMedium
                       ?.copyWith(color: colors.ink)
                       .jaWeight(FontWeight.w700),
@@ -616,7 +629,7 @@ class _ReactionAct extends StatelessWidget {
                 if (hint != null) ...[
                   const SizedBox(height: 14),
                   Text(
-                    '観察の手がかり',
+                    t('観察の手がかり', 'Observation clue'),
                     style: theme.textTheme.labelMedium
                         ?.copyWith(color: colors.ink)
                         .jaWeight(FontWeight.w700),
@@ -635,15 +648,21 @@ class _ReactionAct extends StatelessWidget {
           const SizedBox(height: 14),
           Text(
             selectedCorrect
-                ? 'この反応のあと、観察結果と科学的な理由で判断を確かめます。'
-                : '残りの選択肢は順番に試しません。手がかりを使って、観察と教材の訂正を直接比べます。',
+                ? t(
+                    'この反応のあと、観察結果と科学的な理由で判断を確かめます。',
+                    'After this reaction, you\'ll check your choice with the observations and the scientific reason.',
+                  )
+                : t(
+                    '残りの選択肢は順番に試しません。手がかりを使って、観察と教材の訂正を直接比べます。',
+                    'You won\'t try the other options one by one. Use the clue to compare the observation directly with the material\'s correction.',
+                  ),
             style: theme.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
           ),
         ],
       ),
       action: _PrimaryAction(
         buttonKey: const ValueKey('science-story-reaction-to-comparison'),
-        label: '観察と訂正を比べる',
+        label: t('観察と訂正を比べる', 'Compare observation and correction'),
         icon: Icons.compare_arrows,
         onPressed: onContinue,
       ),
@@ -682,8 +701,13 @@ class _ComparisonAct extends StatelessWidget {
     final colors = context.gamePalette;
     return _ActLayout(
       key: const ValueKey('science-story-comparison'),
-      eyebrow: '第3幕  /  観察と訂正',
-      title: selectedCorrect ? '判断を、観察で確かめる' : '判断と観察の違いに決着する',
+      eyebrow: t('第3幕  /  観察と訂正', 'Act 3  /  Observation and correction'),
+      title: selectedCorrect
+          ? t('判断を、観察で確かめる', 'Check your choice with the observation')
+          : t(
+              '判断と観察の違いに決着する',
+              'Settle the gap between your choice and the observation',
+            ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -699,7 +723,7 @@ class _ComparisonAct extends StatelessWidget {
           const SizedBox(height: 14),
           _ComparisonSurface(
             key: const ValueKey('science-story-observation'),
-            label: '状況の観察',
+            label: t('状況の観察', 'Observing the situation'),
             icon: Icons.visibility_outlined,
             color: colors.surfaceRaised,
             foreground: colors.ink,
@@ -709,11 +733,14 @@ class _ComparisonAct extends StatelessWidget {
           const SizedBox(height: 12),
           Semantics(
             container: true,
-            label: '思い込みの直し方。$correction。$explanation',
+            label: t(
+              '思い込みの直し方。$correction。$explanation',
+              'How to fix the misconception. $correction. $explanation',
+            ),
             child: ExcludeSemantics(
               child: _ComparisonSurface(
                 key: const ValueKey('science-story-correction'),
-                label: 'デキすぎ君への訂正',
+                label: t('デキすぎ君への訂正', 'Correction for Dekisugi-kun'),
                 icon: Icons.fact_check_outlined,
                 color: colors.surfaceRaised,
                 foreground: colors.ink,
@@ -725,7 +752,7 @@ class _ComparisonAct extends StatelessWidget {
           if (!selectedCorrect) ...[
             const SizedBox(height: 12),
             Text(
-              '最初の判断：$selectedText',
+              t('最初の判断：$selectedText', 'First choice: $selectedText'),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.inkMuted,
               ),
@@ -748,7 +775,7 @@ class _ComparisonAct extends StatelessWidget {
       ),
       action: _PrimaryAction(
         buttonKey: const ValueKey('science-story-complete'),
-        label: '事件の記録を終える',
+        label: t('事件の記録を終える', 'Finish the story'),
         icon: Icons.check,
         onPressed: onComplete,
       ),
@@ -772,7 +799,11 @@ class _ListenButton extends StatelessWidget {
     key: buttonKey,
     onPressed: speaking ? null : onPressed,
     icon: Icon(speaking ? Icons.graphic_eq_rounded : Icons.volume_up_outlined),
-    label: Text(speaking ? '読み上げ中…' : 'この場面を聞く'),
+    label: Text(
+      speaking
+          ? t('読み上げ中…', 'Reading aloud…')
+          : t('この場面を聞く', 'Listen to this scene'),
+    ),
     style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
   );
 }
@@ -791,7 +822,10 @@ class _CompleteAct extends StatelessWidget {
         Semantics(
           key: const ValueKey('science-story-finished'),
           container: true,
-          label: '理科事件完了。判断を観察と教材の訂正まで比べました。',
+          label: t(
+            '理科事件完了。判断を観察と教材の訂正まで比べました。',
+            'Science story complete. You compared your choice with the observation and the material\'s correction.',
+          ),
           child: ExcludeSemantics(
             child: Container(
               width: double.infinity,
@@ -810,7 +844,7 @@ class _CompleteAct extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    '事件の記録を完了',
+                    t('事件の記録を完了', 'Story complete'),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineSmall
                         ?.copyWith(color: colors.ink)
@@ -818,7 +852,10 @@ class _CompleteAct extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '判断を、観察と教材の訂正まで比べました。',
+                    t(
+                      '判断を、観察と教材の訂正まで比べました。',
+                      'You compared your choice with the observation and the material\'s correction.',
+                    ),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colors.ink,
@@ -834,7 +871,7 @@ class _CompleteAct extends StatelessWidget {
           key: const ValueKey('science-story-return-to-path'),
           onPressed: onReturnToPath,
           icon: const Icon(Icons.route_outlined),
-          label: const Text('探究ノートへ戻る'),
+          label: Text(t('探究ノートへ戻る', 'Back to the learning path')),
           style: FilledButton.styleFrom(
             minimumSize: const Size(double.infinity, 52),
           ),
@@ -1025,7 +1062,10 @@ class _StoryOptionButton extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: '選択肢${index + 1}、全$count件中。${option.text}',
+      label: t(
+        '選択肢${index + 1}、全$count件中。${option.text}',
+        'Option ${index + 1} of $count. ${option.text}',
+      ),
       child: ExcludeSemantics(
         child: OutlinedButton(
           key: ValueKey('science-story-option-${option.id}'),

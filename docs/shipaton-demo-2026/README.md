@@ -1,30 +1,43 @@
-# Shipaton demo rehearsal 2026
+# Shipaton demo 2026
 
-`dekisugi-on-device-rehearsal.mp4` is a **rehearsal artifact**, not the public
-Shipaton submission video. It records only the deterministic, bundled,
-on-device route from the current Flutter build.
+`shipaton-demo-v7.mp4` is the current submission candidate: **114s**, Android
+emulator footage of the English build at 1080x1920 portrait, English captions
+burned in, no audio. It opens with a hook card ("Every study app tests you. —
+This one learns FROM you."), then walks the loop end to end in English: the
+learning path, a lesson node whose material hides for the explanation, a typed
+English teach-back, the key-term coverage panel, the fixed follow-up question,
+a wrong pick costing a heart and earning a hint, the misconception record
+screen ("Corrected / Still unsure"), the shareable parent report, and then a
+**real purchase loop** — the Plus screen listing live Test Store packages
+(Monthly $9.99 / Yearly $79.98 / Lifetime $99.99), the native Test Store
+checkout dialog, entitlement confirmation, the Aurora Mantle equipped, and
+the unlocked parent report — closing on a feature-summary card.
 
-It does not claim Store publication, revenue, live-AI approval, purchase
-success, or school deployment. Raw Android screen recordings remain outside
-the repository and are printed by the capture script at the end of each run.
+The matching caption source is `shipaton-demo-v7-captions.en.srt`.
 
-Reproduce and verify from the repository root:
+The purchase segment is real footage of the RevenueCat SDK against the
+project's **Test Store** (`test_…` public key, see
+[docs/monetization-setup.md](../monetization-setup.md)) — the same SDK path a
+production store uses. The 会話枠 retry banner visible after the purchase is
+expected: Test Store purchases cannot be verified against the real backend,
+and the app surfaces that honestly instead of faking a sync.
 
-```zsh
-tools/capture-shipaton-demo-rehearsal.sh
-tools/verify-shipaton-demo-rehearsal.sh
-```
+Earlier cuts are archived under `docs/attic/`:
 
-The verifier requires:
+- `shipaton-demo-v6.mp4` (97s) — same loop minus the real purchase segment;
+  superseded by v7.
+- `shipaton-demo-v4.mp4` (118s) — earlier Japanese-UI capture with the
+  airplane-mode beat; the on-device claim it proves still applies.
+- `shipaton-demo-v3.mp4` (68s, Japanese UI) — superseded by v6.
+- `shipaton-demo-v2.mp4` (54s) — same footage minus the karte segment.
+- `shipaton-demo-v1.mp4` (114s) — web-build capture, no device footage or
+  teach-back loop. Do not submit it.
 
-- duration between 1:45 and 1:55;
-- 1080x1920 H.264, `yuv420p`, constant 30fps;
-- no audio stream and no selectable subtitle stream;
-- English captions burned into pixels and recognized from sampled frames;
-- metadata that explicitly marks the file `NOT PUBLIC SUBMISSION`;
-- current device-only UI evidence and no unverified RevenueCat claim.
+The video does not claim Store publication, revenue, live-AI approval, or
+school deployment. Raw screen recordings stay outside the repository.
 
-The timing and claim source of truth remains:
+Historical capture tooling (used for the earlier cuts) lives in:
 
+- `tools/capture-shipaton-demo-rehearsal.sh`
+- `tools/verify-shipaton-demo-rehearsal.sh`
 - `docs/shipaton-demo-capture.md`
-- `docs/shipaton-demo-captions.en.srt`

@@ -1,3 +1,4 @@
+import 'package:dekisugi/config/app_language.dart';
 import 'package:dekisugi/config/app_theme.dart';
 import 'package:dekisugi/models/game_path.dart';
 import 'package:dekisugi/ui/_material.dart';
@@ -57,6 +58,35 @@ const _friendQuest = GameQuest(
 );
 
 void main() {
+  testWidgets('英語でも初回案内と探究の役割を読んで次へ進める', (tester) async {
+    final previous = appLanguage;
+    appLanguage = AppLanguage.en;
+    addTearDown(() => appLanguage = previous);
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    var dismissed = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: GameTabGuide(
+          schoolMode: false,
+          onDismissed: () => dismissed = true,
+        ),
+      ),
+    );
+    expect(find.text('Field Notebook'), findsWidgets);
+    expect(find.text('Next'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('game-tab-guide-next')));
+    await tester.pumpAndSettle();
+    expect(find.text('Science Cases'), findsWidgets);
+    await tester.tap(find.byKey(const ValueKey('game-tab-guide-dismiss')));
+    expect(dismissed, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('初回案内は各タブの役割を順番に示し、いつでも閉じられる', (tester) async {
     var dismissed = 0;
     await tester.pumpWidget(

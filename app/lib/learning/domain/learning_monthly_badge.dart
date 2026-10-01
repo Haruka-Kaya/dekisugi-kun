@@ -1,6 +1,8 @@
 /// 月間クエストからだけ獲得できる、非購入のコレクション実績。
 library;
 
+import '../../config/app_language.dart';
+
 enum LearningMonthlyBadgeStyle { orbit, telescope, prism, constellation }
 
 final class LearningMonthlyBadgeAward {
@@ -55,8 +57,14 @@ final class LearningMonthlyBadgeCatalogV1 {
       badgeId: 'badge.monthly.$learningMonth.$questKey',
       sourceQuestInstanceId: questInstanceId,
       learningMonth: learningMonth,
-      title: '${parts[0]}年${int.parse(parts[1])}月 観測バッジ',
-      description: '意味のある学習を12件終えた月の記録です。',
+      title: t(
+        '${parts[0]}年${int.parse(parts[1])}月 観測バッジ',
+        'Observation Badge ${int.parse(parts[1])}/${parts[0]}',
+      ),
+      description: t(
+        '意味のある学習を12件終えた月の記録です。',
+        'A record of a month with 12 meaningful learning activities done.',
+      ),
       style: style,
       unlockedAt: rewardedAt,
     );

@@ -5,6 +5,7 @@ import '../domain/learning_event.dart';
 import '../domain/learning_monthly_badge.dart';
 import '../domain/learning_policy.dart';
 import '../domain/learning_progress.dart';
+import '../../config/app_language.dart';
 
 /// 観察予定が開く先。UIのindexを保存せず、Homeがこの値を現在の6タブへ変換する。
 enum LearningQuestDestination {
@@ -332,18 +333,24 @@ final class LearningQuestPlannerV2 {
     final monthlyPresentation = LearningQuestPresentation(
       questInstanceId: monthly.questInstanceId,
       kind: LearningQuestPresentationKind.monthly,
-      title: '今月の観測印を完成させる',
+      title: t('今月の観測印を完成させる', 'Complete this month\'s observation badge'),
       description: daily == null
-          ? '今月の探究記録です。今日は新しい予定を作らず、次の再観察日を待ちます。'
-          : '今月、意味のある観察記録を${LearningMonthlyBadgeCatalogV1.target}件積み重ねます。',
+          ? t(
+              '今月の探究記録です。今日は新しい予定を作らず、次の再観察日を待ちます。',
+              'This month\'s record. No new goal today — wait for your next review day.',
+            )
+          : t(
+              '今月、意味のある観察記録を${LearningMonthlyBadgeCatalogV1.target}件積み重ねます。',
+              'Build up ${LearningMonthlyBadgeCatalogV1.target} meaningful learning activities this month.',
+            ),
       action: daily == null
-          ? const LearningQuestAction(
-              label: '今月の記録を見る',
+          ? LearningQuestAction(
+              label: t('今月の記録を見る', 'View this month\'s record'),
               destination: LearningQuestDestination.profile,
               focus: LearningQuestFocus.monthlyBadgeCollection,
             )
-          : const LearningQuestAction(
-              label: '探究ノートを進める',
+          : LearningQuestAction(
+              label: t('探究ノートを進める', 'Continue learning'),
               destination: LearningQuestDestination.path,
               focus: LearningQuestFocus.currentPathNode,
             ),
@@ -380,10 +387,13 @@ final class LearningQuestPlannerV2 {
     final presentation = LearningQuestPresentation(
       questInstanceId: daily.questInstanceId,
       kind: LearningQuestPresentationKind.classroom,
-      title: 'この端末で授業観察を1件記録する',
-      description: '個人の探究記録・結晶・共同観測へ混ぜず、この端末の授業予定だけを進めます。',
-      action: const LearningQuestAction(
-        label: '授業の観察へ',
+      title: t('この端末で授業観察を1件記録する', 'Finish 1 class activity on this device'),
+      description: t(
+        '個人の探究記録・結晶・共同観測へ混ぜず、この端末の授業予定だけを進めます。',
+        'Only advances this device\'s class goal, separate from personal XP, gems, and rankings.',
+      ),
+      action: LearningQuestAction(
+        label: t('授業の観察へ', 'Next class step'),
         destination: LearningQuestDestination.path,
         focus: LearningQuestFocus.currentPathNode,
       ),
@@ -415,8 +425,19 @@ final class LearningQuestPlannerV2 {
     }
 
     final legacy = switch (key) {
-      'one-action' => (version: 'daily.v1', target: 1, title: '今日の観察を1件記録する'),
-      'two-actions' => (version: 'daily.v2', target: 2, title: '今日の観察を2件記録する'),
+      'one-action' => (
+        version: 'daily.v1',
+        target: 1,
+        title: t('今日の観察を1件記録する', 'Finish 1 meaningful learning activity today'),
+      ),
+      'two-actions' => (
+        version: 'daily.v2',
+        target: 2,
+        title: t(
+          '今日の観察を2件記録する',
+          'Finish 2 meaningful learning activities today',
+        ),
+      ),
       _ => null,
     };
     if (legacy == null) {
@@ -436,9 +457,12 @@ final class LearningQuestPlannerV2 {
         questInstanceId: definition.questInstanceId,
         kind: LearningQuestPresentationKind.daily,
         title: legacy.title,
-        description: '同日に開始済みの観察予定です。途中で内容や件数を変えません。',
-        action: const LearningQuestAction(
-          label: '探究ノートへ',
+        description: t(
+          '同日に開始済みの観察予定です。途中で内容や件数を変えません。',
+          'An older quest started earlier today. Its content and count won\'t change.',
+        ),
+        action: LearningQuestAction(
+          label: t('探究ノートへ', 'Next step'),
           destination: LearningQuestDestination.path,
           focus: LearningQuestFocus.currentPathNode,
         ),
@@ -522,14 +546,17 @@ final class LearningFriendsQuestBoardSource {
       item: LearningQuestBoardItem(
         id: 'local-pair-invite:$weekKey',
         kind: LearningQuestPresentationKind.friend,
-        title: '端末内で共同観察を始める',
-        description: '同じ場所にいる2人で端末を交代し、それぞれ観察記録を1件残します。',
+        title: t('端末内で共同観察を始める', 'Create a same-device pair quest'),
+        description: t(
+          '同じ場所にいる2人で端末を交代し、それぞれ観察記録を1件残します。',
+          'Two people in the same place take turns on this device, each finishing 1 meaningful learning activity.',
+        ),
         current: 0,
         target: 2,
         rewardGems: 3,
         state: LearningQuestBoardState.active,
-        action: const LearningQuestAction(
-          label: 'ふたりの観察を準備する',
+        action: LearningQuestAction(
+          label: t('ふたりの観察を準備する', 'Set up a quest for 2'),
           destination: LearningQuestDestination.profile,
           focus: LearningQuestFocus.localFriendsQuest,
         ),
@@ -554,8 +581,11 @@ final class LearningFriendsQuestBoardSource {
       item: LearningQuestBoardItem(
         id: run.questInstanceId,
         kind: LearningQuestPresentationKind.friend,
-        title: '端末内の共同観察',
-        description: '同じ端末を2人で交代し、それぞれ観察記録を1件残します。氏名は保存しません。',
+        title: t('端末内の共同観察', 'Same-device pair quest'),
+        description: t(
+          '同じ端末を2人で交代し、それぞれ観察記録を1件残します。氏名は保存しません。',
+          'Two people take turns on the same device, each finishing 1 meaningful learning activity. Names aren\'t saved.',
+        ),
         current: run.progress.clamp(0, run.target),
         target: run.target,
         rewardGems: run.rewardGems,
@@ -564,8 +594,8 @@ final class LearningFriendsQuestBoardSource {
             : run.completed
             ? LearningQuestBoardState.completed
             : LearningQuestBoardState.active,
-        action: const LearningQuestAction(
-          label: '担当を選んで観察する',
+        action: LearningQuestAction(
+          label: t('担当を選んで観察する', 'Pick a player and learn'),
           destination: LearningQuestDestination.profile,
           focus: LearningQuestFocus.localFriendsQuest,
         ),
@@ -574,19 +604,22 @@ final class LearningFriendsQuestBoardSource {
   }
 
   factory LearningFriendsQuestBoardSource.lanInvite() =>
-      const LearningFriendsQuestBoardSource._(
+      LearningFriendsQuestBoardSource._(
         channel: LearningFriendsQuestChannel.lan,
         item: LearningQuestBoardItem(
           id: 'lan-friends-invite',
           kind: LearningQuestPresentationKind.friend,
-          title: 'ふたりの共同観察を始める',
-          description: '成人同意後、同じWi-Fiの実在する2人がそれぞれ観察記録を1件残します。',
+          title: t('ふたりの共同観察を始める', 'Start a duo quest'),
+          description: t(
+            '成人同意後、同じWi-Fiの実在する2人がそれぞれ観察記録を1件残します。',
+            'With adult consent, 2 real people on the same Wi-Fi each add 1 learning result.',
+          ),
           current: 0,
           target: 2,
           rewardGems: 1,
           state: LearningQuestBoardState.active,
           action: LearningQuestAction(
-            label: '参加コードを開く',
+            label: t('参加コードを開く', 'Open join code'),
             destination: LearningQuestDestination.lanSocial,
             focus: LearningQuestFocus.lanFriendsQuest,
           ),
@@ -621,24 +654,41 @@ final class LearningFriendsQuestBoardSource {
         ? 1
         : 0;
     final description = switch (snapshot.state) {
-      LanSocialFriendsState.waitingForPartner =>
+      LanSocialFriendsState.waitingForPartner => t(
         '参加コードを、同じWi-Fiでいっしょに学ぶ1人へ渡します。',
+        'Give the join code to 1 person learning with you on the same Wi-Fi.',
+      ),
       LanSocialFriendsState.active =>
         snapshot.myContributed
-            ? '自分の観察記録は届きました。相手の記録を待っています。'
-            : '2人がそれぞれ観察記録を1件残すと達成です。',
-      LanSocialFriendsState.completed => '実在する2人の観察記録がそろいました。',
+            ? t(
+                '自分の観察記録は届きました。相手の記録を待っています。',
+                'Your 1 activity arrived. Waiting for your partner\'s result.',
+              )
+            : t(
+                '2人がそれぞれ観察記録を1件残すと達成です。',
+                'Complete when both of you finish 1 meaningful learning activity.',
+              ),
+      LanSocialFriendsState.completed => t(
+        '実在する2人の観察記録がそろいました。',
+        'Both real people have finished their learning results.',
+      ),
       LanSocialFriendsState.expired =>
         snapshot.completed
-            ? '終了前に2人の観察記録がそろいました。'
-            : 'この共同観察は終了しました。新しい参加コードで始められます。',
+            ? t(
+                '終了前に2人の観察記録がそろいました。',
+                'Both learning results were in before it ended.',
+              )
+            : t(
+                'この共同観察は終了しました。新しい参加コードで始められます。',
+                'This quest has ended. You can start a new one with a new join code.',
+              ),
     };
     return LearningFriendsQuestBoardSource._(
       channel: LearningFriendsQuestChannel.lan,
       item: LearningQuestBoardItem(
         id: 'lan-friends:$roomId',
         kind: LearningQuestPresentationKind.friend,
-        title: 'ふたりの共同観察',
+        title: t('ふたりの共同観察', 'Duo quest'),
         description: description,
         current: current,
         target: 2,
@@ -648,8 +698,8 @@ final class LearningFriendsQuestBoardSource {
             : snapshot.completed
             ? LearningQuestBoardState.completed
             : LearningQuestBoardState.active,
-        action: const LearningQuestAction(
-          label: 'ふたりの観察記録を開く',
+        action: LearningQuestAction(
+          label: t('ふたりの観察記録を開く', 'Open duo progress'),
           destination: LearningQuestDestination.lanSocial,
           focus: LearningQuestFocus.lanFriendsQuest,
         ),
@@ -714,8 +764,8 @@ final class LearningQuestBoardProjectionV2 {
       final action =
           presentation.kind == LearningQuestPresentationKind.monthly &&
               state != LearningQuestBoardState.active
-          ? const LearningQuestAction(
-              label: '観測印を見る',
+          ? LearningQuestAction(
+              label: t('観測印を見る', 'View earned badges'),
               destination: LearningQuestDestination.profile,
               focus: LearningQuestFocus.monthlyBadgeCollection,
             )
@@ -801,13 +851,16 @@ final class _DailyQuestSpec {
   }
 }
 
-const _dailySpecs = <LearningDailyQuestVariant, _DailyQuestSpec>{
+Map<LearningDailyQuestVariant, _DailyQuestSpec> get _dailySpecs => {
   LearningDailyQuestVariant.comparePrediction: _DailyQuestSpec(
     key: 'compare-prediction',
-    title: '予想と教材を1回照合する',
-    description: '答えを見る前の予想を教材の説明と照合し、観察記録へ残します。',
+    title: t('予想と教材を1回照合する', 'Predict, then compare with the material'),
+    description: t(
+      '答えを見る前の予想を教材の説明と照合し、観察記録へ残します。',
+      'Predict before seeing the answer, then compare the material\'s explanation with your idea once.',
+    ),
     action: LearningQuestAction(
-      label: '予想の観察を始める',
+      label: t('予想の観察を始める', 'Start with a prediction'),
       destination: LearningQuestDestination.path,
       focus: LearningQuestFocus.currentPathNode,
     ),
@@ -816,10 +869,13 @@ const _dailySpecs = <LearningDailyQuestVariant, _DailyQuestSpec>{
   ),
   LearningDailyQuestVariant.storyCase: _DailyQuestSpec(
     key: 'story-case',
-    title: '事件簿を1話解明する',
-    description: '物語の途中で条件を判断し、デキすぎ君の思い込みを直します。',
+    title: t('事件簿を1話解明する', 'Solve 1 casebook story'),
+    description: t(
+      '物語の途中で条件を判断し、デキすぎ君の思い込みを直します。',
+      'Judge the conditions midway through the story and fix Dekisugi-kun\'s misconception.',
+    ),
     action: LearningQuestAction(
-      label: '今日の事件簿を開く',
+      label: t('今日の事件簿を開く', 'Open today\'s casebook'),
       destination: LearningQuestDestination.stories,
       focus: LearningQuestFocus.nextStory,
     ),
@@ -829,10 +885,13 @@ const _dailySpecs = <LearningDailyQuestVariant, _DailyQuestSpec>{
   ),
   LearningDailyQuestVariant.listening: _DailyQuestSpec(
     key: 'listen-for-conditions',
-    title: '聞き取り観察で条件を見抜く',
-    description: '説明を最後まで聞き、文字起こしと意味を分けて観察します。',
+    title: t('聞き取り観察で条件を見抜く', 'Listen and spot the conditions'),
+    description: t(
+      '説明を最後まで聞き、文字起こしと意味を分けて観察します。',
+      'Listen to the whole explanation and check 1 item, separating transcript from meaning.',
+    ),
     action: LearningQuestAction(
-      label: '聞き取り観察を始める',
+      label: t('聞き取り観察を始める', 'Start the listening mission'),
       destination: LearningQuestDestination.practice,
       focus: LearningQuestFocus.dailyListening,
     ),
@@ -841,10 +900,13 @@ const _dailySpecs = <LearningDailyQuestVariant, _DailyQuestSpec>{
   ),
   LearningDailyQuestVariant.speaking: _DailyQuestSpec(
     key: 'explain-it-back',
-    title: '自分のことばで教え返す',
-    description: '声または同格の文字経路で説明し、自分で聞き直す・読み直す観察を1件記録します。',
+    title: t('自分のことばで教え返す', 'Explain science in your own words'),
+    description: t(
+      '声または同格の文字経路で説明し、自分で聞き直す・読み直す観察を1件記録します。',
+      'Explain by voice or the equal text route, and finish 1 task where you listen back or reread.',
+    ),
     action: LearningQuestAction(
-      label: '教え返しを始める',
+      label: t('教え返しを始める', 'Start the speaking mission'),
       destination: LearningQuestDestination.practice,
       focus: LearningQuestFocus.dailySpeaking,
     ),
@@ -853,10 +915,13 @@ const _dailySpecs = <LearningDailyQuestVariant, _DailyQuestSpec>{
   ),
   LearningDailyQuestVariant.diagram: _DailyQuestSpec(
     key: 'diagram-relations',
-    title: '図と条件の関係を1つ記録する',
-    description: '量・向き・条件の関係を図で組み、教材と照合します。',
+    title: t('図と条件の関係を1つ記録する', 'Build 1 diagram with conditions'),
+    description: t(
+      '量・向き・条件の関係を図で組み、教材と照合します。',
+      'Build a diagram of how amount, direction, and conditions relate, then compare with the material.',
+    ),
     action: LearningQuestAction(
-      label: '図の観察を始める',
+      label: t('図の観察を始める', 'Start a diagram task'),
       destination: LearningQuestDestination.path,
       focus: LearningQuestFocus.nextDiagram,
     ),
@@ -865,10 +930,16 @@ const _dailySpecs = <LearningDailyQuestVariant, _DailyQuestSpec>{
   ),
   LearningDailyQuestVariant.notation: _DailyQuestSpec(
     key: 'notation-trace',
-    title: '式・単位・矢印を意味の順に観察する',
-    description: '記号を、なぞる→組む→読むの順で1件確かめます。',
+    title: t(
+      '式・単位・矢印を意味の順に観察する',
+      'Trace equations, units, and arrows in order of meaning',
+    ),
+    description: t(
+      '記号を、なぞる→組む→読むの順で1件確かめます。',
+      'Check 1 symbol set in order: trace → build → read.',
+    ),
     action: LearningQuestAction(
-      label: '記号の観察を開く',
+      label: t('記号の観察を開く', 'Open the Symbol Lab'),
       destination: LearningQuestDestination.notation,
       focus: LearningQuestFocus.nextNotation,
     ),
@@ -878,10 +949,13 @@ const _dailySpecs = <LearningDailyQuestVariant, _DailyQuestSpec>{
   ),
   LearningDailyQuestVariant.transfer: _DailyQuestSpec(
     key: 'transfer-challenge',
-    title: '別の場面で原理を1回検証する',
-    description: 'ヒントなしの別場面で、同じ原理が使える条件を確かめます。',
+    title: t('別の場面で原理を1回検証する', 'Use a principle once in a new situation'),
+    description: t(
+      'ヒントなしの別場面で、同じ原理が使える条件を確かめます。',
+      'In a new situation with no hints, check when the same principle applies.',
+    ),
     action: LearningQuestAction(
-      label: '総合検証へ進む',
+      label: t('総合検証へ進む', 'Go to the challenge'),
       destination: LearningQuestDestination.path,
       focus: LearningQuestFocus.currentPathNode,
     ),
@@ -891,10 +965,13 @@ const _dailySpecs = <LearningDailyQuestVariant, _DailyQuestSpec>{
   ),
   LearningDailyQuestVariant.spacedReview: _DailyQuestSpec(
     key: 'spaced-review',
-    title: '期限の来た記録を思い出す',
-    description: '前回から間隔を空けた内容を、答えを見る前に1件再観察します。',
+    title: t('期限の来た記録を思い出す', 'Recall due content'),
+    description: t(
+      '前回から間隔を空けた内容を、答えを見る前に1件再観察します。',
+      'Recall 1 item spaced out since last time, before seeing the answer.',
+    ),
     action: LearningQuestAction(
-      label: '再観察を始める',
+      label: t('再観察を始める', 'Start today\'s review'),
       destination: LearningQuestDestination.practice,
       focus: LearningQuestFocus.duePractice,
     ),

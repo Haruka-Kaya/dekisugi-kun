@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../services/live_session.dart';
@@ -41,7 +42,7 @@ class QuotaChip extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            'あと$left回',
+            lang.t('あと$left回', '$left left'),
             style: t.textTheme.bodySmall?.copyWith(color: fg, height: 1.0),
           ),
         ],
@@ -88,7 +89,7 @@ class OutOfTimeCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'きょうのぶんは終わりです',
+                  lang.t('きょうのぶんは終わりです', "That's it for today"),
                   style: t.textTheme.titleSmall
                       ?.copyWith(color: c.onCoolSurface)
                       .jaWeight(FontWeight.w700),
@@ -98,14 +99,22 @@ class OutOfTimeCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '無料で話せるのは1日2回までです。1回はおよそ10分です。'
-            '${_resetText(resetsAt)}に、またいちから話せるようになります。',
+            lang.t(
+              '無料で話せるのは1日2回までです。1回はおよそ10分です。'
+                  '${_resetText(resetsAt)}に、またいちから話せるようになります。',
+              'Free talks are limited to 2 a day, about 10 minutes each. '
+                  'You can talk again ${_resetText(resetsAt)}.',
+            ),
             style: t.textTheme.bodyMedium?.copyWith(color: c.onCoolSurface),
           ),
           const SizedBox(height: 12),
           Text(
-            '待っているあいだは、「もう一度見るところ」で'
-            'うまく説明しきれなかったところを見直せます。',
+            lang.t(
+              '待っているあいだは、「もう一度見るところ」で'
+                  'うまく説明しきれなかったところを見直せます。',
+              'While you wait, use "Review spots" to '
+                  'go over what you could not fully explain.',
+            ),
             style: t.textTheme.bodySmall?.copyWith(
               color: c.onCoolSurface.withValues(alpha: 0.82),
             ),
@@ -115,7 +124,9 @@ class OutOfTimeCard extends StatelessWidget {
             FilledButton(
               onPressed: plusBusy ? null : onOpenPlus,
               child: Text(
-                plusBusy ? 'Plusを確認しています…' : 'Plusで会話回数を広げる',
+                plusBusy
+                    ? lang.t('Plusを確認しています…', 'Checking Plus…')
+                    : lang.t('Plusで会話回数を広げる', 'Get more talks with Plus'),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -127,7 +138,7 @@ class OutOfTimeCard extends StatelessWidget {
 
   /// いつ戻るか。**「明日」で済ませない** — 夜中に使う子には today/tomorrow が紛らわしい。
   static String _resetText(DateTime? at) {
-    if (at == null) return '日付が変わったころ';
+    if (at == null) return lang.t('日付が変わったころ', 'after midnight');
     final local = at.toLocal();
     final now = DateTime.now();
     final sameDay =
@@ -135,6 +146,8 @@ class OutOfTimeCard extends StatelessWidget {
         local.month == now.month &&
         local.day == now.day;
     final h = local.hour.toString();
-    return sameDay ? 'きょうの$h時ごろ' : 'あすの$h時ごろ';
+    return sameDay
+        ? lang.t('きょうの$h時ごろ', 'today around $h:00')
+        : lang.t('あすの$h時ごろ', 'tomorrow around $h:00');
   }
 }

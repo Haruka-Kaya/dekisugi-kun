@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 
+import '../config/app_language.dart' as lang;
 import '_material.dart';
 
 /// プラットフォームで作法が違うものだけを、ここに集める。
@@ -174,11 +175,11 @@ Future<bool?> _cupertinoSheet(
                       children: [
                         CupertinoButton(
                           onPressed: () => Navigator.of(ctx).pop(false),
-                          child: const Text('やめる'),
+                          child: Text(lang.t('やめる', 'Cancel')),
                         ),
                         CupertinoButton.filled(
                           onPressed: () => Navigator.of(ctx).pop(true),
-                          child: const Text('決定'),
+                          child: Text(lang.t('決定', 'OK')),
                         ),
                       ],
                     ),

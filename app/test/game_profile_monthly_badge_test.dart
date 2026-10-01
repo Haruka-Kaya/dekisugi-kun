@@ -32,6 +32,7 @@ final _badge = LearningMonthlyBadgeAward(
 Widget _host({
   required bool schoolMode,
   Brightness brightness = Brightness.dark,
+  bool plusSupporter = false,
 }) => MaterialApp(
   theme: buildAppTheme(brightness),
   home: GameProfileScreen(
@@ -39,6 +40,7 @@ Widget _host({
     quests: const [],
     schoolMode: schoolMode,
     monthlyBadges: [_badge],
+    plusSupporter: plusSupporter,
     onOpenSettings: () {},
   ),
 );
@@ -88,5 +90,26 @@ void main() {
       findsNothing,
     );
     expect(find.text('2026年8月 観測バッジ'), findsNothing);
+  });
+
+  testWidgets('Plusサポーターは個人scopeの研究室にだけ印が出る', (tester) async {
+    await tester.pumpWidget(_host(schoolMode: false, plusSupporter: true));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('game-profile-metric-Plus サポーター')),
+      findsOneWidget,
+    );
+    expect(find.text('応援中'), findsOneWidget);
+  });
+
+  testWidgets('schoolLocalはplusSupporterフラグがあっても印を出さない', (tester) async {
+    await tester.pumpWidget(_host(schoolMode: true, plusSupporter: true));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('game-profile-metric-Plus サポーター')),
+      findsNothing,
+    );
   });
 }

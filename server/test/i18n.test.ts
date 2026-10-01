@@ -9,8 +9,16 @@ import {
   parseLang,
   validateTranslations,
 } from '../lib/i18n.js'
+import { readFile } from 'node:fs/promises'
+
+import { EN_CONTENT } from '../lib/en/index.js'
+import { missingContentTranslations } from '../lib/i18n-content.js'
 import { liveSessionConfig, systemInstruction } from '../lib/live-config.js'
 import { MISCONCEPTIONS } from '../lib/misconceptions.js'
+import {
+  buildBundledUnitCatalog,
+  publicUnitDetail,
+} from '../lib/public-unit-catalog.js'
 import { UNITS, unitById, validateLocalSpeakingPractice } from '../lib/units.js'
 
 /** 日本語の文字が混ざっていないか。**訳し漏れは1文だけ混ざるので目で見つけにくい** */
@@ -22,10 +30,10 @@ describe('英語への差し替え', () => {
     // 落ちないので気づけないまま出荷される
     assert.deepEqual(missingTranslations(UNITS, MISCONCEPTIONS), [])
     assert.deepEqual(validateTranslations(UNITS, MISCONCEPTIONS), [])
-    assert.equal(UNITS.flatMap((unit) => unit.concepts).length, 23)
+    assert.equal(UNITS.flatMap((unit) => unit.concepts).length, 35)
     assert.deepEqual(
       MISCONCEPTIONS.map((misconception) => misconception.id),
-      Array.from({ length: 23 }, (_, index) => `M${String(index + 1).padStart(2, '0')}`),
+      Array.from({ length: 35 }, (_, index) => `M${String(index + 1).padStart(2, '0')}`),
     )
   })
 
@@ -524,5 +532,85 @@ describe('会話設定', () => {
       () => systemInstruction(unit, '[D:x]', 'ja', 'no-such-concept'),
       /未知の概念/,
     )
+  })
+})
+
+describe('英語コンテンツ差し替え（練習・Story・Notation）', () => {
+  it('全単元の差し替え表に穴が無い', () => {
+    // 抜けると英語の練習の途中に日本語が1文だけ混ざる
+    assert.deepEqual(missingContentTranslations(UNITS, EN_CONTENT), [])
+  })
+
+  it('英語カタログの練習・Story・Notationに日本語が残らない', () => {
+    for (const u of UNITS) {
+      const detail = publicUnitDetail(u, 'en', EN_CONTENT[u.id])
+      const text = JSON.stringify({
+        localPracticeVariants: detail.sections.map((s) => s.localPracticeVariants),
+        notationLab: detail.sections.map((s) => s.notationLab),
+        scienceStory: detail.sections.map((s) => s.scienceStory),
+      })
+      assert.ok(!JA.test(text), `${u.id}: 公開詳細に日本語が残っている`)
+    }
+  })
+
+  it('英語でも構造は言語で変わらない', () => {
+    // variant/stage/task/option の id は観測の単位そのもの
+    for (const u of UNITS) {
+      const ja = publicUnitDetail(u)
+      const en = publicUnitDetail(u, 'en', EN_CONTENT[u.id])
+      assert.equal(en.sections.length, ja.sections.length, u.id)
+      for (let i = 0; i < ja.sections.length; i += 1) {
+        const j = ja.sections[i]!
+        const e = en.sections[i]!
+        assert.equal(e.conceptKey, j.conceptKey)
+        assert.deepEqual(
+          e.localPracticeVariants.map((v) => v.stage),
+          j.localPracticeVariants.map((v) => v.stage),
+        )
+        assert.deepEqual(
+          e.notationLab.tasks.map((task) => task.id),
+          j.notationLab.tasks.map((task) => task.id),
+        )
+      }
+    }
+  })
+
+  it('同梱英語カタログが正カタログからの機械生成結果と完全一致する', async () => {
+    const assetUrl = new URL(
+      '../../app/assets/catalog/units.en.json',
+      import.meta.url,
+    )
+    const actual = JSON.parse(
+      await readFile(assetUrl, 'utf8'),
+    ) as unknown
+    assert.deepEqual(
+      actual,
+      buildBundledUnitCatalog(UNITS, 'en', EN_CONTENT),
+      'EN_CONTENT を変えたら npm run catalog:generate が必要',
+    )
+    assert.equal(
+      (actual as { language?: unknown }).language,
+      'en',
+      '英語カタログを日本語として配っている',
+    )
+  })
+
+  it('concept.storyTitle が section.scienceStory.title と全概念で一致する', () => {
+    // アプリはこの一致を詳細デコードの同一性根拠にする。ずれると
+    // 同梱英語カタログごと読めず学習パスが「読み込めません」になる。
+    for (const lang of ['ja', 'en'] as const) {
+      for (const u of UNITS) {
+        const detail = publicUnitDetail(u, lang, EN_CONTENT[u.id])
+        const sectionTitles = new Set(
+          detail.sections.map((s) => s.scienceStory.title),
+        )
+        for (const concept of detail.concepts) {
+          assert.ok(
+            sectionTitles.has(concept.storyTitle),
+            `${lang} ${u.id}/${concept.key}: storyTitle が対応するStory題名と一致しない`,
+          )
+        }
+      }
+    }
   })
 })

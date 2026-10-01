@@ -10,13 +10,13 @@ void main() {
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
 
-  group('learning ledger v13 migration', () {
+  group('learning ledger v14 migration', () {
     late Directory tmp;
 
     setUp(() => tmp = Directory.systemTemp.createTempSync('dekisugi_learning'));
     tearDown(() => tmp.deleteSync(recursive: true));
 
-    test('v6の会話・復習・設定を保ったままv13へ上げる', () async {
+    test('v6の会話・復習・設定を保ったままv14へ上げる', () async {
       final path = await _makeV6(p.join(tmp.path, 'from-v6.db'));
       final store = await SqfliteSessionStore.open(path: path);
       addTearDown(store.close);
@@ -33,14 +33,14 @@ void main() {
       expect(snapshot.wallet.xp, 10);
     });
 
-    test('新規DBはv13全表を持ち回答・音声・選択内容の列を持たない', () async {
+    test('新規DBはv14全表を持ち回答・音声・選択内容の列を持たない', () async {
       final path = p.join(tmp.path, 'fresh.db');
       final store = await SqfliteSessionStore.open(path: path);
       await store.close();
 
       final db = await databaseFactory.openDatabase(path);
       addTearDown(db.close);
-      expect(await db.getVersion(), 13);
+      expect(await db.getVersion(), 14);
 
       final tables = (await db.rawQuery(
         "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'learning_%'",
@@ -65,6 +65,7 @@ void main() {
           'learning_runs',
           'learning_gem_spends',
           'learning_cosmetic_loadout',
+          'learning_cosmetic_grants',
           'learning_local_coop_runs',
           'learning_local_coop_participants',
           'learning_local_coop_contributions',
@@ -114,6 +115,7 @@ void main() {
       final db = await databaseFactory.openDatabase(path);
       await db.execute('DROP TABLE learning_local_league_history');
       await db.execute('DROP TABLE learning_cosmetic_loadout');
+      await db.execute('DROP TABLE learning_cosmetic_grants');
       await db.execute('DROP TABLE learning_gem_spends');
       await db.execute('''
         CREATE TABLE learning_gem_spends(
@@ -175,6 +177,7 @@ void main() {
       await db.execute('DROP TABLE learning_local_league_history');
       await db.execute('DROP TABLE learning_need_state');
       await db.execute('DROP TABLE learning_cosmetic_loadout');
+      await db.execute('DROP TABLE learning_cosmetic_grants');
       await db.execute(
         'DROP TABLE learning_challenge_heart_practice_recoveries',
       );
@@ -234,6 +237,7 @@ void main() {
       await db.execute('DROP TABLE learning_local_coop_runs');
       await db.execute('DROP TABLE learning_gem_spends');
       await db.execute('DROP TABLE learning_cosmetic_loadout');
+      await db.execute('DROP TABLE learning_cosmetic_grants');
       await db.execute(
         'DROP TABLE learning_challenge_heart_practice_recoveries',
       );
@@ -293,6 +297,7 @@ void main() {
       await db.execute('DROP TABLE learning_local_coop_runs');
       await db.execute('DROP TABLE learning_gem_spends');
       await db.execute('DROP TABLE learning_cosmetic_loadout');
+      await db.execute('DROP TABLE learning_cosmetic_grants');
       await db.execute(
         'DROP TABLE learning_challenge_heart_practice_recoveries',
       );

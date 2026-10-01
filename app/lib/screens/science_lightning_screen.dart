@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_heart.dart';
@@ -359,8 +360,10 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
         ScienceChallengeHeader(
           eyebrow: 'ラボ・ブリーフ  /  連続観察  /  任意',
           title: widget.conceptLabel,
-          body:
-              '${widget.content.questions.length}問の固定列を$_initialSeconds秒で解きます。',
+          body: t(
+            '${widget.content.questions.length}問の固定列を$_initialSeconds秒で解きます。',
+            'Answer a fixed set of ${widget.content.questions.length} questions in $_initialSeconds seconds.',
+          ),
           icon: Icons.playlist_add_check_rounded,
           accent: colors.legendary,
           onAccent: colors.onLegendary,
@@ -368,7 +371,7 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
-          label: '速さより、根拠',
+          label: t('速さより、根拠', 'Reasons over speed'),
           icon: Icons.shield_outlined,
           child: const Text(
             '誤答か時間切れでその観察は終了します。時間切れでは試行余力は減らず、固定問題の誤答だけ、'
@@ -377,7 +380,7 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
-          label: '学習する場面',
+          label: t('学習する場面', 'Learning scenario'),
           icon: Icons.science_outlined,
           child: Text(
             '${_variant.transferPrompt}\n\n'
@@ -387,7 +390,7 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('lightning-start'),
-          label: '連続観察を始める',
+          label: t('連続観察を始める', 'Start Lightning'),
           icon: Icons.play_arrow_rounded,
           onPressed: _start,
           backgroundColor: colors.legendary,
@@ -408,12 +411,14 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
         ScienceMiniGameCountdown(
           remainingSeconds: _remainingSeconds,
           totalSeconds: _initialSeconds,
-          stepLabel:
-              '${_questionIndex + 1}/${widget.content.questions.length}問目',
+          stepLabel: t(
+            '${_questionIndex + 1}/${widget.content.questions.length}問目',
+            'Question ${_questionIndex + 1}/${widget.content.questions.length}',
+          ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
-          label: '短く判断する',
+          label: t('短く判断する', 'Decide quickly'),
           icon: Icons.rule_outlined,
           child: Text(
             question.prompt,
@@ -439,7 +444,7 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('lightning-submit'),
-          label: 'この答えで決定',
+          label: t('この答えで決定', 'Lock in this answer'),
           icon: Icons.arrow_forward_rounded,
           onPressed: _selectedOptionId == null ? null : _submit,
           backgroundColor: colors.legendary,
@@ -455,14 +460,26 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
     final colors = context.gamePalette;
     final cleared = _outcome == _LightningOutcome.cleared;
     final title = switch (_outcome!) {
-      _LightningOutcome.cleared => '連続観察を完了',
-      _LightningOutcome.needsReview => '今回はここまで',
-      _LightningOutcome.timeUp => '時間になりました',
+      _LightningOutcome.cleared => t('連続観察を完了', 'Finished all questions'),
+      _LightningOutcome.needsReview => t(
+        '今回はここまで',
+        'That\'s it for this round',
+      ),
+      _LightningOutcome.timeUp => t('時間になりました', 'Time\'s up'),
     };
     final body = switch (_outcome!) {
-      _LightningOutcome.cleared => '全問を順番に判断できました。',
-      _LightningOutcome.needsReview => '誤答後は別の選択肢や後続問題を開きません。通常練習で根拠を確かめられます。',
-      _LightningOutcome.timeUp => '未回答の正解は表示しません。時間は学習成果として保存されません。',
+      _LightningOutcome.cleared => t(
+        '全問を順番に判断できました。',
+        'You answered every question in order.',
+      ),
+      _LightningOutcome.needsReview => t(
+        '誤答後は別の選択肢や後続問題を開きません。通常練習で根拠を確かめられます。',
+        'After a wrong answer, other choices and later questions stay locked. You can check the reasoning in regular practice.',
+      ),
+      _LightningOutcome.timeUp => t(
+        '未回答の正解は表示しません。時間は学習成果として保存されません。',
+        'Answers to unanswered questions aren\'t shown. Time isn\'t saved as a learning result.',
+      ),
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -484,15 +501,20 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
-          label: '学習記録への影響',
+          label: t('学習記録への影響', 'Effect on your record'),
           icon: Icons.shield_outlined,
-          child: const Text('この結果だけでは探究ノート・連続観測・報酬は変わりません。回答・正誤・残り時間も保存しません。'),
+          child: Text(
+            t(
+              'この結果だけでは探究ノート・連続観測・報酬は変わりません。回答・正誤・残り時間も保存しません。',
+              'This result alone doesn\'t change your Path, streak, or rewards. Answers, correctness, and remaining time aren\'t saved.',
+            ),
+          ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         if (cleared)
           ScienceChallengePrimaryButton(
             key: const ValueKey('lightning-complete'),
-            label: '連続観察を完了する',
+            label: t('連続観察を完了する', 'Finish Lightning'),
             icon: Icons.check_rounded,
             onPressed: _completionCalled ? null : _complete,
             backgroundColor: colors.pathComplete,
@@ -507,7 +529,11 @@ class _ScienceLightningScreenState extends State<ScienceLightningScreen>
               foregroundColor: colors.ink,
             ),
             icon: const Icon(Icons.refresh_rounded),
-            label: Text(_retryChecking ? '試行余力を確認中…' : '最初からもう一度'),
+            label: Text(
+              _retryChecking
+                  ? t('試行余力を確認中…', 'Checking hearts…')
+                  : t('最初からもう一度', 'Start over'),
+            ),
           ),
         const SizedBox(height: GameTokens.spaceLg),
         const ScienceChallengePrivacyNote(),

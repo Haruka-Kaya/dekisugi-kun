@@ -350,7 +350,7 @@ final class LanSocialClient {
         ),
       );
       if (response.statusCode == 401 || response.statusCode == 410) {
-        return _fetchAndApplyTerminalSettlement(membership);
+        return await _fetchAndApplyTerminalSettlement(membership);
       }
       if (response.statusCode != 200) {
         return const _LanSocialRemoteState.unavailable();

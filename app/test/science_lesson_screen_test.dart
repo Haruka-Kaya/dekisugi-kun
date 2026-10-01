@@ -18,10 +18,7 @@ const _checkpoint = LocalCheckpoint(
 const _section = Section(
   conceptKey: 'fall',
   title: '落下の本文',
-  body: [
-    '物体には重力がはたらく。力の向きも確かめよう。',
-    '真空では**質量に関係なく**同じ加速度で落ちる。空気中では抵抗も考える。',
-  ],
+  body: ['物体には重力がはたらく。力の向きも確かめよう。', '真空では**質量に関係なく**同じ加速度で落ちる。空気中では抵抗も考える。'],
   tryIt: '紙を丸めて比べる。',
   localCheckpoint: _checkpoint,
 );
@@ -86,10 +83,7 @@ void main() {
     expect(find.text('真空では質量に関係なく同じ加速度で落ちる。'), findsOneWidget);
     expect(find.text('物体には重力がはたらく。力の向きも確かめよう。'), findsNothing);
     expect(
-      find.text(
-        '真空では質量に関係なく同じ加速度で落ちる。空気中では抵抗も考える。',
-        findRichText: true,
-      ),
+      find.text('真空では質量に関係なく同じ加速度で落ちる。空気中では抵抗も考える。', findRichText: true),
       findsNothing,
     );
     expect(find.text('まず押さえる要点'), findsOneWidget);
@@ -101,10 +95,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('物体には重力がはたらく。力の向きも確かめよう。'), findsOneWidget);
     expect(
-      find.text(
-        '真空では質量に関係なく同じ加速度で落ちる。空気中では抵抗も考える。',
-        findRichText: true,
-      ),
+      find.text('真空では質量に関係なく同じ加速度で落ちる。空気中では抵抗も考える。', findRichText: true),
       findsOneWidget,
     );
     expect(find.textContaining('**'), findsNothing);
@@ -215,10 +206,7 @@ void main() {
       _app(onCompleted: () {}, onReturnToPath: () => returned++),
     );
 
-    await _scrollTo(
-      tester,
-      find.byKey(const ValueKey('science-lesson-defer')),
-    );
+    await _scrollTo(tester, find.byKey(const ValueKey('science-lesson-defer')));
     await tester.tap(find.byKey(const ValueKey('science-lesson-defer')));
     await tester.pump();
 

@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../models/team.dart';
@@ -46,7 +47,9 @@ class TeamCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    summary.name.isEmpty ? 'クラス' : summary.name,
+                    summary.name.isEmpty
+                        ? lang.t('クラス', 'Class')
+                        : summary.name,
                     style: t.textTheme.titleMedium?.jaWeight(FontWeight.w700),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -54,7 +57,7 @@ class TeamCard extends StatelessWidget {
                 IconButton(
                   onPressed: onLeave,
                   icon: const Icon(Icons.logout, size: 20),
-                  tooltip: 'クラスから抜ける',
+                  tooltip: lang.t('クラスから抜ける', 'Leave class'),
                   constraints: const BoxConstraints(
                     minWidth: 48,
                     minHeight: 48,
@@ -98,8 +101,12 @@ class _Pending extends StatelessWidget {
         const SizedBox(width: 6),
         Expanded(
           child: Text(
-            'クラスの合計は、$memberCount人あつまってから出ます。'
-            '\n少ない人数だと、合計から一人ひとりの数が分かってしまうためです。',
+            lang.t(
+              'クラスの合計は、$memberCount人あつまってから出ます。'
+                  '\n少ない人数だと、合計から一人ひとりの数が分かってしまうためです。',
+              'The class total appears once $memberCount people join.'
+                  "\nWith too few people, the total could reveal each person's count.",
+            ),
             style: t.textTheme.bodySmall?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
@@ -123,13 +130,16 @@ class _Totals extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'みんなの説明が ${summary.total ?? 0}件 集まりました。',
+          lang.t(
+            'みんなの説明が ${summary.total ?? 0}件 集まりました。',
+            'Everyone has shared ${summary.total ?? 0} explanations.',
+          ),
           style: t.textTheme.titleSmall?.jaWeight(FontWeight.w700),
         ),
         const SizedBox(height: 4),
         // **自分のぶんは添えるだけ。** 比べさせない
         Text(
-          'あなたが話したぶん ${summary.myTotal}件',
+          lang.t('あなたが話したぶん ${summary.myTotal}件', 'Yours: ${summary.myTotal}'),
           style: t.textTheme.bodySmall?.copyWith(
             color: scheme.onSurfaceVariant,
           ),

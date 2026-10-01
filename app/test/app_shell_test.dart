@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui' show SemanticsAction, Tristate;
 
+import 'package:dekisugi/config/app_language.dart';
 import 'package:dekisugi/learning/domain/learning_event.dart';
 import 'package:dekisugi/learning/services/game_path_projection.dart';
 import 'package:dekisugi/main.dart';
@@ -36,6 +37,20 @@ class _JsonAssetBundle extends CachingAssetBundle {
 
   @override
   Future<ByteData> load(String key) async {
+    final bytes = Uint8List.fromList(utf8.encode(source));
+    return ByteData.sublistView(bytes);
+  }
+}
+
+/// assetパスごとに別JSONを返すbundle。言語別カタログのfixtureに使う。
+class _MultiJsonAssetBundle extends CachingAssetBundle {
+  _MultiJsonAssetBundle(this.sources);
+
+  final Map<String, String> sources;
+
+  @override
+  Future<ByteData> load(String key) async {
+    final source = sources[key] ?? '';
     final bytes = Uint8List.fromList(utf8.encode(source));
     return ByteData.sublistView(bytes);
   }
@@ -246,13 +261,19 @@ Map<String, Object?> _scienceStory(String prefix) {
   };
 }
 
-String get _localCatalogJson => jsonEncode({
+String get _localCatalogJson =>
+    _localCatalogJsonFor(language: 'ja', title: '端末内テスト単元');
+
+String _localCatalogJsonFor({
+  required String language,
+  required String title,
+}) => jsonEncode({
   'schemaVersion': 10,
-  'language': 'ja',
+  'language': language,
   'units': [
     {
       'id': 'local-unit',
-      'title': '端末内テスト単元',
+      'title': title,
       'brief': '2概念の決定論fixture',
       'concepts': [
         {
@@ -521,6 +542,69 @@ void main() {
     expect(await store.getSetting('device_id'), isNull);
     expect(tester.takeException(), isNull);
     semantics.dispose();
+  });
+
+  testWidgets('表示言語を切り替えると教材カタログを新しい言語で読み直す', (tester) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    final store = MemorySessionStore();
+    await tester.pumpWidget(
+      DekisugiApp(
+        store: store,
+        localCatalogAssets: _MultiJsonAssetBundle({
+          'assets/catalog/units.ja.json': _localCatalogJsonFor(
+            language: 'ja',
+            title: '端末内テスト単元',
+          ),
+          'assets/catalog/units.en.json': _localCatalogJsonFor(
+            language: 'en',
+            title: 'Local test unit',
+          ),
+        }),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final localEntry = find.byKey(const ValueKey('use-local-only-mode'));
+    await reveal(tester, localEntry);
+    await tester.tap(localEntry);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('game-tab-guide-dismiss')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ScienceGameHomeScreen), findsOneWidget);
+    // 探究ノートは現在の観察位置へスクロールするため、単元見出しは
+    // 操作対象にせず、読み込まれたカタログの表示内容として検査する。
+    expect(find.text('端末内テスト単元'), findsWidgets);
+    expect(find.text('Local test unit'), findsNothing);
+
+    final context = tester.element(find.byType(ScienceGameHomeScreen));
+    final controller = Provider.of<AppLanguageController?>(
+      context,
+      listen: false,
+    );
+    expect(controller, isNotNull);
+    await controller!.setLanguage(AppLanguage.en);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byType(ScienceGameHomeScreen),
+      findsOneWidget,
+      reason: '言語切替でGateが作り直されても端末内モードへ戻る',
+    );
+    expect(
+      find.text('Local test unit'),
+      findsWidgets,
+      reason: '単元一覧は英語カタログを読み直す',
+    );
+    expect(find.text('端末内テスト単元'), findsNothing);
+    expect(await store.getSetting('app_lang'), 'en');
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('18歳未満の本人端末内はpersonal game機構へ到達し、外部Providerを持たない', (

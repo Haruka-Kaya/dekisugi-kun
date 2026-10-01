@@ -835,7 +835,7 @@ void main() {
     expect(result.economy.challengeHeartRecoveryGemCost, 2);
     expect(result.economy.canRefillStreakFreeze, isFalse);
     expect(result.economy.canRecoverChallengeHearts, isFalse);
-    expect(result.economy.cosmeticItems, hasLength(3));
+    expect(result.economy.cosmeticItems, hasLength(4));
     expect(result.economy.timedChallengePassGemCost, 1);
     expect(result.economy.timedChallengePassActive, isFalse);
     expect(result.economy.canPurchaseTimedChallengePass, isTrue);
@@ -928,6 +928,41 @@ void main() {
     );
     expect(result.economy.timedChallengePassActive, isTrue);
     expect(result.economy.canPurchaseTimedChallengePass, isFalse);
+  });
+
+  test('Plus特典を所有する個人scopeだけplusSupporterが立つ', () {
+    const granted = LearningCosmeticState(
+      ownedProductIds: {
+        SafeLearningEconomyCatalogV1.standardMascotId,
+        SafeLearningEconomyCatalogV1.auroraMascotId,
+      },
+      equippedPathMascotId: SafeLearningEconomyCatalogV1.auroraMascotId,
+    );
+    final personal = projection.build(
+      catalog: _catalog,
+      snapshot: snapshot(cosmetics: granted),
+      now: DateTime(2026, 8, 10, 12),
+    );
+    expect(personal.economy.plusSupporter, isTrue);
+
+    final plain = projection.build(
+      catalog: _catalog,
+      snapshot: snapshot(),
+      now: DateTime(2026, 8, 10, 12),
+    );
+    expect(plain.economy.plusSupporter, isFalse);
+
+    final school = projection.build(
+      catalog: _catalog,
+      snapshot: snapshot(scope: LearningScope.schoolLocal, cosmetics: granted),
+      now: DateTime(2026, 8, 10, 12),
+      schoolMode: true,
+    );
+    expect(
+      school.economy.plusSupporter,
+      isFalse,
+      reason: '学校scopeは個人の購入特典を表示しない',
+    );
   });
 
   test('economy表示は保存側へ渡すpolicyと同じ実コストだけを返す', () {

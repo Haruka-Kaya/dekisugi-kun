@@ -12,6 +12,7 @@ import '../domain/learning_progress.dart';
 import 'game_path_projection.dart';
 import 'learning_economy_catalog_projection.dart';
 import 'learning_monthly_badge_projection.dart';
+import '../../config/app_language.dart';
 
 class LearningGameProjectionResult {
   const LearningGameProjectionResult({
@@ -70,6 +71,7 @@ class LearningEconomyView {
     required this.timedChallengePassGemCost,
     required this.timedChallengePassActive,
     required this.canPurchaseTimedChallengePass,
+    this.plusSupporter = false,
   });
 
   final bool available;
@@ -83,6 +85,9 @@ class LearningEconomyView {
   final int? timedChallengePassGemCost;
   final bool timedChallengePassActive;
   final bool canPurchaseTimedChallengePass;
+
+  /// Plus特典の見た目を所有している = サポーター。entitlement失効後も残る。
+  final bool plusSupporter;
 }
 
 /// append-only台帳から、6タブで共有する表示値を一度だけ導く。
@@ -267,8 +272,14 @@ class LearningGameProjection {
           id: id,
           title: questTitles[id] ?? _questTitle(id),
           description: schoolMode
-              ? 'この端末で取り組む授業の観察予定です。クラス全体の件数は集計しません。'
-              : '探究ノートに観察記録を残す予定です。',
+              ? t(
+                  'この端末で取り組む授業の観察予定です。クラス全体の件数は集計しません。',
+                  'A class goal for this device. Class-wide totals aren\'t counted.',
+                )
+              : t(
+                  '探究ノートに観察記録を残す予定です。',
+                  'A quest that moves your learning path forward.',
+                ),
           kind: id.startsWith('monthly:')
               ? GameQuestKind.monthly
               : schoolMode
@@ -430,6 +441,9 @@ class LearningGameProjection {
       timedChallengePassActive: timedPassActive,
       canPurchaseTimedChallengePass:
           !schoolMode && !timedPassActive && wallet.gems >= timedPass.gemCost,
+      plusSupporter:
+          !schoolMode &&
+          cosmeticState.owns(SafeLearningEconomyCatalogV1.auroraMascotId),
     );
     final player = PlayerSummaryView(
       xp: schoolMode ? 0 : wallet.xp,
@@ -441,7 +455,7 @@ class LearningGameProjection {
       completedNodes: completedNodes,
       totalNodes: totalNodes,
       leagueName: schoolMode
-          ? '学校モード'
+          ? t('学校モード', 'School mode')
           : learningLeagueTierForXp(weeklyXp).label,
       weeklyLeagueXp: schoolMode ? 0 : weeklyXp,
       nextLeagueXp: schoolMode ? 0 : learningLeagueNextTarget(weeklyXp),
@@ -672,14 +686,16 @@ class LearningGameProjection {
   }
 
   static String? _questRewardLabel(int amount) =>
-      amount > 0 ? '結晶$amount個' : null;
+      amount > 0 ? t('結晶$amount個', '$amount gems') : null;
 
   static String _questTitle(String id) {
-    if (id.contains('transfer')) return '別の場面で原理を1回確かめる';
-    if (id.contains('retrieval') || id.contains('review')) {
-      return '期限の来た観察を1件確かめる';
+    if (id.contains('transfer')) {
+      return t('別の場面で原理を1回確かめる', 'Use it once in a new situation');
     }
-    return '探究ノートへ観察を1件記録する';
+    if (id.contains('retrieval') || id.contains('review')) {
+      return t('期限の来た観察を1件確かめる', 'Do a due review');
+    }
+    return t('探究ノートへ観察を1件記録する', 'Complete 1 learning path step');
   }
 
   static String _dayKey(DateTime date) =>

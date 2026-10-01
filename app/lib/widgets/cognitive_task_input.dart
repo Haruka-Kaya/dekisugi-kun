@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../models/unit.dart';
@@ -191,22 +192,23 @@ class CognitiveTaskResponseSummary extends StatelessWidget {
     super.key,
     required this.prompt,
     required this.response,
-    this.label = '組んだ答え',
+    this.label,
   });
 
   final LocalCognitiveTaskPrompt prompt;
   final CognitiveTaskResponse response;
-  final String label;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     final colors = context.gamePalette;
     final summary = cognitiveTaskResponseSummary(prompt, response);
+    final label = this.label ?? lang.t('組んだ答え', 'Your answer');
     return Semantics(
       key: const ValueKey('cognitive-task-response-summary'),
       container: true,
-      label: '$label。$summary',
+      label: lang.t('$label。$summary', '$label. $summary'),
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.fromLTRB(15, 13, 15, 14),
@@ -256,16 +258,22 @@ class _SingleSelectInput extends StatelessWidget {
       children: [
         _TaskInstruction(
           icon: Icons.touch_app_outlined,
-          title: '予想を1つ決める',
-          body: '答えはまだ表示しません。いまの考えに一番近いものを選びます。',
+          title: lang.t('予想を1つ決める', 'Pick one prediction'),
+          body: lang.t(
+            '答えはまだ表示しません。いまの考えに一番近いものを選びます。',
+            "The answer isn't shown yet. Choose the one closest to what you think now.",
+          ),
         ),
         const SizedBox(height: 12),
         for (var i = 0; i < items.length; i++) ...[
           _ChoiceCard(
             key: ValueKey('cognitive-task-choice-${items[i].id}'),
-            label:
-                '選択肢${i + 1}、全${items.length}件中。${items[i].text}'
-                '${response?.selectedItemId == items[i].id ? '。選択中' : ''}',
+            label: lang.t(
+              '選択肢${i + 1}、全${items.length}件中。${items[i].text}'
+                  '${response?.selectedItemId == items[i].id ? '。選択中' : ''}',
+              'Choice ${i + 1} of ${items.length}. ${items[i].text}'
+                  '${response?.selectedItemId == items[i].id ? '. Selected' : ''}',
+            ),
             text: items[i].text,
             selected: response?.selectedItemId == items[i].id,
             onTap: () => onChanged(SingleSelectTaskResponse(items[i].id)),
@@ -297,10 +305,13 @@ class _ClassifyInput extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _TaskInstruction(
+        _TaskInstruction(
           icon: Icons.category_outlined,
-          title: '一つずつ分類する',
-          body: 'カードごとに分類先を選びます。すべて決めるまで答えは表示されません。',
+          title: lang.t('一つずつ分類する', 'Sort one at a time'),
+          body: lang.t(
+            'カードごとに分類先を選びます。すべて決めるまで答えは表示されません。',
+            "Choose a group for each card. The answer isn't shown until all are decided.",
+          ),
         ),
         const SizedBox(height: 12),
         for (var itemIndex = 0; itemIndex < items.length; itemIndex++) ...[
@@ -319,7 +330,10 @@ class _ClassifyInput extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'カード ${itemIndex + 1} / ${items.length}',
+                    lang.t(
+                      'カード ${itemIndex + 1} / ${items.length}',
+                      'Card ${itemIndex + 1} / ${items.length}',
+                    ),
                     style: t.textTheme.labelMedium
                         ?.copyWith(color: colors.inkMuted)
                         .jaWeight(FontWeight.w700),
@@ -336,10 +350,14 @@ class _ClassifyInput extends StatelessWidget {
                       key: ValueKey(
                         'cognitive-task-classify-${items[itemIndex].id}-${targets[targetIndex].id}',
                       ),
-                      semanticsLabel:
-                          'カード${itemIndex + 1}、全${items.length}件中。'
-                          '${items[itemIndex].text}。分類先、${targets[targetIndex].label}'
-                          '${response?.targetByItemId[items[itemIndex].id] == targets[targetIndex].id ? '。選択中' : ''}',
+                      semanticsLabel: lang.t(
+                        'カード${itemIndex + 1}、全${items.length}件中。'
+                            '${items[itemIndex].text}。分類先、${targets[targetIndex].label}'
+                            '${response?.targetByItemId[items[itemIndex].id] == targets[targetIndex].id ? '。選択中' : ''}',
+                        'Card ${itemIndex + 1} of ${items.length}. '
+                            '${items[itemIndex].text}. Group: ${targets[targetIndex].label}'
+                            '${response?.targetByItemId[items[itemIndex].id] == targets[targetIndex].id ? '. Selected' : ''}',
+                      ),
                       label: targets[targetIndex].label,
                       selected:
                           response?.targetByItemId[items[itemIndex].id] ==
@@ -392,13 +410,19 @@ class _SequenceInput extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _TaskInstruction(
+        _TaskInstruction(
           icon: Icons.format_list_numbered_outlined,
-          title: '起きる順に組む',
-          body: '未配置のカードを、最初に起きるものからタップします。選んだカードは取り消せます。',
+          title: lang.t('起きる順に組む', 'Put them in order'),
+          body: lang.t(
+            '未配置のカードを、最初に起きるものからタップします。選んだカードは取り消せます。',
+            'Tap the unplaced cards, starting with what happens first. You can undo a placed card.',
+          ),
         ),
         const SizedBox(height: 14),
-        Text('組んだ順序', style: t.textTheme.titleSmall?.jaWeight(FontWeight.w700)),
+        Text(
+          lang.t('組んだ順序', 'Your order'),
+          style: t.textTheme.titleSmall?.jaWeight(FontWeight.w700),
+        ),
         const SizedBox(height: 8),
         if (ordered.isEmpty)
           Container(
@@ -410,7 +434,7 @@ class _SequenceInput extends StatelessWidget {
               border: Border.all(color: colors.border),
             ),
             child: Text(
-              'まだカードを置いていません。',
+              lang.t('まだカードを置いていません。', 'No cards placed yet.'),
               style: t.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
             ),
           )
@@ -429,11 +453,14 @@ class _SequenceInput extends StatelessWidget {
             if (i != ordered.length - 1) const SizedBox(height: 8),
           ],
         const SizedBox(height: 16),
-        Text('未配置', style: t.textTheme.titleSmall?.jaWeight(FontWeight.w700)),
+        Text(
+          lang.t('未配置', 'Unplaced'),
+          style: t.textTheme.titleSmall?.jaWeight(FontWeight.w700),
+        ),
         const SizedBox(height: 8),
         if (remaining.isEmpty)
           Text(
-            'すべてのカードを置きました。',
+            lang.t('すべてのカードを置きました。', 'All cards placed.'),
             key: const ValueKey('cognitive-task-sequence-all-placed'),
             style: t.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
           )
@@ -444,9 +471,12 @@ class _SequenceInput extends StatelessWidget {
               onTap: () => onChanged(
                 SequenceTaskResponse([...orderedIds, remaining[i].id]),
               ),
-              label:
-                  '未配置項目${i + 1}、全${remaining.length}件中。'
-                  '${remaining[i].text}。タップすると${ordered.length + 1}番目へ追加',
+              label: lang.t(
+                '未配置項目${i + 1}、全${remaining.length}件中。'
+                    '${remaining[i].text}。タップすると${ordered.length + 1}番目へ追加',
+                'Unplaced item ${i + 1} of ${remaining.length}. '
+                    '${remaining[i].text}. Tap to place it at position ${ordered.length + 1}',
+              ),
               child: ExcludeSemantics(
                 child: OutlinedButton.icon(
                   key: ValueKey(
@@ -659,7 +689,10 @@ class _SequencePlacedCard extends StatelessWidget {
     return Semantics(
       button: true,
       onTap: onRemove,
-      label: '${index + 1}番目、全$total件中。${item.text}。タップすると順序から取り消す',
+      label: lang.t(
+        '${index + 1}番目、全$total件中。${item.text}。タップすると順序から取り消す',
+        'Position ${index + 1} of $total. ${item.text}. Tap to remove from the order',
+      ),
       child: ExcludeSemantics(
         child: Material(
           color: colors.surfaceRaised,
@@ -720,10 +753,28 @@ class _SequencePlacedCard extends StatelessWidget {
 
 String _operationLabel(LocalCognitiveOperation operation) =>
     switch (operation) {
-      LocalCognitiveOperation.prediction => '科学タスク、結果を予測する',
-      LocalCognitiveOperation.conditionClassify => '科学タスク、条件を分類する',
-      LocalCognitiveOperation.causalOrder => '科学タスク、原因と結果を順に組む',
-      LocalCognitiveOperation.forceDirection => '科学タスク、力や向きを考える',
-      LocalCognitiveOperation.quantityCompare => '科学タスク、数量を比べる',
-      LocalCognitiveOperation.experimentPlan => '科学タスク、実験の条件を組む',
+      LocalCognitiveOperation.prediction => lang.t(
+        '科学タスク、結果を予測する',
+        'Science task: predict the result',
+      ),
+      LocalCognitiveOperation.conditionClassify => lang.t(
+        '科学タスク、条件を分類する',
+        'Science task: sort the conditions',
+      ),
+      LocalCognitiveOperation.causalOrder => lang.t(
+        '科学タスク、原因と結果を順に組む',
+        'Science task: order cause and effect',
+      ),
+      LocalCognitiveOperation.forceDirection => lang.t(
+        '科学タスク、力や向きを考える',
+        'Science task: think about forces and direction',
+      ),
+      LocalCognitiveOperation.quantityCompare => lang.t(
+        '科学タスク、数量を比べる',
+        'Science task: compare amounts',
+      ),
+      LocalCognitiveOperation.experimentPlan => lang.t(
+        '科学タスク、実験の条件を組む',
+        'Science task: set up the experiment conditions',
+      ),
     };

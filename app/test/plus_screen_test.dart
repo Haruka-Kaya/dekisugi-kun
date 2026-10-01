@@ -78,6 +78,7 @@ void main() {
   Widget wrap(
     FakePurchaseService purchases, {
     Future<bool> Function()? onEntitlementSync,
+    Future<void> Function()? onPlusActivated,
     Future<bool> Function(Uri uri)? openExternalUri,
     VoidCallback? onClose,
     double textScale = 1,
@@ -93,6 +94,7 @@ void main() {
       home: PlusScreen(
         purchaseService: purchases,
         onEntitlementSync: onEntitlementSync,
+        onPlusActivated: onPlusActivated,
         openExternalUri: openExternalUri,
         onClose: onClose,
       ),
@@ -176,9 +178,12 @@ void main() {
     await tester.pumpWidget(wrap(FakePurchaseService()));
     await tester.pumpAndSettle();
 
-    expect(find.text('1日2会話'), findsOneWidget);
-    expect(find.textContaining('1回はおよそ10分'), findsWidgets);
-    expect(find.text('会話回数の上限なし'), findsOneWidget);
+    expect(find.text('教材とミッションは全部無料'), findsOneWidget);
+    expect(find.textContaining('およそ10分'), findsWidgets);
+    expect(
+      find.text('限定マスコット・生成AIの返事・保護者レポート'),
+      findsOneWidget,
+    );
     expect(find.textContaining('本人のノート'), findsOneWidget);
     expect(find.textContaining('文字入力'), findsOneWidget);
     expect(find.textContaining('アクセシビリティ機能'), findsOneWidget);
@@ -191,6 +196,7 @@ void main() {
 
   testWidgets('購入成功と会話枠同期の両方を確認してから有効表示する', (tester) async {
     var syncCalls = 0;
+    var perkGrants = 0;
     final purchases = FakePurchaseService(
       purchaseResult: const PurchaseActionResult(
         outcome: PurchaseActionOutcome.completed,
@@ -204,6 +210,9 @@ void main() {
           syncCalls++;
           return true;
         },
+        onPlusActivated: () async {
+          perkGrants++;
+        },
       ),
     );
     await tester.pumpAndSettle();
@@ -216,8 +225,9 @@ void main() {
     expect(purchases.purchaseCalls, 1);
     expect(purchases.lastPackage, same(monthly));
     expect(syncCalls, 1);
+    expect(perkGrants, 1);
     expect(find.text('Plusは有効です'), findsOneWidget);
-    expect(find.textContaining('会話枠への反映を確認しました'), findsOneWidget);
+    expect(find.textContaining('限定マスコットを受け取りました'), findsOneWidget);
     expect(find.text('¥980で申し込む'), findsNothing);
   });
 
@@ -426,7 +436,7 @@ void main() {
 
     await reveal(tester, find.text('このアプリではPlusを購入できません'));
     expect(find.text('このアプリではPlusを購入できません'), findsOneWidget);
-    expect(find.textContaining('1日2会話はそのまま'), findsOneWidget);
+    expect(find.textContaining('そのまま使えます'), findsOneWidget);
     expect(find.text('¥980'), findsNothing);
     expect(find.text('以前の購入を復元'), findsNothing);
   });

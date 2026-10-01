@@ -11,6 +11,7 @@ library;
 import 'dart:math' as math;
 
 import '../services/transcript_text.dart';
+import '../config/app_language.dart';
 
 enum UnitCurriculumField {
   matter,
@@ -119,12 +120,55 @@ class UnitSafety {
   Map<String, Object?> toJson() => {'level': level.wire, 'guidance': guidance};
 }
 
+/// 概念につながれた定番の誤概念。
+///
+/// `statement`は誤った理解（記録と復習の表示用）、`correct`は訂正後の
+/// 正しい考え。AIが口にする逐語の誘発文（lure）は同梱しない。
+class UnitConceptMisconception {
+  const UnitConceptMisconception({
+    required this.id,
+    required this.statement,
+    required this.correct,
+  });
+
+  final String id;
+  final String statement;
+  final String correct;
+
+  static UnitConceptMisconception? fromJson(Map<String, Object?> json) {
+    if (!_hasExactKeys(json, const {'id', 'statement', 'correct'})) {
+      return null;
+    }
+    final id = _notationText(json['id'], maxLength: 16);
+    final statement = _notationText(json['statement'], maxLength: 300);
+    final correct = _notationText(json['correct'], maxLength: 600);
+    if (id == null ||
+        !RegExp(r'^M\d{2}$').hasMatch(id) ||
+        statement == null ||
+        correct == null) {
+      return null;
+    }
+    return UnitConceptMisconception(
+      id: id,
+      statement: statement,
+      correct: correct,
+    );
+  }
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'statement': statement,
+    'correct': correct,
+  };
+}
+
 /// 一覧に公開する1概念。Storyの事件名と学習指導要領対応も正本から受け取る。
 class UnitConcept {
   const UnitConcept({
     required this.key,
     required this.label,
     required this.storyTitle,
+    this.misconception,
     this.field = UnitCurriculumField.energy,
     this.grade = 1,
     this.curriculumRefs = const [],
@@ -139,6 +183,9 @@ class UnitConcept {
   final String key;
   final String label;
   final String storyTitle;
+
+  /// カタログJSONでは必須。直接構築するfixtureだけnullを許す。
+  final UnitConceptMisconception? misconception;
   final UnitCurriculumField field;
   final int grade;
   final List<UnitCurriculumReference> curriculumRefs;
@@ -147,22 +194,41 @@ class UnitConcept {
   final UnitSafety safety;
 
   static UnitConcept? fromJson(Map<String, Object?> json) {
+    // misconceptionはv10同梱・新APIだけが持つ。旧キャッシュとfixtureを
+    // 拒否しないため、キーが無い形も受理する（あれば有効な形を要求）。
     if (!_hasExactKeys(json, const {
-      'key',
-      'label',
-      'storyTitle',
-      'field',
-      'grade',
-      'curriculumRefs',
-      'prerequisites',
-      'difficulty',
-      'safety',
-    })) {
+          'key',
+          'label',
+          'storyTitle',
+          'field',
+          'grade',
+          'curriculumRefs',
+          'prerequisites',
+          'difficulty',
+          'safety',
+        }) &&
+        !_hasExactKeys(json, const {
+          'key',
+          'label',
+          'storyTitle',
+          'misconception',
+          'field',
+          'grade',
+          'curriculumRefs',
+          'prerequisites',
+          'difficulty',
+          'safety',
+        })) {
       return null;
     }
     final key = _notationText(json['key'], maxLength: 128);
     final label = _notationText(json['label'], maxLength: 300);
     final storyTitle = _notationText(json['storyTitle'], maxLength: 300);
+    final rawMisconception = json['misconception'];
+    final misconceptionJson = rawMisconception == null
+        ? null
+        : _stringKeyedMap(rawMisconception);
+    if (rawMisconception != null && misconceptionJson == null) return null;
     final field = UnitCurriculumField.parse(json['field']);
     final grade = json['grade'];
     final difficulty = json['difficulty'];
@@ -202,7 +268,13 @@ class UnitConcept {
       references.add(reference);
     }
     final prerequisites = rawPrerequisites.cast<String>();
+    final misconception = misconceptionJson == null
+        ? null
+        : UnitConceptMisconception.fromJson(misconceptionJson);
     final safety = UnitSafety.fromJson(safetyJson);
+    if (misconceptionJson != null && misconception == null) {
+      return null;
+    }
     if (prerequisites.toSet().length != prerequisites.length ||
         references.map((reference) => reference.section).toSet().length !=
             references.length ||
@@ -213,6 +285,7 @@ class UnitConcept {
       key: key,
       label: label,
       storyTitle: storyTitle,
+      misconception: misconception,
       field: field,
       grade: grade.toInt(),
       curriculumRefs: List.unmodifiable(references),
@@ -226,6 +299,7 @@ class UnitConcept {
     'key': key,
     'label': label,
     'storyTitle': storyTitle,
+    if (misconception != null) 'misconception': misconception!.toJson(),
     'field': field.wire,
     'grade': grade,
     'curriculumRefs': [
@@ -840,9 +914,9 @@ enum LocalPracticeStage {
   String get wire => name;
 
   String get label => switch (this) {
-    LocalPracticeStage.foundation => '原理を思い出す',
-    LocalPracticeStage.conditions => '条件を見分ける',
-    LocalPracticeStage.transfer => '別の場面へ使う',
+    LocalPracticeStage.foundation => t('原理を思い出す', 'Recall the principle'),
+    LocalPracticeStage.conditions => t('条件を見分ける', 'Tell the conditions apart'),
+    LocalPracticeStage.transfer => t('別の場面へ使う', 'Apply it to a new situation'),
   };
 
   static LocalPracticeStage? parse(Object? value) => switch (value) {
@@ -1772,11 +1846,14 @@ class LocalNotationLab {
           kind: LocalNotationTaskKind.symbolMatch,
           id: '${_notationConceptFromNeed(symbol.needCode)}.symbol',
           needCode: symbol.needCode,
-          title: '単位記号を意味と結ぶ',
+          title: t('単位記号を意味と結ぶ', 'Match unit symbols to their meaning'),
           prompt: symbol.prompt,
           solutionSummary: symbol.solutionSummary,
           representation: const [],
-          representationSemanticsLabel: '選択肢の記号と意味を対応させます。',
+          representationSemanticsLabel: t(
+            '選択肢の記号と意味を対応させます。',
+            'Match each symbol to its meaning.',
+          ),
           choices: symbol.choices,
           correctChoiceId: symbol.correctChoiceId,
         ),
@@ -1785,7 +1862,7 @@ class LocalNotationLab {
           kind: LocalNotationTaskKind.graphRead,
           id: '${_notationConceptFromNeed(graph.needCode)}.graph',
           needCode: graph.needCode,
-          title: 'グラフを読む',
+          title: t('グラフを読む', 'Read the graph'),
           prompt: graph.prompt,
           solutionSummary: graph.solutionSummary,
           representation: graph.graphNotation,
@@ -2346,13 +2423,28 @@ class Section {
     if (variants.isEmpty) {
       return LocalPracticeVariant(
         stage: LocalPracticeStage.foundation,
-        recallPrompt: '教材を見ずに、この概念の中心となる考えを自分の言葉で説明してください。',
-        reasoningPrompt: 'その説明が成り立つ条件か、そうなる理由を一つ足してください。',
+        recallPrompt: t(
+          '教材を見ずに、この概念の中心となる考えを自分の言葉で説明してください。',
+          'Without looking at the material, explain the main idea of this concept in your own words.',
+        ),
+        reasoningPrompt: t(
+          'その説明が成り立つ条件か、そうなる理由を一つ足してください。',
+          'Add one condition where your explanation holds, or one reason why it happens.',
+        ),
         transferPrompt: tryIt.trim().isEmpty
-            ? 'この考えを使える具体的な場面を一つ考え、起きることを予想してください。'
+            ? t(
+                'この考えを使える具体的な場面を一つ考え、起きることを予想してください。',
+                'Think of one real situation where this idea applies, and predict what will happen.',
+              )
             : tryIt,
-        expectedOutcome: 'この旧形式の教材には、場面へ直接対応する比較結果がありません。',
-        expectedReason: 'チェックポイントの正答を場面の答えとして流用せず、教材を読み直してください。',
+        expectedOutcome: t(
+          'この旧形式の教材には、場面へ直接対応する比較結果がありません。',
+          "This older-format material doesn't have a result to compare with this situation.",
+        ),
+        expectedReason: t(
+          'チェックポイントの正答を場面の答えとして流用せず、教材を読み直してください。',
+          "Don't reuse the checkpoint answer for this situation. Reread the material instead.",
+        ),
         cognitiveTask: LocalCognitiveTask.safeLegacyFallback,
         checkpoint: localCheckpoint,
       );

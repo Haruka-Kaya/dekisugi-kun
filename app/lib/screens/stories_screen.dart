@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_economy.dart';
@@ -40,8 +41,14 @@ class StoriesScreen extends StatelessWidget {
           title: hero.title,
           body: hero.body,
           semanticSummary:
-              '理科事件簿。${episodes.length}件中$readable件が読めます。'
-              '$completed件完了。${hero.semanticState}',
+              lang.t(
+                '理科事件簿。${episodes.length}件中$readable件が読めます。',
+                'Science case files. $readable of ${episodes.length} available.',
+              ) +
+              lang.t(
+                '$completed件完了。${hero.semanticState}',
+                ' $completed completed. ${hero.semanticState}',
+              ),
           mascotReaction: hero.reaction,
           mascotStyle: mascotStyle,
           content: GameSolidSurface(
@@ -51,13 +58,13 @@ class StoriesScreen extends StatelessWidget {
               children: [
                 _StoryFact(
                   icon: Icons.menu_book_rounded,
-                  label: '読める',
-                  value: '$readable件',
+                  label: lang.t('読める', 'Available'),
+                  value: lang.t('$readable件', '$readable'),
                 ),
                 _StoryFact(
                   icon: Icons.check_circle_outline_rounded,
-                  label: '解明済み',
-                  value: '$completed件',
+                  label: lang.t('解明済み', 'Solved'),
+                  value: lang.t('$completed件', '$completed'),
                 ),
               ],
             ),
@@ -79,9 +86,12 @@ class StoriesScreen extends StatelessWidget {
                 ),
         ),
         const SizedBox(height: GameTokens.spaceXl),
-        const GameSectionHeader(
-          title: '事件ファイル',
-          description: '未解放・続き・完了・復習を、形と文字で見分けます。',
+        GameSectionHeader(
+          title: lang.t('事件ファイル', 'Case files'),
+          description: lang.t(
+            '未解放・続き・完了・復習を、形と文字で見分けます。',
+            'Use the shapes and labels to tell locked, in-progress, completed, and review cases apart.',
+          ),
         ),
         const SizedBox(height: GameTokens.spaceMd),
         if (episodes.isEmpty)
@@ -124,33 +134,51 @@ _StoryHeroState _storyHeroState(List<StoryEpisodeView> episodes) {
   if (primary != null) {
     return switch (primary.state) {
       GameContentState.inProgress => (
-        eyebrow: '理科事件簿 ・ 続き',
-        title: '「${primary.title}」の続き',
-        body: '前回の判断から再開し、観察と理由を最後までつなぎます。',
-        semanticState: '続きの事件は${primary.title}です',
+        eyebrow: lang.t('理科事件簿 ・ 続き', 'SCIENCE CASE FILES · CONTINUE'),
+        title: lang.t('「${primary.title}」の続き', 'Continue "${primary.title}"'),
+        body: lang.t(
+          '前回の判断から再開し、観察と理由を最後までつなぎます。',
+          'Pick up from your last choice and connect observations with reasons.',
+        ),
+        semanticState: lang.t(
+          '続きの事件は${primary.title}です',
+          'Continue the ${primary.title} case',
+        ),
         reaction: GameCharacterReaction.encourage,
         primaryEpisode: primary,
-        actionLabel: '続きから読む',
+        actionLabel: lang.t('続きから読む', 'Continue reading'),
         actionIcon: Icons.play_arrow_rounded,
       ),
       GameContentState.dueReview => (
-        eyebrow: '理科事件簿 ・ 再検証',
-        title: '「${primary.title}」をもう一度',
-        body: '前に解明した事件を、条件と結果を思い出しながら再検証します。',
-        semanticState: '次は${primary.title}を再検証します',
+        eyebrow: lang.t('理科事件簿 ・ 再検証', 'SCIENCE CASE FILES · REVISIT'),
+        title: lang.t('「${primary.title}」をもう一度', 'Revisit "${primary.title}"'),
+        body: lang.t(
+          '前に解明した事件を、条件と結果を思い出しながら再検証します。',
+          'Revisit a solved case and recall its conditions and results.',
+        ),
+        semanticState: lang.t(
+          '次は${primary.title}を再検証します',
+          'Next, revisit ${primary.title}',
+        ),
         reaction: GameCharacterReaction.thinking,
         primaryEpisode: primary,
-        actionLabel: 'もう一度調べる',
+        actionLabel: lang.t('もう一度調べる', 'Investigate again'),
         actionIcon: Icons.replay_rounded,
       ),
       GameContentState.available => (
-        eyebrow: '理科事件簿 ・ 次の事件',
+        eyebrow: lang.t('理科事件簿 ・ 次の事件', 'SCIENCE CASE FILES · NEXT CASE'),
         title: primary.title,
-        body: '${primary.conceptLabel}の思い込みを、観察と理由で解き明かします。',
-        semanticState: '次は${primary.title}を読みます',
+        body: lang.t(
+          '${primary.conceptLabel}の思い込みを、観察と理由で解き明かします。',
+          'Use observations and reasons to uncover the misconception about ${primary.conceptLabel}.',
+        ),
+        semanticState: lang.t(
+          '次は${primary.title}を読みます',
+          'Read ${primary.title} next',
+        ),
         reaction: GameCharacterReaction.invite,
         primaryEpisode: primary,
-        actionLabel: '事件を開く',
+        actionLabel: lang.t('事件を開く', 'Open case'),
         actionIcon: Icons.menu_book_rounded,
       ),
       _ => throw StateError(
@@ -164,10 +192,13 @@ _StoryHeroState _storyHeroState(List<StoryEpisodeView> episodes) {
       episodes.every((episode) => episode.state == GameContentState.completed);
   if (allCompleted) {
     return (
-      eyebrow: '理科事件簿 ・ 解明済み',
-      title: 'すべての事件を解明しました',
-      body: '観察した条件と結果を、探究ノートで次の問いにつなげられます。',
-      semanticState: 'すべての事件を解明済みです',
+      eyebrow: lang.t('理科事件簿 ・ 解明済み', 'SCIENCE CASE FILES · SOLVED'),
+      title: lang.t('すべての事件を解明しました', 'All cases solved'),
+      body: lang.t(
+        '観察した条件と結果を、探究ノートで次の問いにつなげられます。',
+        'Use the conditions and results you observed to tackle the next question on your learning path.',
+      ),
+      semanticState: lang.t('すべての事件を解明済みです', 'All cases solved'),
       reaction: GameCharacterReaction.celebrate,
       primaryEpisode: null,
       actionLabel: null,
@@ -177,10 +208,13 @@ _StoryHeroState _storyHeroState(List<StoryEpisodeView> episodes) {
 
   if (episodes.isEmpty) {
     return (
-      eyebrow: '理科事件簿',
-      title: '最初の事件を準備中',
-      body: '探究ノートを進めると、ここに観察事件が現れます。',
-      semanticState: '事件を準備中です',
+      eyebrow: lang.t('理科事件簿', 'Science case files'),
+      title: lang.t('最初の事件を準備中', 'Preparing your first case'),
+      body: lang.t(
+        '探究ノートを進めると、ここに観察事件が現れます。',
+        'Move along the learning path to unlock an observation story here.',
+      ),
+      semanticState: lang.t('事件を準備中です', 'Preparing a case'),
       reaction: GameCharacterReaction.invite,
       primaryEpisode: null,
       actionLabel: null,
@@ -189,10 +223,16 @@ _StoryHeroState _storyHeroState(List<StoryEpisodeView> episodes) {
   }
 
   return (
-    eyebrow: '理科事件簿 ・ 未解放',
-    title: '次の事件は探究ノートで解放',
-    body: '現在の必修ノードを終えると、次の事件ファイルを読めます。',
-    semanticState: '読める事件はまだありません',
+    eyebrow: lang.t('理科事件簿 ・ 未解放', 'SCIENCE CASE FILES · LOCKED'),
+    title: lang.t(
+      '次の事件は探究ノートで解放',
+      'Unlock the next case on your learning path',
+    ),
+    body: lang.t(
+      '現在の必修ノードを終えると、次の事件ファイルを読めます。',
+      'Finish the current required node to read the next case file.',
+    ),
+    semanticState: lang.t('読める事件はまだありません', 'No cases available yet'),
     reaction: GameCharacterReaction.invite,
     primaryEpisode: null,
     actionLabel: null,
@@ -210,7 +250,10 @@ class _EmptyStories extends StatelessWidget {
     return Semantics(
       key: const ValueKey('stories-empty'),
       container: true,
-      label: '事件簿はまだ未解放。探究ノートを進めると開きます',
+      label: lang.t(
+        '事件簿はまだ未解放。探究ノートを進めると開きます',
+        'Case files are locked. Continue on the learning path to open them.',
+      ),
       child: ExcludeSemantics(
         child: GameSolidSurface(
           raised: true,
@@ -236,14 +279,17 @@ class _EmptyStories extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '事件簿はまだ未解放',
+                      lang.t('事件簿はまだ未解放', 'Case files are locked'),
                       style: t.textTheme.titleMedium
                           ?.copyWith(color: colors.ink)
                           .jaWeight(FontWeight.w800),
                     ),
                     const SizedBox(height: GameTokens.spaceSm),
                     Text(
-                      '探究ノートを進めると、事件簿が開きます。',
+                      lang.t(
+                        '探究ノートを進めると、事件簿が開きます。',
+                        'Keep going on the learning path to open case files.',
+                      ),
                       style: t.textTheme.bodyMedium?.copyWith(
                         color: colors.inkMuted,
                       ),
@@ -271,11 +317,11 @@ class _EpisodeCard extends StatelessWidget {
     final colors = context.gamePalette;
     final enabled = episode.state != GameContentState.locked;
     final status = switch (episode.state) {
-      GameContentState.locked => '未解放',
-      GameContentState.available => '読めます',
-      GameContentState.inProgress => '続きから',
-      GameContentState.completed => '完了',
-      GameContentState.dueReview => 'もう一度',
+      GameContentState.locked => lang.t('未解放', 'Locked'),
+      GameContentState.available => lang.t('読めます', 'Available'),
+      GameContentState.inProgress => lang.t('続きから', 'Continue'),
+      GameContentState.completed => lang.t('完了', 'Completed'),
+      GameContentState.dueReview => lang.t('もう一度', 'Review'),
     };
     final icon = switch (episode.state) {
       GameContentState.locked => Icons.lock_outline_rounded,
@@ -302,9 +348,10 @@ class _EpisodeCard extends StatelessWidget {
     return Semantics(
       button: enabled,
       enabled: enabled,
-      label:
-          '${episode.chapterLabel}、${episode.title}。${episode.conceptLabel}。'
-          '$status。約${episode.minutes}分',
+      label: lang.t(
+        '${episode.chapterLabel}、${episode.title}。${episode.conceptLabel}。$status。約${episode.minutes}分',
+        '${episode.chapterLabel}, ${episode.title}. ${episode.conceptLabel}. $status. About ${episode.minutes} min',
+      ),
       onTap: enabled ? onOpen : null,
       child: ExcludeSemantics(
         child: Material(
@@ -374,7 +421,10 @@ class _EpisodeCard extends StatelessWidget {
                     ),
                     const SizedBox(height: GameTokens.spaceMd),
                     Text(
-                      '${episode.conceptLabel} ・ 約${episode.minutes}分',
+                      lang.t(
+                        '${episode.conceptLabel} ・ 約${episode.minutes}分',
+                        '${episode.conceptLabel} · About ${episode.minutes} min',
+                      ),
                       style: t.textTheme.bodySmall?.copyWith(
                         color: colors.inkMuted,
                       ),

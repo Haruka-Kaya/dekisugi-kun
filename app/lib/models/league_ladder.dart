@@ -5,21 +5,25 @@
 /// 使うのは唯一1位・唯一最下位・同率という順位関係だけ。
 library;
 
+import '../config/app_language.dart';
+
 enum LanSocialLeagueTier {
-  bronze('ブロンズ'),
-  silver('シルバー'),
-  gold('ゴールド'),
-  sapphire('サファイア'),
-  ruby('ルビー'),
-  emerald('エメラルド'),
-  amethyst('アメジスト'),
-  pearl('パール'),
-  obsidian('オブシディアン'),
-  diamond('ダイヤモンド');
+  bronze('ブロンズ', 'Bronze'),
+  silver('シルバー', 'Silver'),
+  gold('ゴールド', 'Gold'),
+  sapphire('サファイア', 'Sapphire'),
+  ruby('ルビー', 'Ruby'),
+  emerald('エメラルド', 'Emerald'),
+  amethyst('アメジスト', 'Amethyst'),
+  pearl('パール', 'Pearl'),
+  obsidian('オブシディアン', 'Obsidian'),
+  diamond('ダイヤモンド', 'Diamond');
 
-  const LanSocialLeagueTier(this.label);
+  const LanSocialLeagueTier(this._labelJa, this._labelEn);
 
-  final String label;
+  final String _labelJa;
+  final String _labelEn;
+  String get label => t(_labelJa, _labelEn);
   String get wire => name;
 
   LanSocialLeagueTier get promoted =>

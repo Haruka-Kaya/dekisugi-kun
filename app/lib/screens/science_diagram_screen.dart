@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../config/motion.dart';
@@ -175,10 +176,19 @@ class _ScienceDiagramScreenState extends State<ScienceDiagramScreen> {
     final reduceMotion = ReduceMotionScope.of(context);
     final hasSharedChrome = GameActivityScaffold.hasSharedChrome(context);
     final headerBody = _finished
-        ? '自分の組み方と教材を比べ終えました。'
+        ? lang.t(
+            '自分の組み方と教材を比べ終えました。',
+            'You compared your build with the material.',
+          )
         : _submitted
-        ? '自分の組み方と教材のしくみを比べます。'
-        : 'カードでしくみを組み、理由を一文で説明します。';
+        ? lang.t(
+            '自分の組み方と教材のしくみを比べます。',
+            'Compare your build with the material\'s mechanism.',
+          )
+        : lang.t(
+            'カードでしくみを組み、理由を一文で説明します。',
+            'Build the mechanism with cards and explain why in one sentence.',
+          );
 
     return Scaffold(
       key: const ValueKey('science-diagram-screen'),
@@ -189,7 +199,7 @@ class _ScienceDiagramScreenState extends State<ScienceDiagramScreen> {
               backgroundColor: colors.canvas,
               foregroundColor: colors.ink,
               title: Text(
-                'しくみ図',
+                lang.t('しくみ図', 'Mechanism diagram'),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
@@ -325,7 +335,10 @@ class _ComposeStep extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: 'しくみ図、第1段階。カードで考えを組み、理由を一文書く',
+      label: lang.t(
+        'しくみ図、第1段階。カードで考えを組み、理由を一文書く',
+        'Mechanism diagram, step 1. Build your idea with cards and write one sentence of reasoning',
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -333,7 +346,10 @@ class _ComposeStep extends StatelessWidget {
             step: '1 / 2',
             eyebrow: 'しくみを組む',
             title: conceptLabel,
-            body: '先にカードで予想を組み、そのあと決め手を一文だけ書きます。',
+            body: lang.t(
+              '先にカードで予想を組み、そのあと決め手を一文だけ書きます。',
+              'First build your prediction with cards, then write the key reason in one sentence.',
+            ),
           ),
           const SizedBox(height: GameTokens.spaceXl),
           _PromptSurface(prompt: transferPrompt),
@@ -356,18 +372,21 @@ class _ComposeStep extends StatelessWidget {
                       CognitiveTaskResponseSummary(
                         prompt: prompt,
                         response: response!,
-                        label: 'あなたの組み方',
+                        label: lang.t('あなたの組み方', 'Your build'),
                       ),
                       const SizedBox(height: GameTokens.spaceLg),
                       Text(
-                        'なぜそう考えた？',
+                        lang.t('なぜそう考えた？', 'Why do you think so?'),
                         style: t.textTheme.titleLarge
                             ?.copyWith(color: colors.ink)
                             .jaWeight(FontWeight.w800),
                       ),
                       const SizedBox(height: GameTokens.spaceXs),
                       Text(
-                        '条件・力の向き・変化の順から、決め手を一文で書きます。',
+                        lang.t(
+                          '条件・力の向き・変化の順から、決め手を一文で書きます。',
+                          'Write the key reason in one sentence: a condition, force direction, or order of change.',
+                        ),
                         style: t.textTheme.bodyMedium?.copyWith(
                           color: colors.inkMuted,
                         ),
@@ -376,8 +395,14 @@ class _ComposeStep extends StatelessWidget {
                       _LocalSentenceField(
                         key: const ValueKey('science-diagram-reason'),
                         controller: reasonController,
-                        label: 'この答えにした理由（1文）',
-                        hint: '例：変えた条件が一つだけだから。',
+                        label: lang.t(
+                          'この答えにした理由（1文）',
+                          'Why you chose this answer (1 sentence)',
+                        ),
+                        hint: lang.t(
+                          '例：変えた条件が一つだけだから。',
+                          'e.g. Because only one condition was changed.',
+                        ),
                         onChanged: onReasonChanged,
                       ),
                       const SizedBox(height: GameTokens.spaceLg),
@@ -390,7 +415,12 @@ class _ComposeStep extends StatelessWidget {
                           foregroundColor: colors.onPathActive,
                         ),
                         icon: const Icon(Icons.compare_arrows_rounded),
-                        label: const Text('教材の組み方と比べる'),
+                        label: Text(
+                          lang.t(
+                            '教材の組み方と比べる',
+                            'Compare with the material\'s build',
+                          ),
+                        ),
                       ),
                     ],
                   )
@@ -411,7 +441,10 @@ class _ComposeStep extends StatelessWidget {
                         const SizedBox(width: GameTokens.spaceSm),
                         Expanded(
                           child: Text(
-                            'カードをすべて決めると、理由を書く欄が開きます。',
+                            lang.t(
+                              'カードをすべて決めると、理由を書く欄が開きます。',
+                              'Set all the cards to open the reason field.',
+                            ),
                             style: t.textTheme.bodyMedium?.copyWith(
                               color: colors.ink,
                             ),
@@ -478,7 +511,10 @@ class _ComparisonStep extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: 'しくみ図、第2段階。自分の組み方と教材を比べる',
+      label: lang.t(
+        'しくみ図、第2段階。自分の組み方と教材を比べる',
+        'Mechanism diagram, step 2. Compare your build with the material',
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -486,7 +522,10 @@ class _ComparisonStep extends StatelessWidget {
             step: '2 / 2',
             eyebrow: '教材と比べる',
             title: conceptLabel,
-            body: '教材の根拠と照らし、違っていたら組み直してから自分の一文を残します。',
+            body: lang.t(
+              '教材の根拠と照らし、違っていたら組み直してから自分の一文を残します。',
+              'No scoring. Find the differences, then keep your own one sentence.',
+            ),
           ),
           const SizedBox(height: GameTokens.spaceXl),
           _PromptSurface(prompt: transferPrompt),
@@ -494,7 +533,7 @@ class _ComparisonStep extends StatelessWidget {
           CognitiveTaskResponseSummary(
             prompt: prompt,
             response: response,
-            label: 'あなたの組み方',
+            label: lang.t('あなたの組み方', 'Your build'),
           ),
           const SizedBox(height: GameTokens.spaceMd),
           _ReasonSurface(reason: reason),
@@ -681,7 +720,7 @@ class _PromptSurface extends StatelessWidget {
     return Semantics(
       key: const ValueKey('science-diagram-transfer-prompt'),
       container: true,
-      label: '考える場面。$prompt',
+      label: lang.t('考える場面。$prompt', 'Scenario. $prompt'),
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.all(GameTokens.spaceLg),
@@ -700,7 +739,7 @@ class _PromptSurface extends StatelessWidget {
                   const SizedBox(width: GameTokens.spaceSm),
                   Expanded(
                     child: Text(
-                      'この場面を考える',
+                      lang.t('この場面を考える', 'Think about this scenario'),
                       style: t.textTheme.labelLarge
                           ?.copyWith(color: colors.pathActive)
                           .jaWeight(FontWeight.w800),
@@ -732,7 +771,7 @@ class _ReasonSurface extends StatelessWidget {
     final colors = context.gamePalette;
     return Semantics(
       container: true,
-      label: 'あなたが書いた理由。$reason',
+      label: lang.t('あなたが書いた理由。$reason', 'Your reason. $reason'),
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.all(GameTokens.spaceLg),
@@ -744,7 +783,7 @@ class _ReasonSurface extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'あなたが書いた理由',
+                lang.t('あなたが書いた理由', 'Your reason'),
                 style: t.textTheme.labelLarge
                     ?.copyWith(color: colors.inkMuted)
                     .jaWeight(FontWeight.w800),
@@ -779,9 +818,11 @@ class _MaterialComparison extends StatelessWidget {
     return Semantics(
       key: const ValueKey('science-diagram-solution'),
       container: true,
-      label:
-          '教材の組み方。$solutionSummary。'
-          '教材で確かめた結果。$expectedOutcome。教材の理由。$expectedReason',
+      label: lang.t(
+        '教材の組み方。$solutionSummary。'
+            '教材で確かめた結果。$expectedOutcome。教材の理由。$expectedReason',
+        'Material\'s build. $solutionSummary. Result confirmed by the material. $expectedOutcome. Material\'s reason. $expectedReason',
+      ),
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.all(GameTokens.spaceLg),
@@ -795,19 +836,19 @@ class _MaterialComparison extends StatelessWidget {
             children: [
               _ComparisonLine(
                 icon: Icons.account_tree_outlined,
-                label: '教材の組み方',
+                label: lang.t('教材の組み方', 'Material\'s build'),
                 body: solutionSummary,
               ),
               _ComparisonDivider(color: colors.border),
               _ComparisonLine(
                 icon: Icons.visibility_outlined,
-                label: '教材で確かめた結果',
+                label: lang.t('教材で確かめた結果', 'Result confirmed by the material'),
                 body: expectedOutcome,
               ),
               _ComparisonDivider(color: colors.border),
               _ComparisonLine(
                 icon: Icons.lightbulb_outline_rounded,
-                label: '教材の理由',
+                label: lang.t('教材の理由', 'Material\'s reason'),
                 body: expectedReason,
               ),
             ],
@@ -893,7 +934,10 @@ class _DecisionButton extends StatelessWidget {
       container: true,
       button: true,
       selected: selected,
-      label: '$label。$description${selected ? '。選択中' : ''}',
+      label: lang.t(
+        '$label。$description${selected ? '。選択中' : ''}',
+        '$label. $description${selected ? '. Selected' : ''}',
+      ),
       onTap: onTap,
       child: ExcludeSemantics(
         child: Material(
@@ -985,7 +1029,10 @@ class _PrivacyNote extends StatelessWidget {
     final colors = context.gamePalette;
     return Semantics(
       container: true,
-      label: '入力は保存も送信もせず、構造の復習コードだけを端末に保存し、成績や理解度の認定には使いません',
+      label: lang.t(
+        '入力は保存も送信もせず、構造の復習コードだけを端末に保存し、成績や理解度の認定には使いません',
+        'Input is not saved or sent. Only a review code for the structure is stored on this device, and it is not used for grades or mastery',
+      ),
       child: ExcludeSemantics(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -998,7 +1045,10 @@ class _PrivacyNote extends StatelessWidget {
             const SizedBox(width: GameTokens.spaceSm),
             Expanded(
               child: Text(
-                '入力内容はこの画面だけで使い、保存・送信しません。構造の不一致があった場合も、固定の復習コードだけをこの端末に保存し、成績や理解度の認定には使いません。',
+                lang.t(
+                  '入力内容はこの画面だけで使い、保存・送信しません。構造の不一致があった場合も、固定の復習コードだけをこの端末に保存し、成績や理解度の認定には使いません。',
+                  'Your input is used only on this screen and is not saved or sent. If the structure didn\'t match, only a fixed review code is stored on this device. It is not used for grades or mastery.',
+                ),
                 style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
               ),
             ),
@@ -1026,7 +1076,10 @@ class _FinishedStep extends StatelessWidget {
     return Semantics(
       container: true,
       liveRegion: true,
-      label: 'しくみ図を完了。$conceptLabelを最後まで見比べました',
+      label: lang.t(
+        'しくみ図を完了。$conceptLabelを最後まで見比べました',
+        'Mechanism diagram complete. You compared $conceptLabel to the end',
+      ),
       child: Container(
         padding: const EdgeInsets.all(GameTokens.spaceXl),
         decoration: BoxDecoration(
@@ -1044,14 +1097,17 @@ class _FinishedStep extends StatelessWidget {
             ),
             const SizedBox(height: GameTokens.spaceMd),
             Text(
-              '見比べ終わりました',
+              lang.t('見比べ終わりました', 'Comparison done'),
               style: t.textTheme.headlineSmall
                   ?.copyWith(color: colors.ink)
                   .jaWeight(FontWeight.w800),
             ),
             const SizedBox(height: GameTokens.spaceSm),
             Text(
-              '理解度の自動判定ではなく、自分の考えと教材を最後まで比べた完了です。',
+              lang.t(
+                '理解度の自動判定ではなく、自分の考えと教材を最後まで比べた完了です。',
+                'This isn\'t an automatic mastery check. It means you compared your idea with the material to the end.',
+              ),
               style: t.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
             ),
             if (onReturnToPath != null) ...[
@@ -1065,7 +1121,7 @@ class _FinishedStep extends StatelessWidget {
                   foregroundColor: colors.onPathActive,
                 ),
                 icon: const Icon(Icons.route_rounded),
-                label: const Text('探究ノートへ戻る'),
+                label: Text(lang.t('探究ノートへ戻る', 'Back to learning path')),
               ),
             ],
           ],

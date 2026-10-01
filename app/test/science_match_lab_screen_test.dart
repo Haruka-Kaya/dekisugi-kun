@@ -114,6 +114,7 @@ void main() {
     await tester.pumpWidget(
       _wrap(disableAnimations: true, onCompleted: () => completed++),
     );
+    expect(find.textContaining('Instance of'), findsNothing);
 
     expect(find.text('対応づけ実験'), findsOneWidget);
     expect(find.bySemanticsLabel(RegExp('ラボ・ブリーフ.*対応づけ実験')), findsOneWidget);

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../config/motion.dart';
@@ -141,8 +142,11 @@ class GameCompletionCelebration extends StatelessWidget {
                           icon: Icons.note_alt_outlined,
                           value: '+${summary.xpAwarded}',
                           label: summary.xpAwarded == 0
-                              ? '探究記録（今回は加算なし）'
-                              : '探究記録',
+                              ? t(
+                                  '探究記録（今回は加算なし）',
+                                  'Observation record (none added this time)',
+                                )
+                              : t('探究記録', 'Observation record'),
                           color: colors.streak,
                         ),
                       if (summary.showPersonalRewards &&
@@ -151,21 +155,21 @@ class GameCompletionCelebration extends StatelessWidget {
                           key: const ValueKey('completion-gems'),
                           icon: Icons.hexagon_outlined,
                           value: '+${summary.gemsAwarded}',
-                          label: 'ひらめき結晶',
+                          label: t('ひらめき結晶', 'Insight gems'),
                           color: colors.gem,
                         ),
                       _CompletionMetric(
-                        key: const ValueKey('completion-time'),
+                        key: ValueKey('completion-time'),
                         icon: Icons.schedule_outlined,
                         value: _formatElapsed(summary.elapsed),
-                        label: '今回の観察時間',
+                        label: t('今回の観察時間', 'Time this round'),
                         color: colors.pathReview,
                         last: true,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: GameTokens.spaceSm),
+                SizedBox(height: GameTokens.spaceSm),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -174,10 +178,13 @@ class GameCompletionCelebration extends StatelessWidget {
                       size: 18,
                       color: colors.inkMuted,
                     ),
-                    const SizedBox(width: GameTokens.spaceSm),
+                    SizedBox(width: GameTokens.spaceSm),
                     Expanded(
                       child: Text(
-                        '観察時間はこの記録票だけに表示し、端末へ保存しません。',
+                        t(
+                          '観察時間はこの記録票だけに表示し、端末へ保存しません。',
+                          'Time is shown only on this screen and is not saved on the device.',
+                        ),
                         style: Theme.of(
                           context,
                         ).textTheme.bodySmall?.copyWith(color: colors.inkMuted),
@@ -190,8 +197,8 @@ class GameCompletionCelebration extends StatelessWidget {
                   key: const ValueKey('completion-next-step'),
                   onPressed: () =>
                       Navigator.of(context).pop(GameCompletionAction.nextStep),
-                  icon: const Icon(Icons.arrow_forward_rounded),
-                  label: const Text('次の観察へ'),
+                  icon: Icon(Icons.arrow_forward_rounded),
+                  label: Text(t('次の観察へ', 'Next observation')),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(56),
                     backgroundColor: colors.pathComplete,
@@ -208,7 +215,7 @@ class GameCompletionCelebration extends StatelessWidget {
                     context,
                   ).pop(GameCompletionAction.reviewResult),
                   icon: const Icon(Icons.visibility_outlined),
-                  label: const Text('今回の記録を見る'),
+                  label: Text(t('今回の記録を見る', 'View this observation')),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                     shape: RoundedRectangleBorder(
@@ -253,7 +260,10 @@ class _ObservationRecordHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Semantics(
-                  label: '${mascotStyle.label}が観察記録へ完了印を押しています',
+                  label: t(
+                    '${mascotStyle.label}が観察記録へ完了印を押しています',
+                    '${mascotStyle.label} stamps this observation as complete',
+                  ),
                   child: ExcludeSemantics(
                     child: Container(
                       width: 88,
@@ -326,33 +336,41 @@ class _ObservationRecordHeader extends StatelessWidget {
 
 String _observationEyebrow(String source) {
   final upper = source.toUpperCase();
-  if (source.contains('授業') || upper.contains('CLASS')) {
-    return '授業の観察記録';
+  if (source.contains(t('授業', 'Class')) || upper.contains('CLASS')) {
+    return t('授業の観察記録', 'Class observation record');
   }
-  if (source.contains('記号') ||
-      source.contains('図解') ||
+  if (source.contains(t('記号', 'Symbols')) ||
+      source.contains(t('図解', 'Diagrams')) ||
       upper.contains('NOTATION')) {
-    return '記号実験の観察記録';
+    return t('記号実験の観察記録', 'Symbol observation record');
   }
-  if (source.contains('事件') || upper.contains('STORY')) {
-    return '事件簿の観察記録';
+  if (source.contains(t('事件', 'Cases')) || upper.contains('STORY')) {
+    return t('事件簿の観察記録', 'Science case observation record');
   }
-  if (source.contains('聞き取り') || upper.contains('LISTEN')) {
-    return '聞き取りの観察記録';
+  if (source.contains(t('聞き取り', 'Listening')) || upper.contains('LISTEN')) {
+    return t('聞き取りの観察記録', 'Listening observation record');
   }
-  if (source.contains('教え返し') || upper.contains('SPEAK')) {
-    return '教え返しの観察記録';
+  if (source.contains(t('教え返し', 'Teach-back')) || upper.contains('SPEAK')) {
+    return t('教え返しの観察記録', 'Teach-back observation record');
   }
-  if (source.contains('教材観察')) return '教材観察の記録';
-  if (source.contains('構造実験')) return '構造実験の観察記録';
-  if (source.contains('高難度')) return '高難度検証の観察記録';
-  if (source.contains('総合検証')) return '総合検証の観察記録';
+  if (source.contains(t('教材観察', 'Material observation'))) {
+    return t('教材観察の記録', 'Material observation record');
+  }
+  if (source.contains(t('構造実験', 'Structured experiment'))) {
+    return t('構造実験の観察記録', 'Experiment observation record');
+  }
+  if (source.contains(t('高難度', 'Advanced'))) {
+    return t('高難度検証の観察記録', 'Advanced observation record');
+  }
+  if (source.contains(t('総合検証', 'Combined investigation'))) {
+    return t('総合検証の観察記録', 'Combined investigation record');
+  }
   if (upper.contains('BOSS') ||
       upper.contains('LEGENDARY') ||
       upper.contains('UNIT')) {
-    return '総合検証の観察記録';
+    return t('総合検証の観察記録', 'Combined investigation record');
   }
-  return '探究ノート / 保存済み';
+  return t('探究ノート / 保存済み', 'Field Notebook / Saved');
 }
 
 class _CompletionMetric extends StatelessWidget {
@@ -429,7 +447,7 @@ String _formatElapsed(Duration elapsed) {
   final seconds = math.max(1, elapsed.inSeconds);
   final minutes = seconds ~/ 60;
   final rest = seconds % 60;
-  if (minutes == 0) return '$seconds秒';
+  if (minutes == 0) return t('$seconds秒', '${seconds}s');
   if (minutes < 60) return '$minutes:${rest.toString().padLeft(2, '0')}';
   final hours = minutes ~/ 60;
   return '$hours:${(minutes % 60).toString().padLeft(2, '0')}:${rest.toString().padLeft(2, '0')}';

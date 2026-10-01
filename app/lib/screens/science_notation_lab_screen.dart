@@ -1,3 +1,4 @@
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_heart.dart';
@@ -246,11 +247,14 @@ class ScienceNotationLabContent {
         ScienceNotationChoiceTask(
           kind: LocalNotationTaskKind.symbolMatch,
           id: 'legacy.symbol',
-          title: '単位記号を意味と結ぶ',
+          title: t('単位記号を意味と結ぶ', 'Match unit symbols to meanings'),
           prompt: symbol.prompt,
           solutionSummary: symbol.solutionSummary,
           representation: const [],
-          representationSemanticsLabel: '選択肢の記号と意味を対応させます。',
+          representationSemanticsLabel: t(
+            '選択肢の記号と意味を対応させます。',
+            'Match each symbol to its meaning.',
+          ),
           choices: symbol.choices,
           correctChoiceId: symbol.correctChoiceId,
           needCode: symbol.needCode,
@@ -259,7 +263,7 @@ class ScienceNotationLabContent {
         ScienceNotationChoiceTask(
           kind: LocalNotationTaskKind.graphRead,
           id: 'legacy.graph',
-          title: 'グラフと矢印を読む',
+          title: t('グラフと矢印を読む', 'Read graphs and arrows'),
           prompt: graph.prompt,
           solutionSummary: graph.solutionSummary,
           representation: graph.graphNotation,
@@ -548,7 +552,10 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
         ScienceChallengeHeader(
           eyebrow: '記号実験  /  $stepLabel',
           title: widget.conceptLabel,
-          body: '記号・モデル・図表を組み立て、意味と結びます。',
+          body: t(
+            '記号・モデル・図表を組み立て、意味と結びます。',
+            'Build symbols, models, and charts, and link them to meanings.',
+          ),
           icon: Icons.draw_outlined,
           accent: colors.story,
           onAccent: colors.onStory,
@@ -556,7 +563,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
-          label: 'この単元の場面',
+          label: t('この単元の場面', 'Scenario for this unit'),
           icon: Icons.science_outlined,
           child: Text(
             '${_variant.transferPrompt}\n\n'
@@ -581,7 +588,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
         if (_tracePending)
           ScienceChallengePrimaryButton(
             key: const ValueKey('notation-trace-continue'),
-            label: 'なぞりを終えて次へ',
+            label: t('なぞりを終えて次へ', 'Finish tracing and continue'),
             icon: Icons.arrow_forward_rounded,
             onPressed: _traceCompleted ? _finishTrace : null,
             backgroundColor: colors.story,
@@ -590,7 +597,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
         else
           ScienceChallengePrimaryButton(
             key: const ValueKey('notation-submit'),
-            label: 'この組み方で確認する',
+            label: t('この組み方で確認する', 'Check this build'),
             icon: Icons.check_rounded,
             onPressed: _canSubmit ? _submit : null,
             backgroundColor: colors.story,
@@ -629,7 +636,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
           Text(task.prompt),
           const SizedBox(height: GameTokens.spaceSm),
           Semantics(
-            label: 'なぞる向き。${task.guide}',
+            label: t('なぞる向き。${task.guide}', 'Tracing direction. ${task.guide}'),
             child: Text(
               task.guide,
               style: Theme.of(
@@ -642,8 +649,8 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
             key: const ValueKey('notation-order-output'),
             container: true,
             label: selectedLabels.isEmpty
-                ? 'まだ何も並べていません'
-                : '現在の並び。$selectedLabels',
+                ? t('まだ何も並べていません', 'Nothing placed yet')
+                : t('現在の並び。$selectedLabels', 'Current order. $selectedLabels'),
             child: ExcludeSemantics(
               child: Container(
                 constraints: const BoxConstraints(minHeight: 56),
@@ -655,7 +662,9 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
                   border: Border.all(color: colors.border),
                 ),
                 child: Text(
-                  selectedLabels.isEmpty ? 'ここに順番に並びます' : selectedLabels,
+                  selectedLabels.isEmpty
+                      ? t('ここに順番に並びます', 'Tiles appear here in order')
+                      : selectedLabels,
                 ),
               ),
             ),
@@ -670,7 +679,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
                   button: true,
                   enabled:
                       !_lockedAfterWrong && !_orderedIds.contains(token.id),
-                  label: '組み札。${token.label}',
+                  label: t('組み札。${token.label}', 'Tile. ${token.label}'),
                   child: OutlinedButton(
                     key: ValueKey('notation-order-token-${token.id}'),
                     onPressed:
@@ -697,7 +706,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
               foregroundColor: colors.ink,
             ),
             icon: const Icon(Icons.restart_alt_rounded),
-            label: const Text('送信前に組み直す'),
+            label: Text(t('送信前に組み直す', 'Rebuild before submitting')),
           ),
         ],
       ),
@@ -714,14 +723,17 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
         .join('  ');
     return ScienceChallengeSurface(
       key: ValueKey('notation-trace-surface-${task.id}'),
-      label: '正答のあとに、指で定着',
+      label: t('正答のあとに、指で定着', 'After the right answer, trace to lock it in'),
       icon: Icons.swipe_rounded,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Semantics(
             container: true,
-            label: '正しい組み方。$canonical。${task.solutionSummary}',
+            label: t(
+              '正しい組み方。$canonical。${task.solutionSummary}',
+              'Correct build. $canonical. ${task.solutionSummary}',
+            ),
             child: ExcludeSemantics(
               child: Container(
                 padding: const EdgeInsets.all(GameTokens.spaceMd),
@@ -753,7 +765,10 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
           ),
           const SizedBox(height: GameTokens.spaceMd),
           Text(
-            '線から指を離さず、表示された順に1本ずつなぞります。離れた場合は、その1本だけやり直します。',
+            t(
+              '線から指を離さず、表示された順に1本ずつなぞります。離れた場合は、その1本だけやり直します。',
+              'Trace each line in the order shown without lifting your finger. If you lift it, redo just that line.',
+            ),
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: colors.inkMuted),
@@ -853,13 +868,18 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
   Widget _buildReview(BuildContext context) {
     final colors = context.gamePalette;
     return ScienceChallengeSurface(
-      label: 'ここで一度、見直す',
+      label: t('ここで一度、見直す', 'Pause and review'),
       icon: Icons.lock_clock_outlined,
       backgroundColor: colors.surfaceRaised,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('別の札を続けて押すことはできません。見直す点を1文だけ残すと、同じ課題を組み直せます。'),
+          Text(
+            t(
+              '別の札を続けて押すことはできません。見直す点を1文だけ残すと、同じ課題を組み直せます。',
+              'You can\'t just tap another tile. Write one sentence about what to review, then rebuild the same task.',
+            ),
+          ),
           const SizedBox(height: GameTokens.spaceMd),
           TextField(
             key: const ValueKey('notation-review'),
@@ -867,8 +887,11 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
             minLines: 2,
             maxLines: 4,
             onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(
-              labelText: 'どこを見直す？（6文字以上）',
+            decoration: InputDecoration(
+              labelText: t(
+                'どこを見直す？（6文字以上）',
+                'What will you review? (6+ characters)',
+              ),
               border: OutlineInputBorder(),
             ),
           ),
@@ -881,7 +904,11 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
               foregroundColor: colors.ink,
             ),
             icon: const Icon(Icons.refresh_rounded),
-            label: Text(_retryChecking ? '試行余力を確認中…' : 'この課題だけ組み直す'),
+            label: Text(
+              _retryChecking
+                  ? t('試行余力を確認中…', 'Checking hearts…')
+                  : t('この課題だけ組み直す', 'Rebuild just this task'),
+            ),
           ),
         ],
       ),
@@ -898,7 +925,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
       children: [
         ScienceChallengeHeader(
           eyebrow: '記号実験  /  完了',
-          title: '記号を意味とつなげました',
+          title: t('記号を意味とつなげました', 'You linked symbols to meanings'),
           body: widget.conceptLabel,
           icon: Icons.fact_check_outlined,
           accent: colors.pathComplete,
@@ -907,7 +934,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
-          label: '読み方の確認',
+          label: t('読み方の確認', 'How to read it'),
           icon: Icons.menu_book_outlined,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -922,7 +949,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('notation-complete'),
-          label: '記号実験を完了する',
+          label: t('記号実験を完了する', 'Finish Notation Lab'),
           icon: Icons.check_circle_outline_rounded,
           onPressed: _completionCalled ? null : _completeLab,
           backgroundColor: colors.pathComplete,
@@ -991,7 +1018,12 @@ class _NotationTraceBoardState extends State<_NotationTraceBoard> {
     final stroke = _currentStroke;
     if (stroke == null) return;
     if (_activeGesture) {
-      _invalidateGesture('指が複数触れました。この線を1本の指でやり直します。');
+      _invalidateGesture(
+        t(
+          '指が複数触れました。この線を1本の指でやり直します。',
+          'More than one finger touched. Redo this line with one finger.',
+        ),
+      );
       return;
     }
     final point = _normalized(localPosition, size);
@@ -1002,7 +1034,10 @@ class _NotationTraceBoardState extends State<_NotationTraceBoard> {
         _activeGesture = false;
         _activePointer = null;
         _pointerPath.clear();
-        _error = '番号の付いた始点から始めてください。';
+        _error = t(
+          '番号の付いた始点から始めてください。',
+          'Start from the numbered starting point.',
+        );
       });
       return;
     }
@@ -1024,7 +1059,12 @@ class _NotationTraceBoardState extends State<_NotationTraceBoard> {
     if (stroke == null) return;
     final point = _normalized(localPosition, size);
     if (!_insideUnit(point)) {
-      _invalidateGesture('枠の外へ出ました。この線を始点からやり直します。');
+      _invalidateGesture(
+        t(
+          '枠の外へ出ました。この線を始点からやり直します。',
+          'You went outside the frame. Redo this line from the start.',
+        ),
+      );
       return;
     }
     final nextIndex = _nextPointIndex.clamp(1, stroke.points.length - 1);
@@ -1036,7 +1076,12 @@ class _NotationTraceBoardState extends State<_NotationTraceBoard> {
       Offset(next.x, next.y),
     );
     if (distanceFromSegment > 0.12) {
-      _invalidateGesture('線から離れました。この線を始点からやり直します。');
+      _invalidateGesture(
+        t(
+          '線から離れました。この線を始点からやり直します。',
+          'You left the line. Redo this line from the start.',
+        ),
+      );
       return;
     }
 
@@ -1066,7 +1111,10 @@ class _NotationTraceBoardState extends State<_NotationTraceBoard> {
         _completedStrokeIds.add(stroke.id);
         _error = null;
       } else {
-        _error = '途中で指が離れました。この線を始点からやり直します。';
+        _error = t(
+          '途中で指が離れました。この線を始点からやり直します。',
+          'Your finger lifted midway. Redo this line from the start.',
+        );
       }
     });
     if (completed) widget.onCompletedChanged(_complete);
@@ -1074,7 +1122,12 @@ class _NotationTraceBoardState extends State<_NotationTraceBoard> {
 
   void _cancelGesture(int pointer) {
     if (!_activeGesture || pointer != _activePointer) return;
-    _invalidateGesture('操作が中断されました。この線を始点からやり直します。');
+    _invalidateGesture(
+      t(
+        '操作が中断されました。この線を始点からやり直します。',
+        'The gesture was interrupted. Redo this line from the start.',
+      ),
+    );
   }
 
   void _invalidateGesture(String message) {
@@ -1096,8 +1149,14 @@ class _NotationTraceBoardState extends State<_NotationTraceBoard> {
     final colors = context.gamePalette;
     final current = _currentStroke;
     final progress = _complete
-        ? '全${widget.pattern.strokeOrderIds.length}本を完了しました。'
-        : '${_completedStrokeIds.length + 1}本目、${current?.label ?? ''}。';
+        ? t(
+            '全${widget.pattern.strokeOrderIds.length}本を完了しました。',
+            'All ${widget.pattern.strokeOrderIds.length} lines done.',
+          )
+        : t(
+            '${_completedStrokeIds.length + 1}本目、${current?.label ?? ''}。',
+            'Line ${_completedStrokeIds.length + 1}, ${current?.label ?? ''}.',
+          );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1203,13 +1262,20 @@ class _NotationTraceBoardState extends State<_NotationTraceBoard> {
     return Semantics(
       key: const ValueKey('notation-trace-accessible-sequence'),
       container: true,
-      label:
-          '${widget.pattern.semanticsLabel} '
-          'スクリーンリーダー用に、同じ線順をボタンで確認します。',
+      label: t(
+        '${widget.pattern.semanticsLabel} '
+            'スクリーンリーダー用に、同じ線順をボタンで確認します。',
+        '${widget.pattern.semanticsLabel} For screen readers, confirm the same line order with buttons.',
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('読み上げ操作では、線を同じ順番で1本ずつ確認します。'),
+          Text(
+            t(
+              '読み上げ操作では、線を同じ順番で1本ずつ確認します。',
+              'With a screen reader, confirm each line in the same order, one at a time.',
+            ),
+          ),
           const SizedBox(height: GameTokens.spaceMd),
           for (
             var index = 0;
@@ -1219,14 +1285,22 @@ class _NotationTraceBoardState extends State<_NotationTraceBoard> {
             Semantics(
               button: true,
               enabled: index == _completedStrokeIds.length,
-              label:
-                  '${index + 1}本目、'
-                  '${widget.pattern.strokeFor(widget.pattern.strokeOrderIds[index]).label}。'
-                  '${index < _completedStrokeIds.length
-                      ? '確認済み'
-                      : index == _completedStrokeIds.length
-                      ? '確認する'
-                      : '前の線の確認後に使えます'}',
+              label: t(
+                '${index + 1}本目、'
+                    '${widget.pattern.strokeFor(widget.pattern.strokeOrderIds[index]).label}。'
+                    '${index < _completedStrokeIds.length
+                        ? '確認済み'
+                        : index == _completedStrokeIds.length
+                        ? '確認する'
+                        : '前の線の確認後に使えます'}',
+                'Line ${index + 1}, '
+                    '${widget.pattern.strokeFor(widget.pattern.strokeOrderIds[index]).label}. '
+                    '${index < _completedStrokeIds.length
+                        ? 'Checked'
+                        : index == _completedStrokeIds.length
+                        ? 'Check'
+                        : 'Available after the previous line'}',
+              ),
               child: OutlinedButton.icon(
                 key: ValueKey('notation-trace-accessible-${index + 1}'),
                 onPressed: index == _completedStrokeIds.length
@@ -1242,8 +1316,12 @@ class _NotationTraceBoardState extends State<_NotationTraceBoard> {
                       : Icons.looks_one_outlined,
                 ),
                 label: Text(
-                  '${index + 1}本目：'
-                  '${widget.pattern.strokeFor(widget.pattern.strokeOrderIds[index]).label}',
+                  t(
+                    '${index + 1}本目：'
+                        '${widget.pattern.strokeFor(widget.pattern.strokeOrderIds[index]).label}',
+                    'Line ${index + 1}: '
+                        '${widget.pattern.strokeFor(widget.pattern.strokeOrderIds[index]).label}',
+                  ),
                 ),
               ),
             ),
@@ -1258,7 +1336,11 @@ class _NotationTraceBoardState extends State<_NotationTraceBoard> {
                 children: [
                   Icon(Icons.check_circle_rounded, color: colors.pathComplete),
                   const SizedBox(width: GameTokens.spaceSm),
-                  const Expanded(child: Text('全ての線を順番に確認しました。')),
+                  Expanded(
+                    child: Text(
+                      t('全ての線を順番に確認しました。', 'All lines checked in order.'),
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_economy.dart';
@@ -44,14 +45,28 @@ class PracticeHubScreen extends StatelessWidget {
           surfaceKey: const ValueKey('practice-due-summary'),
           color: dueBackground,
           foregroundColor: dueForeground,
-          eyebrow: '練習ラボ',
-          title: dueCount == 0 ? '次の復習を準備中' : '今日の復習 $dueCount件',
+          eyebrow: lang.t('練習ラボ', 'Practice Lab'),
+          title: dueCount == 0
+              ? lang.t('次の復習を準備中', 'Preparing your next review')
+              : lang.t('今日の復習 $dueCount件', 'Today\'s reviews: $dueCount'),
           body: dueCount == 0
-              ? '忘れかけたところを、違う方法で取り出します。復習は翌学習日から届きます。'
-              : '思い出す→別場面へ使う。終えると次の間隔が開きます。',
+              ? lang.t(
+                  '忘れかけたところを、違う方法で取り出します。復習は翌学習日から届きます。',
+                  'Recall what you\'re starting to forget in a new way. Reviews arrive from your next study day.',
+                )
+              : lang.t(
+                  '思い出す→別場面へ使う。終えると次の間隔が開きます。',
+                  'Recall → apply to a new scenario. Finish to set the next interval.',
+                ),
           semanticSummary: dueCount == 0
-              ? '今日が期限の復習はありません。次の復習を準備中'
-              : '今日が期限の復習、$dueCount件。思い出し練習ができます',
+              ? lang.t(
+                  '今日が期限の復習はありません。次の復習を準備中',
+                  'No reviews due today. Preparing your next review',
+                )
+              : lang.t(
+                  '今日が期限の復習、$dueCount件。思い出し練習ができます',
+                  '$dueCount reviews due today. Recall practice is available',
+                ),
           mascotReaction: hasDueReview
               ? GameCharacterReaction.encourage
               : GameCharacterReaction.invite,
@@ -71,8 +86,14 @@ class PracticeHubScreen extends StatelessWidget {
                 Expanded(
                   child: Text(
                     hasDueReview
-                        ? '今日の期限を終えても、他の練習は自由に選べます。'
-                        : '探究ノートはいつでも進められます。',
+                        ? lang.t(
+                            '今日の期限を終えても、他の練習は自由に選べます。',
+                            'Even after today\'s reviews, you can freely choose other practice.',
+                          )
+                        : lang.t(
+                            '探究ノートはいつでも進められます。',
+                            'You can continue the learning path anytime.',
+                          ),
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: colors.ink),
@@ -84,21 +105,32 @@ class PracticeHubScreen extends StatelessWidget {
         ),
         if (dailyAudioPlan case final plan?) ...[
           const SizedBox(height: GameTokens.spaceXl),
-          const GameSectionHeader(
-            title: '音声観察',
-            description: '聞く課題と話す課題を、別々の学習として開きます。',
+          GameSectionHeader(
+            title: lang.t('音声観察', 'Audio missions'),
+            description: lang.t(
+              '聞く課題と話す課題を、別々の学習として開きます。',
+              'Listening and speaking tasks open as separate activities.',
+            ),
           ),
           const SizedBox(height: GameTokens.spaceMd),
           DailyAudioPracticePanel(plan: plan, onOpen: onOpenDailyAudio!),
         ],
         const SizedBox(height: GameTokens.spaceXl),
-        const GameSectionHeader(
-          title: '練習メニュー',
-          description: '今の学習状態に必要な方法を選びます。準備中の項目は開きません。',
+        GameSectionHeader(
+          title: lang.t('練習メニュー', 'Practice menu'),
+          description: lang.t(
+            '今の学習状態に必要な方法を選びます。準備中の項目は開きません。',
+            'Choose what you need right now. Items in preparation are locked.',
+          ),
         ),
         const SizedBox(height: GameTokens.spaceMd),
         if (modes.isEmpty)
-          const GameSolidSurface(raised: true, child: Text('練習メニューを準備しています。'))
+          GameSolidSurface(
+            raised: true,
+            child: Text(
+              lang.t('練習メニューを準備しています。', 'Preparing the practice menu.'),
+            ),
+          )
         else
           GameResponsiveGrid(
             children: [
@@ -117,7 +149,10 @@ class PracticeHubScreen extends StatelessWidget {
               const SizedBox(width: GameTokens.spaceSm),
               Expanded(
                 child: Text(
-                  '時間観察は任意です。時間切れでも探究ノート、連続観測、学校課題は失いません。',
+                  lang.t(
+                    '時間観察は任意です。時間切れでも探究ノート、連続観測、学校課題は失いません。',
+                    'Timed modes are optional. Running out of time won\'t cost your learning path, streak, or school assignments.',
+                  ),
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(color: colors.inkMuted),
@@ -155,10 +190,14 @@ class _PracticeLane extends StatelessWidget {
     return Semantics(
       button: mode.enabled,
       enabled: mode.enabled,
-      label:
-          '${mode.title}。${mode.description}'
-          '。${mode.enabled ? '利用できます' : '準備中'}'
-          '${mode.badge == null ? '' : '。${mode.badge}'}',
+      label: lang.t(
+        '${mode.title}。${mode.description}'
+            '。${mode.enabled ? '利用できます' : '準備中'}'
+            '${mode.badge == null ? '' : '。${mode.badge}'}',
+        '${mode.title}. ${mode.description}'
+            '. ${mode.enabled ? 'Available' : 'Coming soon'}'
+            '${mode.badge == null ? '' : '. ${mode.badge}'}',
+      ),
       onTap: mode.enabled ? onOpen : null,
       child: ExcludeSemantics(
         child: Material(
@@ -235,11 +274,17 @@ class _PracticeLane extends StatelessWidget {
                                 child: Text(
                                   mode.enabled
                                       ? mode.badge == null
-                                            ? '利用できます'
-                                            : '利用できます ・ ${mode.badge}'
+                                            ? lang.t('利用できます', 'Available')
+                                            : lang.t(
+                                                '利用できます ・ ${mode.badge}',
+                                                'Available · ${mode.badge}',
+                                              )
                                       : mode.badge == null
-                                      ? '準備中'
-                                      : '準備中 ・ ${mode.badge}',
+                                      ? lang.t('準備中', 'Coming soon')
+                                      : lang.t(
+                                          '準備中 ・ ${mode.badge}',
+                                          'Coming soon · ${mode.badge}',
+                                        ),
                                   style: t.textTheme.labelMedium
                                       ?.copyWith(
                                         color: mode.enabled

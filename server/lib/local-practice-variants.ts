@@ -7,6 +7,10 @@ import {
   STAGE1_PROOF_COGNITIVE_TASKS,
   STAGE1_PROOF_PRACTICE_PLANS,
 } from './stage1-proof-practice.js'
+import {
+  STAGE2_COGNITIVE_TASKS,
+  STAGE2_PRACTICE_PLANS,
+} from './stage2-practice.js'
 
 /**
  * 同じ概念を繰り返すときの、端末内練習の認知的な進み方。
@@ -1029,6 +1033,7 @@ const PLANS: Readonly<Record<string, LocalPracticePlan>> = {
   },
   ...STAGE1_PROOF_PRACTICE_PLANS,
   ...STAGE1_EXPANSION_PRACTICE_PLANS,
+  ...STAGE2_PRACTICE_PLANS,
 }
 
 export type CognitiveTaskPlan = Record<LocalPracticeStage, CognitiveTask>
@@ -1584,6 +1589,7 @@ const COGNITIVE_TASKS: Readonly<Record<string, CognitiveTaskPlan>> = {
   },
   ...STAGE1_PROOF_COGNITIVE_TASKS,
   ...STAGE1_EXPANSION_COGNITIVE_TASKS,
+  ...STAGE2_COGNITIVE_TASKS,
 }
 
 const ANSWER_SIGNALING_ID =

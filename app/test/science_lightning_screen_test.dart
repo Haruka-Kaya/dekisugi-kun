@@ -111,6 +111,7 @@ void main() {
     );
     expect(find.text('連続観察'), findsOneWidget);
     expect(find.bySemanticsLabel(RegExp('ラボ・ブリーフ.*連続観察')), findsOneWidget);
+    expect(find.textContaining('Instance of'), findsNothing);
     await _start(tester);
 
     expect(find.textContaining('落下加速度は？'), findsOneWidget);

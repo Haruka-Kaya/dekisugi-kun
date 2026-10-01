@@ -105,3 +105,6 @@ tools/live_spike/.env.local
 tools/misconception-survey/codes.txt
 tools/misconception-survey/results/
 tools/misconception-survey/judged.json
+
+# Golden比較の失敗診断は検証用出力で、配布sourceではない。
+app/test/failures/

@@ -22,6 +22,7 @@ import '../widgets/session_complete.dart';
 import '../widgets/stage.dart';
 import 'offline_practice_screen.dart';
 import 'review_screen.dart';
+import '../config/app_language.dart' as lang;
 
 /// 会話画面。
 ///
@@ -114,7 +115,7 @@ class _TalkScreenState extends State<TalkScreen> with WidgetsBindingObserver {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('端末の設定で通知が切られています。')));
+          ).showSnackBar(SnackBar(content: Text(lang.t('端末の設定で通知が切られています。', 'Notifications are turned off in your device settings.'))));
         }
         return;
       }
@@ -123,7 +124,7 @@ class _TalkScreenState extends State<TalkScreen> with WidgetsBindingObserver {
       if (mounted) {
         setState(() => _remindersEnabled = true);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('明日$_reminderHour時ごろに、次のCASEを知らせます。')),
+          SnackBar(content: Text(lang.t('明日$_reminderHour時ごろに、次のCASEを知らせます。', 'I\'ll remind you about the next CASE tomorrow around $_reminderHour:00.'))),
         );
       }
     } finally {
@@ -229,15 +230,15 @@ class _TalkScreenState extends State<TalkScreen> with WidgetsBindingObserver {
       context: context,
       builder: (ctx) => AlertDialog(
         scrollable: true,
-        title: const Text('この会話を捨てますか？'),
-        content: const Text(
-          'ここまで話した言葉と会話ノートが端末から消えます。'
-          'この操作は元に戻せません。',
+        title: Text(lang.t('この会話を捨てますか？', 'Discard this conversation?')),
+        content: Text(
+          lang.t('ここまで話した言葉と会話ノートが端末から消えます。'
+          'この操作は元に戻せません。', 'The words you said and your conversation notes will be deleted from this device. This cannot be undone.'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('会話を残す'),
+            child: Text(lang.t('会話を残す', 'Keep conversation')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -245,7 +246,7 @@ class _TalkScreenState extends State<TalkScreen> with WidgetsBindingObserver {
               backgroundColor: Theme.of(ctx).colorScheme.error,
               foregroundColor: Theme.of(ctx).colorScheme.onError,
             ),
-            child: const Text('この会話を捨てる'),
+            child: Text(lang.t('この会話を捨てる', 'Discard conversation')),
           ),
         ],
       ),
@@ -269,19 +270,19 @@ class _TalkScreenState extends State<TalkScreen> with WidgetsBindingObserver {
       context: context,
       builder: (ctx) => AlertDialog(
         scrollable: true,
-        title: const Text('いったんやめますか？'),
-        content: const Text(
-          'ここを出ると会話は終わります。'
-          'いま話したところまでは残るので、あとから続きにできます。',
+        title: Text(lang.t('いったんやめますか？', 'Take a break?')),
+        content: Text(
+          lang.t('ここを出ると会話は終わります。'
+          'いま話したところまでは残るので、あとから続きにできます。', 'Leaving here ends the conversation. What you\'ve said so far is kept, so you can continue later.'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('つづける'),
+            child: Text(lang.t('つづける', 'Keep going')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('いったんやめる'),
+            child: Text(lang.t('いったんやめる', 'Take a break')),
           ),
         ],
       ),
@@ -350,10 +351,10 @@ class _TalkScreenState extends State<TalkScreen> with WidgetsBindingObserver {
       context: context,
       builder: (ctx) => AlertDialog(
         scrollable: true,
-        title: const Text('保存せずホームへ戻りますか？'),
-        content: const Text(
-          '今回話した言葉がノートに残らない可能性があります。'
-          'この画面で、もう一度保存できます。',
+        title: Text(lang.t('保存せずホームへ戻りますか？', 'Go home without saving?')),
+        content: Text(
+          lang.t('今回話した言葉がノートに残らない可能性があります。'
+          'この画面で、もう一度保存できます。', 'The words you said this time may not be saved to your notes. You can try saving again on this screen.'),
         ),
         actions: [
           TextButton(
@@ -363,7 +364,7 @@ class _TalkScreenState extends State<TalkScreen> with WidgetsBindingObserver {
                 context.read<LiveSessionController>().retryCompletionSave(),
               );
             },
-            child: const Text('保存をやり直す'),
+            child: Text(lang.t('保存をやり直す', 'Try saving again')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -371,7 +372,7 @@ class _TalkScreenState extends State<TalkScreen> with WidgetsBindingObserver {
               backgroundColor: Theme.of(ctx).colorScheme.error,
               foregroundColor: Theme.of(ctx).colorScheme.onError,
             ),
-            child: const Text('保存せず戻る'),
+            child: Text(lang.t('保存せず戻る', 'Go back without saving')),
           ),
         ],
       ),
@@ -394,7 +395,7 @@ class _TalkScreenState extends State<TalkScreen> with WidgetsBindingObserver {
         if (saveNeedsAttention) {
           if (live.completionSaveInProgress) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('ノートへの保存が終わるまでお待ちください。')),
+              SnackBar(content: Text(lang.t('ノートへの保存が終わるまでお待ちください。', 'Please wait until saving to your notes is finished.'))),
             );
           } else {
             await _confirmLeaveWithoutSaving();
@@ -448,13 +449,13 @@ class _TalkScreenState extends State<TalkScreen> with WidgetsBindingObserver {
           // TalkScreenはdisposeされず、マイクもWebSocketも動き続ける
           if (!live.isActive && live.state != LiveState.done)
             IconButton(
-              tooltip: 'もう一度見るところ',
+              tooltip: lang.t('もう一度見るところ', 'What to look at again'),
               onPressed: _openReview,
               icon: const Icon(Icons.bookmarks_outlined),
             ),
           if (live.isActive)
             IconButton(
-              tooltip: 'いったんやめる',
+              tooltip: lang.t('いったんやめる', 'Take a break'),
               onPressed: _pauseAndLeave,
               icon: const Icon(Icons.pause_circle_outline),
             ),
@@ -591,15 +592,15 @@ class _MissingServer extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          '会話の接続先を確認できません',
+          lang.t('会話の接続先を確認できません', 'Can\'t reach the conversation server'),
           style: t.textTheme.titleMedium,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         Text(
           onPracticeOffline == null
-              ? 'あとでもう一度お試しください。'
-              : '端末内練習を続けるか、あとでもう一度お試しください。',
+              ? lang.t('あとでもう一度お試しください。', 'Please try again later.')
+              : lang.t('端末内練習を続けるか、あとでもう一度お試しください。', 'Keep practicing on this device, or try again later.'),
           style: t.textTheme.bodyMedium,
           textAlign: TextAlign.center,
         ),
@@ -649,14 +650,14 @@ class _ResumeBanner extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '前回の続きがあります',
+            lang.t('前回の続きがあります', 'You have a conversation to continue'),
             style: t.textTheme.titleSmall?.jaWeight(FontWeight.w700),
           ),
           const SizedBox(height: 3),
-          Text('$turns回ぶんの会話が端末に残っています。', style: t.textTheme.bodySmall),
+          Text(lang.t('$turns回ぶんの会話が端末に残っています。', '$turns turns of conversation are saved on this device.'), style: t.textTheme.bodySmall),
           if (!canResume) ...[
             const SizedBox(height: 6),
-            Text('会話できる回数が戻るまで、この続きは端末に残ります。', style: t.textTheme.bodySmall),
+            Text(lang.t('会話できる回数が戻るまで、この続きは端末に残ります。', 'This conversation stays on your device until your conversation count resets.'), style: t.textTheme.bodySmall),
           ],
           const SizedBox(height: 10),
           Wrap(
@@ -665,9 +666,9 @@ class _ResumeBanner extends StatelessWidget {
             alignment: WrapAlignment.end,
             children: [
               // 破棄は主導線から弱めるが、取り消せない意味は明示する
-              TextButton(onPressed: onDiscard, child: const Text('この会話を捨てる')),
+              TextButton(onPressed: onDiscard, child: Text(lang.t('この会話を捨てる', 'Discard conversation'))),
               if (canResume)
-                FilledButton(onPressed: onResume, child: const Text('続きから')),
+                FilledButton(onPressed: onResume, child: Text(lang.t('続きから', 'Continue'))),
             ],
           ),
         ],
@@ -687,10 +688,10 @@ class _FailureBanner extends StatelessWidget {
     final t = Theme.of(context);
     final c = context.appColors;
     final text = switch (failure) {
-      LiveFailure.noPermission => 'マイクを使う許可がありません',
-      LiveFailure.network => 'ネットワークにつながりません',
-      LiveFailure.auth => '接続を確認できませんでした。少し待って、もう一度お試しください',
-      LiveFailure.unknown => '続けられませんでした',
+      LiveFailure.noPermission => lang.t('マイクを使う許可がありません', 'No permission to use the microphone'),
+      LiveFailure.network => lang.t('ネットワークにつながりません', 'Can\'t connect to the network'),
+      LiveFailure.auth => lang.t('接続を確認できませんでした。少し待って、もう一度お試しください', 'Couldn\'t confirm the connection. Please wait a moment and try again'),
+      LiveFailure.unknown => lang.t('続けられませんでした', 'Couldn\'t continue'),
     };
 
     return Container(
@@ -733,7 +734,7 @@ class _OfflinePracticeOffer extends StatelessWidget {
     final colors = context.appColors;
     return Semantics(
       container: true,
-      label: '接続できないため、端末内の文字練習を利用できます',
+      label: lang.t('接続できないため、端末内の文字練習を利用できます', 'Can\'t connect, so you can use text practice on this device'),
       child: Container(
         width: double.infinity,
         margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
@@ -757,7 +758,7 @@ class _OfflinePracticeOffer extends StatelessWidget {
                 const SizedBox(width: 9),
                 Expanded(
                   child: Text(
-                    '会話につながらなくても、教材を閉じた練習は続けられます。',
+                    lang.t('会話につながらなくても、教材を閉じた練習は続けられます。', 'Even without a conversation connection, you can keep practicing with the material closed.'),
                     style: t.textTheme.bodyMedium?.copyWith(
                       color: colors.onCoolSurface,
                     ),
@@ -770,11 +771,11 @@ class _OfflinePracticeOffer extends StatelessWidget {
               key: const ValueKey('continue-offline-practice'),
               onPressed: onContinue,
               icon: const Icon(Icons.edit_note_outlined),
-              label: const Text('端末内で練習を続ける'),
+              label: Text(lang.t('端末内で練習を続ける', 'Keep practicing on this device')),
             ),
             const SizedBox(height: 6),
             Text(
-              '入力は送信・保存せず、会話できる回数も使いません。',
+              lang.t('入力は送信・保存せず、会話できる回数も使いません。', 'Your input is not sent or saved, and it doesn\'t use your conversation count.'),
               style: t.textTheme.bodySmall?.copyWith(
                 color: colors.onCoolSurface,
               ),
@@ -801,9 +802,9 @@ class _IssueBanner extends StatelessWidget {
     final t = Theme.of(context);
     final c = context.appColors;
     final text = switch (issue) {
-      RecordingIssue.silent => 'マイクが音を拾えていません。ふさいでいないか確かめてください。',
-      RecordingIssue.quiet => '声が小さいようです。マイクに近づいてください。',
-      RecordingIssue.clipped => '音が大きすぎて割れています。少し離れてください。',
+      RecordingIssue.silent => lang.t('マイクが音を拾えていません。ふさいでいないか確かめてください。', 'The microphone isn\'t picking up sound. Make sure it isn\'t covered.'),
+      RecordingIssue.quiet => lang.t('声が小さいようです。マイクに近づいてください。', 'Your voice seems quiet. Move closer to the microphone.'),
+      RecordingIssue.clipped => lang.t('音が大きすぎて割れています。少し離れてください。', 'The sound is too loud and distorted. Move back a little.'),
     };
 
     return Container(
@@ -856,8 +857,8 @@ class _EchoBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'デキすぎ君の声をマイクが拾っているようです。'
-              'イヤホンをつけると話しやすくなります。',
+              lang.t('デキすぎ君の声をマイクが拾っているようです。'
+              'イヤホンをつけると話しやすくなります。', 'The microphone seems to be picking up Dekisugi-kun\'s voice. Using earphones makes it easier to talk.'),
               style: t.textTheme.bodySmall?.copyWith(color: c.shakyFg),
             ),
           ),
@@ -889,7 +890,7 @@ class _TurnLog extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '知っていることを、教えてください。',
+                lang.t('知っていることを、教えてください。', 'Teach me what you know.'),
                 style: Theme.of(
                   context,
                 ).textTheme.titleSmall?.jaWeight(FontWeight.w700),
@@ -897,7 +898,7 @@ class _TurnLog extends StatelessWidget {
               ),
               const SizedBox(height: 5),
               Text(
-                '声でも文字でも、どちらでも大丈夫です。',
+                lang.t('声でも文字でも、どちらでも大丈夫です。', 'Voice or text — either is fine.'),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -1030,7 +1031,7 @@ class _ConversationViewportState extends State<_ConversationViewport> {
             child: FilledButton.tonalIcon(
               onPressed: _moveToLatest,
               icon: const Icon(Icons.arrow_downward),
-              label: const Text('新しい会話'),
+              label: Text(lang.t('新しい会話', 'New conversation')),
             ),
           ),
       ],
@@ -1072,7 +1073,7 @@ class _Bubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isStudent ? 'あなた' : 'デキすぎ君',
+              isStudent ? lang.t('あなた', 'You') : lang.t('デキすぎ君', 'Dekisugi-kun'),
               style: t.textTheme.labelSmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -1087,7 +1088,7 @@ class _Bubble extends StatelessWidget {
             ),
             if (interim)
               Text(
-                '…変換中',
+                lang.t('…変換中', '…transcribing'),
                 style: t.textTheme.labelSmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -1126,7 +1127,7 @@ class _Composer extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              '声でも文字でも、同じように教えられます。',
+              lang.t('声でも文字でも、同じように教えられます。', 'You can teach by voice or text just the same.'),
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -1147,7 +1148,7 @@ class _Composer extends StatelessWidget {
                 running ? (live.hasMic ? Icons.pause : Icons.mic) : Icons.mic,
               ),
               label: Text(
-                running ? (live.hasMic ? 'いったんやめる' : '声でも話す') : '声ではなす',
+                running ? (live.hasMic ? lang.t('いったんやめる', 'Take a break') : lang.t('声でも話す', 'Talk by voice too')) : lang.t('声ではなす', 'Talk by voice'),
               ),
             ),
           ],
@@ -1197,13 +1198,13 @@ class _TextInputState extends State<_TextInput> {
     return switch (phase) {
       MissionPhase.teach => [
         switch (widget.live.tactic) {
-          TeachingTactic.example => 'たとえば、',
-          TeachingTactic.reason => '結論から言うと、',
-          TeachingTactic.experiment => 'やってみると、',
+          TeachingTactic.example => lang.t('たとえば、', 'For example, '),
+          TeachingTactic.reason => lang.t('結論から言うと、', 'In short, '),
+          TeachingTactic.experiment => lang.t('やってみると、', 'When you try it, '),
         },
       ],
-      MissionPhase.challenge => const ['条件をそろえると、', '違うと思う。なぜなら、', 'たとえば、'],
-      MissionPhase.resolve => const ['正しいのは、', '2つを比べると、', '理由は、'],
+      MissionPhase.challenge => [lang.t('条件をそろえると、', 'If the conditions are the same, '), lang.t('違うと思う。なぜなら、', 'I don\'t think so, because '), lang.t('たとえば、', 'For example, ')],
+      MissionPhase.resolve => [lang.t('正しいのは、', 'The right idea is '), lang.t('2つを比べると、', 'Comparing the two, '), lang.t('理由は、', 'The reason is ')],
       MissionPhase.clear => const [],
     };
   }
@@ -1255,7 +1256,7 @@ class _TextInputState extends State<_TextInput> {
         children: [
           if (starters.isNotEmpty) ...[
             Text(
-              '考え始めるヒント  /  タップしても送信されません',
+              lang.t('考え始めるヒント  /  タップしても送信されません', 'Hints to get started  /  Tapping does not send'),
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -1284,11 +1285,11 @@ class _TextInputState extends State<_TextInput> {
                   minLines: 1,
                   maxLines: 4,
                   onSubmitted: (_) => _send(),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     // 48dp を割らせない。主要操作は48dp以上を保つ。
                     // isDense を外して既定の高さに戻すのではなく、明示して固定する
                     constraints: BoxConstraints(minHeight: 48),
-                    hintText: '文字で説明する',
+                    hintText: lang.t('文字で説明する', 'Explain in text'),
                   ),
                 ),
               ),
@@ -1296,7 +1297,7 @@ class _TextInputState extends State<_TextInput> {
               IconButton.filled(
                 onPressed: canSend ? _send : null,
                 icon: const Icon(Icons.send),
-                tooltip: '送る',
+                tooltip: lang.t('送る', 'Send'),
                 // 既定は 40dp なので明示して広げる
                 constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
               ),
@@ -1325,8 +1326,8 @@ class _MicLevel extends StatelessWidget {
         final listening = live.isListeningToMic;
         final v = listening ? (snap.data ?? 0).clamp(0.0, 1.0) : 0.0;
         return Semantics(
-          label: '入力音量',
-          value: listening ? '${(v * 100).round()}パーセント' : '聞いていません',
+          label: lang.t('入力音量', 'Input volume'),
+          value: listening ? lang.t('${(v * 100).round()}パーセント', '${(v * 100).round()} percent') : lang.t('聞いていません', 'Not listening'),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.pill),
             child: LinearProgressIndicator(

@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../models/game_path.dart';
@@ -123,35 +124,49 @@ class PlayerStatusBar extends StatelessWidget {
         fit: StackFit.passthrough,
         children: [
           Row(
-            key: const ValueKey('player-status-bar'),
+            key: ValueKey('player-status-bar'),
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (!schoolMode) ...[
                 Expanded(
                   child: _StatusItem(
-                    key: const ValueKey('player-status-streak'),
+                    key: ValueKey('player-status-streak'),
                     icon: Icons.calendar_view_week_outlined,
                     iconColor: colors.streak,
                     visualValue: _compact(status.streakDays),
-                    visualLabel: '観測日',
+                    visualLabel: lang.t('観測日', 'Observation days'),
                     semanticLabel:
-                        '連続観測、${status.streakDays}日。'
-                        'お休みの日の保護、${status.streakFreezeRemaining}回分',
-                    tooltip:
-                        '連続観測。忙しい日に1日空いても連続記録を守る保護を${status.streakFreezeRemaining}回分残しています',
+                        lang.t(
+                          '連続観測、${status.streakDays}日。',
+                          'Observation streak, ${status.streakDays} days. ',
+                        ) +
+                        lang.t(
+                          'お休みの日の保護、${status.streakFreezeRemaining}回分',
+                          '${status.streakFreezeRemaining} rest-day shields remaining',
+                        ),
+                    tooltip: lang.t(
+                      '連続観測。忙しい日に1日空いても連続記録を守る保護を${status.streakFreezeRemaining}回分残しています',
+                      'Observation streak. You have ${status.streakFreezeRemaining} shields to protect your record when you miss a busy day',
+                    ),
                     onTap: onStreakTap,
                   ),
                 ),
                 _Divider(color: colors.border),
                 Expanded(
                   child: _StatusItem(
-                    key: const ValueKey('player-status-gems'),
+                    key: ValueKey('player-status-gems'),
                     icon: Icons.hexagon_outlined,
                     iconColor: colors.gem,
                     visualValue: _compact(status.gems),
-                    visualLabel: '結晶',
-                    semanticLabel: 'ひらめき結晶、${status.gems}個',
-                    tooltip: 'ひらめき結晶。学習を速くしたり正答を買ったりせず、記録の補助だけに使えます',
+                    visualLabel: lang.t('結晶', 'Gems'),
+                    semanticLabel: lang.t(
+                      'ひらめき結晶、${status.gems}個',
+                      'Spark gems, ${status.gems}',
+                    ),
+                    tooltip: lang.t(
+                      'ひらめき結晶。学習を速くしたり正答を買ったりせず、記録の補助だけに使えます',
+                      'Spark gems',
+                    ),
                     onTap: onGemsTap,
                   ),
                 ),
@@ -159,19 +174,25 @@ class PlayerStatusBar extends StatelessWidget {
               ],
               Expanded(
                 child: _StatusItem(
-                  key: const ValueKey('player-status-hearts'),
+                  key: ValueKey('player-status-hearts'),
                   icon: Icons.science_outlined,
                   iconColor: colors.heart,
                   visualValue: status.unlimitedHearts
                       ? '∞'
                       : '${status.hearts}',
-                  visualLabel: '試行',
+                  visualLabel: lang.t('試行', 'Attempts'),
                   semanticLabel: status.unlimitedHearts
                       ? schoolMode
-                            ? '授業モード。試行、無制限。個人報酬は記録しません'
-                            : '試行、無制限'
-                      : '試行余力、${status.maxHearts}枠中${status.hearts}枠',
-                  tooltip: '試行余力',
+                            ? lang.t(
+                                '授業モード。試行、無制限。個人報酬は記録しません',
+                                'Class mode. Unlimited attempts. Personal rewards are not recorded',
+                              )
+                            : lang.t('試行、無制限', 'Unlimited attempts')
+                      : lang.t(
+                          '試行余力、${status.maxHearts}枠中${status.hearts}枠',
+                          'Attempts remaining, ${status.hearts} of ${status.maxHearts}',
+                        ),
+                  tooltip: lang.t('試行余力', 'Attempts remaining'),
                   onTap: onHeartsTap,
                 ),
               ),
@@ -308,8 +329,12 @@ class _QuestButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
-    final noun = schoolMode ? '授業の観察予定' : '今日の観察予定';
-    final label = count == 0 ? '$noun。進行中はありません' : '$noun。進行中$count件';
+    final noun = schoolMode
+        ? lang.t('授業の観察予定', 'Class observation plans')
+        : lang.t('今日の観察予定', 'Today\'s observation plan');
+    final label = count == 0
+        ? lang.t('$noun。進行中はありません', '$noun. None in progress')
+        : lang.t('$noun。進行中$count件', '$noun. $count in progress');
     return Semantics(
       key: const ValueKey('game-quest-button'),
       button: true,
@@ -452,7 +477,9 @@ class _QuestSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     final colors = context.gamePalette;
-    final title = schoolMode ? 'この端末の授業予定' : '観察予定';
+    final title = schoolMode
+        ? lang.t('この端末の授業予定', 'Class goals on this device')
+        : lang.t('観察予定', 'Observation plans');
     return Semantics(
       container: true,
       namesRoute: true,
@@ -484,8 +511,14 @@ class _QuestSheet extends StatelessWidget {
                       const SizedBox(height: GameTokens.spaceXs),
                       Text(
                         schoolMode
-                            ? '順位やクラス件数は集計せず、この端末で授業の学習を進めます。'
-                            : '今日の探究に直接つながる予定だけを集めています。',
+                            ? lang.t(
+                                '順位やクラス件数は集計せず、この端末で授業の学習を進めます。',
+                                'No rankings or class counts are tallied. Class learning continues on this device.',
+                              )
+                            : lang.t(
+                                '今日の探究に直接つながる予定だけを集めています。',
+                                'Only goals tied to what you actually learn are collected here.',
+                              ),
                         style: t.textTheme.bodyMedium?.copyWith(
                           color: colors.inkMuted,
                         ),
@@ -496,7 +529,7 @@ class _QuestSheet extends StatelessWidget {
                 const SizedBox(width: GameTokens.spaceSm),
                 IconButton(
                   key: const ValueKey('game-quest-sheet-close'),
-                  tooltip: '閉じる',
+                  tooltip: lang.t('閉じる', 'Close'),
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close_rounded),
                 ),
@@ -515,8 +548,14 @@ class _QuestSheet extends StatelessWidget {
                   children: [
                     Text(
                       questUnavailable
-                          ? '観察予定を読み込めませんでした。探究ノートはそのまま使えます。'
-                          : 'いま取り組み中の観察予定はありません。',
+                          ? lang.t(
+                              '観察予定を読み込めませんでした。探究ノートはそのまま使えます。',
+                              'Could not load quests. The learning path still works.',
+                            )
+                          : lang.t(
+                              'いま取り組み中の観察予定はありません。',
+                              'No quests in progress right now.',
+                            ),
                       style: t.textTheme.bodyLarge?.copyWith(color: colors.ink),
                     ),
                     if (questUnavailable && onQuestRetry != null) ...[
@@ -524,7 +563,7 @@ class _QuestSheet extends StatelessWidget {
                       FilledButton.tonal(
                         key: const ValueKey('game-quest-retry'),
                         onPressed: onQuestRetry,
-                        child: const Text('もう一度読み込む'),
+                        child: Text(lang.t('もう一度読み込む', 'Reload')),
                       ),
                     ],
                   ],
@@ -564,15 +603,21 @@ class _QuestCard extends StatelessWidget {
     final t = Theme.of(context);
     final colors = context.gamePalette;
     final kind = switch (quest.kind) {
-      GameQuestKind.daily => '今日',
-      GameQuestKind.monthly => '今月',
-      GameQuestKind.friend => '共同',
-      GameQuestKind.classroom => '授業',
+      GameQuestKind.daily => lang.t('今日', 'Daily'),
+      GameQuestKind.monthly => lang.t('今月', 'Monthly'),
+      GameQuestKind.friend => lang.t('共同', 'Together'),
+      GameQuestKind.classroom => lang.t('授業', 'Class'),
     };
     final state = switch (quest.state) {
-      GameQuestState.active => '取り組み中',
-      GameQuestState.completed => schoolMode ? 'この端末に記録済み' : '記録済み。結晶を受け取れます',
-      GameQuestState.claimed => schoolMode ? 'この端末に記録済み' : '記録済み',
+      GameQuestState.active => lang.t('取り組み中', 'In progress'),
+      GameQuestState.completed =>
+        schoolMode
+            ? lang.t('この端末に記録済み', 'Completed on this device')
+            : lang.t('記録済み。結晶を受け取れます', 'Completed. Reward ready to claim'),
+      GameQuestState.claimed =>
+        schoolMode
+            ? lang.t('この端末に記録済み', 'Completed on this device')
+            : lang.t('記録済み', 'Completed'),
     };
     final semantic =
         '$kindの観察予定、${quest.title}。${quest.description}。'

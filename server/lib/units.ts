@@ -26,6 +26,7 @@ import {
 } from './science-stories.js'
 import { STAGE1_EXPANSION_UNITS } from './stage1-expansion-units.js'
 import { STAGE1_PROOF_UNITS } from './stage1-proof-units.js'
+import { STAGE2_UNITS } from './stage2-units.js'
 
 /**
  * 単元と、その中で生徒に説明してもらいたい概念。
@@ -905,6 +906,7 @@ export const UNITS: Unit[] = [
     ],
   },
   ...STAGE1_UNITS,
+  ...STAGE2_UNITS,
 ]
 
 const BY_ID = new Map(UNITS.map((u) => [u.id, u]))

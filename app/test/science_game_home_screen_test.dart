@@ -2076,6 +2076,24 @@ void main() {
 
     expect(
       find.byKey(const ValueKey('science-explain-follow-up')),
+      findsNothing,
+      reason: '大事な言葉が届かない説明は間い返しへ進ませない',
+    );
+    expect(
+      find.byKey(const ValueKey('science-explain-coverage')),
+      findsOneWidget,
+    );
+
+    await tester.enterText(
+      find.byKey(const ValueKey('science-explain-text-input')),
+      '空気抵抗が変わると紙の着き方が変わる。',
+    );
+    await tester.pump();
+    await tapSpeaking(const ValueKey('science-explain-review-text'));
+    await tapSpeaking(const ValueKey('science-explain-submit-text'));
+
+    expect(
+      find.byKey(const ValueKey('science-explain-follow-up')),
       findsOneWidget,
     );
     final oneCharacterOnly = await store.learningProgressSnapshot(
@@ -2101,7 +2119,7 @@ void main() {
     await tapSpeaking(const ValueKey('science-explain-start-revision'));
     await tester.enterText(
       find.byKey(const ValueKey('science-explain-text-input')),
-      '一。理由と成立条件を足して言い直す',
+      '空気抵抗まで足して言い直す',
     );
     await tester.pump();
     await tapSpeaking(const ValueKey('science-explain-review-text'));
@@ -2152,7 +2170,7 @@ void main() {
         need.needCode,
       ],
     ].join('|');
-    expect(persistedFixedFields, isNot(contains('理由と成立条件を足して言い直す')));
+    expect(persistedFixedFields, isNot(contains('空気抵抗まで足して言い直す')));
   });
 
   testWidgets('Speakingの誤答直後に戻ってもheartだけを減らさずcanonical needをRepairへ残す', (
@@ -2223,6 +2241,12 @@ void main() {
     await tester.enterText(
       find.byKey(const ValueKey('science-explain-text-input')),
       '一',
+    );
+    await tapSpeaking(const ValueKey('science-explain-review-text'));
+    await tapSpeaking(const ValueKey('science-explain-submit-text'));
+    await tester.enterText(
+      find.byKey(const ValueKey('science-explain-text-input')),
+      '空気抵抗が変わると紙の着き方が変わる。',
     );
     await tapSpeaking(const ValueKey('science-explain-review-text'));
     await tapSpeaking(const ValueKey('science-explain-submit-text'));

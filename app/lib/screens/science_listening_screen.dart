@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_heart.dart';
@@ -323,7 +324,10 @@ class _ScienceListeningScreenState extends State<ScienceListeningScreen> {
                       ScienceChallengeHeader(
                         eyebrow: 'LISTEN LAB  /  ${_stepLabel(_phase)}',
                         title: widget.conceptLabel,
-                        body: '固定教材を端末内音声で聞き、条件と説明を結び付けます。',
+                        body: t(
+                          '固定教材を端末内音声で聞き、条件と説明を結び付けます。',
+                          'Listen to the material with on-device audio and connect the conditions to the explanation.',
+                        ),
                         icon: Icons.headphones_rounded,
                         accent: colors.pathActive,
                         onAccent: colors.onPathActive,
@@ -371,7 +375,12 @@ class _ScienceListeningScreenState extends State<ScienceListeningScreen> {
                         ),
                         _ListeningPhase.hint => _Hint(
                           selectedText: _selectedOption?.text ?? '',
-                          hint: _selectedOption?.hint ?? '条件と結果のつながりを見直します。',
+                          hint:
+                              _selectedOption?.hint ??
+                              t(
+                                '条件と結果のつながりを見直します。',
+                                'Review how the conditions connect to the result.',
+                              ),
                           onContinue: _openComparison,
                         ),
                         _ListeningPhase.compare => _Comparison(
@@ -431,34 +440,48 @@ class _Prepare extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeSurface(
-          label: '聞く前の場面',
+          label: t('聞く前の場面', 'Scenario before listening'),
           icon: Icons.visibility_outlined,
           child: Text(prompt),
         ),
         const SizedBox(height: GameTokens.spaceMd),
         ScienceChallengeSurface(
-          label: '音声の出所',
+          label: t('音声の出所', 'Audio source'),
           icon: Icons.volume_up_outlined,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 bundledHumanRecording == null
-                    ? 'この教材に人の録音はまだ同梱されていません。端末の音声合成で読み上げます。'
-                    : '同梱された${bundledHumanRecording!.narratorLabel}の録音を優先します。再生できない場合だけ端末の音声合成へ切り替えます。',
+                    ? t(
+                        'この教材に人の録音はまだ同梱されていません。端末の音声合成で読み上げます。',
+                        'No human recording is bundled with this material yet. Your device\'s speech synthesis will read it aloud.',
+                      )
+                    : t(
+                        '同梱された${bundledHumanRecording!.narratorLabel}の録音を優先します。再生できない場合だけ端末の音声合成へ切り替えます。',
+                        'The bundled recording by ${bundledHumanRecording!.narratorLabel} plays first. Device speech synthesis is used only if it can\'t play.',
+                      ),
               ),
               const SizedBox(height: GameTokens.spaceSm),
               Text(
                 speaking
-                    ? '再生中です。最後まで聞いてから文字起こしへ進みます。'
-                    : '説明文は再生が終わるまで画面に出ません。何度でも聞き直せます。',
+                    ? t(
+                        '再生中です。最後まで聞いてから文字起こしへ進みます。',
+                        'Playing. Listen to the end, then move on to the transcript.',
+                      )
+                    : t(
+                        '説明文は再生が終わるまで画面に出ません。何度でも聞き直せます。',
+                        'The text stays hidden until playback ends. You can replay it as many times as you like.',
+                      ),
               ),
             ],
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
-          label: speaking ? '読み上げ中…' : '説明を聞く',
+          label: speaking
+              ? t('読み上げ中…', 'Reading aloud…')
+              : t('説明を聞く', 'Listen to the explanation'),
           icon: speaking ? Icons.graphic_eq_rounded : Icons.play_arrow_rounded,
           onPressed: onListen,
           backgroundColor: colors.pathActive,
@@ -468,24 +491,37 @@ class _Prepare extends StatelessWidget {
           const SizedBox(height: GameTokens.spaceMd),
           Semantics(
             liveRegion: true,
-            label: '端末の読み上げを使えません。文字で同じ課題に進めます。',
+            label: t(
+              '端末の読み上げを使えません。文字で同じ課題に進めます。',
+              'Device read-aloud isn\'t available. You can do the same task with text.',
+            ),
             child: ScienceChallengeSurface(
-              label: '読み上げを使えませんでした',
+              label: t('読み上げを使えませんでした', 'Read-aloud wasn\'t available'),
               icon: Icons.subtitles_outlined,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('文字で同じ説明を確認して続けられます。'),
+                  Text(
+                    t(
+                      '文字で同じ説明を確認して続けられます。',
+                      'You can read the same explanation as text and continue.',
+                    ),
+                  ),
                   const SizedBox(height: GameTokens.spaceSm),
                   Text(lure),
                   const SizedBox(height: GameTokens.spaceSm),
-                  const Text('音声を確認できていないため、文字起こしは採点せず、意味の判断だけに進みます。'),
+                  Text(
+                    t(
+                      '音声を確認できていないため、文字起こしは採点せず、意味の判断だけに進みます。',
+                      'Since the audio couldn\'t be checked, the transcript won\'t be scored. You\'ll go straight to judging the meaning.',
+                    ),
+                  ),
                   const SizedBox(height: GameTokens.spaceMd),
                   OutlinedButton.icon(
                     key: const ValueKey('listening-text-fallback'),
                     onPressed: onUseText,
                     icon: const Icon(Icons.arrow_forward_rounded),
-                    label: const Text('文字で判断へ進む'),
+                    label: Text(t('文字で判断へ進む', 'Continue with text')),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(52),
                     ),
@@ -523,20 +559,34 @@ class _Transcribe extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
     final sourceLabel = switch (delivery) {
-      LocalNarrationDelivery.bundledHumanRecording => '同梱された人の録音',
-      LocalNarrationDelivery.deviceSpeechSynthesis => '端末の音声合成',
-      _ => '音声',
+      LocalNarrationDelivery.bundledHumanRecording => t(
+        '同梱された人の録音',
+        'Bundled human recording',
+      ),
+      LocalNarrationDelivery.deviceSpeechSynthesis => t(
+        '端末の音声合成',
+        'Device speech synthesis',
+      ),
+      _ => t('音声', 'Audio'),
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Semantics(
           liveRegion: true,
-          label: '$sourceLabelの再生が完了しました。聞こえた文を入力してください。',
+          label: t(
+            '$sourceLabelの再生が完了しました。聞こえた文を入力してください。',
+            '$sourceLabel finished playing. Type the sentence you heard.',
+          ),
           child: ScienceChallengeSurface(
-            label: '聞こえた文を文字にする',
+            label: t('聞こえた文を文字にする', 'Write down what you heard'),
             icon: Icons.subtitles_rounded,
-            child: Text('$sourceLabelを聞きました。句読点や空白の違いは問いません。語の追加・省略は教材と比べます。'),
+            child: Text(
+              t(
+                '$sourceLabelを聞きました。句読点や空白の違いは問いません。語の追加・省略は教材と比べます。',
+                'You listened to: $sourceLabel. Punctuation and spacing don\'t matter. Added or missing words are compared with the material.',
+              ),
+            ),
           ),
         ),
         const SizedBox(height: GameTokens.spaceMd),
@@ -546,7 +596,9 @@ class _Transcribe extends StatelessWidget {
           icon: Icon(
             speaking ? Icons.graphic_eq_rounded : Icons.replay_rounded,
           ),
-          label: Text(speaking ? '再生中…' : 'もう一度聞く'),
+          label: Text(
+            speaking ? t('再生中…', 'Playing…') : t('もう一度聞く', 'Listen again'),
+          ),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size.fromHeight(52),
           ),
@@ -554,7 +606,10 @@ class _Transcribe extends StatelessWidget {
         const SizedBox(height: GameTokens.spaceMd),
         Semantics(
           textField: true,
-          label: '聞こえた文の文字起こし。回答本文は保存も送信もしません。',
+          label: t(
+            '聞こえた文の文字起こし。回答本文は保存も送信もしません。',
+            'Transcript of what you heard. Your answer is not saved or sent.',
+          ),
           child: TextField(
             key: const ValueKey('listening-transcription-input'),
             controller: controller,
@@ -565,16 +620,16 @@ class _Transcribe extends StatelessWidget {
             maxLength: 800,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => onSubmit?.call(),
-            decoration: const InputDecoration(
-              labelText: '聞こえた文',
-              hintText: 'ここに文字起こしを入力',
+            decoration: InputDecoration(
+              labelText: t('聞こえた文', 'What you heard'),
+              hintText: t('ここに文字起こしを入力', 'Type the transcript here'),
               alignLabelWithHint: true,
             ),
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
-          label: '教材の文と比べる',
+          label: t('教材の文と比べる', 'Compare with the original'),
           icon: Icons.compare_arrows_rounded,
           onPressed: onSubmit,
           backgroundColor: colors.pathActive,
@@ -606,9 +661,16 @@ class _TranscriptComparison extends StatelessWidget {
       children: [
         Semantics(
           liveRegion: true,
-          label: matched ? '文字起こしは教材と一致しました。' : '文字起こしに追加または省略があります。教材の文と比べます。',
+          label: matched
+              ? t('文字起こしは教材と一致しました。', 'Your transcript matches the material.')
+              : t(
+                  '文字起こしに追加または省略があります。教材の文と比べます。',
+                  'Your transcript has added or missing words. Compare it with the original.',
+                ),
           child: ScienceChallengeSurface(
-            label: matched ? '聞き取った語が一致' : '聞き取りの差を確認',
+            label: matched
+                ? t('聞き取った語が一致', 'Words match')
+                : t('聞き取りの差を確認', 'Check the differences'),
             icon: matched
                 ? Icons.check_circle_outline_rounded
                 : Icons.find_in_page_outlined,
@@ -617,12 +679,19 @@ class _TranscriptComparison extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('あなたの文字起こし：$transcript'),
+                Text(
+                  t('あなたの文字起こし：$transcript', 'Your transcript: $transcript'),
+                ),
                 const SizedBox(height: GameTokens.spaceSm),
-                Text('教材の文：$source'),
+                Text(t('教材の文：$source', 'Original: $source')),
                 if (!matched) ...[
                   const SizedBox(height: GameTokens.spaceSm),
-                  const Text('差のあった箇所を確認し、次は文全体の意味を判断します。'),
+                  Text(
+                    t(
+                      '差のあった箇所を確認し、次は文全体の意味を判断します。',
+                      'Check the differences, then judge the meaning of the whole sentence.',
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -631,7 +700,7 @@ class _TranscriptComparison extends StatelessWidget {
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('listening-open-meaning'),
-          label: '文の意味を判断する',
+          label: t('文の意味を判断する', 'Judge the meaning'),
           icon: Icons.arrow_forward_rounded,
           onPressed: onContinue,
           backgroundColor: matched ? colors.pathComplete : colors.pathReview,
@@ -671,7 +740,10 @@ class _Answer extends StatelessWidget {
       children: [
         if (textOnlySource case final source?) ...[
           ScienceChallengeSurface(
-            label: '文字教材（聞き取り観察とは別の学習）',
+            label: t(
+              '文字教材（聞き取り観察とは別の学習）',
+              'Text material (separate from Listening)',
+            ),
             icon: Icons.article_outlined,
             child: Text(source),
           ),
@@ -682,7 +754,11 @@ class _Answer extends StatelessWidget {
             icon: Icon(
               speaking ? Icons.graphic_eq_rounded : Icons.replay_rounded,
             ),
-            label: Text(speaking ? '読み上げ中…' : 'もう一度聞く'),
+            label: Text(
+              speaking
+                  ? t('読み上げ中…', 'Reading aloud…')
+                  : t('もう一度聞く', 'Listen again'),
+            ),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
             ),
@@ -690,8 +766,14 @@ class _Answer extends StatelessWidget {
         const SizedBox(height: GameTokens.spaceLg),
         Text(
           textOnlySource == null
-              ? '聞いた説明を、観察に合う形へ直すなら？'
-              : '表示した説明を、観察に合う形へ直すなら？',
+              ? t(
+                  '聞いた説明を、観察に合う形へ直すなら？',
+                  'How would you fix the explanation you heard to match the observation?',
+                )
+              : t(
+                  '表示した説明を、観察に合う形へ直すなら？',
+                  'How would you fix the explanation shown to match the observation?',
+                ),
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
@@ -701,7 +783,10 @@ class _Answer extends StatelessWidget {
           Semantics(
             selected: options[index].id == selectedOptionId,
             button: true,
-            label: '${index + 1}番。${options[index].text}',
+            label: t(
+              '${index + 1}番。${options[index].text}',
+              'Option ${index + 1}. ${options[index].text}',
+            ),
             child: ExcludeSemantics(
               child: OutlinedButton(
                 key: ValueKey('listening-option-${options[index].id}'),
@@ -728,7 +813,7 @@ class _Answer extends StatelessWidget {
         ],
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
-          label: 'この判断で比べる',
+          label: t('この判断で比べる', 'Compare with this choice'),
           icon: Icons.compare_arrows_rounded,
           onPressed: onSubmit,
           backgroundColor: colors.pathActive,
@@ -758,24 +843,27 @@ class _Hint extends StatelessWidget {
       children: [
         Semantics(
           liveRegion: true,
-          label: '別の条件を確認します。選んだ説明、$selectedText。見直す観点、$hint',
+          label: t(
+            '別の条件を確認します。選んだ説明、$selectedText。見直す観点、$hint',
+            'Check another condition. Your choice: $selectedText. What to review: $hint',
+          ),
           child: ScienceChallengeSurface(
-            label: '別の条件を確認する',
+            label: t('別の条件を確認する', 'Check another condition'),
             icon: Icons.travel_explore_rounded,
             backgroundColor: colors.pathReview.withValues(alpha: .12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('選んだ説明：$selectedText'),
+                Text(t('選んだ説明：$selectedText', 'Your choice: $selectedText')),
                 const SizedBox(height: GameTokens.spaceSm),
-                Text('見直す観点：$hint'),
+                Text(t('見直す観点：$hint', 'What to review: $hint')),
               ],
             ),
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
-          label: '教材の訂正と比べる',
+          label: t('教材の訂正と比べる', 'Compare with the material\'s correction'),
           icon: Icons.arrow_forward_rounded,
           onPressed: onContinue,
           backgroundColor: colors.pathReview,
@@ -812,13 +900,17 @@ class _Comparison extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeSurface(
-          label: textOnly ? '表示した文字教材' : '聞いた説明',
+          label: textOnly
+              ? t('表示した文字教材', 'Text material shown')
+              : t('聞いた説明', 'Explanation you heard'),
           icon: textOnly ? Icons.article_outlined : Icons.hearing_rounded,
           child: Text(lure),
         ),
         const SizedBox(height: GameTokens.spaceMd),
         ScienceChallengeSurface(
-          label: selectedCorrect ? '選んだ説明は条件と一致' : '選んだ説明と教材を比較',
+          label: selectedCorrect
+              ? t('選んだ説明は条件と一致', 'Your choice matches the conditions')
+              : t('選んだ説明と教材を比較', 'Compare your choice with the material'),
           icon: selectedCorrect
               ? Icons.check_circle_outline_rounded
               : Icons.compare_arrows_rounded,
@@ -826,9 +918,11 @@ class _Comparison extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('自分の判断：$selectedText'),
+              Text(t('自分の判断：$selectedText', 'Your judgment: $selectedText')),
               const SizedBox(height: GameTokens.spaceSm),
-              Text('教材の訂正：$correction'),
+              Text(
+                t('教材の訂正：$correction', 'Material\'s correction: $correction'),
+              ),
               const SizedBox(height: GameTokens.spaceSm),
               Text(explanation),
             ],
@@ -836,7 +930,9 @@ class _Comparison extends StatelessWidget {
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
-          label: textOnly ? '文字教材の確認を終える' : '聞き取りを完了する',
+          label: textOnly
+              ? t('文字教材の確認を終える', 'Finish text review')
+              : t('聞き取りを完了する', 'Finish listening'),
           icon: Icons.check_rounded,
           onPressed: onComplete,
           backgroundColor: colors.pathComplete,
@@ -862,12 +958,17 @@ class _Done extends StatelessWidget {
           label: 'LISTEN LAB COMPLETE',
           icon: Icons.headphones_rounded,
           backgroundColor: colors.pathComplete.withValues(alpha: .12),
-          child: const Text('聞いた説明を、観察条件と正しい訂正へ結び付けました。'),
+          child: Text(
+            t(
+              '聞いた説明を、観察条件と正しい訂正へ結び付けました。',
+              'You connected the explanation you heard to the observed conditions and the correct fix.',
+            ),
+          ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('listening-return-to-path'),
-          label: '探究ノートへ戻る',
+          label: t('探究ノートへ戻る', 'Back to learning path'),
           icon: Icons.route_rounded,
           onPressed: onReturnToPath,
           backgroundColor: colors.pathActive,
@@ -890,17 +991,20 @@ class _TextOnlyDone extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeSurface(
-          label: '文字教材の確認を完了',
+          label: t('文字教材の確認を完了', 'Text review complete'),
           icon: Icons.article_outlined,
           backgroundColor: colors.pathReview.withValues(alpha: .12),
-          child: const Text(
-            '音声を再生できなかったため、聞き取り観察・探究記録・連続観測には数えません。文字で意味だけを確認しました。',
+          child: Text(
+            t(
+              '音声を再生できなかったため、聞き取り観察・探究記録・連続観測には数えません。文字で意味だけを確認しました。',
+              'Audio couldn\'t be played, so this doesn\'t count toward Listening completion, XP, or your streak. You checked the meaning with text only.',
+            ),
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('listening-text-only-return-to-path'),
-          label: '探究ノートへ戻る',
+          label: t('探究ノートへ戻る', 'Back to learning path'),
           icon: Icons.route_rounded,
           onPressed: onReturnToPath,
           backgroundColor: colors.pathActive,

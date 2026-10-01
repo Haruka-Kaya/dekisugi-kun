@@ -1,3 +1,4 @@
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../models/game_economy.dart';
@@ -37,19 +38,23 @@ class GameCosmeticItemCard extends StatelessWidget {
         ? onPurchase
         : null;
     final actionLabel = busy
-        ? '記録中…'
+        ? t('記録中…', 'Saving…')
         : item.equipped
-        ? '装備中'
+        ? t('装備中', 'Equipped')
         : item.owned
-        ? 'この見た目にする'
+        ? t('この見た目にする', 'Use this look')
+        : item.requiresPlusAccess
+        ? t('Plus画面で受け取る', 'Claim on the Plus screen')
         : item.canPurchase
-        ? '◆ ${item.gemCost} で購入して装備'
-        : '結晶が足りません';
+        ? t('◆ ${item.gemCost} で購入して装備', 'Buy and equip for ◆ ${item.gemCost}')
+        : t('結晶が足りません', 'Not enough gems');
     final stateLabel = item.equipped
-        ? '装備中'
+        ? t('装備中', 'Equipped')
         : item.owned
-        ? '購入済み'
-        : '未購入、結晶${item.gemCost}個';
+        ? t('購入済み', 'Owned')
+        : item.requiresPlusAccess
+        ? t('Plus特典・未受け取り', 'Plus perk, not claimed')
+        : t('未購入、結晶${item.gemCost}個', 'Not owned, ${item.gemCost} gems');
 
     return Semantics(
       container: true,

@@ -1,3 +1,4 @@
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../learning/domain/learning_economy.dart';
@@ -69,10 +70,18 @@ class _SessionStoreOpeningPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
     final textTheme = Theme.of(context).textTheme;
-    final title = failed ? '学習記録の保存先を開けませんでした' : '学習記録を準備しています';
+    final title = failed
+        ? t('学習記録の保存先を開けませんでした', 'Could not open the storage for your records')
+        : t('学習記録を準備しています', 'Preparing your learning records');
     final message = failed
-        ? '記録が消える一時モードでは開始しません。端末の空き容量を確認して、もう一度お試しください。'
-        : '前回の続きと、今日の探究ノートを読み込んでいます。';
+        ? t(
+            '記録が消える一時モードでは開始しません。端末の空き容量を確認して、もう一度お試しください。',
+            'The app will not start in a temporary mode where records would be lost. Check your device storage and try again.',
+          )
+        : t(
+            '前回の続きと、今日の探究ノートを読み込んでいます。',
+            "Loading your last session and today's learning path.",
+          );
 
     return Scaffold(
       backgroundColor: colors.canvas,
@@ -86,7 +95,7 @@ class _SessionStoreOpeningPage extends StatelessWidget {
                 key: const ValueKey('session-store-bootstrap-status'),
                 container: true,
                 liveRegion: true,
-                label: '$title。$message',
+                label: t('$title。$message', '$title. $message'),
                 child: ExcludeSemantics(
                   child: Container(
                     padding: const EdgeInsets.all(GameTokens.spaceXl),
@@ -137,7 +146,7 @@ class _SessionStoreOpeningPage extends StatelessWidget {
                               ),
                               onPressed: onRetry,
                               icon: const Icon(Icons.refresh_rounded),
-                              label: const Text('もう一度開く'),
+                              label: Text(t('もう一度開く', 'Try again')),
                             ),
                           ),
                         ],

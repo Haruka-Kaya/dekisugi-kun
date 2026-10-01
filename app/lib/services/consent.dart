@@ -1,12 +1,13 @@
 import 'dart:convert';
 
 import 'session_store.dart';
+import '../config/app_language.dart';
 
 /// 同意の版。**文面を変えたら必ず上げる。**
 ///
 /// 上げると、すでに同意した人にもう一度出る。
 /// 上げ忘れると、古い文面にしか同意していない人を「同意済み」として扱うことになる。
-const int kConsentVersion = 4;
+const int kConsentVersion = 5;
 
 /// どの利用経路で必要な手続を確認したか。
 ///
@@ -43,16 +44,54 @@ enum ConsentRoute {
 /// Plus を使わない間は RevenueCat SDK を起動しない。
 /// Plus 画面を開いたり、購入・復元したりする場面では、
 /// 匿名IDであっても送信対象になることを隠さない。
-const List<(String, String)> kExternalServiceDisclosure = [
-  ('Google（AI との会話）', '声と、話したり入力したりした文字を、会話の処理のために送ります。'),
+List<(String, String)> get kExternalServiceDisclosure => [
   (
-    'RevenueCat（Plus の購入管理）',
-    'Plus 画面を開くなど SDK を使う場面で、端末ごとにアプリが作った匿名UUID、'
-        '端末の種類とOS、最終利用時刻が送られることがあります。購入・復元時は、'
-        'Apple のレシートまたは Google の購入トークンなどの取引情報も扱われ、'
-        'Apple App Store または Google Play と連携します。',
+    t('Google（AI との会話）', 'Google (conversation with the AI)'),
+    t(
+      '声と、話したり入力したりした文字を、会話の処理のために送ります。',
+      'Your voice and the text you speak or type are sent to process the conversation.',
+    ),
   ),
-  ('RevenueCat へ送らないもの', '氏名、メールアドレス、広告ID、会話の逐語、声のデータは RevenueCat へ送りません。'),
+  (
+    t(
+      '生成AIサービス（デキすぎ君の返事の文面）',
+      "Generative AI service (wording of Dekisugi-kun's replies)",
+    ),
+    t(
+      '説明を聞き終えたあとの返事の前置きを作るため、入力した説明文と'
+          'そこから聞き取れた言葉、単元名を本アプリのサーバ経由で'
+          '生成AIサービス（OpenAI または同等の提供元）へ送ります。'
+          '送るのはその3点だけで、氏名・ID・声・選択肢や正解の文面は送りません。',
+      'To write the opening of the reply after hearing your explanation, the '
+          'explanation you typed, the words recognized from it, and the unit name '
+          "are sent through this app's server to a generative AI service (OpenAI "
+          'or an equivalent provider). Only these 3 items are sent. Your name, ID, '
+          'voice, and the text of answer choices or correct answers are not sent.',
+    ),
+  ),
+  (
+    t('RevenueCat（Plus の購入管理）', 'RevenueCat (managing Plus purchases)'),
+    t(
+      'Plus 画面を開くなど SDK を使う場面で、端末ごとにアプリが作った匿名UUID、'
+          '端末の種類とOS、最終利用時刻が送られることがあります。購入・復元時は、'
+          'Apple のレシートまたは Google の購入トークンなどの取引情報も扱われ、'
+          'Apple App Store または Google Play と連携します。',
+      'When the SDK is used, such as when you open the Plus screen, an anonymous '
+          'UUID created by the app for each device, the device type and OS, and the '
+          'last time the app was used may be sent. When purchasing or restoring, '
+          "transaction information such as Apple's receipt or Google's purchase "
+          'token is also handled, in connection with the Apple App Store or '
+          'Google Play.',
+    ),
+  ),
+  (
+    t('RevenueCat へ送らないもの', 'What is not sent to RevenueCat'),
+    t(
+      '氏名、メールアドレス、広告ID、会話の逐語、声のデータは RevenueCat へ送りません。',
+      'Your name, email address, advertising ID, conversation transcripts, and '
+          'voice data are not sent to RevenueCat.',
+    ),
+  ),
 ];
 
 /// 越境処理について画面で表示する3点。
@@ -60,24 +99,43 @@ const List<(String, String)> kExternalServiceDisclosure = [
 /// > [!warning] 文面の最終確認は受けていない
 /// > 公開前に専門家に見てもらうこと。ここにあるのは
 /// > 「何を表示すべきか」の実装であって、文面の保証ではない。
-const List<(String, String)> kTransferDisclosure = [
+List<(String, String)> get kTransferDisclosure => [
   (
-    '① どこへ送られるか',
-    'アメリカ合衆国です。Google のサーバーで会話を処理します。'
-        'RevenueCat の課金管理データは、米国の AWS に保存されると公開されています。',
+    t('① どこへ送られるか', '① Where the data is sent'),
+    t(
+      'アメリカ合衆国です。Google のサーバーで会話を処理します。'
+          'RevenueCat の課金管理データは、米国の AWS に保存されると公開されています。',
+      "The United States of America. Conversations are processed on Google's "
+          'servers. RevenueCat has published that its billing management data is '
+          'stored on AWS in the United States.',
+    ),
   ),
   (
-    '② その国のきまり',
-    'アメリカには、日本の個人情報保護法にあたる国全体の法律がありません。'
-        '州ごとのきまりと、分野ごとの法律があります。'
-        '日本と同じしくみではない、と考えてください。',
+    t('② その国のきまり', "② That country's rules"),
+    t(
+      'アメリカには、日本の個人情報保護法にあたる国全体の法律がありません。'
+          '州ごとのきまりと、分野ごとの法律があります。'
+          '日本と同じしくみではない、と考えてください。',
+      "The United States has no nationwide law equivalent to Japan's Act on "
+          'the Protection of Personal Information. Instead, there are state rules '
+          'and laws for specific sectors. Please understand that the system is '
+          'not the same as in Japan.',
+    ),
   ),
   (
-    '③ 送り先が守っていること',
-    'Google は、データの取り扱いについて EU が認めた標準契約条項を結び、'
-        '暗号化して送受信し、保存する場所と期間を定めています。'
-        'RevenueCat は本アプリから委託された処理者として課金管理データを扱い、'
-        '通信に TLS を使うと公開しています。詳細は各社の公開資料で確認できます。',
+    t('③ 送り先が守っていること', '③ What the recipients commit to'),
+    t(
+      'Google は、データの取り扱いについて EU が認めた標準契約条項を結び、'
+          '暗号化して送受信し、保存する場所と期間を定めています。'
+          'RevenueCat は本アプリから委託された処理者として課金管理データを扱い、'
+          '通信に TLS を使うと公開しています。詳細は各社の公開資料で確認できます。',
+      'For data handling, Google has entered into the Standard Contractual '
+          'Clauses approved by the EU, encrypts data when sending and receiving '
+          'it, and sets where and for how long data is stored. RevenueCat handles '
+          'billing management data as a processor entrusted by this app, and has '
+          'published that it uses TLS for communication. Details can be found in '
+          "each company's public documentation.",
+    ),
   ),
 ];
 
@@ -91,9 +149,9 @@ enum AgeBand {
   adult;
 
   String get label => switch (this) {
-    AgeBand.under16 => '15歳以下',
-    AgeBand.from16to17 => '16〜17歳',
-    AgeBand.adult => '18歳以上',
+    AgeBand.under16 => t('15歳以下', '15 or younger'),
+    AgeBand.from16to17 => t('16〜17歳', '16–17'),
+    AgeBand.adult => t('18歳以上', '18 or older'),
   };
 
   static AgeBand? parse(Object? v) => switch (v) {

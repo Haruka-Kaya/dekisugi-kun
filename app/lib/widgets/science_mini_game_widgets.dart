@@ -1,3 +1,4 @@
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../ui/_material.dart';
@@ -27,7 +28,10 @@ class ScienceMiniGameCountdown extends StatelessWidget {
       key: const ValueKey('science-mini-game-countdown'),
       container: true,
       liveRegion: true,
-      label: '$stepLabel。残り時間$remainingSeconds秒',
+      label: t(
+        '$stepLabel。残り時間$remainingSeconds秒',
+        '$stepLabel. $remainingSeconds seconds left',
+      ),
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.all(GameTokens.spaceLg),
@@ -51,7 +55,7 @@ class ScienceMiniGameCountdown extends StatelessWidget {
                         .jaWeight(FontWeight.w800),
                   ),
                   Text(
-                    '残り $remainingSeconds 秒',
+                    t('残り $remainingSeconds 秒', '$remainingSeconds s left'),
                     style: theme.textTheme.labelLarge
                         ?.copyWith(color: colors.pathReview)
                         .jaWeight(FontWeight.w900),
@@ -99,7 +103,10 @@ class ScienceMiniGameChoice extends StatelessWidget {
       button: true,
       enabled: onPressed != null,
       selected: selected,
-      label: '選択肢$position/$count。$text。${selected ? '選択中' : '未選択'}',
+      label: t(
+        '選択肢$position/$count。$text。${selected ? '選択中' : '未選択'}',
+        'Choice $position/$count. $text. ${selected ? 'Selected' : 'Not selected'}',
+      ),
       child: ExcludeSemantics(
         child: OutlinedButton(
           onPressed: onPressed,

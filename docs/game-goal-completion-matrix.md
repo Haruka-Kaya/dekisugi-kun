@@ -1,6 +1,6 @@
 # ゲーム全面刷新 — 完成条件と現在証拠
 
-更新日: 2026-08-13
+更新日: 2026-10-01
 
 この表は「それらしい画面がある」ではなく、production導線・保存契約・E2E・実機表示の4点で完成を判定する。
 安全上の代替や縮小実装は、元の要求と同等でない限り完成に数えない。
@@ -12,10 +12,10 @@ XP / Heart / Streak / Streak Freeze / Matchはすべて、既存ID・enum・保�
 
 | 明示要件 | 現在状態 | 完成を証明する一次証拠 | 残作業 |
 |---|---|---|---|
-| 中学理科教材の広さ | 第1段階実装済み（全範囲ではない） | MEXT理科編を参照するcatalog schema v10、8単元23概念、69のfoundation / conditions / transfer variant、23固有Story、23×3のListening聞き取り／意味need、80 tagged notation task。server正本・公開JSON・同梱asset・Dart parserをexact keysで同期し、未知fieldをfail-closed | 化学変化、イオン、生命の連続性、科学技術・自然環境は次段階。教員による学年配置・用語・安全性pilotが必要 |
+| 中学理科教材の広さ | 12単元35概念を実装済み | MEXT理科編を参照するcatalog schema v10、12単元35概念、105のfoundation / conditions / transfer variant、35固有Story、35×3のListening聞き取り／意味need、116 tagged notation task。server正本・公開JSON・同梱asset・Dart parserをexact keysで同期し、未知fieldをfail-closed | 化学変化、イオン、生命の連続性、科学技術・自然環境まで収録。教員による学年配置・用語・安全性pilotが必要 |
 | 探究ノート（内部Learning Path） | 実装済み | `GamePathProjection`と保存IDは維持し、表示を左の実験レール＋横長の探究ログへ変更。円形マス・蛇行connector・疑似立体rim・押下translationを廃止し、状態別の罫線・icon・文言、角形markerと「次はここ」、深い進捗のcold launch自動可視化、Home journey E2Eを保持 | 最新Field Notebook画面をAndroid / iOS物理端末で最終目視する |
-| 理科事件＋読み聞かせ（内部Stories） | 実装済み（実機音声QA待ち） | schema v10の23固有episode、一覧の固有事件名、固定人物・公開順会話・3選択肢別反応・科学的解決・落ち、可視sceneだけを読むWidget / MethodChannel contract＋Android / iOS native bridge実装 | Android / iOS実機で声質と中断を最終確認する |
-| 日次聞き取り観察／教え返し（内部Listening / Speaking） | 実装済み（実機音声QA待ち） | 聞き取り観察は音声完了後だけprivate文字起こし→教材文比較→意味判断へ進み、schema v10で23concept×3stageの聞き取りneedと意味needを別code化。同梱人音声と端末TTS fallbackを出所表示し、再生不能では完了・rewardを作らない。教え返しは正解非表示のstage別単一promptへ音声または文字で説明し、音声は実feed/drain完了まで再生、文字は明示再読後に固定問い返しへ進む。誤答はcanonical need＋試行余力1回だけを保存し、ヒント後の言い直しと再生／再読を必須にする。録音・自由文・選択肢IDはRAM外へ出さないHome E2E | 現catalogには人音声assetが無いため聞き取り観察はTTS fallback。Android / iOS物理端末でマイク許可／拒否、録音の実再生、TTS / 将来の人音声中断を最終確認する |
+| 理科事件＋読み聞かせ（内部Stories） | 実装済み（実機音声QA待ち） | schema v10の35固有episode、一覧の固有事件名、固定人物・公開順会話・3選択肢別反応・科学的解決・落ち、可視sceneだけを読むWidget / MethodChannel contract＋Android / iOS native bridge実装 | Android / iOS実機で声質と中断を最終確認する |
+| 日次聞き取り観察／教え返し（内部Listening / Speaking） | 実装済み（実機音声QA待ち） | 聞き取り観察は音声完了後だけprivate文字起こし→教材文比較→意味判断へ進み、schema v10で35concept×3stageの聞き取りneedと意味needを別code化。同梱人音声と端末TTS fallbackを出所表示し、再生不能では完了・rewardを作らない。教え返しは正解非表示のstage別単一promptへ音声または文字で説明し、音声は実feed/drain完了まで再生、文字は明示再読後に固定問い返しへ進む。誤答はcanonical need＋試行余力1回だけを保存し、ヒント後の言い直しと再生／再読を必須にする。録音・自由文・選択肢IDはRAM外へ出さないHome E2E | 現catalogには人音声assetが無いため聞き取り観察はTTS fallback。Android / iOS物理端末でマイク許可／拒否、録音の実再生、TTS / 将来の人音声中断を最終確認する |
 | 理科の文字学習相当（式・単位・矢印・グラフ） | 実装済み | catalog schema v10、物理のstrokeに加えて分類・順序・モデル・グラフを表すtagged notation task、pointer順序・距離・lift判定、screen reader順序確認、対応する修復実験のE2E | なし |
 | 連続観測（内部Streak） | 実装済み | 4時学習日投影、meaningful event限定、利用可能な保護は学習前から1日の欠けを仮保護し、未保護の欠けだけ1日ごと7日減衰。長期離脱→0の回帰 | 物理端末で午前4時境界を確認 |
 | 観測記録の保護（内部Streak Freeze） | 実装済み | Memory / SQLite共通contract、週1自動利用、結晶補充、同週／週跨ぎ／03:59→04:00のpure projection。完了前に減衰して完了後に突然復活せず、保護日は継続を維持するが学習日数には加算しない | 物理端末で午前4時境界を確認 |
@@ -37,7 +37,7 @@ XP / Heart / Streak / Streak Freeze / Matchはすべて、既存ID・enum・保�
 - Notationの「なぞる」は、catalogに固定した正規化strokeを実際のpointerで順に通る操作を指す。説明文、token並べ替え、完了ボタンだけをfinger tracingの代用にしない
 - 指軌跡はWidget State内だけに置き、保存・送信・need DTOへ含めない。画面外、順序違い、離れすぎた軌跡は完了にせず、Reduce Motionとscreen reader向けには同じ意味を順序操作で確認できる代替を用意する
 - catalogは未知field、欠落stroke、範囲外座標、短すぎるstroke、重複IDをfail-closedし、server正本と同梱assetの一致を機械検証する
-- 実装証拠は、23件の固有title/setting/punchline fixture、一覧・詳細・assetのtitle一致、80件のtagged notation invariant、全分岐/TTS停止/pointer/a11y/320×568・文字200% widget testで固定する
+- 実装証拠は、35件の固有title/setting/punchline fixture、一覧・詳細・assetのtitle一致、116件のtagged notation invariant、全分岐/TTS停止/pointer/a11y/320×568・文字200% widget testで固定する
 
 ## 教え返し／個別再観察／観察予定（内部Speaking / Practice / Quest）の完成境界
 
@@ -48,10 +48,10 @@ XP / Heart / Streak / Streak Freeze / Matchはすべて、既存ID・enum・保�
 
 ## 全体gate
 
-- 自動: Flutter 1277/1277・analyze 0、server 373/373・typecheck・catalog check・依存脆弱性0、Memory / SQLite同一contract
+- 自動: Flutter 1337/1337・analyze 0、server 399/399・typecheck・catalog check・依存脆弱性0、Memory / SQLite同一contract
 - visual/native: production widgetのField Notebook Golden 6/6、runtimeキャラクター正本Golden 4/4、派生native/store PNG 49件の2回byte一致・寸法・alpha・adaptive 66dp safe-zone・参照を検証
 - 自動UI: 6タブroute、320×568・文字200%・light/dark・Reduce Motion・Semantics、700dp以上の可読幅とgrid
-- build: Android release APKはupload key `CN=Haruka Kaya`のv2署名・zipalignを検証済み（SHA-256 `9b69c6ec741a5d4539f662591955623a0d572e75f353b2239bc2d31407d39575`）。iOS Simulator debug buildも成功。APK内に現Field Notebook語彙があり、旧到達語「週次リーグ」「ペアクエスト」「TUTORIAL CLEAR」「30秒おためしミッション」が無いことも検査した。APKのローカル署名はPlay受理、iOS実機署名、Store公開の証拠には数えない
+- build: Android release APKはupload key `CN=Haruka Kaya`のv2署名・zipalignを検証済み（統合後のARM64 APKハッシュは検証記録を参照）。iOS Simulator debug buildも成功。APK内に現Field Notebook語彙があり、旧到達語「週次リーグ」「ペアクエスト」「TUTORIAL CLEAR」「30秒おためしミッション」が無いことも検査した。APKのローカル署名はPlay受理、iOS実機署名、Store公開の証拠には数えない
 - Git成果物: 必要な新規production / test / asset / workflowを意図的に追跡し、clean checkout CIが通るまで未完
 - Simulator: iOS build / launchと主要画面の目視。Simulatorは実マイク録音・再生、権限ダイアログ、TTSの実機証拠には数えない
 - 未完の物理端末: Android / iOSのマイク許可／拒否、録音の実再生、TTS中断、最新6タブの最終目視

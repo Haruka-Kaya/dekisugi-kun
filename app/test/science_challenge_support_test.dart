@@ -117,6 +117,8 @@ void main() {
               DekisugiCharacterDecoration.standard,
             LearningPathMascotStyle.orbit => DekisugiCharacterDecoration.orbit,
             LearningPathMascotStyle.nova => DekisugiCharacterDecoration.nova,
+            LearningPathMascotStyle.aurora =>
+              DekisugiCharacterDecoration.aurora,
           });
           expect(art.pose, switch (reaction) {
             GameCharacterReaction.none => DekisugiCharacterPose.idle,

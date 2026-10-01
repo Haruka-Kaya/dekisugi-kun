@@ -1,3 +1,4 @@
+import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
 import '../models/game_path.dart';
@@ -165,7 +166,10 @@ class _ScienceLessonScreenState extends State<ScienceLessonScreen> {
                           ),
                           const SizedBox(height: 8),
                           Semantics(
-                            label: '教材観察、4段階中${_step.index + 1}',
+                            label: t(
+                              '教材観察、4段階中${_step.index + 1}',
+                              'Reading lesson, step ${_step.index + 1} of 4',
+                            ),
                             child: LinearProgressIndicator(
                               value: progress,
                               minHeight: 8,
@@ -254,12 +258,19 @@ class _PredictionStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _LessonLayout(
-    eyebrow: '観察手順 1 / 3  ・  答えを見る前に',
-    title: 'まず、自分の予想を置く。',
+    eyebrow: t(
+      '観察手順 1 / 3  ・  答えを見る前に',
+      'Observation 1 / 3  ·  Before the answer',
+    ),
+    title: t('まず、自分の予想を置く。', 'First, make your prediction.'),
     body: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Surface(label: '今回の問い', text: prompt, interpretEmphasis: true),
+        _Surface(
+          label: t('今回の問い', 'Today\'s question'),
+          text: prompt,
+          interpretEmphasis: true,
+        ),
         const SizedBox(height: 12),
         const _TeachBackNotice(),
         const SizedBox(height: 16),
@@ -269,9 +280,12 @@ class _PredictionStep extends StatelessWidget {
           minLines: 3,
           maxLines: 5,
           maxLength: 240,
-          decoration: const InputDecoration(
-            labelText: '読む前の予想（1文以上）',
-            hintText: 'いま考えていることを書く',
+          decoration: InputDecoration(
+            labelText: t(
+              '読む前の予想（1文以上）',
+              'Your prediction before reading (1+ sentences)',
+            ),
+            hintText: t('いま考えていることを書く', 'Write what you\'re thinking now'),
           ),
         ),
         const SizedBox(height: 8),
@@ -281,7 +295,7 @@ class _PredictionStep extends StatelessWidget {
     action: FilledButton(
       key: const ValueKey('science-lesson-reveal'),
       onPressed: onContinue,
-      child: const Text('予想を置いて、教材を読む'),
+      child: Text(t('予想を置いて、教材を読む', 'Save prediction and read')),
     ),
     secondaryAction: _DeferLessonButton(onPressed: onDefer),
   );
@@ -293,7 +307,10 @@ class _TeachBackNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     container: true,
-    label: 'この教材のあと、デキすぎ君へ理由と条件を自分の言葉で説明します',
+    label: t(
+      'この教材のあと、デキすぎ君へ理由と条件を自分の言葉で説明します',
+      'After this material, you\'ll explain the reasons and conditions to Dekisugi-kun in your own words',
+    ),
     child: ExcludeSemantics(
       child: Container(
         padding: const EdgeInsets.all(GameTokens.spaceMd),
@@ -313,7 +330,10 @@ class _TeachBackNotice extends StatelessWidget {
             const SizedBox(width: GameTokens.spaceSm),
             Expanded(
               child: Text(
-                'このあと、デキすぎ君へ説明します。答えだけでなく「なぜ」と「どんな条件で」を拾ってください。',
+                t(
+                  'このあと、デキすぎ君へ説明します。答えだけでなく「なぜ」と「どんな条件で」を拾ってください。',
+                  'Next, you\'ll explain this to Dekisugi-kun. Look for not just the answer, but "why" and "under what conditions."',
+                ),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: context.gamePalette.ink,
                 ),
@@ -339,7 +359,7 @@ class _ReadingStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _LessonLayout(
-    eyebrow: '観察手順 2 / 3  ・  教材を読む',
+    eyebrow: t('観察手順 2 / 3  ・  教材を読む', 'Observation 2 / 3  ·  Read the material'),
     title: section.title,
     body: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -350,8 +370,8 @@ class _ReadingStep extends StatelessWidget {
           key: const ValueKey('science-lesson-full-text'),
           tilePadding: const EdgeInsets.symmetric(horizontal: 14),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          title: const Text('教材をくわしく読む'),
-          subtitle: const Text('本文を開いて、言葉や条件を確かめられます。'),
+          title: Text('教材をくわしく読む'),
+          subtitle: Text('本文を開いて、言葉や条件を確かめられます。'),
           children: [
             for (final paragraph in section.body) ...[
               Align(
@@ -367,7 +387,7 @@ class _ReadingStep extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         _Surface(
-          label: '手を動かすなら',
+          label: t('手を動かすなら', 'Try it hands-on'),
           text: section.tryIt,
           interpretEmphasis: true,
         ),
@@ -376,7 +396,7 @@ class _ReadingStep extends StatelessWidget {
     action: FilledButton(
       key: const ValueKey('science-lesson-compare'),
       onPressed: onContinue,
-      child: const Text('最初の予想と比べる'),
+      child: Text(t('最初の予想と比べる', 'Compare with your first prediction')),
     ),
     secondaryAction: _DeferLessonButton(onPressed: onDefer),
   );
@@ -389,7 +409,7 @@ class _ReadingHighlights extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _Surface(
-    label: 'まず押さえる要点',
+    label: t('まず押さえる要点', 'Key points to start with'),
     text: '',
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,15 +466,21 @@ class _ComparisonStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _LessonLayout(
-    eyebrow: '観察手順 3 / 3  ・  自分の予想と比べる',
-    title: '予想を、教材の要点と比べる。',
+    eyebrow: t(
+      '観察手順 3 / 3  ・  自分の予想と比べる',
+      'Observation 3 / 3  ·  Compare your prediction',
+    ),
+    title: t('予想を、教材の要点と比べる。', 'Compare your prediction with the key points.'),
     body: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Surface(label: '読む前の予想', text: prediction),
+        _Surface(
+          label: t('読む前の予想', 'Your prediction before reading'),
+          text: prediction,
+        ),
         const SizedBox(height: 10),
         _Surface(
-          label: '教材で確かめたこと',
+          label: t('教材で確かめたこと', 'What the material showed'),
           text: section.body.join('\n\n'),
           interpretEmphasis: true,
         ),
@@ -466,16 +492,16 @@ class _ComparisonStep extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         SegmentedButton<_LessonDecision>(
-          segments: const [
+          segments: [
             ButtonSegment(
               value: _LessonDecision.keep,
-              label: Text('残す点'),
-              icon: Icon(Icons.add_task),
+              label: Text(t('残す点', 'Keep')),
+              icon: const Icon(Icons.add_task),
             ),
             ButtonSegment(
               value: _LessonDecision.revise,
-              label: Text('直す点'),
-              icon: Icon(Icons.edit_note),
+              label: Text(t('直す点', 'Fix')),
+              icon: const Icon(Icons.edit_note),
             ),
           ],
           selected: {?decision},
@@ -491,9 +517,12 @@ class _ComparisonStep extends StatelessWidget {
           minLines: 2,
           maxLines: 4,
           maxLength: 200,
-          decoration: const InputDecoration(
-            labelText: '比べて気づいたこと（1文）',
-            hintText: '予想に残す点、または直す点を書く',
+          decoration: InputDecoration(
+            labelText: t('比べて気づいたこと（1文）', 'What you noticed (1 sentence)'),
+            hintText: t(
+              '予想に残す点、または直す点を書く',
+              'Write what to keep or fix in your prediction',
+            ),
           ),
         ),
       ],
@@ -501,7 +530,7 @@ class _ComparisonStep extends StatelessWidget {
     action: FilledButton(
       key: const ValueKey('science-lesson-complete'),
       onPressed: onComplete,
-      child: const Text('教材観察を完了する'),
+      child: Text(t('教材観察を完了する', 'Finish reading lesson')),
     ),
     secondaryAction: _DeferLessonButton(onPressed: onDefer),
   );
@@ -523,7 +552,10 @@ class _CheckpointComparison extends StatelessWidget {
     final correct = selectedId == checkpoint.correctOptionId;
     final hasAnswer = selectedId != null;
     return _Surface(
-      label: '教材の根拠で、もう一度確かめる',
+      label: t(
+        '教材の根拠で、もう一度確かめる',
+        'Check again with evidence from the material',
+      ),
       text: '',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -560,8 +592,14 @@ class _CheckpointComparison extends StatelessWidget {
               liveRegion: true,
               child: Text(
                 correct
-                    ? '教材の根拠と照合できました。'
-                    : '教材の根拠を読み直して、もう一度選んでみましょう。\n${checkpoint.explanation}',
+                    ? t(
+                        '教材の根拠と照合できました。',
+                        'You matched it with the material\'s evidence.',
+                      )
+                    : t(
+                        '教材の根拠を読み直して、もう一度選んでみましょう。\n${checkpoint.explanation}',
+                        'Read the evidence again and choose once more.\n${checkpoint.explanation}',
+                      ),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: correct
                       ? context.gamePalette.pathComplete
@@ -585,17 +623,20 @@ class _LessonComplete extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     key: const ValueKey('science-lesson-finished'),
     container: true,
-    label: '教材観察完了。読む前の予想を教材と比べました。',
+    label: t(
+      '教材観察完了。読む前の予想を教材と比べました。',
+      'Reading lesson complete. You compared your prediction with the material.',
+    ),
     child: ExcludeSemantics(
       child: _LessonLayout(
-        eyebrow: '教材観察  /  完了',
-        title: '予想と本文を、比べ終えた。',
+        eyebrow: t('教材観察  /  完了', 'Material Observation  /  Complete'),
+        title: t('予想と本文を、比べ終えた。', 'Prediction and material compared.'),
         body: const _LocalOnlyNote(),
         action: FilledButton.icon(
           key: const ValueKey('science-lesson-return'),
           onPressed: onReturnToPath,
           icon: const Icon(Icons.route),
-          label: const Text('探究ノートへ戻る'),
+          label: Text(t('探究ノートへ戻る', 'Back to learning path')),
         ),
       ),
     ),
@@ -701,7 +742,7 @@ class _DeferLessonButton extends StatelessWidget {
     key: const ValueKey('science-lesson-defer'),
     onPressed: onPressed,
     icon: const Icon(Icons.bookmark_add_outlined),
-    label: const Text('このステップは後でやる'),
+    label: Text('このステップは後でやる'),
   );
 }
 
@@ -711,7 +752,10 @@ class _LocalOnlyNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     container: true,
-    label: '入力はこの画面だけで使い、保存も送信も自動採点もしません',
+    label: t(
+      '入力はこの画面だけで使い、保存も送信も自動採点もしません',
+      'Your input is used only on this screen. It is not saved, sent, or auto-graded',
+    ),
     child: ExcludeSemantics(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -722,7 +766,14 @@ class _LocalOnlyNote extends StatelessWidget {
             color: context.gamePalette.inkMuted,
           ),
           const SizedBox(width: 8),
-          const Expanded(child: Text('入力は保存・送信・自動採点しません。')),
+          Expanded(
+            child: Text(
+              t(
+                '入力は保存・送信・自動採点しません。',
+                'Input is not saved, sent, or auto-graded.',
+              ),
+            ),
+          ),
         ],
       ),
     ),

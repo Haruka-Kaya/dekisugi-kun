@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as lang;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../config/motion.dart';
@@ -65,15 +66,17 @@ class _TeachingMissionBoardState extends State<TeachingMissionBoard> {
     final copy = _copyFor(snapshot.phase);
     final challenge = snapshot.phase != MissionPhase.teach;
     final missionName = switch (widget.missionKind) {
-      MissionKind.teach => '教えるミッション',
-      MissionKind.repair => 'リペアミッション',
-      MissionKind.caseRetry => 'ケースミッション',
+      MissionKind.teach => lang.t('教えるミッション', 'Teach mission'),
+      MissionKind.repair => lang.t('リペアミッション', 'Repair mission'),
+      MissionKind.caseRetry => lang.t('ケースミッション', 'Case mission'),
     };
 
     return Semantics(
       container: true,
-      label:
-          '$missionName、3段階中${snapshot.step}。${widget.conceptLabel}。${copy.title}。${copy.body}',
+      label: lang.t(
+        '$missionName、3段階中${snapshot.step}。${widget.conceptLabel}。${copy.title}。${copy.body}',
+        '$missionName, step ${snapshot.step} of 3. ${widget.conceptLabel}. ${copy.title}. ${copy.body}',
+      ),
       child: ExcludeSemantics(
         child: Container(
           width: double.infinity,
@@ -158,7 +161,10 @@ class _TeachingMissionBoardState extends State<TeachingMissionBoard> {
                     borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
                   child: Text(
-                    '選んだ作戦：${widget.tactic.label}\n${widget.tactic.hint}',
+                    lang.t(
+                      '選んだ作戦：${widget.tactic.label}\n${widget.tactic.hint}',
+                      'Your strategy: ${widget.tactic.label}\n${widget.tactic.hint}',
+                    ),
                     style: t.textTheme.bodySmall?.copyWith(
                       color: c.onCoolSurface,
                     ),
@@ -180,14 +186,20 @@ class _TeachingMissionBoardState extends State<TeachingMissionBoard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'LAST CHALLENGE  /  デキすぎ君の考え',
+                        lang.t(
+                          'LAST CHALLENGE  /  デキすぎ君の考え',
+                          'LAST CHALLENGE  /  What Dekisugi-kun thinks',
+                        ),
                         style: t.textTheme.labelSmall
                             ?.copyWith(color: c.onWarmSurface)
                             .jaWeight(FontWeight.w700),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        '「${widget.challengeText!.trim()}」',
+                        lang.t(
+                          '「${widget.challengeText!.trim()}」',
+                          '"${widget.challengeText!.trim()}"',
+                        ),
                         style: t.textTheme.bodyMedium
                             ?.copyWith(color: c.onWarmSurface, height: 1.55)
                             .jaWeight(FontWeight.w700),
@@ -210,54 +222,88 @@ class _TeachingMissionBoardState extends State<TeachingMissionBoard> {
   };
 
   String get _clearLabel => switch (widget.missionKind) {
-    MissionKind.teach => 'MISSION CLEAR  /  教え切った',
-    MissionKind.repair => 'REPAIR CLEAR  /  決着した',
-    MissionKind.caseRetry => 'CASE CLEAR  /  別の場面でも使えた',
+    MissionKind.teach => lang.t(
+      'MISSION CLEAR  /  教え切った',
+      'MISSION CLEAR  /  Fully taught',
+    ),
+    MissionKind.repair => lang.t(
+      'REPAIR CLEAR  /  決着した',
+      'REPAIR CLEAR  /  Settled',
+    ),
+    MissionKind.caseRetry => lang.t(
+      'CASE CLEAR  /  別の場面でも使えた',
+      'CASE CLEAR  /  Worked in a new situation',
+    ),
   };
 
-  ({IconData icon, String title, String body}) _copyFor(MissionPhase phase) =>
-      switch ((widget.missionKind, phase)) {
-        (MissionKind.caseRetry, MissionPhase.teach) => (
-          icon: Icons.travel_explore_outlined,
-          title: '場面の結果を予想する',
-          body: '答えを思い出すのではなく、この場面で何が起きるかを理由と一緒に話してください。',
-        ),
-        (MissionKind.repair, MissionPhase.teach) => (
-          icon: Icons.build_outlined,
-          title: '決着点を組み直す',
-          body: '前に曖昧だったところを、条件や理由までつなげて説明し直してください。',
-        ),
-        (_, MissionPhase.teach) => (
-          icon: Icons.record_voice_over_outlined,
-          title: 'まず、自分の言葉で教える',
-          body: '覚えた文を当てる問題ではありません。あなたの説明を、声か文字で聞かせてください。',
-        ),
-        (_, MissionPhase.challenge) => (
-          icon: Icons.psychology_alt_outlined,
-          title: 'デキすぎ君の思い込みを見破る',
-          body: '相手の考えのどこが違うか、条件や理由をつけて返してください。',
-        ),
-        (_, MissionPhase.resolve) => (
-          icon: Icons.compare_arrows,
-          title: 'まだ決着していない',
-          body: '出てきた2つの考えを比べて、どちらがなぜ正しいかを言い切ってください。',
-        ),
-        (MissionKind.caseRetry, MissionPhase.clear) => (
-          icon: Icons.verified_outlined,
-          title: '別の場面でも使えた',
-          body: '場面の予想と理由、思い込みへの訂正がつながりました。次は間隔を空けて確かめます。',
-        ),
-        (MissionKind.repair, MissionPhase.clear) => (
-          icon: Icons.verified_outlined,
-          title: '曖昧だったところに決着した',
-          body: '説明と理由付きの訂正がそろいました。組み直した言葉をノートに残します。',
-        ),
-        (_, MissionPhase.clear) => (
-          icon: Icons.verified_outlined,
-          title: '思い込みを見破った',
-          body: '説明と訂正の両方が伝わりました。あなたの言葉をノートに残します。',
-        ),
-      };
+  ({IconData icon, String title, String body}) _copyFor(
+    MissionPhase phase,
+  ) => switch ((widget.missionKind, phase)) {
+    (MissionKind.caseRetry, MissionPhase.teach) => (
+      icon: Icons.travel_explore_outlined,
+      title: lang.t('場面の結果を予想する', 'Predict what happens'),
+      body: lang.t(
+        '答えを思い出すのではなく、この場面で何が起きるかを理由と一緒に話してください。',
+        'Do not just recall the answer. Say what will happen in this situation, and why.',
+      ),
+    ),
+    (MissionKind.repair, MissionPhase.teach) => (
+      icon: Icons.build_outlined,
+      title: lang.t('決着点を組み直す', 'Rebuild the key point'),
+      body: lang.t(
+        '前に曖昧だったところを、条件や理由までつなげて説明し直してください。',
+        'Explain again the part that was unclear before, connecting it to conditions and reasons.',
+      ),
+    ),
+    (_, MissionPhase.teach) => (
+      icon: Icons.record_voice_over_outlined,
+      title: lang.t('まず、自分の言葉で教える', 'First, teach it in your own words'),
+      body: lang.t(
+        '覚えた文を当てる問題ではありません。あなたの説明を、声か文字で聞かせてください。',
+        'This is not about matching a memorized sentence. Give me your explanation by voice or text.',
+      ),
+    ),
+    (_, MissionPhase.challenge) => (
+      icon: Icons.psychology_alt_outlined,
+      title: lang.t('デキすぎ君の思い込みを見破る', "Catch Dekisugi-kun's misconception"),
+      body: lang.t(
+        '相手の考えのどこが違うか、条件や理由をつけて返してください。',
+        'Point out what is wrong with his idea, with conditions or reasons.',
+      ),
+    ),
+    (_, MissionPhase.resolve) => (
+      icon: Icons.compare_arrows,
+      title: lang.t('まだ決着していない', 'Not settled yet'),
+      body: lang.t(
+        '出てきた2つの考えを比べて、どちらがなぜ正しいかを言い切ってください。',
+        'Compare the two ideas that came up and say clearly which one is right and why.',
+      ),
+    ),
+    (MissionKind.caseRetry, MissionPhase.clear) => (
+      icon: Icons.verified_outlined,
+      title: lang.t('別の場面でも使えた', 'It worked in a new situation'),
+      body: lang.t(
+        '場面の予想と理由、思い込みへの訂正がつながりました。次は間隔を空けて確かめます。',
+        'Your prediction, reason, and correction of the misconception all connected. Next, we will check again after a break.',
+      ),
+    ),
+    (MissionKind.repair, MissionPhase.clear) => (
+      icon: Icons.verified_outlined,
+      title: lang.t('曖昧だったところに決着した', 'Settled what was unclear'),
+      body: lang.t(
+        '説明と理由付きの訂正がそろいました。組み直した言葉をノートに残します。',
+        'Your explanation and reasoned correction are complete. Your rebuilt words go into the notebook.',
+      ),
+    ),
+    (_, MissionPhase.clear) => (
+      icon: Icons.verified_outlined,
+      title: lang.t('思い込みを見破った', 'Caught the misconception'),
+      body: lang.t(
+        '説明と訂正の両方が伝わりました。あなたの言葉をノートに残します。',
+        'Both your explanation and your correction came through. Your words go into the notebook.',
+      ),
+    ),
+  };
 }
 
 class _StepDots extends StatelessWidget {

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../config/app_language.dart' as l10n;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
@@ -171,14 +172,23 @@ class _ConsentScreenState extends State<ConsentScreen> {
     final isUnavailableRoute =
         _step == _ConsentStep.route && _currentlyUnavailable;
     final pageTitle = switch (_step) {
-      _ConsentStep.age => '年齢の確認',
-      _ConsentStep.route => '利用する経路',
-      _ConsentStep.transfer => '送信内容の確認',
+      _ConsentStep.age => l10n.t('年齢の確認', 'Check your age'),
+      _ConsentStep.route => l10n.t('利用する経路', 'How you will use the app'),
+      _ConsentStep.transfer => l10n.t('送信内容の確認', 'Check what is sent'),
     };
     final pageDescription = switch (_step) {
-      _ConsentStep.age => '生年月日や氏名は集めません。',
-      _ConsentStep.route => '学校からの案内か、本人の利用かを選びます。',
-      _ConsentStep.transfer => '会話を始める前に、実際の送信内容を確認します。',
+      _ConsentStep.age => l10n.t(
+        '生年月日や氏名は集めません。',
+        'Your birth date and name are not collected.',
+      ),
+      _ConsentStep.route => l10n.t(
+        '学校からの案内か、本人の利用かを選びます。',
+        'Choose whether you were invited by a school or are using the app yourself.',
+      ),
+      _ConsentStep.transfer => l10n.t(
+        '会話を始める前に、実際の送信内容を確認します。',
+        'Review what is actually sent before starting a conversation.',
+      ),
     };
 
     return Scaffold(
@@ -210,24 +220,36 @@ class _ConsentScreenState extends State<ConsentScreen> {
               const SizedBox(height: 20),
               if (_step == _ConsentStep.age) ...[
                 const _FirstMissionPreview(),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
               ],
               StudioPageIntro(
                 eyebrow: pageTitle,
                 title: switch (_step) {
-                  _ConsentStep.age => '最初に、年齢を\n確認します。',
-                  _ConsentStep.route => 'どこから使うかを\n確認します。',
-                  _ConsentStep.transfer => '送る内容を\n確認します。',
+                  _ConsentStep.age => l10n.t(
+                    '最初に、年齢を\n確認します。',
+                    'First, check\nyour age.',
+                  ),
+                  _ConsentStep.route => l10n.t(
+                    'どこから使うかを\n確認します。',
+                    'Check how you\nwill use the app.',
+                  ),
+                  _ConsentStep.transfer => l10n.t(
+                    '送る内容を\n確認します。',
+                    'Check what\nis sent.',
+                  ),
                 },
                 body: pageDescription,
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               switch (_step) {
                 _ConsentStep.age => _PaperSection(
-                  header: const StudioSectionHeader(
+                  header: StudioSectionHeader(
                     leading: _StepBadge(step: 1),
-                    title: '年齢だけ教えてください',
-                    description: '生年月日や氏名は集めません。',
+                    title: l10n.t('年齢だけ教えてください', 'Just tell us your age'),
+                    description: l10n.t(
+                      '生年月日や氏名は集めません。',
+                      'Your birth date and name are not collected.',
+                    ),
                   ),
                   child: RadioGroup<AgeBand>(
                     groupValue: _band,
@@ -245,10 +267,13 @@ class _ConsentScreenState extends State<ConsentScreen> {
                   ),
                 ),
                 _ConsentStep.route => _PaperSection(
-                  header: const StudioSectionHeader(
+                  header: StudioSectionHeader(
                     leading: _StepBadge(step: 2),
-                    title: 'どこから使いますか？',
-                    description: '学校から案内された場合だけ、学校コードが必要です。',
+                    title: l10n.t('どこから使いますか？', 'How will you use the app?'),
+                    description: l10n.t(
+                      '学校から案内された場合だけ、学校コードが必要です。',
+                      'A school code is needed only when your school invited you.',
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -282,10 +307,16 @@ class _ConsentScreenState extends State<ConsentScreen> {
                   ),
                 ),
                 _ConsentStep.transfer => _PaperSection(
-                  header: const StudioSectionHeader(
+                  header: StudioSectionHeader(
                     leading: _StepBadge(step: 3),
-                    title: '声・文字・Plus の送り先',
-                    description: '話し始める前に、実際の送信内容をお読みください。',
+                    title: l10n.t(
+                      '声・文字・Plus の送り先',
+                      'Where your voice, text, and Plus data go',
+                    ),
+                    description: l10n.t(
+                      '話し始める前に、実際の送信内容をお読みください。',
+                      'Before you start talking, please read exactly what is sent.',
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -295,7 +326,12 @@ class _ConsentScreenState extends State<ConsentScreen> {
                         value: _agreedTransfer,
                         onChanged: (v) =>
                             setState(() => _agreedTransfer = v ?? false),
-                        title: const Text('上の内容を読んで、会話時の海外送信に同意します'),
+                        title: Text(
+                          l10n.t(
+                            '上の内容を読んで、会話時の海外送信に同意します',
+                            'I have read the above and agree to data being sent overseas during conversations',
+                          ),
+                        ),
                         contentPadding: EdgeInsets.zero,
                         controlAffinity: ListTileControlAffinity.leading,
                       ),
@@ -308,7 +344,7 @@ class _ConsentScreenState extends State<ConsentScreen> {
                 OutlinedButton.icon(
                   onPressed: _previous,
                   icon: const Icon(Icons.arrow_back),
-                  label: const Text('前の確認へ戻る'),
+                  label: Text('前の確認へ戻る'),
                 ),
               ] else ...[
                 if (_step != _ConsentStep.age)
@@ -316,7 +352,7 @@ class _ConsentScreenState extends State<ConsentScreen> {
                     key: const ValueKey('consent-previous'),
                     onPressed: _busy ? null : _previous,
                     icon: const Icon(Icons.arrow_back),
-                    label: const Text('前の確認へ戻る'),
+                    label: Text('前の確認へ戻る'),
                   ),
                 if (_step != _ConsentStep.age) const SizedBox(height: 10),
                 FilledButton.icon(
@@ -333,7 +369,9 @@ class _ConsentScreenState extends State<ConsentScreen> {
                               : Icons.arrow_forward,
                         ),
                   label: Text(
-                    _step == _ConsentStep.transfer ? '同意してはじめる' : '次へ',
+                    _step == _ConsentStep.transfer
+                        ? l10n.t('同意してはじめる', 'Agree and start')
+                        : l10n.t('次へ', 'Next'),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -343,16 +381,35 @@ class _ConsentScreenState extends State<ConsentScreen> {
                       ? _useRestrictedLocal
                       : widget.onUseLocalOnly,
                   icon: const Icon(Icons.phone_android_outlined),
-                  label: const Text('通信しない端末内モードを使う'),
+                  label: Text(
+                    l10n.t('通信しない端末内モードを使う', 'Use offline on-device mode'),
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'こちらは年齢や同意を保存せず、外部AI・学校サーバ・購入機能へ接続しません。',
+                  l10n.t(
+                    'こちらは年齢や同意を保存せず、外部AI・学校サーバ・購入機能へ接続しません。',
+                    'This mode saves no age or consent, and never connects to external AI, school servers, or purchases.',
+                  ),
                   style: t.textTheme.bodySmall?.copyWith(
                     color: t.colorScheme.onSurfaceVariant,
                   ),
                   textAlign: TextAlign.center,
                 ),
+                if (_needsGuardian && !_guardianPresent)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Text(
+                      l10n.t(
+                        'おうちの人といっしょに確認してから、はじめてください。',
+                        'Please check this together with a parent or guardian before you start.',
+                      ),
+                      style: t.textTheme.bodySmall?.copyWith(
+                        color: t.colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
               ],
             ],
           ),
@@ -391,8 +448,14 @@ class _FirstMissionPreviewState extends State<_FirstMissionPreview> {
         _feedback = null;
       } else {
         _feedback = switch (_phase) {
-          _PreviewPhase.predict => 'まだ決着しません。条件は「真空中」です。空気の抵抗が無いときの落ち方を考えてみよう。',
-          _PreviewPhase.challenge => 'その答えだと「重いほど速い」が残ります。重さと落下の速さを分けて返そう。',
+          _PreviewPhase.predict => l10n.t(
+            'まだ決着しません。条件は「真空中」です。空気の抵抗が無いときの落ち方を考えてみよう。',
+            'Not settled yet. The condition is "in a vacuum." Think about how things fall with no air resistance.',
+          ),
+          _PreviewPhase.challenge => l10n.t(
+            'その答えだと「重いほど速い」が残ります。重さと落下の速さを分けて返そう。',
+            'That answer still leaves "heavier falls faster." Separate weight from falling speed in your reply.',
+          ),
           _PreviewPhase.clear => null,
         };
       }
@@ -472,15 +535,21 @@ class _FirstMissionPreviewState extends State<_FirstMissionPreview> {
                   children: [
                     Text(
                       _phase == _PreviewPhase.clear
-                          ? 'おためし観察  /  完了'
-                          : '30秒おためし観察',
+                          ? l10n.t(
+                              'おためし観察  /  完了',
+                              'Trial Observation  /  Complete',
+                            )
+                          : l10n.t('30秒おためし観察', '30-second trial observation'),
                       style: t.textTheme.labelMedium
                           ?.copyWith(color: c.heroMuted)
                           .jaWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '通信せず、端末の中だけで動きます。',
+                      l10n.t(
+                        '通信せず、端末の中だけで動きます。',
+                        'Runs only on this device, with no internet.',
+                      ),
                       style: t.textTheme.bodySmall?.copyWith(
                         color: c.heroMuted,
                       ),
@@ -493,7 +562,10 @@ class _FirstMissionPreviewState extends State<_FirstMissionPreview> {
           const SizedBox(height: 18),
           if (_phase == _PreviewPhase.predict) ...[
             Text(
-              '真空中で、重い球と軽い球を同じ高さから同時に落とす。どちらが先に着く？',
+              l10n.t(
+                '真空中で、重い球と軽い球を同じ高さから同時に落とす。どちらが先に着く？',
+                'In a vacuum, a heavy ball and a light ball are dropped from the same height at the same time. Which lands first?',
+              ),
               key: const Key('preview-predict-question'),
               style: t.textTheme.titleMedium
                   ?.copyWith(color: c.onHeroSurface, height: 1.45)
@@ -502,33 +574,36 @@ class _FirstMissionPreviewState extends State<_FirstMissionPreview> {
             const SizedBox(height: 14),
             _PreviewChoice(
               key: const Key('preview-predict-heavy'),
-              label: '重い球が先に着く',
+              label: l10n.t('重い球が先に着く', 'The heavy ball lands first'),
               onPressed: () =>
                   _answer(correct: false, next: _PreviewPhase.challenge),
             ),
             const SizedBox(height: 8),
             _PreviewChoice(
               key: const Key('preview-predict-same'),
-              label: '同時に着く',
+              label: l10n.t('同時に着く', 'They land at the same time'),
               onPressed: () =>
                   _answer(correct: true, next: _PreviewPhase.challenge),
             ),
             const SizedBox(height: 8),
             _PreviewChoice(
-              label: '軽い球が先に着く',
+              label: l10n.t('軽い球が先に着く', 'The light ball lands first'),
               onPressed: () =>
                   _answer(correct: false, next: _PreviewPhase.challenge),
             ),
           ] else if (_phase == _PreviewPhase.challenge) ...[
             Text(
-              'デキすぎ君の思い込み',
+              l10n.t('デキすぎ君の思い込み', 'Dekisugi-kun\'s misconception'),
               style: t.textTheme.labelMedium
                   ?.copyWith(color: c.heroMuted)
                   .jaWeight(FontWeight.w700),
             ),
             const SizedBox(height: 6),
             Text(
-              '「えっと、じゃあ重いものの方が速く落ちるってこと？」',
+              l10n.t(
+                '「えっと、じゃあ重いものの方が速く落ちるってこと？」',
+                '"Um, so that means heavier things fall faster?"',
+              ),
               key: const Key('preview-challenge'),
               style: t.textTheme.titleMedium
                   ?.copyWith(color: c.onHeroSurface, height: 1.45)
@@ -536,25 +611,31 @@ class _FirstMissionPreviewState extends State<_FirstMissionPreview> {
             ),
             const SizedBox(height: 10),
             Text(
-              'どこを直す？',
+              l10n.t('どこを直す？', 'What needs fixing?'),
               style: t.textTheme.bodyMedium?.copyWith(color: c.heroMuted),
             ),
             const SizedBox(height: 12),
             _PreviewChoice(
-              label: 'そう。重いものほど速く落ちる',
+              label: l10n.t(
+                'そう。重いものほど速く落ちる',
+                'Yes. Heavier things fall faster',
+              ),
               onPressed: () =>
                   _answer(correct: false, next: _PreviewPhase.clear),
             ),
             const SizedBox(height: 8),
             _PreviewChoice(
               key: const Key('preview-correct-challenge'),
-              label: '違う。空気の抵抗を無視すれば、重さに関係なく同時に着く',
+              label: l10n.t(
+                '違う。空気の抵抗を無視すれば、重さに関係なく同時に着く',
+                'No. Ignoring air resistance, they land together no matter the weight',
+              ),
               onPressed: () =>
                   _answer(correct: true, next: _PreviewPhase.clear),
             ),
             const SizedBox(height: 8),
             _PreviewChoice(
-              label: '違う。軽いものほど速く落ちる',
+              label: l10n.t('違う。軽いものほど速く落ちる', 'No. Lighter things fall faster'),
               onPressed: () =>
                   _answer(correct: false, next: _PreviewPhase.clear),
             ),
@@ -563,13 +644,19 @@ class _FirstMissionPreviewState extends State<_FirstMissionPreview> {
               key: const Key('preview-clear-region'),
               container: true,
               liveRegion: true,
-              label: 'おためし観察を完了。条件を使って思い込みを見破りました。',
+              label: l10n.t(
+                'おためし観察を完了。条件を使って思い込みを見破りました。',
+                'Trial mission cleared. You used the condition to spot the misconception.',
+              ),
               child: ExcludeSemantics(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      '条件を使って、\n思い込みを見破った。',
+                      l10n.t(
+                        '条件を使って、\n思い込みを見破った。',
+                        'You used the condition\nto spot the misconception.',
+                      ),
                       key: const Key('preview-clear'),
                       style: t.textTheme.headlineSmall
                           ?.copyWith(color: c.onHeroSurface, height: 1.35)
@@ -577,7 +664,10 @@ class _FirstMissionPreviewState extends State<_FirstMissionPreview> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      '空気の抵抗を無視すれば、落下の速さは重さに関係しません。',
+                      l10n.t(
+                        '空気の抵抗を無視すれば、落下の速さは重さに関係しません。',
+                        'Ignoring air resistance, falling speed does not depend on weight.',
+                      ),
                       style: t.textTheme.bodyMedium?.copyWith(
                         color: c.heroMuted,
                       ),
@@ -588,11 +678,17 @@ class _FirstMissionPreviewState extends State<_FirstMissionPreview> {
             ),
             const SizedBox(height: 16),
             Text(
-              '本番は選択肢ではなく、あなたの言葉を声か文字で教えます。最初の一言は、うまくなくて大丈夫です。',
+              l10n.t(
+                '本番は選択肢ではなく、あなたの言葉を声か文字で教えます。最初の一言は、うまくなくて大丈夫です。',
+                'In real missions there are no choices: you teach in your own words, by voice or text. Your first try doesn\'t have to be perfect.',
+              ),
               style: t.textTheme.bodySmall?.copyWith(color: c.heroMuted),
             ),
             const SizedBox(height: 12),
-            _PreviewChoice(label: 'もう一度ためす', onPressed: _restart),
+            _PreviewChoice(
+              label: l10n.t('もう一度ためす', 'Try again'),
+              onPressed: _restart,
+            ),
           ],
           if (_feedback case final feedback?) ...[
             const SizedBox(height: 12),
@@ -694,7 +790,7 @@ class _StepBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     return Semantics(
-      label: 'ステップ$step/3',
+      label: l10n.t('ステップ$step/3', 'Step $step/3'),
       excludeSemantics: true,
       child: Container(
         constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
@@ -761,7 +857,7 @@ class _SchoolCard extends StatelessWidget {
               value: on,
               onChanged: busy ? null : (v) => onToggle(v ?? false),
               title: Text(
-                '学校からもらって使います',
+                l10n.t('学校からもらって使います', 'I got it from my school'),
                 style: t.textTheme.titleSmall
                     ?.copyWith(color: c.onCoolSurface)
                     .jaWeight(FontWeight.w700),
@@ -771,7 +867,10 @@ class _SchoolCard extends StatelessWidget {
             ),
             if (on) ...[
               Text(
-                '学校から教えてもらった学校コードを入れてください。',
+                l10n.t(
+                  '学校から教えてもらった学校コードを入れてください。',
+                  'Enter the school code your school gave you.',
+                ),
                 style: t.textTheme.bodyMedium?.copyWith(color: c.onCoolSurface),
               ),
               const SizedBox(height: 10),
@@ -781,8 +880,8 @@ class _SchoolCard extends StatelessWidget {
                 onChanged: (_) => onChanged(),
                 autocorrect: false,
                 textCapitalization: TextCapitalization.characters,
-                decoration: const InputDecoration(
-                  labelText: '学校コード',
+                decoration: InputDecoration(
+                  labelText: l10n.t('学校コード', 'School code'),
                   hintText: 'ABCD-EFGH',
                 ),
               ),
@@ -791,7 +890,10 @@ class _SchoolCard extends StatelessWidget {
                 Semantics(
                   container: true,
                   liveRegion: true,
-                  label: '学校コードを確認できません。${e.message}',
+                  label: l10n.t(
+                    '学校コードを確認できません。${e.message}',
+                    'Can\'t verify the school code. ${e.message}',
+                  ),
                   child: ExcludeSemantics(
                     child: Container(
                       padding: const EdgeInsets.all(12),
@@ -825,9 +927,16 @@ class _SchoolCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 acceptingCodes
-                    ? 'このコードは、学校が案内した経路の確認に使います。'
-                          'コード自体が同意の証明になるものではありません。'
-                    : '学校コードの入力と送信は、提供開始までできません。',
+                    ? l10n.t(
+                        'このコードは、学校が案内した経路の確認に使います。'
+                            'コード自体が同意の証明になるものではありません。',
+                        'This code confirms you came through your school. '
+                            'The code itself is not proof of consent.',
+                      )
+                    : l10n.t(
+                        '学校コードの入力と送信は、提供開始までできません。',
+                        'School codes can\'t be entered or sent until the service launches.',
+                      ),
                 style: t.textTheme.bodySmall?.copyWith(
                   color: c.onCoolSurface.withValues(alpha: 0.82),
                 ),
@@ -846,13 +955,22 @@ class _UnavailableNotice extends StatelessWidget {
 
   final VoidCallback onUseLocalOnly;
 
-  static const message = '外部サービスを使うモードは、18歳未満・学校向けに提供していません。';
-  static const action =
-      '同梱教材を通信せずに使う「端末内モード」なら、今すぐ学べます。'
-      '年齢や同意は保存しません。';
-  static const assurance =
-      '外部AI・学校サーバ・購入機能へ接続しません。入力した説明は送信・保存せず、'
-      '自動採点や理解認定も行いません。';
+  static String get message => l10n.t(
+    '外部サービスを使うモードは、18歳未満・学校向けに提供していません。',
+    'Modes that use external services are not available for users under 18 or for schools.',
+  );
+  static String get action => l10n.t(
+    '同梱教材を通信せずに使う「端末内モード」なら、今すぐ学べます。'
+        '年齢や同意は保存しません。',
+    'You can start learning now in "on-device mode," which uses the built-in lessons offline. '
+        'Your age and consent are not saved.',
+  );
+  static String get assurance => l10n.t(
+    '外部AI・学校サーバ・購入機能へ接続しません。入力した説明は送信・保存せず、'
+        '自動採点や理解認定も行いません。',
+    'It never connects to external AI, school servers, or purchases. Your explanations are not sent or saved, '
+        'and there is no automatic grading or mastery judgment.',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -920,7 +1038,9 @@ class _UnavailableNotice extends StatelessWidget {
               key: const ValueKey('use-local-only-mode'),
               onPressed: onUseLocalOnly,
               icon: const Icon(Icons.phone_android_outlined),
-              label: const Text('通信しない端末内モードを使う'),
+              label: Text(
+                l10n.t('通信しない端末内モードを使う', 'Use offline on-device mode'),
+              ),
             ),
           ],
         ),
@@ -957,7 +1077,7 @@ class _GuardianCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'おうちの人の確認',
+                    l10n.t('おうちの人の確認', 'Parent or guardian check'),
                     style: t.textTheme.titleSmall
                         ?.copyWith(color: c.onWarmSurface)
                         .jaWeight(FontWeight.w700),
@@ -967,15 +1087,22 @@ class _GuardianCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              '16歳未満の場合、このアプリを使うことについて、'
-              'おうちの人の確認が必要です。',
+              l10n.t(
+                '16歳未満の場合、このアプリを使うことについて、'
+                    'おうちの人の確認が必要です。',
+                'If you are under 16, '
+                    'a parent or guardian needs to approve your use of this app.',
+              ),
               style: t.textTheme.bodyMedium?.copyWith(color: c.onWarmSurface),
             ),
             CheckboxListTile(
               value: checked,
               onChanged: (v) => onChanged(v ?? false),
               title: Text(
-                'おうちの人といっしょに確認しました',
+                l10n.t(
+                  'おうちの人といっしょに確認しました',
+                  'I checked this with a parent or guardian',
+                ),
                 style: t.textTheme.bodyMedium?.copyWith(color: c.onWarmSurface),
               ),
               contentPadding: EdgeInsets.zero,
@@ -1012,7 +1139,13 @@ class _TransferCard extends StatelessWidget {
               const Icon(Icons.public, size: 20),
               const SizedBox(width: 8),
               Expanded(
-                child: Text('使う機能によって送り先が変わります', style: t.textTheme.titleSmall),
+                child: Text(
+                  l10n.t(
+                    '使う機能によって送り先が変わります',
+                    'Where data goes depends on the feature you use',
+                  ),
+                  style: t.textTheme.titleSmall,
+                ),
               ),
             ],
           ),
@@ -1035,7 +1168,10 @@ class _TransferCard extends StatelessWidget {
               ),
             ),
           Text(
-            'Plus を使わない間は、RevenueCat SDK を起動しません。',
+            l10n.t(
+              'Plus を使わない間は、RevenueCat SDK を起動しません。',
+              'The RevenueCat SDK does not start unless you use Plus.',
+            ),
             style: t.textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
