@@ -1,43 +1,71 @@
-# Shipaton demo 2026
+# English demo — review and introduction
 
-`shipaton-demo-v7.mp4` is the current submission candidate: **114s**, Android
-emulator footage of the English build at 1080x1920 portrait, English captions
-burned in, no audio. It opens with a hook card ("Every study app tests you. —
-This one learns FROM you."), then walks the loop end to end in English: the
-learning path, a lesson node whose material hides for the explanation, a typed
-English teach-back, the key-term coverage panel, the fixed follow-up question,
-a wrong pick costing a heart and earning a hint, the misconception record
-screen ("Corrected / Still unsure"), the shareable parent report, and then a
-**real purchase loop** — the Plus screen listing live Test Store packages
-(Monthly $9.99 / Yearly $79.98 / Lifetime $99.99), the native Test Store
-checkout dialog, entitlement confirmation, the Aurora Mantle equipped, and
-the unlocked parent report — closing on a feature-summary card.
+**Current candidate: [shipaton-demo-v8.mp4](shipaton-demo-v8.mp4)** — 84.17 seconds,
+1920×1080 landscape, 30 fps, English narration and burned-in English captions.
+The matching [SRT](shipaton-demo-v8-captions.en.srt) and
+[poster](shipaton-demo-v8-poster.jpg) are included. This is a local video candidate;
+this change does not publish it to YouTube, Vimeo, or Devpost.
 
-The matching caption source is `shipaton-demo-v7-captions.en.srt`.
+The edit follows one idea: predict which ball falls first, read the evidence,
+hide the material, explain in English, review key terms, answer a fixed
+follow-up, and receive a hint after a wrong choice. It then shows the
+companion's misconception record and optional Plus purchase and benefits.
+Large editorial headings explain the purpose of each step; actual native app
+footage and enlarged details show the interaction. Captions have their own
+strip and never cover the app.
 
-The purchase segment is real footage of the RevenueCat SDK against the
-project's **Test Store** (`test_…` public key, see
-[docs/monetization-setup.md](../monetization-setup.md)) — the same SDK path a
-production store uses. The 会話枠 retry banner visible after the purchase is
-expected: Test Store purchases cannot be verified against the real backend,
-and the app surfaces that honestly instead of faking a sync.
+## Evidence and limits
 
-Earlier cuts are archived under `docs/attic/`:
+- App source: `11d9ae3cc1e9e6597a6206a4ab07b80f6ac49b8e` (Field Notebook).
+- Captured on a dedicated Android emulator, using the English build. Some
+  existing secondary labels remain Japanese. This is not physical-device QA.
+- Progress comes from real native UI interactions. No database values or UI
+  screens were fabricated. Cuts and held screenshots shorten the interaction.
+- The misconception shown remains **Still unsure**. Rewriting a free explanation
+  or answering a checkpoint does not itself clear an observed need; the
+  corresponding repair experiment is required. The edit does not claim a
+  measured learning gain or a resolved misconception.
+- The purchase uses the RevenueCat SDK against the project's **Test Store**.
+  The native test confirmation was completed, the local Aurora Cape grant was
+  verified, the look was equipped, and the parent report was opened. No real
+  charge or production-store purchase occurred. See
+  [monetization setup](../monetization-setup.md).
+- Server conversation-allowance synchronization was not confirmed; the app
+  displayed its retry notice. The purchase footage does not claim server sync
+  or enabled live conversation. A restart refreshed the cached cosmetic view.
+- External generative AI was disabled. Narration is a separate, locally
+  generated editorial voice, not the companion speaking in the app.
 
-- `shipaton-demo-v6.mp4` (97s) — same loop minus the real purchase segment;
-  superseded by v7.
-- `shipaton-demo-v4.mp4` (118s) — earlier Japanese-UI capture with the
-  airplane-mode beat; the on-device claim it proves still applies.
-- `shipaton-demo-v3.mp4` (68s, Japanese UI) — superseded by v6.
-- `shipaton-demo-v2.mp4` (54s) — same footage minus the karte segment.
-- `shipaton-demo-v1.mp4` (114s) — web-build capture, no device footage or
-  teach-back loop. Do not submit it.
+## Sources and reproduction
 
-The video does not claim Store publication, revenue, live-AI approval, or
-school deployment. Raw screen recordings stay outside the repository.
+[Script](v8-script.json), [edit decisions](v8-edit.json), and
+[manifest](v8-manifest.json) identify scene timing, source hashes, and the final
+video hash. The tools and regeneration commands are in
+[tools/demo-video](../../tools/demo-video/README.md).
 
-Historical capture tooling (used for the earlier cuts) lives in:
+Raw native captures, XML observations, action logs, and narration are preserved
+locally at `app/build/demo-video-v8/` (ignored by Git). A new checkout must
+capture its own footage or receive that source bundle; the MP4 and its captions
+are directly usable without the bundle. No emulator database or account state
+is part of the public artifact.
 
-- `tools/capture-shipaton-demo-rehearsal.sh`
-- `tools/verify-shipaton-demo-rehearsal.sh`
-- `docs/shipaton-demo-capture.md`
+The English narration uses [Kokoro ONNX](https://github.com/thewh1teagle/kokoro-onnx)
+and [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), locally. The quiet
+musical bed is synthesized by the renderer; no stock track was used. The end
+card uses the project's current `docs/store/icon-1024.png` artwork.
+
+## Validation
+
+The final file was decoded from beginning to end; its audio and video timestamps
+were checked for ordering. All nine scenes and purchase transitions were
+visually inspected, and caption timing was checked against sentence-level
+narration cues. Integrated loudness and peak measurements are recorded in
+`v8-validation.json`. Listening quality still benefits from the viewer's final
+playback review; this does not certify physical-device voice behavior.
+
+## Earlier edits
+
+`shipaton-demo-v7.mp4` (114 seconds, portrait, silent) remains available for
+comparison. v1–v6 are historical cuts under `docs/attic/`.
+`docs/shipaton-demo-capture.md` and the earlier rehearsal scripts describe the
+historical capture workflow; v8 uses the tools above.
