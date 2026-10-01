@@ -1,6 +1,6 @@
 # Native English demo tooling
 
-These tools produced the v8 and v9 English demos from real
+These tools produced the v8, v9 and v10 English demos from real
 native Android captures. They never seed app progress or alter the emulator
 database. Run from the repository root. macOS was validated with Python 3.14.6,
 FFmpeg 8.1 (`ffmpeg-full`, including libass), and the built-in Avenir Next font.
@@ -94,3 +94,30 @@ python3 tools/demo-video/render.py docs/shipaton-demo-2026/v9-script.json \
 `--name` chooses output names without overwriting the previous cut. Relative
 raw/output paths are resolved before FFmpeg concat files are written. The v9
 script, edit, manifest and validation sit alongside the final video.
+
+## Regenerate the motion-first cut
+
+v10 uses retained learning recordings from v8 and freshly recorded Test Store,
+equip and parent-report interactions in `app/build/demo-video-v10/`.
+The Plus run uses a separate fresh adult personal profile; its empty report
+is a feature demonstration, not the learning run's progress. Native UI alone
+creates progress and grants; no database values are seeded.
+
+```bash
+python3 tools/demo-video/narrate.py docs/shipaton-demo-2026/v10-script.json \
+  --models /path/to/local/kokoro-models --output app/build/demo-video-v10/narration \
+  --lead .12 --gap .08 --speed 1.06
+python3 tools/demo-video/render_motion.py docs/shipaton-demo-2026/v10-script.json \
+  docs/shipaton-demo-2026/v10-edit.json --raw app/build/demo-video-v10 \
+  --output docs/shipaton-demo-2026
+```
+
+`render_motion.py` splits each recorded frame into a full native view and its
+synchronized detail crop. It adds no artificial pans, tap indicators or UI
+transitions. `start`, `duration`, `speed`, and `crop` in the edit file select
+recorded actions and remove waits. Narration must finish within each scene;
+the renderer fails rather than extending the scene with a frozen last frame.
+Only the hint, rewritten explanation, and short closing card are held still.
+Defaults in `narrate.py` retain the v8/v9 pacing; v10 explicitly shortens gaps.
+The manifest distinguishes recording-source seconds from screenshot holds;
+recording-source share does not mean every frame contains movement.
