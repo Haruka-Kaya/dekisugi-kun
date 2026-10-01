@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import 'dart:async';
 
 import 'package:provider/provider.dart';
@@ -1930,7 +1931,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       return await _showCompletionCelebration(
         result: result,
         elapsed: elapsed,
-        eyebrow: '単元の高難度検証 / 保存済み',
+        eyebrow: localize.t('単元の高難度検証 / 保存済み', "UNIT ADVANCED CHECK / SAVED"),
         title: lang.t('単元の高難度検証を記録しました', 'Advanced challenge cleared!'),
         message: lang.t(
           '${target.unit.title}の固定課題を最後まで確かめました。',
@@ -1972,7 +1973,9 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     return showGameCompletionCelebration(
       context,
       summary: GameCompletionSummary(
-        eyebrow: widget.schoolMode ? '授業の観察記録 / 保存済み' : eyebrow,
+        eyebrow: widget.schoolMode
+            ? localize.t('授業の観察記録 / 保存済み', "CLASS OBSERVATION / SAVED")
+            : eyebrow,
         title: widget.schoolMode
             ? lang.t('この端末の授業観察を完了', 'Class mission completed on this device')
             : title,
@@ -2533,7 +2536,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       return await _showCompletionCelebration(
         result: result,
         elapsed: elapsed,
-        eyebrow: '記号と図解 / 保存済み',
+        eyebrow: localize.t('記号と図解 / 保存済み', "SYMBOLS AND DIAGRAMS / SAVED"),
         title: result.inserted
             ? lang.t('記号の観察を記録しました', 'Nice! You figured out the symbols')
             : lang.t('記号をもう一度確かめた', 'You checked the symbols again'),
@@ -4101,13 +4104,28 @@ LearningEvidenceLevel _evidenceFor(GamePathNodeKind kind) => switch (kind) {
 };
 
 String _completionEyebrow(GamePathNodeKind kind) => switch (kind) {
-  GamePathNodeKind.lesson => '教材観察 / 保存済み',
-  GamePathNodeKind.practice => '構造実験 / 保存済み',
-  GamePathNodeKind.story => '理科事件簿 / 保存済み',
-  GamePathNodeKind.listening => '聞き取り観察 / 保存済み',
-  GamePathNodeKind.speaking => '教え返し / 保存済み',
-  GamePathNodeKind.challenge => '総合検証 / 保存済み',
-  GamePathNodeKind.legendary => '高難度検証 / 保存済み',
+  GamePathNodeKind.lesson => localize.t(
+    '教材観察 / 保存済み',
+    "MATERIAL EXPLORATION / SAVED",
+  ),
+  GamePathNodeKind.practice => localize.t(
+    '構造実験 / 保存済み',
+    "STRUCTURE LAB / SAVED",
+  ),
+  GamePathNodeKind.story => localize.t('理科事件簿 / 保存済み', "SCIENCE CASE / SAVED"),
+  GamePathNodeKind.listening => localize.t(
+    '聞き取り観察 / 保存済み',
+    "LISTENING / SAVED",
+  ),
+  GamePathNodeKind.speaking => localize.t('教え返し / 保存済み', "TEACHING / SAVED"),
+  GamePathNodeKind.challenge => localize.t(
+    '総合検証 / 保存済み',
+    "COMBINED CHECK / SAVED",
+  ),
+  GamePathNodeKind.legendary => localize.t(
+    '高難度検証 / 保存済み',
+    "ADVANCED CHECK / SAVED",
+  ),
 };
 
 String _completionMessage(GamePathNodeKind kind, bool foundRepairNeed) {

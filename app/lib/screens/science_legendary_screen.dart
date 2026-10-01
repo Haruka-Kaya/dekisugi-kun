@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
@@ -259,7 +260,7 @@ class _ScienceLegendaryScreenState extends State<ScienceLegendaryScreen> {
               foregroundColor: colors.ink,
               title: Text(
                 widget.presentation == ScienceLegendaryPresentation.legendary
-                    ? '高難度検証'
+                    ? localize.t('高難度検証', "Advanced Check")
                     : lang.t('間隔を空けた再検証', 'Scheduled review'),
                 style: Theme.of(
                   context,
@@ -357,7 +358,10 @@ class _LegendaryLocked extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  高難度検証  /  準備中',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  高難度検証  /  準備中',
+            "LAB BRIEF / ADVANCED CHECK / PREPARING",
+          ),
           title: conceptLabel,
           body: lang.t(
             'この高難度検証は、通常課題を終えた翌学習日以降に開きます。',
@@ -415,7 +419,10 @@ class _LegendaryTask extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  ${legendary ? '高難度検証' : '間隔を空けた再検証'}  /  1/3',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  ${legendary ? localize.t('高難度検証', "Advanced Check") : localize.t('間隔を空けた再検証', "Spaced Review")}  /  1/3',
+            'LAB BRIEF / ${legendary ? localize.t('高難度検証', "Advanced Check") : localize.t('間隔を空けた再検証', "Spaced Review")}  /  1/3',
+          ),
           title: conceptLabel,
           body: lang.t(
             'ヒントなし・一度だけの回答です。まず構造課題を組みます。',
@@ -482,7 +489,10 @@ class _LegendaryCheckpoint extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  ${legendary ? '高難度検証' : '間隔を空けた再検証'}  /  2/3',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  ${legendary ? localize.t('高難度検証', "Advanced Check") : localize.t('間隔を空けた再検証', "Spaced Review")}  /  2/3',
+            'LAB BRIEF / ${legendary ? localize.t('高難度検証', "Advanced Check") : localize.t('間隔を空けた再検証', "Spaced Review")}  /  2/3',
+          ),
           title: lang.t('思い込みを見破る', 'Spot the misconception'),
           body: lang.t(
             'ヒントは出ません。最初の判断を確定すると、すぐ自己比較へ進みます。',
@@ -632,7 +642,10 @@ class _LegendaryComparison extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  ${legendary ? '高難度検証' : '間隔を空けた再検証'}  /  3/3',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  ${legendary ? localize.t('高難度検証', "Advanced Check") : localize.t('間隔を空けた再検証', "Spaced Review")}  /  3/3',
+            'LAB BRIEF / ${legendary ? localize.t('高難度検証', "Advanced Check") : localize.t('間隔を空けた再検証', "Spaced Review")}  /  3/3',
+          ),
           title: lang.t('正本と自己比較する', 'Compare with the model answer'),
           body: cleared
               ? lang.t(
@@ -736,7 +749,10 @@ class _LegendaryDone extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'ラボ・ブリーフ  /  ${legendary ? '高難度検証' : '間隔を空けた再検証'}  /  記録',
+          eyebrow: localize.t(
+            'ラボ・ブリーフ  /  ${legendary ? localize.t('高難度検証', "Advanced Check") : localize.t('間隔を空けた再検証', "Spaced Review")}  /  記録',
+            'LAB BRIEF / ${legendary ? localize.t('高難度検証', "Advanced Check") : localize.t('間隔を空けた再検証', "Spaced Review")} / RECORD',
+          ),
           title: cleared
               ? legendary
                     ? lang.t('高難度検証を完了', 'Advanced challenge cleared')

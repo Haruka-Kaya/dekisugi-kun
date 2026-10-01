@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
@@ -310,7 +311,7 @@ class _GameTabGuideState extends State<GameTabGuide> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    '画面の見かた',
+                    localize.t('画面の見かた', "How to use this screen"),
                     style: Theme.of(context).textTheme.labelLarge
                         ?.copyWith(color: colors.pathActive)
                         .jaWeight(FontWeight.w800),
@@ -320,7 +321,7 @@ class _GameTabGuideState extends State<GameTabGuide> {
                     child: TextButton(
                       key: const ValueKey('game-tab-guide-dismiss'),
                       onPressed: widget.onDismissed,
-                      child: Text('あとで見る'),
+                      child: Text(localize.t('あとで見る', "View later")),
                     ),
                   ),
                 ],

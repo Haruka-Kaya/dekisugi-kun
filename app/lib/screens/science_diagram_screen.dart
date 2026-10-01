@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
@@ -225,7 +226,10 @@ class _ScienceDiagramScreenState extends State<ScienceDiagramScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   ScienceChallengeHeader(
-                    eyebrow: 'しくみ図  /  観察中',
+                    eyebrow: localize.t(
+                      'しくみ図  /  観察中',
+                      "MECHANISM DIAGRAM / EXPLORING",
+                    ),
                     title: widget.conceptLabel,
                     body: headerBody,
                     icon: Icons.account_tree_rounded,
@@ -344,7 +348,7 @@ class _ComposeStep extends StatelessWidget {
         children: [
           _LessonHeader(
             step: '1 / 2',
-            eyebrow: 'しくみを組む',
+            eyebrow: localize.t('しくみを組む', "Build the mechanism"),
             title: conceptLabel,
             body: lang.t(
               '先にカードで予想を組み、そのあと決め手を一文だけ書きます。',
@@ -520,7 +524,7 @@ class _ComparisonStep extends StatelessWidget {
         children: [
           _LessonHeader(
             step: '2 / 2',
-            eyebrow: '教材と比べる',
+            eyebrow: localize.t('教材と比べる', "Compare with the material"),
             title: conceptLabel,
             body: lang.t(
               '教材の根拠と照らし、違っていたら組み直してから自分の一文を残します。',
@@ -546,18 +550,26 @@ class _ComparisonStep extends StatelessWidget {
           if (!isCorrect) ...[
             const SizedBox(height: GameTokens.spaceLg),
             ScienceChallengeSurface(
-              label: '教材の組み方と違うところがあります',
+              label: localize.t(
+                '教材の組み方と違うところがあります',
+                "Some parts differ from the material",
+              ),
               icon: Icons.menu_book_outlined,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('教材の根拠を見て、もう一度カードを組みます。'),
+                  Text(
+                    localize.t(
+                      '教材の根拠を見て、もう一度カードを組みます。',
+                      "Check the evidence in the material, then arrange the cards again.",
+                    ),
+                  ),
                   const SizedBox(height: GameTokens.spaceMd),
                   OutlinedButton.icon(
                     key: const ValueKey('science-diagram-try-again'),
                     onPressed: onTryAgain,
                     icon: const Icon(Icons.replay_rounded),
-                    label: const Text('カードを組み直す'),
+                    label: Text(localize.t('カードを組み直す', "Rearrange the cards")),
                   ),
                 ],
               ),
@@ -566,21 +578,30 @@ class _ComparisonStep extends StatelessWidget {
           if (isCorrect) ...[
             const SizedBox(height: GameTokens.spaceXl),
             Text(
-              '自分の考えをどうする？',
+              localize.t(
+                '自分の考えをどうする？',
+                "What will you do with your explanation?",
+              ),
               style: t.textTheme.titleLarge
                   ?.copyWith(color: colors.ink)
                   .jaWeight(FontWeight.w800),
             ),
             const SizedBox(height: GameTokens.spaceXs),
             Text(
-              '教材と同じでも違っていても、次に使う自分の一文を選びます。',
+              localize.t(
+                '教材と同じでも違っていても、次に使う自分の一文を選びます。',
+                "Whether it matches the material or differs, choose a sentence to use next time.",
+              ),
               style: t.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
             ),
             const SizedBox(height: GameTokens.spaceMd),
             _DecisionButton(
               key: const ValueKey('science-diagram-keep'),
-              label: 'この考えを残す',
-              description: '理由をより短く、使える形にする',
+              label: localize.t('この考えを残す', "Keep this explanation"),
+              description: localize.t(
+                '理由をより短く、使える形にする',
+                "Make the reasoning concise and useful",
+              ),
               icon: Icons.bookmark_add_outlined,
               selected: choice == _ReflectionChoice.keep,
               onTap: () => onChoiceChanged(_ReflectionChoice.keep),
@@ -588,8 +609,11 @@ class _ComparisonStep extends StatelessWidget {
             const SizedBox(height: GameTokens.spaceSm),
             _DecisionButton(
               key: const ValueKey('science-diagram-revise'),
-              label: '考えを直す',
-              description: '比較して変わったところを書き直す',
+              label: localize.t('考えを直す', "Revise the explanation"),
+              description: localize.t(
+                '比較して変わったところを書き直す',
+                "Rewrite what changed after comparison",
+              ),
               icon: Icons.edit_note_rounded,
               selected: choice == _ReflectionChoice.revise,
               onTap: () => onChoiceChanged(_ReflectionChoice.revise),
@@ -600,11 +624,17 @@ class _ComparisonStep extends StatelessWidget {
                 key: const ValueKey('science-diagram-reflection'),
                 controller: reflectionController,
                 label: choice == _ReflectionChoice.keep
-                    ? '残したい自分の一文'
-                    : '直して残す自分の一文',
+                    ? localize.t('残したい自分の一文', "Your sentence to keep")
+                    : localize.t('直して残す自分の一文', "Your revised sentence to keep"),
                 hint: choice == _ReflectionChoice.keep
-                    ? '次の場面でも使える言い方にする'
-                    : '変わった考えを一文にする',
+                    ? localize.t(
+                        '次の場面でも使える言い方にする',
+                        "Phrase it for use in a new situation",
+                      )
+                    : localize.t(
+                        '変わった考えを一文にする',
+                        "Summarize your revised idea in one sentence",
+                      ),
                 onChanged: onReflectionChanged,
               ),
               const SizedBox(height: GameTokens.spaceLg),
@@ -617,7 +647,7 @@ class _ComparisonStep extends StatelessWidget {
                   foregroundColor: colors.onPathActive,
                 ),
                 icon: const Icon(Icons.check_rounded),
-                label: const Text('この一文で完了'),
+                label: Text(localize.t('この一文で完了', "Finish with this sentence")),
               ),
             ],
           ],
@@ -641,7 +671,7 @@ class _DeferDiagramButton extends StatelessWidget {
     key: const ValueKey('science-diagram-defer'),
     onPressed: onPressed,
     icon: const Icon(Icons.bookmark_add_outlined),
-    label: const Text('このステップは後でやる'),
+    label: Text(localize.t('このステップは後でやる', "Do this step later")),
   );
 }
 
@@ -677,7 +707,7 @@ class _LessonHeader extends StatelessWidget {
                 borderRadius: BorderRadius.circular(GameTokens.radiusPill),
               ),
               child: Text(
-                '観察手順 $step',
+                localize.t('観察手順 $step', 'Observation step $step'),
                 style: t.textTheme.labelMedium
                     ?.copyWith(color: colors.onPathActive)
                     .jaWeight(FontWeight.w800),

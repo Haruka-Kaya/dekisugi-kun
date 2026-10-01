@@ -179,11 +179,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('教材とミッションは全部無料'), findsOneWidget);
-    expect(find.textContaining('およそ10分'), findsWidgets);
-    expect(
-      find.text('限定マスコット・生成AIの返事・保護者レポート'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('学習効果を保証'), findsOneWidget);
+    expect(find.text('保護者向け復習プラン・共有レポート'), findsOneWidget);
     expect(find.textContaining('本人のノート'), findsOneWidget);
     expect(find.textContaining('文字入力'), findsOneWidget);
     expect(find.textContaining('アクセシビリティ機能'), findsOneWidget);

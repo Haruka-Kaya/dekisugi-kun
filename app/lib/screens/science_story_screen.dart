@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import 'dart:async';
 
 import '../config/app_theme.dart';
@@ -349,8 +350,14 @@ class _StoryHeader extends StatelessWidget {
     return Semantics(
       container: true,
       label:
-          '理科事件、3幕中$act。$storyTitle。$conceptLabel。$stageLabel。'
-          'デキすぎ君。${reaction.semanticsLabel}',
+          localize.t(
+            '理科事件、3幕中$act。$storyTitle。$conceptLabel。$stageLabel。',
+            'Science case, act $act. $storyTitle. $conceptLabel. $stageLabel. ',
+          ) +
+          localize.t(
+            'デキすぎ君。${reaction.semanticsLabel}',
+            'Dekisugi-kun. ${reaction.semanticsLabel}',
+          ),
       child: ExcludeSemantics(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
@@ -373,7 +380,10 @@ class _StoryHeader extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        '理科事件  /  第$act幕・全3幕',
+                        localize.t(
+                          '理科事件  /  第$act幕・全3幕',
+                          'SCIENCE CASE / ACT $act OF 3',
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.labelMedium
@@ -1027,7 +1037,7 @@ class _CaseSurface extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '事件の状況',
+            localize.t('事件の状況', "Case background"),
             style: theme.textTheme.labelMedium
                 ?.copyWith(color: colors.story)
                 .jaWeight(FontWeight.w700),

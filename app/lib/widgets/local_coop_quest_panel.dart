@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
@@ -104,10 +105,10 @@ class LocalCoopQuestPanel extends StatelessWidget {
             )
           else ...[
             Semantics(
-              label:
-                  'ふたりの共同観察、${active.target}件中${active.progress}件'
-                  '${active.completed ? '、達成済み' : '、進行中'}'
-                  '、結晶${active.rewardGems}個',
+              label: localize.t(
+                'ふたりの共同観察、${active.target}件中${active.progress}件${active.completed ? '、達成済み' : '、進行中'}、結晶${active.rewardGems}個',
+                'Partner observation, ${active.progress} of ${active.target}, ${active.completed ? 'completed' : 'in progress'}, ${active.rewardGems} gems',
+              ),
               child: ExcludeSemantics(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -123,7 +124,10 @@ class LocalCoopQuestPanel extends StatelessWidget {
                     ),
                     const SizedBox(height: GameTokens.spaceXs),
                     Text(
-                      '観察記録 ${active.progress} / ${active.target}  ・  結晶 ${active.rewardGems}',
+                      localize.t(
+                        '観察記録 ${active.progress} / ${active.target}  ・  結晶 ${active.rewardGems}',
+                        'Observations ${active.progress} / ${active.target} · Gems ${active.rewardGems}',
+                      ),
                       textAlign: TextAlign.end,
                       style: t.textTheme.labelLarge?.copyWith(
                         color: colors.ink,
@@ -219,10 +223,10 @@ class _ParticipantButton extends StatelessWidget {
       selected: selected,
       label:
           '$label、${contributed
-              ? '観察記録済み'
+              ? localize.t('観察記録済み', "Observation recorded")
               : selected
-              ? '次に観察する人として選択中'
-              : '未選択'}',
+              ? localize.t('次に観察する人として選択中', "Selected as the next observer")
+              : localize.t('未選択', "Not selected")}',
       onTap: contributed ? null : onTap,
       child: ExcludeSemantics(
         child: OutlinedButton.icon(

@@ -45,7 +45,9 @@ from this app.
 The native `purchases_flutter` SDK handles packages, purchases, restore and the
 `plus` entitlement. The paywall uses store-returned prices and periods rather
 than invented prices. The current demo shows a completed RevenueCat Test Store
-purchase, an equipped Aurora Cape, and an unlocked parent report. No real
+purchase, an equipped Aurora Cape, and an unlocked parent report. Plus now adds
+a local family review plan: next topic, selection reason, parent prompt and a
+new-situation check. No real
 charge occurred. The cosmetic grant remains in the local grant ledger.
 
 Server-side entitlement re-verification and webhook code also exist, but the
@@ -53,6 +55,15 @@ video does not claim a successful production purchase or conversation-allowance
 sync. Live conversation remains disabled. The optional remote companion-line
 research path is not enabled or demonstrated. See
 [monetization setup](monetization-setup.md) and [age restrictions](age-restriction.md).
+
+## Inspecting learning usefulness
+
+Settings includes a free on-device understanding check: three before items,
+a hidden-source explanation, three different after items and a transfer item.
+Results explicitly state that the forms are unvalidated and short-term count
+changes cannot establish improvement. No answers or scores are saved or sent.
+An optional copy exports counts only. There are no real learner pre/post results;
+see [evidence and evaluation status](learning-evidence-2026.md).
 
 ## Build and current scope
 

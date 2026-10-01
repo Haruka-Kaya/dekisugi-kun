@@ -1,3 +1,4 @@
+import '../../config/app_language.dart' as localize;
 import '../../models/game_hub.dart';
 import '../../models/game_path.dart';
 import '../../models/unit.dart';
@@ -200,7 +201,7 @@ class GameContentProjection {
         ),
         PracticeModeView(
           id: 'practice:match',
-          title: '対応づけ実験',
+          title: localize.t('対応づけ実験', "Matching Lab"),
           description: t(
             '観察・理由・訂正を、対応する説明へすばやく結びます。',
             'Quickly link observations, reasons, and corrections to the right explanations.',
@@ -215,7 +216,7 @@ class GameContentProjection {
         ),
         PracticeModeView(
           id: 'practice:lightning',
-          title: '連続観察',
+          title: localize.t('連続観察', "Observation Sprint"),
           description: t(
             '3ラウンドの思い込み訂正を順番に判断します。',
             'Judge 3 rounds of misconception fixes in order.',

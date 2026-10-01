@@ -16,7 +16,7 @@ It includes a RevenueCat **Test Store** purchase; no real charge occurred.
 |---|---|---|
 | Clear, useful, interesting or original idea | The companion needs the learner's explanation. The material disappears, so the student must produce an explanation. | [Product constitution](../AGENTS.md), [learning screens](../app/lib/screens) |
 | Meaningful progress toward a working app | A native prediction → evidence → hidden-source explanation → follow-up → hint/retry sequence; uncertainty remains visible in the companion's record. | [Bundled English catalog](../app/assets/catalog/units.en.json), [record screen](../app/lib/screens/science_karte_screen.dart), [repair planner](../app/lib/learning/services/learning_repair_planner.dart) |
-| Thoughtful use of RevenueCat | Store-provided packages, native purchase confirmation, Aurora Cape equipped, parent report unlocked. Core lessons stay free. | [Purchase adapter](../app/lib/services/revenuecat_purchase_adapter.dart), [purchase service](../app/lib/services/purchase_service.dart), [configuration](../app/lib/services/purchase_config.dart), [integration tests](../app/test/purchase_service_test.dart) |
+| Thoughtful use of RevenueCat | Store-provided packages, native purchase confirmation, Aurora Cape equipped, family review plan and parent report unlocked. Core lessons stay free. | [Purchase adapter](../app/lib/services/revenuecat_purchase_adapter.dart), [purchase service](../app/lib/services/purchase_service.dart), [configuration](../app/lib/services/purchase_config.dart), [integration tests](../app/test/purchase_service_test.dart) |
 | Technical choices, product thinking and care | Offline core, equal text route, deterministic checkpoints rather than LLM grading, minimal persisted need state, reproducible capture and edit. | [Progress store](../app/lib/learning/services/learning_progress_store.dart), [repair tests](../app/test/learning_repair_planner_test.dart), [production AI gate](../server/lib/generative-ai.ts), [video tooling](../tools/demo-video/README.md) |
 
 ## Run the native app
@@ -39,9 +39,18 @@ choice to inspect the hint and retry. In **My Lab**, open the companion's
 misconception record. An observed need remains open until its matching repair
 activity resolves it; rewriting alone is not a mastery claim.
 
-The curriculum and main learning flow have English content. Some secondary UI
-labels remain Japanese. The native app is the review target; the historical
+The curriculum and learning interface support English, including secondary labels
+and accessibility descriptions. Switch languages in Settings. The native app is the review target; the historical
 hosted browser rehearsal is not used as a current demo.
+
+## Free understanding check
+
+Open **Settings → Understanding check · Free**. Answer three questions without
+feedback, read the short lesson, hide it and type an explanation, then complete
+three different questions and one new situation. The result explains that the
+forms are unvalidated and a same-session difference does not prove improvement.
+Answers and counts are not persisted or uploaded. Optional copy exports counts
+only. This route works without Plus or an account.
 
 ## Optional RevenueCat replay
 
@@ -58,7 +67,9 @@ external generative AI disabled; do not set `DEKISUGI_COMPANION_REMOTE`.
 In the adult profile, enable the disclosed online/purchase route, open Plus,
 and select a package. Continue only if the native dialog explicitly says
 **Test Store Purchase**; choose **Test valid purchase**. The `plus` entitlement
-grants Aurora Cape; equip it in My Lab and open the parent report. The recorded
+grants Aurora Cape; equip it in My Lab and open the parent report. The family review plan names the
+next topic, explains its selection, offers a parent question and a transfer prompt,
+and distinguishes recorded activity from unverified understanding. The recorded
 purchase required a restart to refresh the cosmetic view. The server's separate
 conversation-allowance synchronization was not confirmed and showed a retry
 notice. This does not prevent the recorded local supporter grant.
@@ -76,9 +87,11 @@ Entitlement: **`plus`**. Implementation and restore instructions:
 (cd server && npm ci && npm test)
 ```
 
-The integrated app baseline passed 1,337 app and 399 server tests. This
-submission edit changes documentation, screenshots and video tooling, not
-learning or billing behavior. The source is licensed under [MIT](../LICENSE).
+The updated app passed 1,340 tests and analysis reported no issues. The unchanged
+server baseline passed 399 tests. This update adds a
+free local understanding check, a family review plan, and English UI corrections.
+See [learning evidence and limits](learning-evidence-2026.md) for the distinction
+between research rationale, functional verification and unmeasured efficacy. The source is licensed under [MIT](../LICENSE).
 
 There is no store release, measured learning-effect claim, or school rollout.
 The elicitation survey has 18 responses and is not an efficacy study. Physical

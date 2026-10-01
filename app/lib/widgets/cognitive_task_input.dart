@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
@@ -120,14 +121,21 @@ bool isCognitiveTaskResponseComplete(
 String cognitiveTaskPromptSummary(LocalCognitiveTaskPrompt prompt) {
   final instruction = _operationLabel(
     prompt.operation,
-  ).replaceFirst('科学タスク、', '');
+  ).replaceFirst(localize.t('科学タスク、', "Science task, "), '');
   final items = prompt.items.map((item) => item.text).join(' / ');
   return switch (prompt.kind) {
-    LocalCognitiveTaskKind.singleSelect => '$instruction\n候補: $items',
-    LocalCognitiveTaskKind.classify =>
-      '$instruction\n分類する項目: $items\n分類先: '
-          '${prompt.targets.map((target) => target.label).join(' / ')}',
-    LocalCognitiveTaskKind.sequence => '$instruction\n並べる項目: $items',
+    LocalCognitiveTaskKind.singleSelect => localize.t(
+      '$instruction\n候補: $items',
+      '$instruction\nOptions: $items',
+    ),
+    LocalCognitiveTaskKind.classify => localize.t(
+      '$instruction\n分類する項目: $items\n分類先: ${prompt.targets.map((target) => target.label).join(' / ')}',
+      '$instruction\nItems to sort: $items\nCategories: ${prompt.targets.map((target) => target.label).join(' / ')}',
+    ),
+    LocalCognitiveTaskKind.sequence => localize.t(
+      '$instruction\n並べる項目: $items',
+      '$instruction\nItems to order: $items',
+    ),
   };
 }
 

@@ -97,10 +97,10 @@ class LocalWeeklyLeaguePanel extends StatelessWidget {
       '端末手渡し共同観測。実在する2人から8人で開始できます',
       'Pass-the-device weekly league. Start with 2 to 8 real people',
     ),
-    LocalWeeklyLeagueAvailability.active =>
-      '端末手渡し共同観測。実在する${view.participantCount}人、'
-          '観察${view.totalMeaningfulEventCount}件、'
-          '${view.tierFinalizationEligible ? '週終了後に観測級確定' : '5人未満のため観測級確定なし'}',
+    LocalWeeklyLeagueAvailability.active => lang.t(
+      '端末手渡し共同観測。実在する${view.participantCount}人、観察${view.totalMeaningfulEventCount}件、${view.tierFinalizationEligible ? '週終了後に観測級確定' : '5人未満のため観測級確定なし'}',
+      'Pass-the-device observation. ${view.participantCount} participants, ${view.totalMeaningfulEventCount} observations. ${view.tierFinalizationEligible ? 'Tier confirmed at the end of the week' : 'Fewer than five participants; no tier confirmation'}',
+    ),
   };
 }
 
@@ -491,10 +491,10 @@ class _StandingRow extends StatelessWidget {
         : standing.tied
         ? lang.t('同率${standing.rank}位', 'Tied #${standing.rank}')
         : lang.t('${standing.rank}位', '#${standing.rank}');
-    final semanticLabel =
-        '${standing.slotNumber == 1 ? 'この端末の観測者' : '${standing.slotNumber}人目'}、$rankLabel、'
-        '観察${standing.meaningfulEventCount}件'
-        '${selected ? '、次に観察する人として選択中' : ''}';
+    final semanticLabel = lang.t(
+      '${standing.slotNumber == 1 ? 'この端末の観測者' : '${standing.slotNumber}人目'}、$rankLabel、観察${standing.meaningfulEventCount}件${selected ? '、次に観察する人として選択中' : ''}',
+      'Observer ${standing.slotNumber}, $rankLabel, ${standing.meaningfulEventCount} observations${selected ? ', selected as the next observer' : ''}',
+    );
     final content = ConstrainedBox(
       constraints: const BoxConstraints(minHeight: GameTokens.minTouchTarget),
       child: Padding(

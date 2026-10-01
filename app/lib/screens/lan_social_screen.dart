@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import 'package:flutter/services.dart';
 
 import '../config/app_language.dart';
@@ -1245,7 +1246,10 @@ class _StandingRow extends StatelessWidget {
               ),
               const SizedBox(height: GameTokens.spaceXs),
               Text(
-                '${standing.xp} 探究記録',
+                localize.t(
+                  '${standing.xp} 探究記録',
+                  '${standing.xp} learning record',
+                ),
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: colors.inkMuted,
                 ),
@@ -1371,7 +1375,7 @@ class _TierLabel extends StatelessWidget {
     final theme = Theme.of(context);
     final label = tier.displayLabel;
     return Semantics(
-      label: '$label${current ? '、現在' : ''}',
+      label: '$label${current ? localize.t('、現在', ", current") : ''}',
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.symmetric(

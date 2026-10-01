@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import '../config/app_language.dart';
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
@@ -514,7 +515,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
               backgroundColor: colors.canvas,
               foregroundColor: colors.ink,
               title: Text(
-                '記号実験',
+                localize.t('記号実験', "Notation Lab"),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
@@ -545,12 +546,18 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
 
   Widget _buildTask(BuildContext context) {
     final colors = context.gamePalette;
-    final stepLabel = '観察 ${_step + 1} / $_stepCount';
+    final stepLabel = localize.t(
+      '観察 ${_step + 1} / $_stepCount',
+      'Observation ${_step + 1} / $_stepCount',
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: '記号実験  /  $stepLabel',
+          eyebrow: localize.t(
+            '記号実験  /  $stepLabel',
+            'NOTATION LAB / $stepLabel',
+          ),
           title: widget.conceptLabel,
           body: t(
             '記号・モデル・図表を組み立て、意味と結びます。',
@@ -924,7 +931,7 @@ class _ScienceNotationLabScreenState extends State<ScienceNotationLabScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: '記号実験  /  完了',
+          eyebrow: localize.t('記号実験  /  完了', "NOTATION LAB / COMPLETE"),
           title: t('記号を意味とつなげました', 'You linked symbols to meanings'),
           body: widget.conceptLabel,
           icon: Icons.fact_check_outlined,

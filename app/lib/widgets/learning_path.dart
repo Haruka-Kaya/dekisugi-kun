@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import 'dart:math' as math;
 
 import '../config/app_language.dart' as lang;
@@ -265,7 +266,10 @@ class _UnitBanner extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '研究テーマ ${unit.ordinal.toString().padLeft(2, '0')}',
+                        localize.t(
+                          '研究テーマ ${unit.ordinal.toString().padLeft(2, '0')}',
+                          'Research topic ${unit.ordinal.toString().padLeft(2, '0')}',
+                        ),
                         style: t.textTheme.labelLarge
                             ?.copyWith(color: colors.pathActive)
                             .jaWeight(FontWeight.w800),
@@ -523,7 +527,7 @@ class _InquiryTimeline extends StatelessWidget {
         children: [
           Semantics(
             header: true,
-            label: '実験レールと探究ログ',
+            label: localize.t('実験レールと探究ログ', "Experiment path and learning log"),
             child: ExcludeSemantics(
               child: Row(
                 children: [
@@ -532,11 +536,13 @@ class _InquiryTimeline extends StatelessWidget {
                     child: Icon(Icons.straighten_rounded, size: 20),
                   ),
                   const SizedBox(width: GameTokens.spaceSm),
-                  Text(
-                    '探究ログ',
-                    style: Theme.of(context).textTheme.titleMedium
-                        ?.copyWith(color: context.gamePalette.ink)
-                        .jaWeight(FontWeight.w800),
+                  Expanded(
+                    child: Text(
+                      localize.t('探究ログ', "Learning log"),
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(color: context.gamePalette.ink)
+                          .jaWeight(FontWeight.w800),
+                    ),
                   ),
                 ],
               ),
@@ -644,7 +650,10 @@ class _ExperimentRail extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: '実験レール${index + 1}、${current ? '現在位置、' : ''}${_nodeBadge(node)}',
+      label: localize.t(
+        '実験レール${index + 1}、${current ? localize.t('現在位置、', "Current position, ") : ''}${_nodeBadge(node)}',
+        'Experiment path ${index + 1}, ${current ? localize.t('現在位置、', "Current position, ") : ''}${_nodeBadge(node)}',
+      ),
       child: ExcludeSemantics(
         child: Stack(
           alignment: Alignment.topCenter,
@@ -867,7 +876,9 @@ class _PathNodeButton extends StatelessWidget {
                                 border: style.border,
                               ),
                               _LogLabel(
-                                label: current ? '次はここ' : _nodeBadge(node),
+                                label: current
+                                    ? localize.t('次はここ', "Next stop")
+                                    : _nodeBadge(node),
                                 foreground: current
                                     ? colors.onPathActive
                                     : style.foreground,
@@ -899,7 +910,10 @@ class _PathNodeButton extends StatelessWidget {
                           if (node.estimatedMinutes != null) ...[
                             const SizedBox(height: GameTokens.spaceSm),
                             Text(
-                              '観察目安 ${node.estimatedMinutes}分',
+                              localize.t(
+                                '観察目安 ${node.estimatedMinutes}分',
+                                'Estimated time: ${node.estimatedMinutes} min',
+                              ),
                               style: Theme.of(context).textTheme.labelMedium
                                   ?.copyWith(color: colors.inkMuted)
                                   .jaWeight(FontWeight.w700),
@@ -908,7 +922,10 @@ class _PathNodeButton extends StatelessWidget {
                           if (progress != null) ...[
                             const SizedBox(height: GameTokens.spaceMd),
                             Text(
-                              '探究記録 ${node.completedLessons}/${node.totalLessons}',
+                              localize.t(
+                                '探究記録 ${node.completedLessons}/${node.totalLessons}',
+                                'Learning record ${node.completedLessons}/${node.totalLessons}',
+                              ),
                               style: Theme.of(context).textTheme.labelMedium
                                   ?.copyWith(color: colors.ink)
                                   .jaWeight(FontWeight.w700),

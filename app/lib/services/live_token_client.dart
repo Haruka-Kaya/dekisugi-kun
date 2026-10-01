@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
@@ -49,7 +50,11 @@ class LiveTokenClient {
     TeachingTactic tactic = TeachingTactic.reason,
     MissionKind missionKind = MissionKind.teach,
   }) async {
-    if (!isConfigured) throw const LiveTokenUnavailable('接続先が設定されていません');
+    if (!isConfigured) {
+      throw LiveTokenUnavailable(
+        localize.t('接続先が設定されていません', "The server is not configured"),
+      );
+    }
 
     final res = await _send(
       (h) => _dio.post<Object?>(
@@ -92,7 +97,9 @@ class LiveTokenClient {
         model.isEmpty ||
         setup == null ||
         setup.isEmpty) {
-      throw const LiveTokenUnavailable('資格情報の中身が足りません');
+      throw LiveTokenUnavailable(
+        localize.t('資格情報の中身が足りません', "The credentials are incomplete"),
+      );
     }
 
     return LiveGrant(

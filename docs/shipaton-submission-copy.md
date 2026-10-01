@@ -36,6 +36,13 @@ cases, diagram activities and review. Core learning works on-device without an
 account. In the demonstrated route, free explanation text and voice are neither
 uploaded nor retained as durable records.
 
+An optional free understanding check compares three before questions, three
+different after questions, and one new situation around a hidden-source teaching
+activity. It is a formative self-check, not a validated efficacy test. Answers,
+explanation and counts are neither saved nor uploaded; copying aggregate counts
+is the learner's choice. The app does not claim that a count difference proves
+improvement.
+
 ## How I built it
 
 Flutter provides the native app, with a bundled Japanese/English curriculum and
@@ -44,8 +51,10 @@ Fixed catalog checkpoints and canonical need codes connect an observed gap to
 an appropriate repair activity; no external LLM grades student writing.
 
 RevenueCat's `purchases_flutter` SDK provides store packages, purchase, restore
-and the `plus` entitlement. Plus is optional: companion styling and a parent
-report support the product while core lessons remain free. The video shows a
+and the `plus` entitlement. Plus is optional: a family review plan turns local observation records into a
+next topic, a question a parent can ask, and a new-situation prompt. Parents can
+copy the report without child answer text, audio or personal scores. Companion
+styling is an additional benefit. Core lessons and understanding checks remain free. The video shows a
 completed native RevenueCat Test Store purchase, Aurora Cape equipped, and the
 parent report opened. No real charge occurred.
 
@@ -75,8 +84,11 @@ the local supporter grant and does not claim that separate sync succeeded.
 A working native learning loop connects prediction, evidence, explanation,
 follow-up, hints and review. The current interface makes the companion's record
 part of the experience, and the optional purchase grants a visible supporter
-benefit. The integrated app baseline passed 1,337 client and 399 server tests.
+benefit. The updated app passed 1,340 client tests; the unchanged server baseline passed
+399 tests.
 The entry's video demonstrates the real app within two minutes.
+[Evidence and evaluation status](learning-evidence-2026.md) separates the research
+rationale from functional verification. No learner efficacy study has been conducted.
 
 ## What I learned
 
@@ -110,8 +122,8 @@ benefits; it does not gate core science lessons or sell correct answers.
 - Native run and Test Store replay: [reviewer guide](nextgen-review-guide.md).
 - Server re-verification and webhook are implemented; production-store purchase
   and live-conversation allowance sync are not claimed.
-- No store release is required for this Next Gen entry. Some secondary app
-  labels remain Japanese; the demo and submission explanation are in English.
+- No store release is required for this Next Gen entry. The app has English curriculum, UI and accessibility descriptions; the demo
+  and submission explanation are in English.
 
 ## Submission assets
 

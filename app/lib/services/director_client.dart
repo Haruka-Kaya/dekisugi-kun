@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
@@ -165,11 +166,20 @@ class DirectorClient {
     final detail = data is Map ? data['error'] : null;
     return switch (status) {
       400 => '送った内容が受け付けられませんでした（$detail）',
-      401 => 'この端末が確認できませんでした',
-      404 => 'その単元は見つかりませんでした',
-      413 => '会話が長くなりすぎました',
-      429 => 'きょうはたくさん話しました。少し時間をあけてください',
-      502 => '進行役が応答しませんでした',
+      401 => localize.t('この端末が確認できませんでした', "This device could not be verified"),
+      404 => localize.t('その単元は見つかりませんでした', "That unit was not found"),
+      413 => localize.t(
+        '会話が長くなりすぎました',
+        "The conversation exceeded its time limit",
+      ),
+      429 => localize.t(
+        'きょうはたくさん話しました。少し時間をあけてください',
+        "You have had several conversations today. Please take a break.",
+      ),
+      502 => localize.t(
+        '進行役が応答しませんでした',
+        "The conversation director did not respond",
+      ),
       _ => 'エラーが発生しました（HTTP $status）',
     };
   }

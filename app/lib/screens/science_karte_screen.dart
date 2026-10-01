@@ -8,6 +8,7 @@ import '../config/game_tokens.dart';
 import '../learning/domain/learning_economy.dart';
 import '../learning/domain/learning_event.dart';
 import '../learning/services/learning_karte_projection.dart';
+import '../learning/services/family_review_plan.dart';
 import '../models/unit.dart';
 import '../services/session_store.dart';
 import '../ui/_material.dart';
@@ -425,23 +426,10 @@ class _ParentReportCard extends StatelessWidget {
           ),
           const SizedBox(height: GameTokens.spaceSm),
           Text(
-            supporter
-                ? lang.t(
-                        'お子さまの説明でデキすぎ君が理解した思い込みを、',
-                        'Summarize what Dekisugi-kun understood through your child\'s teaching',
-                      ) +
-                      lang.t(
-                        '保護者の方に渡せる文章でまとめます。',
-                        ' in a report you can share with parents.',
-                      )
-                : lang.t(
-                        'お子さまがデキすぎ君に教えて直した思い込みを、',
-                        'Create a report about misconceptions your child helped Dekisugi-kun correct',
-                      ) +
-                      lang.t(
-                        '保護者の方へ渡せるレポートにまとめられます。',
-                        ' to share with parents.',
-                      ),
+            lang.t(
+              '観察記録から次の復習テーマと、保護者が聞ける問いを作ります。回答本文や音声を含めず、コピーして共有できます。',
+              'Create a next-review topic and parent prompts from observation records. Copy and share without answer text or audio.',
+            ),
             style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
           ),
           const SizedBox(height: GameTokens.spaceMd),
@@ -496,6 +484,8 @@ class _KarteParentReportScreen extends StatelessWidget {
         'Dekisugi-kun\'s record — Report for parents',
       ),
       '',
+      familyReviewPlan(view),
+      '',
       lang.t(
         'デキすぎ君は、教科書にありがちな思い込みを持っているAIです。',
         'Dekisugi-kun is an AI with common textbook misconceptions.',
@@ -538,10 +528,7 @@ class _KarteParentReportScreen extends StatelessWidget {
               '・「${entry.misconception!.statement}」（${entry.unitTitle}）',
               '• "${entry.misconception!.statement}" (${entry.unitTitle})',
             ) +
-            lang.t(
-              '— お子さまの説明がまだ届ききっていません。',
-              ' — Your child\'s teaching has not cleared this up yet.',
-            ),
+            lang.t('— 次に一緒に確かめる内容です。', ' — A topic to explore together next.'),
       if (_inProgress.isEmpty) lang.t('・ありません。', '• None.'),
       '',
       lang.t(
@@ -603,6 +590,15 @@ class _KarteParentReportScreen extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: GameTokens.spaceMd),
+            GameSolidSurface(
+              surfaceKey: const ValueKey('family-review-plan'),
+              padding: const EdgeInsets.all(GameTokens.spaceLg),
+              child: Text(
+                familyReviewPlan(view),
+                style: t.textTheme.bodyMedium?.copyWith(color: colors.ink),
+              ),
             ),
             const SizedBox(height: GameTokens.spaceMd),
             GameSolidSurface(
@@ -687,9 +683,9 @@ class _KarteParentReportScreen extends StatelessWidget {
                         child: Text(
                           lang.t(
                             '「${entry.misconception!.statement}」'
-                                '— 説明がまだ届ききっていません。',
+                                '— 次に一緒に確かめる内容です。',
                             '"${entry.misconception!.statement}" '
-                                '— The explanation has not cleared this up yet.',
+                                '— A topic to explore together next.',
                           ),
                           style: t.textTheme.bodySmall?.copyWith(
                             color: colors.ink,

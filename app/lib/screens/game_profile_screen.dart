@@ -1,3 +1,4 @@
+import '../config/app_language.dart' as localize;
 import '../config/app_language.dart' as lang;
 import '../config/app_theme.dart';
 import '../config/game_tokens.dart';
@@ -111,8 +112,14 @@ class GameProfileScreen extends StatelessWidget {
                   'Review Dekisugi-kun\'s gear and your teaching, reviews, and challenges here.',
                 ),
           semanticSummary:
-              '${schoolMode ? 'この端末の' : '自分の'}研究室。'
-              '${player.completedNodes}/${player.totalNodes}観察項目',
+              localize.t(
+                '${schoolMode ? localize.t('この端末の', "On this device: ") : localize.t('自分の', "Your ")}研究室。',
+                '${schoolMode ? localize.t('この端末の', "On this device: ") : localize.t('自分の', "Your ")}lab.',
+              ) +
+              localize.t(
+                '${player.completedNodes}/${player.totalNodes}観察項目',
+                '${player.completedNodes}/${player.totalNodes} observation items',
+              ),
           leading: DecoratedBox(
             decoration: BoxDecoration(
               color: colors.surface,
@@ -375,7 +382,10 @@ class _MonthlyBadgeTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     final colors = context.gamePalette;
-    final displayTitle = badge.title.replaceAll('観測バッジ', '観測印');
+    final displayTitle = badge.title.replaceAll(
+      localize.t('観測バッジ', "Observation badges"),
+      localize.t('観測印', "Observation stamps"),
+    );
     final (icon, fill, foreground) = switch (badge.style) {
       LearningMonthlyBadgeStyle.orbit => (
         Icons.public_rounded,
@@ -529,10 +539,10 @@ class _QuestRow extends StatelessWidget {
     return Semantics(
       key: ValueKey('game-profile-quest-${quest.id}'),
       container: true,
-      label:
-          '$displayTitle、${quest.progress}/${quest.target}'
-          '${quest.isComplete ? '、完了' : ''}'
-          '${showReward ? '、結晶${quest.gemReward}個' : ''}',
+      label: localize.t(
+        '$displayTitle、${quest.progress}/${quest.target}${quest.isComplete ? '、完了' : ''}${showReward ? '、結晶${quest.gemReward}個' : ''}',
+        '$displayTitle, ${quest.progress}/${quest.target}${quest.isComplete ? ', complete' : ''}${showReward ? ', ${quest.gemReward} gems' : ''}',
+      ),
       child: ExcludeSemantics(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: GameTokens.spaceSm),
