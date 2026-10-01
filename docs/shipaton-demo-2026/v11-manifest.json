@@ -1,0 +1,185 @@
+{
+  "source_commit": "11d9ae3cc1e9e6597a6206a4ab07b80f6ac49b8e",
+  "capture": "Real native Android emulator recordings retained from v8 and v10. Single app view; original VFR timeline expanded to CFR before cuts; typing at 1.25x. No fabricated UI or seeded progress. Separate adult Test Store profile for Plus.",
+  "narrator": "Local Kokoro af_sarah; separate editorial voice; no music",
+  "duration": 52.8,
+  "held_screenshot_seconds": 5.6,
+  "end_card_seconds": 2,
+  "sources": {
+    "equip-motion.mp4": "309c4b3d7dcc24a9cfed7b59a6162ff3aa1ca03da7f8f524f38b023f18ee7102",
+    "explain.mp4": "a74f538f5271e0a892ae1f122fd6ed57e2d91f58b0feee1ca2213029ea581e6c",
+    "followup.mp4": "74e74b9dad3999c1acf25749eb63c2abeccc8dbd71e712f89c3ce9f50d60ba7a",
+    "hint.png": "e0c327658df74313d2f14ed0a1a8f4602646a3b165530fc9d7b0812bbb31f8a1",
+    "parent-motion.mp4": "797beb7ef0a4b02e6eaa48c9e12a8b9ca11edab323cb0a7fb31d7f3d0afa043e",
+    "path.mp4": "7be94c6e0d03361ee95d9b91b2b26d6ee6c514e4c7bfabdfa48f23e5749a5986",
+    "plus-purchase.mp4": "748ff2575f2ceb4483839766d119a2ecc92e63428355000bd813b501ca4042dd",
+    "plus-result.png": "1f0ea423e8b5a3bbb1cbf9acd2563bb555e3996e611dab806a42bcfac4b0a9c1",
+    "record.mp4": "c9c1a1f32085fa7cf315fec103eb8a04c71331829e3263a247222842bf0e0a22",
+    "retry-clean.png": "a3ccd23daf20b15a90c7dee20f96a0b863108468b5e7827cbeba8155a8c8ba2c",
+    "source.mp4": "1bfce31f6c8f2cd18b94e2a4b9f6e2900ee1d65f6178e017f0c8c7952d266e6b",
+    "wrong-pick.mp4": "18460ef00bfc6d26b0fabf9ae07ea23538b0eb1662a5369840276260f7383191"
+  },
+  "scenes": [
+    {
+      "scene": "01-start",
+      "start": 0,
+      "duration": 3.2,
+      "shots": [
+        {
+          "file": "path.mp4",
+          "start": 3.2,
+          "duration": 3.2
+        }
+      ]
+    },
+    {
+      "scene": "02-evidence",
+      "start": 3.2,
+      "duration": 6.4,
+      "shots": [
+        {
+          "file": "source.mp4",
+          "start": 1.8,
+          "duration": 2.5
+        },
+        {
+          "file": "source.mp4",
+          "start": 25,
+          "duration": 2.5
+        },
+        {
+          "file": "source.mp4",
+          "start": 44.8,
+          "duration": 1.4
+        }
+      ]
+    },
+    {
+      "scene": "03-hide",
+      "start": 9.6,
+      "duration": 3.2,
+      "shots": [
+        {
+          "file": "explain.mp4",
+          "start": 0,
+          "duration": 3.2
+        }
+      ]
+    },
+    {
+      "scene": "04-type",
+      "start": 12.8,
+      "duration": 8.8,
+      "shots": [
+        {
+          "file": "explain.mp4",
+          "start": 25.3,
+          "duration": 8.8,
+          "speed": 1.25
+        }
+      ]
+    },
+    {
+      "scene": "05-reflect",
+      "start": 21.6,
+      "duration": 5.2,
+      "shots": [
+        {
+          "file": "explain.mp4",
+          "start": 76.7,
+          "duration": 2.3
+        },
+        {
+          "file": "explain.mp4",
+          "start": 128.8,
+          "duration": 2.9
+        }
+      ]
+    },
+    {
+      "scene": "06-question",
+      "start": 26.8,
+      "duration": 3.2,
+      "shots": [
+        {
+          "file": "followup.mp4",
+          "start": 1.6,
+          "duration": 3.2
+        }
+      ]
+    },
+    {
+      "scene": "07-rethink",
+      "start": 30.0,
+      "duration": 7.6,
+      "shots": [
+        {
+          "file": "wrong-pick.mp4",
+          "start": 1.8,
+          "duration": 3.2
+        },
+        {
+          "file": "hint.png",
+          "start": 0,
+          "duration": 2.1
+        },
+        {
+          "file": "retry-clean.png",
+          "start": 0,
+          "duration": 2.3
+        }
+      ]
+    },
+    {
+      "scene": "08-record",
+      "start": 37.6,
+      "duration": 3.2,
+      "shots": [
+        {
+          "file": "record.mp4",
+          "start": 1.2,
+          "duration": 3.2
+        }
+      ]
+    },
+    {
+      "scene": "09-plus",
+      "start": 40.8,
+      "duration": 10.0,
+      "shots": [
+        {
+          "file": "plus-purchase.mp4",
+          "start": 1.7,
+          "duration": 2
+        },
+        {
+          "file": "plus-purchase.mp4",
+          "start": 20.7,
+          "duration": 2
+        },
+        {
+          "file": "plus-result.png",
+          "start": 0,
+          "duration": 1.2
+        },
+        {
+          "file": "equip-motion.mp4",
+          "start": 0,
+          "duration": 2
+        },
+        {
+          "file": "parent-motion.mp4",
+          "start": 2.1,
+          "duration": 2.8
+        }
+      ]
+    },
+    {
+      "scene": "10-close",
+      "start": 50.8,
+      "duration": 2.0,
+      "shots": []
+    }
+  ],
+  "sha256": "b8d32f24a1420e260a2e573cbaf00633b451bc46f3f5b43c4d8ff61a6fd7353a"
+}

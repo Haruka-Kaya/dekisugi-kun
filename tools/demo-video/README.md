@@ -1,6 +1,6 @@
 # Native English demo tooling
 
-These tools produced the v8, v9 and v10 English demos from real
+These tools produced the v8, v9, v10 and v11 English demos from real
 native Android captures. They never seed app progress or alter the emulator
 database. Run from the repository root. macOS was validated with Python 3.14.6,
 FFmpeg 8.1 (`ffmpeg-full`, including libass), and the built-in Avenir Next font.
@@ -69,7 +69,7 @@ Use `--preview 04-explain` to inspect a scene composition without rendering all.
 ## Verify a new edit
 
 Check the full FFmpeg decode exit code, ordered audio/video DTS, duration under
-120 seconds, 1920×1080 at 30 fps, and stereo AAC. Inspect each scene, the first
+120 seconds, the intended 1080p orientation at 30 fps, and stereo AAC. Inspect each scene, the first
 and last frames, and every purchase transition. Check captions for ordering,
 readable holds, and agreement with narration cues. Measure integrated loudness
 and true peak, and listen to the final playback before public submission.
@@ -121,3 +121,27 @@ Only the hint, rewritten explanation, and short closing card are held still.
 Defaults in `narrate.py` retain the v8/v9 pacing; v10 explicitly shortens gaps.
 The manifest distinguishes recording-source seconds from screenshot holds;
 recording-source share does not mean every frame contains movement.
+
+## Current single-view cut (v11)
+
+v11 reuses the v10 source bundle and narration, and removes the duplicate detail
+view and synthesized music. It exports 1080×1920 portrait at 30 fps. Source
+recordings may be VFR: **expand the original timeline with `fps=30:start_time=0`
+before trimming**, then reset PTS. Input seeking followed by `PTS-STARTPTS`
+can move the next sparse frame to the start and remove the tap-before state.
+The renderer keeps a fixed full app viewport; only Android system bars are
+cropped. Typing is 1.25x; the other native clips play at their captured speed.
+
+```bash
+python3 tools/demo-video/narrate.py docs/shipaton-demo-2026/v11-script.json \
+  --models /path/to/local/kokoro-models --output app/build/demo-video-v10/narration \
+  --lead .12 --gap .08 --speed 1.06
+python3 tools/demo-video/render_single.py docs/shipaton-demo-2026/v11-script.json \
+  docs/shipaton-demo-2026/v11-edit.json --raw app/build/demo-video-v10 \
+  --output docs/shipaton-demo-2026
+```
+
+Only native hint, rewrite and Test Store result screenshots are held. The
+manifest identifies all raw-source hashes; `v11-validation.json` includes
+frame comparisons against the original source timeline at the beginning and
+end of every shot. Recording-source share is not used as a motion-quality score.
