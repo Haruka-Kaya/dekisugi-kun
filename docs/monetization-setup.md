@@ -24,19 +24,27 @@ money, about ten minutes.
 
 No learning content is ever paywalled — materials and missions are all free.
 
-## 1. Create a free RevenueCat project
+## 1. This project's Test Store
 
-1. Sign up at [app.revenuecat.com](https://app.revenuecat.com) (free tier is fine).
-2. **Projects → New Project → Test Store**.
-3. Copy the **public API key** (`test_…`). Public keys are safe to ship —
-   they identify the project, they cannot charge anyone.
+A RevenueCat project (`dekisugi-kun`) already exists with entitlement `plus`
+and a `default` offering (Monthly / Yearly / Lifetime). Its Test Store
+**public** API key is:
+
+```
+test_UtdJreIqsGoYiqdCBrGBdTOOwje
+```
+
+Public keys are safe to ship — they identify the project, they cannot charge
+anyone. (To reproduce the setup from scratch: sign up at
+[app.revenuecat.com](https://app.revenuecat.com), **Projects → New Project**,
+then copy the `test_…` public API key.)
 
 ## 2. Point the app at the Test Store
 
 ```bash
 cd app
 flutter run --dart-define=REVENUECAT_USE_TEST_STORE=true \
-            --dart-define=REVENUECAT_TEST_PUBLIC_SDK_KEY=test_xxxxxxxx \
+            --dart-define=REVENUECAT_TEST_PUBLIC_SDK_KEY=test_UtdJreIqsGoYiqdCBrGBdTOOwje \
             --dart-define=SERVER_URL=https://rika-chousa.vercel.app
 ```
 

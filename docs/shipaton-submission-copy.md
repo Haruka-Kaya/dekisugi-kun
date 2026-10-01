@@ -114,7 +114,7 @@ and the entire learning loop is free.
 
 ## Demo video notes
 
-The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v6.mp4`, ~97s) is
+The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v7.mp4`, ~114s) is
 filmed on the English build of the app on an Android emulator in portrait:
 a short hook card, then the learning path, a lesson node (the material hides
 when it is time to explain — C2), a typed English teach-back explanation, the
@@ -131,16 +131,18 @@ words (stem-matched, normalization applied) before the follow-up question
 proceeds. Correctness is still decided by the fixed 3-choice correction, so a
 missed term asks for more detail instead of wrongly blocking a right answer.
 
-The video does not include a purchase: the RevenueCat Test Store key is not in
-the repository (it is a personal credential). The final segment shows the
-paywall's fail-closed branch instead — with no reachable store, the app refuses
-to guess a price and blocks the purchase operation ("Can't check store information"),
-while free features keep working. Judges can exercise the full
-paywall themselves with the `--dart-define` command in "Testing instructions".
+The closing segment is a real purchase: the Plus screen lists live Test Store
+packages (Monthly $9.99 / Yearly $79.98 / Lifetime $99.99), the native Test
+Store checkout dialog completes, the `plus` entitlement confirms, and the
+Aurora Mantle + parent report unlock. The project's Test Store public key is in
+docs/monetization-setup.md — judges can replay the same loop with the
+`--dart-define` command in "Testing instructions". The one honest caveat shown
+on screen is the quota-sync retry banner: a Test Store purchase cannot be
+verified against the real backend, and the app says so instead of faking it.
 
 Earlier cuts (Japanese-UI v4 with the airplane-mode beat, v3, v2, and the
-web-build v1) are archived under `docs/attic/`; the submitted video is the
-English-build v6 capture.
+web-build v1, and the pre-purchase v6) are archived under `docs/attic/`; the submitted video is the
+English-build v7 capture.
 
 ## Testing instructions (for judges)
 
@@ -161,10 +163,10 @@ English-build v6 capture.
 4. Deliberately answer one checkpoint wrong to see the hint + re-explain flow.
 5. Open the profile tab → 「思い込みの記録を見る」 to see the カルテ: the
    companion's misconception map with observed/corrected need states.
-6. Optional: with a RevenueCat Test Store key, run with
-   `--dart-define=REVENUECAT_USE_TEST_STORE=true --dart-define=REVENUECAT_TEST_PUBLIC_SDK_KEY=<test key>`
-   to see the Plus paywall and a simulated purchase that grants the Aurora
-   Mantle companion skin in the cosmetic picker.
+6. Optional: run with the project's Test Store key (in docs/monetization-setup.md)
+   `--dart-define=REVENUECAT_USE_TEST_STORE=true --dart-define=REVENUECAT_TEST_PUBLIC_SDK_KEY=test_UtdJreIqsGoYiqdCBrGBdTOOwje`
+   to see the Plus paywall and a real Test Store purchase that grants the
+   Aurora Mantle companion skin in the cosmetic picker.
 
 ## Evidence checklist for the submission form
 
