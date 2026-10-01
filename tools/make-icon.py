@@ -80,7 +80,7 @@ def _rgb(hex_value: str) -> tuple[int, int, int]:
 def _png(image: Image.Image, *, mode: str) -> bytes:
     converted = image.convert(mode)
     output = io.BytesIO()
-    # metadataを付けず、pinしたPillowの同一encoder設定でbyteを固定する。
+    # metadataを付けず、同一環境・同一encoder設定でbyteを固定する。
     converted.save(output, format="PNG", optimize=False, compress_level=9)
     return output.getvalue()
 
@@ -292,12 +292,35 @@ def _check_current(outputs: Mapping[Path, bytes]) -> None:
             "生成assetが不足しています: "
             + ", ".join(str(path.relative_to(ROOT)) for path in missing)
         )
-    changed = [path for path, payload in outputs.items() if path.read_bytes() != payload]
+    changed = [
+        path for path, payload in outputs.items()
+        if not _same_asset(path.read_bytes(), payload, png=path.suffix == ".png")
+    ]
     if changed:
         raise AssertionError(
             "runtime正本と一致しないassetがあります。tools/make-icon.pyを実行してください: "
             + ", ".join(str(path.relative_to(ROOT)) for path in changed)
         )
+
+
+def _same_asset(actual: bytes, expected: bytes, *, png: bool) -> bool:
+    if actual == expected:
+        return True
+    if not png:
+        return False
+    # macOS/Linuxのzlibは同じ画素でもPNGの圧縮byteが異なる。
+    # sourceとの一致はmode・寸法・全画素で判定し、同一環境での
+    # 2回生成のbyte一致は_compare_mapsで別途要求する。
+    try:
+        with Image.open(io.BytesIO(actual)) as got, Image.open(io.BytesIO(expected)) as want:
+            return (
+                got.format == want.format == "PNG"
+                and got.mode == want.mode
+                and got.size == want.size
+                and got.tobytes() == want.tobytes()
+            )
+    except (OSError, ValueError):
+        return False
 
 
 def generate(*, check: bool) -> None:

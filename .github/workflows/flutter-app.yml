@@ -9,6 +9,7 @@ on:
       - 'server/**'
       - 'tools/make-icon.py'
       - 'tools/requirements-icons.txt'
+      - 'tools/test_make_icon.py'
   push:
     branches:
       - dev
@@ -19,6 +20,7 @@ on:
       - 'server/**'
       - 'tools/make-icon.py'
       - 'tools/requirements-icons.txt'
+      - 'tools/test_make_icon.py'
 
 permissions:
   contents: read
@@ -74,6 +76,7 @@ jobs:
       - name: Verify native brand assets are reproducible
         run: |
           python3 -m pip install --requirement tools/requirements-icons.txt
+          python3 tools/test_make_icon.py
           python3 tools/make-icon.py --check
 
       - name: Audit production server dependencies
