@@ -53,4 +53,3 @@ This is a Test Store purchase. Core lessons stay free.
 14
 00:00:54,020 --> 00:00:55,215
 Learn by teaching.
-

@@ -140,7 +140,7 @@ for cue in cues_all:
         caption_count += 1
         srt += f'{caption_count}\n{timestamp(at)} --> {timestamp(end)}\n{part}\n\n'
         at = end
-(a.output / (a.name + '-captions.en.srt')).write_text(srt)
+(a.output / (a.name + '-captions.en.srt')).write_text(srt.rstrip() + '\n')
 ass_path = work / 'captions.ass'
 ass_path.write_text(ass)
 rate = 24000
