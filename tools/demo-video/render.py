@@ -16,9 +16,16 @@ p.add_argument('edit', type=Path)
 p.add_argument('--raw', required=True, type=Path)
 p.add_argument('--output', required=True, type=Path)
 p.add_argument('--ffmpeg', default='/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg')
+p.add_argument('--poster-time', type=float, default=10, help='ポスターに使う動画内の秒数')
 p.add_argument('--font', default='/System/Library/Fonts/Avenir Next.ttc')
+p.add_argument('--name', default='shipaton-demo-v8', help='出力ファイルの共通名（バージョンを含む）')
 p.add_argument('--preview', help='指定シーンの構図をJPEGだけで書き出す')
 a = p.parse_args()
+if not a.name.replace('-', '').replace('_', '').isalnum():
+    p.error('--name must contain only letters, digits, hyphens, and underscores')
+a.raw = a.raw.resolve()
+a.output = a.output.resolve()
+a.script = a.script.resolve()
 a.output.mkdir(parents=True, exist_ok=True)
 work = a.raw / 'render'
 work.mkdir(exist_ok=True)
@@ -178,7 +185,7 @@ for i, cue in enumerate(all_cues):
         ass += f'Dialogue: 0,{ass_time(at)},{ass_time(end)},Default,,0,0,0,,{part}\n'
         srt += f'{srt.count(" --> ")+1}\n{srt_time(at)} --> {srt_time(end)}\n{part}\n\n'
         at = end
-captions = a.output / 'shipaton-demo-v8-captions.en.srt'
+captions = a.output / (a.name + '-captions.en.srt')
 captions.write_text(srt)
 ass_path = work / 'captions.ass'
 ass_path.write_text(ass)
@@ -194,7 +201,7 @@ for n, start in enumerate(np.arange(0, offset, 4.0)):
     bed[int(start*rate):int(start*rate)+count] += (0.018*chord*envelope).astype(np.float32)
 bed_path = work / 'original-music.wav'
 sf.write(bed_path, bed, rate)
-final = a.output / 'shipaton-demo-v8.mp4'
+final = a.output / (a.name + '.mp4')
 # 個別シーンをデコードして結合する。AACのprimingや色メタデータの差で
 # concat demuxer後のフィルターが再初期化され、字幕と音声がずれるのを防ぐ。
 inputs, filters, pairs = [], [], []
@@ -214,8 +221,8 @@ filters += [
     '[voice][bed]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.84:level=false[a]',
 ]
 run([*inputs, '-i', str(bed_path), '-filter_complex', ';'.join(filters), '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'medium', '-crf', '19', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-ac', '2', '-t', str(offset), '-movflags', '+faststart', '-metadata', 'title=' + script['title'], '-metadata', 'comment=Native emulator footage; edited for pace; RevenueCat Test Store; no real charge; external generative AI disabled', str(final)])
-manifest_path = a.output / 'v8-manifest.json'
+manifest_path = a.output / (a.name.removeprefix('shipaton-demo-') + '-manifest.json')
 sources = sorted({shot['file'] for value in edit.values() for shot in value.get('shots', [])} | {value['detail']['file'] for value in edit.values() if value.get('detail')})
 manifest_path.write_text(json.dumps({'source_commit': script['source_commit'], 'duration': round(offset, 3), 'capture': script['capture'], 'narrator': 'Local Kokoro af_sarah; tempo 0.92', 'sources': {s: hashlib.sha256((a.raw/s).read_bytes()).hexdigest() for s in sources}, 'scenes': manifest, 'sha256': hashlib.sha256(final.read_bytes()).hexdigest()}, indent=2) + '\n')
-run(['-ss', '10', '-i', str(final), '-frames:v', '1', str(a.output / 'shipaton-demo-v8-poster.jpg')])
+run(['-ss', str(a.poster_time), '-i', str(final), '-frames:v', '1', str(a.output / (a.name + '-poster.jpg'))])
 print(final, round(offset, 3), flush=True)

@@ -1,0 +1,30 @@
+{
+  "duration_seconds": 93.133333,
+  "video": {
+    "codec": "h264",
+    "size": [
+      1920,
+      1080
+    ],
+    "frame_rate": "30/1",
+    "pixel_format": "yuv420p"
+  },
+  "audio": {
+    "codec": "aac",
+    "channels": 2,
+    "sample_rate": "48000"
+  },
+  "unordered_dts_packets": 0,
+  "captions": {
+    "count": 19,
+    "minimum_hold_seconds": 2.435,
+    "matches_complete_narration": true
+  },
+  "source_hashes_match": true,
+  "sha256": "3bba9bddf71182393b0d6d2d0806a3d4f5b464950bbbd99550cd4f23226d7dca",
+  "visual_review": "All 10 scene compositions inspected; final modified evidence crop and purchase/rewrite transitions checked separately.",
+  "playback_limit": "Metadata/decode and visual checks do not certify auditory quality or physical-device voice behavior.",
+  "full_decode_exit_code": 0,
+  "integrated_loudness_lufs": -17.0,
+  "true_peak_dbfs": -4.4
+}

@@ -1,12 +1,13 @@
-# English demo — review and introduction
+# English demo — Next Gen review and introduction
 
-**Current candidate: [shipaton-demo-v8.mp4](shipaton-demo-v8.mp4)** — 84.17 seconds,
+**Current candidate: [shipaton-demo-v9.mp4](shipaton-demo-v9.mp4)** — 93.13 seconds,
 1920×1080 landscape, 30 fps, English narration and burned-in English captions.
-The matching [SRT](shipaton-demo-v8-captions.en.srt) and
-[poster](shipaton-demo-v8-poster.jpg) are included. This is a local video candidate;
+The matching [SRT](shipaton-demo-v9-captions.en.srt) and
+[poster](shipaton-demo-v9-poster.jpg) are included. This is a local video candidate;
 this change does not publish it to YouTube, Vimeo, or Devpost.
 
-The edit follows one idea: predict which ball falls first, read the evidence,
+The opening establishes the learner problem and the companion-as-student idea.
+The edit then follows one science question: predict which ball falls first, read the evidence,
 hide the material, explain in English, review key terms, answer a fixed
 follow-up, and receive a hint after a wrong choice. It then shows the
 companion's misconception record and optional Plus purchase and benefits.
@@ -38,13 +39,13 @@ strip and never cover the app.
 
 ## Sources and reproduction
 
-[Script](v8-script.json), [edit decisions](v8-edit.json), and
-[manifest](v8-manifest.json) identify scene timing, source hashes, and the final
+[Script](v9-script.json), [edit decisions](v9-edit.json), and
+[manifest](v9-manifest.json) identify scene timing, source hashes, and the final
 video hash. The tools and regeneration commands are in
 [tools/demo-video](../../tools/demo-video/README.md).
 
 Raw native captures, XML observations, action logs, and narration are preserved
-locally at `app/build/demo-video-v8/` (ignored by Git). A new checkout must
+locally at `app/build/demo-video-v9/` (ignored by Git). A new checkout must
 capture its own footage or receive that source bundle; the MP4 and its captions
 are directly usable without the bundle. No emulator database or account state
 is part of the public artifact.
@@ -57,15 +58,20 @@ card uses the project's current `docs/store/icon-1024.png` artwork.
 ## Validation
 
 The final file was decoded from beginning to end; its audio and video timestamps
-were checked for ordering. All nine scenes and purchase transitions were
+were checked for ordering. All ten scenes and purchase transitions were
 visually inspected, and caption timing was checked against sentence-level
 narration cues. Integrated loudness and peak measurements are recorded in
-`v8-validation.json`. Listening quality still benefits from the viewer's final
+`v9-validation.json`. Listening quality still benefits from the viewer's final
 playback review; this does not certify physical-device voice behavior.
 
 ## Earlier edits
 
+`shipaton-demo-v8.mp4` (84 seconds) remains available. v9 adds the learner
+problem, explicit product decisions, and an actual rewritten explanation after
+the hint, making the four Next Gen criteria visible in the narrative.
+
+
 `shipaton-demo-v7.mp4` (114 seconds, portrait, silent) remains available for
 comparison. v1–v6 are historical cuts under `docs/attic/`.
 `docs/shipaton-demo-capture.md` and the earlier rehearsal scripts describe the
-historical capture workflow; v8 uses the tools above.
+historical capture workflow; v8/v9 use the tools above.

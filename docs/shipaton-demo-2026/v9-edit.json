@@ -1,0 +1,155 @@
+{
+  "01-hook": {
+    "shots": [
+      {
+        "file": "explain-empty.png",
+        "duration": 10
+      }
+    ]
+  },
+  "02-product": {
+    "shots": [
+      {
+        "file": "path.mp4",
+        "start": 0,
+        "duration": 2
+      },
+      {
+        "file": "prediction-check.png",
+        "duration": 9
+      }
+    ],
+    "detail": {
+      "file": "prediction-check.png",
+      "crop": [
+        42,
+        950,
+        1038,
+        1285
+      ]
+    }
+  },
+  "03-source": {
+    "shots": [
+      {
+        "file": "source.mp4",
+        "start": 2,
+        "duration": 3
+      },
+      {
+        "file": "source.mp4",
+        "start": 24,
+        "duration": 5
+      }
+    ],
+    "detail": {
+      "file": "source.png",
+      "crop": [
+        150,
+        1570,
+        1020,
+        1640
+      ]
+    }
+  },
+  "04-explain": {
+    "shots": [
+      {
+        "file": "explain-empty.png",
+        "duration": 2
+      },
+      {
+        "file": "explanation.png",
+        "duration": 8
+      }
+    ],
+    "detail": {
+      "file": "explanation.png",
+      "text": "When air resistance is negligible,\nfalling speed does not depend on weight."
+    }
+  },
+  "05-followup": {
+    "shots": [
+      {
+        "file": "coverage.png",
+        "duration": 4
+      },
+      {
+        "file": "wrong-pick.mp4",
+        "start": 0,
+        "duration": 5
+      }
+    ]
+  },
+  "06-rethink": {
+    "shots": [
+      {
+        "file": "hint.png",
+        "duration": 4
+      },
+      {
+        "file": "retry-clean.png",
+        "duration": 6
+      }
+    ],
+    "detail": {
+      "file": "hint.png",
+      "crop": [
+        165,
+        1210,
+        997,
+        1400
+      ]
+    }
+  },
+  "07-record": {
+    "shots": [
+      {
+        "file": "record.mp4",
+        "start": 0,
+        "duration": 10
+      }
+    ],
+    "detail": {
+      "file": "record-detail.png",
+      "crop": [
+        106,
+        969,
+        980,
+        1179
+      ]
+    }
+  },
+  "08-design": {
+    "shots": [
+      {
+        "file": "explain-empty.png",
+        "duration": 9
+      }
+    ]
+  },
+  "09-plus": {
+    "shots": [
+      {
+        "file": "plus.png",
+        "duration": 2
+      },
+      {
+        "file": "purchase.mp4",
+        "start": 10,
+        "duration": 4
+      },
+      {
+        "file": "aurora-profile-final.png",
+        "duration": 3
+      },
+      {
+        "file": "parent-report.png",
+        "duration": 5
+      }
+    ]
+  },
+  "10-close": {
+    "minimum_duration": 7
+  }
+}

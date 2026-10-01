@@ -1,52 +1,41 @@
-# Shipaton 2026 — Next Gen Award（学生枠）提出チェックリスト
+# Shipaton 2026 — Next Gen 提出チェックリスト
 
-対象賞: **Next Gen Award**（在学生のみ。ストア公開不要・審査は demo video + 公開リポジトリ）。
-締切: **2026-09-30 23:45 PDT**（Submission Period 終了）。
-一次ソース: https://revenuecat-shipaton-2026.devpost.com/rules
+**締切: 2026-10-02 04:00 日本時間**（10月1日正午PDTへ延長）。
+[公式延長告知](https://revenuecat-shipaton-2026.devpost.com/updates/46730-deadline-extended)、
+[公式規約](https://revenuecat-shipaton-2026.devpost.com/rules)。
+Next Genは在学生向け。動画と公開OSSコードが審査対象で、ストア公開は不要。
 
-> このファイルは Next Gen 枠の提出物だけを扱う。一般枠（ストア公開必須）の
-> 作業は `docs/shipaton-2026.md` と `docs/play-console.md` を参照。
+## 提出物の現在地
 
----
+| 条件 | 状態 |
+|---|---|
+| 対象端末上で動くアプリ | Androidネイティブの実操作を撮影。エミュレーター証拠。物理端末の音声QAは別途未完 |
+| RevenueCat購入 | Native Test Storeで購入完了、Aurora Cape付与・装備、保護者レポート表示を確認。実課金なし |
+| 公開コード + OSSライセンス | publicへ変更済み。匿名GitHub APIで公開状態・MITを確認 |
+| ソース・素材・実行手順 | [英語審査ガイド](nextgen-review-guide.md)とREADMEから案内 |
+| 2分以内の英語動画 | [v9 MP4](shipaton-demo-2026/shipaton-demo-v9.mp4)、93.13秒、1080p、英語音声・字幕。YouTube/Vimeo公開URLは未設定 |
+| 英語提出文 | [Devpost欄ごとの原稿](shipaton-submission-copy.md)完成。外部下書きへの反映は未確認 |
+| 1024×1024アイコン | `docs/store/icon-1024.png` |
+| 1179×2556・フレームなし画像 | `docs/store-shots-2026/devpost/shot-1179x2556.png`。現行UIを指定サイズで直接撮影 |
+| 在学生・学術メール | 本人のアカウントで確認が必要。資格を推測しない |
+| 未成年の保護者同意 | 該当する場合に公式フォームの提出を確認する |
+| Devpost最終提出 | ユーザー申告は未提出・下書き中。提出完了表示は未確認 |
 
-## 1. ルール上の必須条件（現状）
+## Plusの実装と実演の範囲
 
-| 条件 | 状態 | 根拠・残作業 |
-|---|---|---|
-| iOS / iPadOS / macOS / Android 向けの動作するアプリ | ✅ | Flutter Android。`flutter run` で端末内モードがネットワークなしで動く |
-| RevenueCat SDK が≥1件の購入（または RC Ads）を動かす | 🟡 コード済み・実演要設定 | `purchases_flutter` 実装済み（`app/lib/services/revenuecat_purchase_adapter.dart`）。動画で購入を実演するには RevenueCat Test Store（`REVENUECAT_USE_TEST_STORE` + `test_` 公開キー）のプロジェクト設定が必要 |
-| 公開済みでない新規アプリ | ✅ | ストア未公開 |
-| リポジトリ public + OSS ライセンス（About 検出） | 🟡 | `LICENSE`（MIT）追加済み。**GitHub で private → public への変更はユーザー操作** |
-| ソース・素材・実行手順がリポジトリに全てある | ✅ | README に英語 quick start 追加済み（同梱 catalog でオフライン動作） |
-| <2 分のデモ動画（YouTube/Vimeo 公開） | 🟡 動画完成・公開未確認 | `docs/shipaton-demo-2026/shipaton-demo-v8.mp4`（84.17秒・1920×1080横長・英語ナレーション／字幕。現行Field NotebookをAndroidエミュレーターで撮影し、予想→教材→説明→問い返し／ヒント→記録→RevenueCat Test Store購入と特典を収録）。物理端末QA・外部公開・提出とは区別する |
-| テキスト説明（英語） | ✅ | `docs/shipaton-submission-copy.md` 更新済み |
-| 1024×1024 アイコン | ✅ | `docs/store/icon-1024.png` |
-| ≥1枚のスクリーンショット 1179×2556・端末フレームなし | ✅ | `docs/store-shots-2026/devpost/shot-1179x2556.png` |
-| Devpost 登録は学生/学術メール（JetBrains/swot で検証） | ⬜ | ユーザー操作 |
-| 未成年の場合: 保護者同意フォーム | ⬜ | https://forms.gle/Gx2Cr4X8WPk9V1q77 を締切までに提出（該当する場合） |
-| 提出物は英語 or 英訳付き | 🟡 | 動画に英語字幕。リポジトリ本文は日本語だが英語 quick start + 英語提出文で対応 |
+`purchases_flutter`のpackage取得、購入・復元、`plus` entitlementと端末内特典を
+実装。撮影は成人の個人テストプロフィールとTest Storeを使った。
+Auroraのgrantと装備、保護者レポートは実際のUIで確認した。
+キャッシュされた着せ替え一覧の更新には再起動が必要だった。
 
-## 2. Plus（RevenueCat 購入）の正直な現状
+サーバ再照会・webhookコードも存在するが、別の会話枠同期はリトライ表示だった。
+本番ストア購入・同期成功・Live会話の提供は主張しない。
+必修教材は無料のまま、外部生成AIは停止したままにする。
+[実行・再現手順](nextgen-review-guide.md)、[課金設定](monetization-setup.md)。
 
-- 実装: paywall → `purchasePackage` → entitlement `plus` → 端末内特典付与、まで実配線済み。サーバ側再照会（`/api/subscription-sync`・`/api/revenuecat-webhook`）も実装・テスト済みだが、現状は Live 会話枠（提供停止中）のゲートにのみ使う。
-- 特典（応援プラン）: 購入・復元で aurora マスコット（`cosmetic.path-mascot.aurora.v1`）を `learning_cosmetic_grants` 台帳へ即付与 — **現行配布ビルドで実際に発動し、entitlement 失効後も保持される**。加えてカルテ画面に「保護者の方へのレポート」カードが開き、訂正できた思い込みを共有できる文面をコピーできる。Live 会話枠の上限解除は同機能の提供再開時に有効になる扱いで、paywall・提出文ともその旨を明記済み。
-- 動画で購入を見せる場合は Test Store ビルドで実演する（`REVENUECAT_USE_TEST_STORE=true --dart-define` + `test_` キー）。ストアアカウント不要。
+## 審査基準への対応
 
-## 3. ユーザー側の残作業（Devin にはできない）
-
-1. **GitHub → Settings → Danger Zone → Change visibility → Public**（LICENSE 検出を確認）
-2. RevenueCat 無料アカウント → Test Store アプリ + entitlement `plus` + offering を設定 → `test_` 公開キーを取得
-3. Devpost アカウント（学生メールで登録）→ Enter a Submission
-4. 未成年なら保護者同意フォーム提出
-5. デモ動画を YouTube か Vimeo に公開して URL を提出フォームへ
-6. 任意: `#Shipaton #BuildInPublic` 投稿で別賞も狙える
-
-## 4. 審査基準（Next Gen）
-
-- アイデアが明確・有用・面白い・独創的か
-- 動画とリポジトリから中核機能が分かるか（meaningful progress toward a working app）
-- RevenueCat を購読/購入/広告などに思慮深く使っているか
-- 技術選択・プロダクト思考・作り込みの丁寧さ
-
-→ 「AI が先に答えを教えない」「音声と文字が対等」「自由記述を採点しない設計判断」は
-副文で前面に出す（`docs/shipaton-submission-copy.md`）。
+アイデア、実装、RevenueCat、技術・プロダクト判断の4基準を、
+[調査と編集判断](nextgen-judging-2026.md)にまとめた。
+動画の冒頭に「生徒が教える」独自性を置き、実演と設計理由をつなげている。
+勝敗や学習効果は保証しない。
