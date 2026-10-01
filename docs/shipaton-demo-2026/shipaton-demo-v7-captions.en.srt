@@ -19,21 +19,21 @@ It listens for the key ideas in YOUR explanation
 Then it asks a follow-up — the questions real students fumble
 
 6
-00:00:51,700 --> 00:00:62,300
+00:00:51,700 --> 00:01:02,300
 A wrong pick costs a heart — and earns a hint, never the answer
 
 7
-00:00:62,700 --> 00:00:72,300
+00:01:02,700 --> 00:01:12,300
 The record — misconceptions cataloged from real classroom surveys
 
 8
-00:00:72,700 --> 00:00:81,300
+00:01:12,700 --> 00:01:21,300
 A shareable report for parents — the core learning loop stays on-device
 
 9
-00:00:81,700 --> 00:00:95,500
+00:01:21,700 --> 00:01:35,500
 Dekisugi-kun Plus — supporter tier via RevenueCat
 
 10
-00:00:95,900 --> 00:00:108,100
+00:01:35,900 --> 00:01:48,100
 A real purchase, end to end — packages, Test Store checkout, entitlement
