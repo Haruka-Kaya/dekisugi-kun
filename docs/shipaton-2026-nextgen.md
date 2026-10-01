@@ -18,7 +18,7 @@
 | 公開済みでない新規アプリ | ✅ | ストア未公開 |
 | リポジトリ public + OSS ライセンス（About 検出） | 🟡 | `LICENSE`（MIT）追加済み。**GitHub で private → public への変更はユーザー操作** |
 | ソース・素材・実行手順がリポジトリに全てある | ✅ | README に英語 quick start 追加済み（同梱 catalog でオフライン動作） |
-| <2 分のデモ動画（実機動作、YouTube/Vimeo 公開） | 🟡 | `docs/shipaton-demo-2026/shipaton-demo-v7.mp4`（114秒・英語ビルド実機画面・teach-backループ＋coverageゲート＋カルテ＋保護者レポート＋RevenueCat Test Store の実購入→entitlement確認→aurora付与まで収録・英語字幕焼き込み・音声なし）。旧版は `docs/attic/` へ退避 — ユーザー操作: YouTube/Vimeo へ公開 |
+| <2 分のデモ動画（YouTube/Vimeo 公開） | 🟡 動画完成・公開未確認 | `docs/shipaton-demo-2026/shipaton-demo-v8.mp4`（84.17秒・1920×1080横長・英語ナレーション／字幕。現行Field NotebookをAndroidエミュレーターで撮影し、予想→教材→説明→問い返し／ヒント→記録→RevenueCat Test Store購入と特典を収録）。物理端末QA・外部公開・提出とは区別する |
 | テキスト説明（英語） | ✅ | `docs/shipaton-submission-copy.md` 更新済み |
 | 1024×1024 アイコン | ✅ | `docs/store/icon-1024.png` |
 | ≥1枚のスクリーンショット 1179×2556・端末フレームなし | ✅ | `docs/store-shots-2026/devpost/shot-1179x2556.png` |

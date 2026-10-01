@@ -1,0 +1,106 @@
+{
+  "title": "Dekisugi-kun \u2014 Learn by teaching",
+  "source_commit": "11d9ae3cc1e9e6597a6206a4ab07b80f6ac49b8e",
+  "capture": "Current native Android app on a dedicated emulator. Edited for pace; no fabricated UI or seeded progress.",
+  "scenes": [
+    {
+      "id": "01-hook",
+      "chapter": "THE QUESTION",
+      "title": "Same height.\nDifferent weights.",
+      "body": "Which ball lands first\nin a vacuum?",
+      "tag": "Think before the answer",
+      "narration": [
+        "Two balls. Same height. Different weights. Which lands first in a vacuum?"
+      ]
+    },
+    {
+      "id": "02-product",
+      "chapter": "LEARN BY TEACHING",
+      "title": "Meet your\nstudy companion.",
+      "body": "Read the evidence.\nExplain it in your own words.\nHelp Dekisugi-kun rethink.",
+      "tag": "Native Flutter app",
+      "narration": [
+        "Meet Dekisugi-kun, a science companion you teach.",
+        "You read the evidence, then explain the idea in your own words."
+      ]
+    },
+    {
+      "id": "03-predict",
+      "chapter": "01 / PREDICT",
+      "title": "Start with\nyour own idea.",
+      "body": "Make a prediction\nbefore seeing the material.",
+      "tag": "A concrete science question",
+      "narration": [
+        "First, make a prediction.",
+        "Here, I think the heavier ball will fall faster. Let's check the evidence."
+      ]
+    },
+    {
+      "id": "04-source",
+      "chapter": "02 / READ",
+      "title": "Look for why.\nLook for when.",
+      "body": "The explanation matters.\nSo do its conditions.",
+      "tag": "One focused lesson",
+      "narration": [
+        "The lesson explains both the principle and the conditions under which it holds.",
+        "The next step is to teach it back."
+      ]
+    },
+    {
+      "id": "05-explain",
+      "chapter": "03 / EXPLAIN",
+      "title": "Close the material.\nTeach it back.",
+      "body": "The source is hidden.\nExplain by text or voice.",
+      "tag": "Your own words",
+      "narration": [
+        "Now the material disappears.",
+        "I explain that the balls fall together when air resistance is negligible.",
+        "Typing is a full learning route, alongside voice."
+      ]
+    },
+    {
+      "id": "06-followup",
+      "chapter": "04 / REVISIT",
+      "title": "An explanation\nstarts a conversation.",
+      "body": "Review the key terms.\nAnswer a follow-up.\nTry a clearer explanation.",
+      "tag": "Fixed, on-device follow-up",
+      "narration": [
+        "The app shows key-term coverage, then asks a fixed follow-up question.",
+        "A wrong choice brings a hint and another try, so I can rethink the missing condition."
+      ]
+    },
+    {
+      "id": "07-record",
+      "chapter": "05 / REFLECT",
+      "title": "Keep track of\nwhat needs another look.",
+      "body": "Keep a record.\nRevisit uncertain ideas.\nExplain them again.",
+      "tag": "A record to return to",
+      "narration": [
+        "The record shows which of the companion's misconceptions were corrected, and which are still unsure.",
+        "The goal is a clearer explanation."
+      ]
+    },
+    {
+      "id": "08-plus",
+      "chapter": "OPTIONAL / PLUS",
+      "title": "Support the app.\nKeep learning free.",
+      "body": "Optional companion styling\nand parent reports.\nCore lessons stay available.",
+      "tag": "RevenueCat Test Store \u00b7 No real charge",
+      "narration": [
+        "Optional Plus adds companion styling and parent reports.",
+        "This is a RevenueCat Test Store purchase, with no real charge. The core lessons stay available."
+      ]
+    },
+    {
+      "id": "09-close",
+      "chapter": "DEKISUGI-KUN",
+      "title": "Read it.\nExplain it.\nRethink it.",
+      "body": "Learn by teaching.",
+      "tag": "On-device learning demo \u00b7 External generative AI disabled",
+      "narration": [
+        "Read it. Explain it. Rethink it.",
+        "Dekisugi-kun. Learn by teaching."
+      ]
+    }
+  ]
+}

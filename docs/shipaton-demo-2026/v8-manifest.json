@@ -1,0 +1,159 @@
+{
+  "source_commit": "11d9ae3cc1e9e6597a6206a4ab07b80f6ac49b8e",
+  "duration": 84.167,
+  "capture": "Current native Android app on a dedicated emulator. Edited for pace; no fabricated UI or seeded progress.",
+  "narrator": "Local Kokoro af_sarah; tempo 0.92",
+  "sources": {
+    "aurora-profile-final.png": "40ae000b6d911876199ac39c35f7a5e9c88469cdf4deff3d944040336cd79ca2",
+    "coverage.png": "acbb3cad0d5be8b7331338dbcbd7f1afcc10378a1eda147752b40f81f5e503a0",
+    "explain-empty.png": "457f141e8a5fc61dbe9c60db9b820a007b6845334fcdae8649c4c6a77918a73c",
+    "explanation.png": "4af839c377e3920e206ef703b3131bb3f727bf2dfe5344475f52f0df3a8d3ec4",
+    "hint.png": "e0c327658df74313d2f14ed0a1a8f4602646a3b165530fc9d7b0812bbb31f8a1",
+    "lesson-detail.png": "dc0094fc858e8a878a84fd55f001d8688a2a0250a6c133534c6e038866ead865",
+    "lesson.png": "1f3e00e1f8f430ca9e0e98447e7aba1b28db424a88dc56f27f722fbee883e5a4",
+    "parent-report.png": "0e4d8473d6011adc6dd0babe2889d783f8c0db6495f0d72c4ca840b9ad2e8966",
+    "path.mp4": "7be94c6e0d03361ee95d9b91b2b26d6ee6c514e4c7bfabdfa48f23e5749a5986",
+    "plus.png": "0f3a45e3beb0636381ff564e8a38740f59707618453a110b91b69bad3c30b793",
+    "prediction-check.png": "ce2847b08f44f35ee7f25cf1867d94b18f993dc903afeaa5967b44ab92ae3d3b",
+    "purchase.mp4": "f84aaf4dff69847c0b45f5009a89f446726c5c3a4e75ac70693c3b4ef0e0e538",
+    "record-detail.png": "1da075e875d509d3c51b4736f0f5d4cd2dddee07d30c2cc84401fa088e9856a6",
+    "record.mp4": "c9c1a1f32085fa7cf315fec103eb8a04c71331829e3263a247222842bf0e0a22",
+    "source.mp4": "1bfce31f6c8f2cd18b94e2a4b9f6e2900ee1d65f6178e017f0c8c7952d266e6b",
+    "source.png": "4cdd6bb33c5168eac094e7c7d0b38b9823eaf5a5bd3b9afb893d817e3c1f2959",
+    "wrong-pick.mp4": "18460ef00bfc6d26b0fabf9ae07ea23538b0eb1662a5369840276260f7383191"
+  },
+  "scenes": [
+    {
+      "scene": "01-hook",
+      "start": 0.0,
+      "duration": 7,
+      "shots": []
+    },
+    {
+      "scene": "02-product",
+      "start": 7.0,
+      "duration": 8.866666666666667,
+      "shots": [
+        {
+          "file": "path.mp4",
+          "start": 0,
+          "duration": 2.5
+        },
+        {
+          "file": "lesson-detail.png",
+          "duration": 6
+        }
+      ]
+    },
+    {
+      "scene": "03-predict",
+      "start": 15.867,
+      "duration": 7.766666666666667,
+      "shots": [
+        {
+          "file": "lesson.png",
+          "duration": 2
+        },
+        {
+          "file": "prediction-check.png",
+          "duration": 6
+        }
+      ]
+    },
+    {
+      "scene": "04-source",
+      "start": 23.633,
+      "duration": 8.6,
+      "shots": [
+        {
+          "file": "source.mp4",
+          "start": 2,
+          "duration": 3
+        },
+        {
+          "file": "source.mp4",
+          "start": 24,
+          "duration": 6
+        }
+      ]
+    },
+    {
+      "scene": "05-explain",
+      "start": 32.233,
+      "duration": 11.7,
+      "shots": [
+        {
+          "file": "explain-empty.png",
+          "duration": 2
+        },
+        {
+          "file": "explanation.png",
+          "duration": 10
+        }
+      ]
+    },
+    {
+      "scene": "06-followup",
+      "start": 43.933,
+      "duration": 11.666666666666666,
+      "shots": [
+        {
+          "file": "coverage.png",
+          "duration": 3
+        },
+        {
+          "file": "wrong-pick.mp4",
+          "start": 0,
+          "duration": 5
+        },
+        {
+          "file": "hint.png",
+          "duration": 4
+        }
+      ]
+    },
+    {
+      "scene": "07-record",
+      "start": 55.6,
+      "duration": 9.6,
+      "shots": [
+        {
+          "file": "record.mp4",
+          "start": 0,
+          "duration": 9
+        }
+      ]
+    },
+    {
+      "scene": "08-plus",
+      "start": 65.2,
+      "duration": 11.966666666666667,
+      "shots": [
+        {
+          "file": "plus.png",
+          "duration": 2
+        },
+        {
+          "file": "purchase.mp4",
+          "start": 10,
+          "duration": 4
+        },
+        {
+          "file": "aurora-profile-final.png",
+          "duration": 2
+        },
+        {
+          "file": "parent-report.png",
+          "duration": 4
+        }
+      ]
+    },
+    {
+      "scene": "09-close",
+      "start": 77.167,
+      "duration": 7,
+      "shots": []
+    }
+  ],
+  "sha256": "853abc776e2d34b917a38135210cb4be5ec9127ac45c885f6eb90b829759ba48"
+}

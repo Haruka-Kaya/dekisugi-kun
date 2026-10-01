@@ -57,8 +57,9 @@ nothing a student needs to learn is behind payment.
 
 ## What was built during Shipaton
 
-- A six-tab game UI with a serpentine learning path: learn / stories / practice /
-  notation / compete / profile.
+- A native Field Notebook interface with six areas: exploration, science cases,
+  experiments, diagrams, shared observations, and a personal lab. The learning
+  path uses an experiment rail and horizontal observation entries.
 - The signature teach-back loop: read → hide → explain by voice or text →
   replay/re-read → fixed catalog checkpoint → hint-and-retry on miss.
 - 12 curriculum units (35 concepts) aligned to Japan's national science
@@ -114,35 +115,31 @@ and the entire learning loop is free.
 
 ## Demo video notes
 
-The submitted video (`docs/shipaton-demo-2026/shipaton-demo-v7.mp4`, ~114s) is
-filmed on the English build of the app on an Android emulator in portrait:
-a short hook card, then the learning path, a lesson node (the material hides
-when it is time to explain — C2), a typed English teach-back explanation, the
-on-device key-term coverage panel, the companion's fixed follow-up question,
-a wrong pick costing a heart and earning a hint instead of the answer, the
-misconception record screen ("Corrected / Still unsure"), the shareable
-parent report, and the Plus screen. English captions overlay the English UI;
-there is no audio track. The whole loop shown is on-device — no LLM, no
-cloud, nothing a student writes leaves the phone.
+The current review and introduction candidate is
+`docs/shipaton-demo-2026/shipaton-demo-v8.mp4`: approximately 84 seconds,
+1920×1080 landscape, with English narration and burned-in English captions.
+It uses fresh native Android emulator captures of the current Field Notebook
+interface. It has not been published or submitted by this change.
 
-The on-device coverage check is a vocabulary floor, not a grader: it verifies
-that the key terms from the expected explanation appear in the student's own
-words (stem-matched, normalization applied) before the follow-up question
-proceeds. Correctness is still decided by the fixed 3-choice correction, so a
-missed term asks for more detail instead of wrongly blocking a right answer.
+The central sequence follows one science question: predict, read the evidence,
+hide the material (C2), explain in your own words, reread the explanation, review
+on-device key-term coverage, answer a fixed follow-up, and rethink a condition
+after a wrong choice brings a hint. Text input is shown as a full learning route.
+The misconception record preserves what still needs another look: an observed
+need is not automatically marked corrected by a rewritten explanation. The
+corresponding repair experiment must resolve it.
 
-The closing segment is a real purchase: the Plus screen lists live Test Store
-packages (Monthly $9.99 / Yearly $79.98 / Lifetime $99.99), the native Test
-Store checkout dialog completes, the `plus` entitlement confirms, and the
-Aurora Mantle + parent report unlock. The project's Test Store public key is in
-docs/monetization-setup.md — judges can replay the same loop with the
-`--dart-define` command in "Testing instructions". The one honest caveat shown
-on screen is the quota-sync retry banner: a Test Store purchase cannot be
-verified against the real backend, and the app says so instead of faking it.
+The final section shows optional Plus: actual store-returned packages, the
+RevenueCat native Test Store purchase confirmation, the equipped Aurora Cape,
+and the parent report. The test purchase was completed with no real charge.
+The app's server conversation-allowance sync was not confirmed and its retry
+notice remains honest; the video does not claim a production purchase, live AI,
+or school deployment. The English narration is editorial audio generated
+locally, separate from the app's companion responses.
 
-Earlier cuts (Japanese-UI v4 with the airplane-mode beat, v3, v2, and the
-web-build v1, and the pre-purchase v6) are archived under `docs/attic/`; the submitted video is the
-English-build v7 capture.
+See `docs/shipaton-demo-2026/README.md` for capture evidence, limitations,
+validation, and source tools. v7 remains available for comparison; older cuts
+are archived under `docs/attic/`.
 
 ## Testing instructions (for judges)
 

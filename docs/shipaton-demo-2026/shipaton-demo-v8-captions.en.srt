@@ -1,0 +1,84 @@
+1
+00:00:00,435 --> 00:00:05,049
+Two balls. Same height. Different weights. Which lands first in a vacuum?
+
+2
+00:00:07,435 --> 00:00:10,751
+Meet Dekisugi-kun, a science companion you teach.
+
+3
+00:00:11,012 --> 00:00:14,699
+You read the evidence, then explain the idea in your own words.
+
+4
+00:00:16,301 --> 00:00:17,925
+First, make a prediction.
+
+5
+00:00:18,186 --> 00:00:22,475
+Here, I think the heavier ball will fall faster. Let's check the evidence.
+
+6
+00:00:24,068 --> 00:00:28,752
+The lesson explains both the principle and the conditions under which it holds.
+
+7
+00:00:29,013 --> 00:00:31,054
+The next step is to teach it back.
+
+8
+00:00:32,668 --> 00:00:34,523
+Now the material disappears.
+
+9
+00:00:34,784 --> 00:00:39,352
+I explain that the balls fall together when air resistance is negligible.
+
+10
+00:00:39,613 --> 00:00:42,767
+Typing is a full learning route, alongside voice.
+
+11
+00:00:44,368 --> 00:00:48,751
+The app shows key-term coverage, then asks a fixed follow-up question.
+
+12
+00:00:49,012 --> 00:00:51,595
+A wrong choice brings a hint and another
+
+13
+00:00:51,595 --> 00:00:54,438
+try, so I can rethink the missing condition.
+
+14
+00:00:56,035 --> 00:00:59,222
+The record shows which of the companion's misconceptions
+
+15
+00:00:59,222 --> 00:01:01,670
+were corrected, and which are still unsure.
+
+16
+00:01:01,930 --> 00:01:04,017
+The goal is a clearer explanation.
+
+17
+00:01:05,635 --> 00:01:09,461
+Optional Plus adds companion styling and parent reports.
+
+18
+00:01:09,722 --> 00:01:12,797
+This is a RevenueCat Test Store purchase, with
+
+19
+00:01:12,797 --> 00:01:16,006
+no real charge. The core lessons stay available.
+
+20
+00:01:17,601 --> 00:01:19,619
+Read it. Explain it. Rethink it.
+
+21
+00:01:19,880 --> 00:01:22,245
+Dekisugi-kun. Learn by teaching.
+
