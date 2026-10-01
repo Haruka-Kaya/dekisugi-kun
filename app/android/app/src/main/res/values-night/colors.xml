@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="launch_background">#0F1219</color>
+    <!-- Flutter GamePalette.dark.canvas と同値。 -->
+    <color name="ic_launcher_background">#121719</color>
+    <color name="launch_background">#121719</color>
 </resources>

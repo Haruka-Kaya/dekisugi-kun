@@ -157,9 +157,16 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
   /// lureと問いは**必ずカタログの逐語** —— 教理は生成に委ねない。
   String get _spokenQuestion {
     final ack = _generatedAck;
-    final prefix =
-        ack != null ? '$ack ' : t('教えてくれてありがとう。デキすぎ君から一問。', 'Thanks for teaching me. Here is a question from Dekisugi-kun.');
-    return t('$prefix${_checkpoint.lure} この考えを科学的に直しているのはどれ？', '$prefix${_checkpoint.lure} Which one scientifically corrects this idea?');
+    final prefix = ack != null
+        ? '$ack '
+        : t(
+            '教えてくれてありがとう。デキすぎ君から一問。',
+            'Thanks for teaching me. Here is a question from Dekisugi-kun.',
+          );
+    return t(
+      '$prefix${_checkpoint.lure} この考えを科学的に直しているのはどれ？',
+      '$prefix${_checkpoint.lure} Which one scientifically corrects this idea?',
+    );
   }
 
   LocalCheckpointOption? get _wrongOption =>
@@ -198,9 +205,10 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
         _isRevision
             ? GameCharacterReaction.encourage
             : GameCharacterReaction.listening,
-      _ExplainStep.echo => _echoPhase == _EchoPhase.listening
-          ? GameCharacterReaction.listening
-          : GameCharacterReaction.thinking,
+      _ExplainStep.echo =>
+        _echoPhase == _EchoPhase.listening
+            ? GameCharacterReaction.listening
+            : GameCharacterReaction.thinking,
       _ExplainStep.followUp => GameCharacterReaction.thinking,
       _ExplainStep.compare => GameCharacterReaction.encourage,
       _ExplainStep.complete => GameCharacterReaction.celebrate,
@@ -439,7 +447,7 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
       case OnDeviceSpeechStatus.recognized:
         _applyEchoCoverage(_assess(result.candidates.join(' ')));
       case OnDeviceSpeechStatus.noSpeech ||
-            OnDeviceSpeechStatus.unrelatedSpeech:
+          OnDeviceSpeechStatus.unrelatedSpeech:
         setState(() {
           _teachMisses++;
           _echoPhase = _EchoPhase.idle;
@@ -552,8 +560,8 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
   void _requestCompanionAck() {
     final explanation = _submittedText ?? _echoText.text.trim();
     if (explanation.isEmpty) return;
-    final heardTerms = _echoCoverage?.matchedTerms ??
-        _assess(explanation).matchedTerms;
+    final heardTerms =
+        _echoCoverage?.matchedTerms ?? _assess(explanation).matchedTerms;
     final future = _renderCompanionAck(explanation, heardTerms);
     _pendingAck = future;
     future.then((ack) {
@@ -816,9 +824,7 @@ class _ScienceSpeakListenScreenState extends State<ScienceSpeakListenScreen>
       canReview: _canReviewText,
       reviewed: _textReviewed,
       allowRouteSwitch: !_isRevision,
-      coverage: _textReviewed || _coverageBlocked
-          ? _assess(_text.text)
-          : null,
+      coverage: _textReviewed || _coverageBlocked ? _assess(_text.text) : null,
       coverageBlocked: _coverageBlocked,
       canBypass: _teachMisses >= 2,
       onReview: _reviewText,
@@ -920,7 +926,8 @@ class _Header extends StatelessWidget {
     final colors = context.gamePalette;
     final stepLabel = switch (step) {
       _ExplainStep.choose => t('教え方を選ぶ', 'Choose how to teach'),
-      _ExplainStep.voice || _ExplainStep.text => t('教材を隠して教える', 'Teach with the material hidden'),
+      _ExplainStep.voice ||
+      _ExplainStep.text => t('教材を隠して教える', 'Teach with the material hidden'),
       _ExplainStep.echo => t('聞き取れたか確かめる', 'Check it was heard'),
       _ExplainStep.followUp => t('デキすぎ君の問い返し', 'Dekisugi-kun\'s follow-up'),
       _ExplainStep.compare => t('教材と振り返る', 'Review with the material'),
@@ -928,9 +935,11 @@ class _Header extends StatelessWidget {
     };
     return Semantics(
       container: true,
-      label:
-          t('ティーチバック。$conceptLabel。$stageLabel。$stepLabel。'
-          'デキすぎ君。${reaction.semanticsLabel}', 'Teach-back. $conceptLabel. $stageLabel. $stepLabel. Dekisugi-kun. ${reaction.semanticsLabel}'),
+      label: t(
+        'ティーチバック。$conceptLabel。$stageLabel。$stepLabel。'
+            'デキすぎ君。${reaction.semanticsLabel}',
+        'Teach-back. $conceptLabel. $stageLabel. $stepLabel. Dekisugi-kun. ${reaction.semanticsLabel}',
+      ),
       child: ExcludeSemantics(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -1010,7 +1019,10 @@ class _ChooseRoute extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          t('教材の答えは隠れたままです。説明のあと、デキすぎ君から固定の質問が1つ返ってきます。自由説明は採点も送信もしませんが、大事な言葉が届いたかだけ端末内で確かめます。', 'The material\'s answer stays hidden. After you explain, Dekisugi-kun will ask one fixed question. Your free explanation is not graded or sent — we only check on this device whether the key words came through.'),
+          t(
+            '教材の答えは隠れたままです。説明のあと、デキすぎ君から固定の質問が1つ返ってきます。自由説明は採点も送信もしませんが、大事な言葉が届いたかだけ端末内で確かめます。',
+            'The material\'s answer stays hidden. After you explain, Dekisugi-kun will ask one fixed question. Your free explanation is not graded or sent — we only check on this device whether the key words came through.',
+          ),
           style: theme.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
         ),
         const SizedBox(height: 18),
@@ -1020,7 +1032,10 @@ class _ChooseRoute extends StatelessWidget {
           buttonKey: const ValueKey('science-explain-choose-voice'),
           icon: Icons.mic_none,
           title: t('声で教える', 'Teach by voice'),
-          body: t('最大60秒。録音を最後まで聞いてから、問い返しへ進む', 'Up to 60 seconds. Listen to your whole recording, then go to the follow-up'),
+          body: t(
+            '最大60秒。録音を最後まで聞いてから、問い返しへ進む',
+            'Up to 60 seconds. Listen to your whole recording, then go to the follow-up',
+          ),
           onPressed: onVoice,
         ),
         const SizedBox(height: 10),
@@ -1028,7 +1043,10 @@ class _ChooseRoute extends StatelessWidget {
           buttonKey: const ValueKey('science-explain-choose-text'),
           icon: Icons.keyboard_outlined,
           title: t('文字で教える', 'Teach by text'),
-          body: t('同じ問いへの説明を書き、読み返してから進む', 'Write your explanation for the same question, reread it, then continue'),
+          body: t(
+            '同じ問いへの説明を書き、読み返してから進む',
+            'Write your explanation for the same question, reread it, then continue',
+          ),
           onPressed: onText,
         ),
       ],
@@ -1109,16 +1127,31 @@ class _VoiceAnswer extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 recording
-                    ? t('録音中  ${_durationLabel(snapshot.duration)} / 1:00', 'Recording  ${_durationLabel(snapshot.duration)} / 1:00')
+                    ? t(
+                        '録音中  ${_durationLabel(snapshot.duration)} / 1:00',
+                        'Recording  ${_durationLabel(snapshot.duration)} / 1:00',
+                      )
                     : playing
                     ? t('自分の説明を最後まで再生中', 'Playing your whole explanation')
                     : snapshot.hasRecording
                     ? snapshot.playbackCompleted
-                          ? t('${_durationLabel(snapshot.duration)} の説明を最後まで聞きました', 'You listened to your whole ${_durationLabel(snapshot.duration)} explanation')
-                          : t('${_durationLabel(snapshot.duration)} の説明をRAMに保持中', 'Holding your ${_durationLabel(snapshot.duration)} explanation in memory')
+                          ? t(
+                              '${_durationLabel(snapshot.duration)} の説明を最後まで聞きました',
+                              'You listened to your whole ${_durationLabel(snapshot.duration)} explanation',
+                            )
+                          : t(
+                              '${_durationLabel(snapshot.duration)} の説明をRAMに保持中',
+                              'Holding your ${_durationLabel(snapshot.duration)} explanation in memory',
+                            )
                     : isRevision
-                    ? t('ヒントを使い、同じ声の方法で言い直します。', 'Use the hint and say it again by voice.')
-                    : t('最大60秒。録音後に必ず自分で聞き返します。', 'Up to 60 seconds. You always listen back after recording.'),
+                    ? t(
+                        'ヒントを使い、同じ声の方法で言い直します。',
+                        'Use the hint and say it again by voice.',
+                      )
+                    : t(
+                        '最大60秒。録音後に必ず自分で聞き返します。',
+                        'Up to 60 seconds. You always listen back after recording.',
+                      ),
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium
                     ?.copyWith(color: colors.onPathReview)
@@ -1136,7 +1169,9 @@ class _VoiceAnswer extends StatelessWidget {
               else if (!snapshot.hasRecording)
                 _Action(
                   buttonKey: const ValueKey('science-explain-start-recording'),
-                  label: isRevision ? t('言い直しを録音する', 'Record your retry') : t('録音を始める', 'Start recording'),
+                  label: isRevision
+                      ? t('言い直しを録音する', 'Record your retry')
+                      : t('録音を始める', 'Start recording'),
                   icon: Icons.mic,
                   onPressed: busy ? null : onStart,
                   light: true,
@@ -1174,10 +1209,19 @@ class _VoiceAnswer extends StatelessWidget {
           const SizedBox(height: 12),
           _Notice(
             text: isRevision
-                ? t('マイクを使えませんでした。今回だけ文字へ切り替え、同じヒントから言い直せます。', 'Couldn\'t use the microphone. Just this time, switch to text and retry from the same hint.')
+                ? t(
+                    'マイクを使えませんでした。今回だけ文字へ切り替え、同じヒントから言い直せます。',
+                    'Couldn\'t use the microphone. Just this time, switch to text and retry from the same hint.',
+                  )
                 : denied
-                ? t('マイクを使えませんでした。最初の説明なら、権限を変えず文字で同じ課題を進められます。', 'Couldn\'t use the microphone. For your first explanation, you can do the same task in text without changing permissions.')
-                : t('録音を続けられませんでした。音声は保存されていません。', 'Couldn\'t keep recording. No audio was saved.'),
+                ? t(
+                    'マイクを使えませんでした。最初の説明なら、権限を変えず文字で同じ課題を進められます。',
+                    'Couldn\'t use the microphone. For your first explanation, you can do the same task in text without changing permissions.',
+                  )
+                : t(
+                    '録音を続けられませんでした。音声は保存されていません。',
+                    'Couldn\'t keep recording. No audio was saved.',
+                  ),
           ),
         ],
         const SizedBox(height: 14),
@@ -1185,7 +1229,10 @@ class _VoiceAnswer extends StatelessWidget {
           buttonKey: const ValueKey('science-explain-submit-voice'),
           label: canAdvance
               ? isRevision
-                    ? t('言い直しを終えて、教材と比べる', 'Finish your retry and compare with the material')
+                    ? t(
+                        '言い直しを終えて、教材と比べる',
+                        'Finish your retry and compare with the material',
+                      )
                     : t('デキすぎ君の質問へ', 'Go to Dekisugi-kun\'s question')
               : t('録音を最後まで聞く', 'Listen to the whole recording'),
           icon: isRevision ? Icons.compare_arrows : Icons.question_answer,
@@ -1197,7 +1244,11 @@ class _VoiceAnswer extends StatelessWidget {
             key: const ValueKey('science-explain-use-text'),
             onPressed: onUseText,
             icon: const Icon(Icons.keyboard_outlined),
-            label: Text(routeSwitchIsFallback ? t('文字で言い直す', 'Retry in text') : t('文字で教える', 'Teach by text')),
+            label: Text(
+              routeSwitchIsFallback
+                  ? t('文字で言い直す', 'Retry in text')
+                  : t('文字で教える', 'Teach by text'),
+            ),
             style: TextButton.styleFrom(
               minimumSize: const Size(double.infinity, 48),
             ),
@@ -1259,7 +1310,9 @@ class _TextAnswer extends StatelessWidget {
         _Prompt(prompt: prompt),
         const SizedBox(height: 16),
         Text(
-          isRevision ? t('ヒントを使って、説明を言い直す', 'Use the hint to explain again') : t('この問いを、自分の言葉で教える', 'Teach this question in your own words'),
+          isRevision
+              ? t('ヒントを使って、説明を言い直す', 'Use the hint to explain again')
+              : t('この問いを、自分の言葉で教える', 'Teach this question in your own words'),
           style: theme.textTheme.titleSmall?.jaWeight(FontWeight.w700),
         ),
         const SizedBox(height: 8),
@@ -1270,7 +1323,10 @@ class _TextAnswer extends StatelessWidget {
           maxLines: 10,
           maxLength: 4000,
           decoration: InputDecoration(
-            hintText: t('問いへの答えと根拠を、自分の言葉で説明する', 'Explain your answer and reasons in your own words'),
+            hintText: t(
+              '問いへの答えと根拠を、自分の言葉で説明する',
+              'Explain your answer and reasons in your own words',
+            ),
             filled: true,
             fillColor: colors.surfaceRaised,
           ),
@@ -1287,7 +1343,9 @@ class _TextAnswer extends StatelessWidget {
         const SizedBox(height: 10),
         _Action(
           buttonKey: const ValueKey('science-explain-review-text'),
-          label: reviewed ? t('読み返し確認済み', 'Reread') : t('自分の説明を読み返した', 'I reread my explanation'),
+          label: reviewed
+              ? t('読み返し確認済み', 'Reread')
+              : t('自分の説明を読み返した', 'I reread my explanation'),
           icon: reviewed
               ? Icons.check_circle_outline
               : Icons.chrome_reader_mode,
@@ -1298,7 +1356,10 @@ class _TextAnswer extends StatelessWidget {
           buttonKey: const ValueKey('science-explain-submit-text'),
           label: reviewed
               ? isRevision
-                    ? t('言い直しを終えて、教材と比べる', 'Finish your retry and compare with the material')
+                    ? t(
+                        '言い直しを終えて、教材と比べる',
+                        'Finish your retry and compare with the material',
+                      )
                     : t('デキすぎ君の質問へ', 'Go to Dekisugi-kun\'s question')
               : t('先に自分の説明を読み返す', 'Reread your explanation first'),
           icon: isRevision ? Icons.compare_arrows : Icons.question_answer,
@@ -1361,8 +1422,14 @@ class _FollowUp extends StatelessWidget {
       key: const ValueKey('science-explain-follow-up'),
       container: true,
       label: lockedWrong
-          ? t('デキすぎ君の問い返し。選んだ考えをヒントから言い直します。', 'Dekisugi-kun\'s follow-up. Retry your chosen idea from the hint.')
-          : t('デキすぎ君の問い返し。$spokenQuestion。固定の3択から選びます。', 'Dekisugi-kun\'s follow-up. $spokenQuestion. Choose from 3 fixed options.'),
+          ? t(
+              'デキすぎ君の問い返し。選んだ考えをヒントから言い直します。',
+              'Dekisugi-kun\'s follow-up. Retry your chosen idea from the hint.',
+            )
+          : t(
+              'デキすぎ君の問い返し。$spokenQuestion。固定の3択から選びます。',
+              'Dekisugi-kun\'s follow-up. $spokenQuestion. Choose from 3 fixed options.',
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1383,7 +1450,9 @@ class _FollowUp extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  speaking ? t('デキすぎ君が質問しています', 'Dekisugi-kun is asking') : t('デキすぎ君からの問い返し', 'Follow-up from Dekisugi-kun'),
+                  speaking
+                      ? t('デキすぎ君が質問しています', 'Dekisugi-kun is asking')
+                      : t('デキすぎ君からの問い返し', 'Follow-up from Dekisugi-kun'),
                   textAlign: TextAlign.center,
                   style: theme.textTheme.labelLarge
                       ?.copyWith(color: colors.pathReview)
@@ -1399,7 +1468,10 @@ class _FollowUp extends StatelessWidget {
                 if (aiComposedAck) ...[
                   const SizedBox(height: 6),
                   Text(
-                    t('返事の前置きは、生成AIがあなたの説明を読んで書きました。', 'The intro to this reply was written by generative AI after reading your explanation.'),
+                    t(
+                      '返事の前置きは、生成AIがあなたの説明を読んで書きました。',
+                      'The intro to this reply was written by generative AI after reading your explanation.',
+                    ),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colors.inkMuted,
@@ -1411,7 +1483,11 @@ class _FollowUp extends StatelessWidget {
                   key: const ValueKey('science-explain-read-question'),
                   onPressed: speaking ? onStopQuestion : onReadQuestion,
                   icon: Icon(speaking ? Icons.stop : Icons.record_voice_over),
-                  label: Text(speaking ? t('読み上げを止める', 'Stop reading aloud') : t('質問をもう一度聞く', 'Hear the question again')),
+                  label: Text(
+                    speaking
+                        ? t('読み上げを止める', 'Stop reading aloud')
+                        : t('質問をもう一度聞く', 'Hear the question again'),
+                  ),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 48),
                   ),
@@ -1421,7 +1497,12 @@ class _FollowUp extends StatelessWidget {
           ),
           if (narrationUnavailable) ...[
             const SizedBox(height: 12),
-            _Notice(text: t('端末の読み上げを使えません。画面の質問を読んで、そのまま続けられます。', 'Text-to-speech isn\'t available on this device. Read the question on screen and keep going.')),
+            _Notice(
+              text: t(
+                '端末の読み上げを使えません。画面の質問を読んで、そのまま続けられます。',
+                'Text-to-speech isn\'t available on this device. Read the question on screen and keep going.',
+              ),
+            ),
           ],
           const SizedBox(height: 18),
           if (lockedWrong) ...[
@@ -1432,13 +1513,19 @@ class _FollowUp extends StatelessWidget {
             const SizedBox(height: 14),
             _Action(
               buttonKey: const ValueKey('science-explain-start-revision'),
-              label: t('ヒントを使って、同じ方法で言い直す', 'Use the hint and retry the same way'),
+              label: t(
+                'ヒントを使って、同じ方法で言い直す',
+                'Use the hint and retry the same way',
+              ),
               icon: Icons.replay,
               onPressed: onRevise,
             ),
             const SizedBox(height: 8),
             Text(
-              t('他の選択肢を順番に試す代わりに、自分の説明を直します。正しい答えは比較まで表示しません。', 'Instead of trying the other options one by one, fix your own explanation. The correct answer isn\'t shown until the comparison.'),
+              t(
+                '他の選択肢を順番に試す代わりに、自分の説明を直します。正しい答えは比較まで表示しません。',
+                'Instead of trying the other options one by one, fix your own explanation. The correct answer isn\'t shown until the comparison.',
+              ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.inkMuted,
               ),
@@ -1470,7 +1557,10 @@ class _FollowUp extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              t('自由説明は採点しません。この固定問題だけを端末内で確認し、選択内容は保存しません。', 'Free explanations aren\'t graded. Only this fixed question is checked on this device, and your choice isn\'t saved.'),
+              t(
+                '自由説明は採点しません。この固定問題だけを端末内で確認し、選択内容は保存しません。',
+                'Free explanations aren\'t graded. Only this fixed question is checked on this device, and your choice isn\'t saved.',
+              ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.inkMuted,
               ),
@@ -1573,21 +1663,34 @@ class _SelfComparison extends StatelessWidget {
     return Semantics(
       key: const ValueKey('science-explain-comparison'),
       container: true,
-      label:
-          t('教材との振り返り。現象の結果。$outcome。理由と条件。$reason。'
-          '問い返しの直し方。$checkpointCorrection。$checkpointExplanation。'
-          '回答は保存せず進捗だけ記録します。', 'Review with the material. What happens: $outcome. Reasons and conditions: $reason. How to fix the follow-up: $checkpointCorrection. $checkpointExplanation. Answers are not saved; only progress is recorded.'),
+      label: t(
+        '教材との振り返り。現象の結果。$outcome。理由と条件。$reason。'
+            '問い返しの直し方。$checkpointCorrection。$checkpointExplanation。'
+            '回答は保存せず進捗だけ記録します。',
+        'Review with the material. What happens: $outcome. Reasons and conditions: $reason. How to fix the follow-up: $checkpointCorrection. $checkpointExplanation. Answers are not saved; only progress is recorded.',
+      ),
       child: ExcludeSemantics(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              revisedAfterHint ? t('言い直した説明と、教材を比べる', 'Compare your retried explanation with the material') : t('教えた内容と、教材を比べる', 'Compare what you taught with the material'),
+              revisedAfterHint
+                  ? t(
+                      '言い直した説明と、教材を比べる',
+                      'Compare your retried explanation with the material',
+                    )
+                  : t(
+                      '教えた内容と、教材を比べる',
+                      'Compare what you taught with the material',
+                    ),
               style: theme.textTheme.headlineSmall?.jaWeight(FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
-              t('自由説明そのものの正誤は採点していません。大事な言葉の聞き取りと固定の問い返し、教材との比較で、足りない条件や理由を自分で確かめます。', 'Your free explanation itself isn\'t graded right or wrong. Using the key-word check, the fixed follow-up, and the material, find missing conditions or reasons yourself.'),
+              t(
+                '自由説明そのものの正誤は採点していません。大事な言葉の聞き取りと固定の問い返し、教材との比較で、足りない条件や理由を自分で確かめます。',
+                'Your free explanation itself isn\'t graded right or wrong. Using the key-word check, the fixed follow-up, and the material, find missing conditions or reasons yourself.',
+              ),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colors.inkMuted,
               ),
@@ -1629,7 +1732,9 @@ class _SelfComparison extends StatelessWidget {
                       buttonKey: const ValueKey(
                         'science-explain-replay-comparison',
                       ),
-                      label: voicePlaying ? t('再生中', 'Playing') : t('録音をもう一度聞く', 'Hear the recording again'),
+                      label: voicePlaying
+                          ? t('再生中', 'Playing')
+                          : t('録音をもう一度聞く', 'Hear the recording again'),
                       icon: Icons.play_arrow,
                       onPressed: voicePlaying ? null : onReplay,
                       light: true,
@@ -1647,7 +1752,10 @@ class _SelfComparison extends StatelessWidget {
             const SizedBox(height: 18),
             _Action(
               buttonKey: const ValueKey('science-explain-keep'),
-              label: t('比較を終えて、進捗だけ記録', 'Finish comparing and record progress only'),
+              label: t(
+                '比較を終えて、進捗だけ記録',
+                'Finish comparing and record progress only',
+              ),
               icon: Icons.check,
               onPressed: voicePlaying ? null : onKeep,
             ),
@@ -1746,15 +1854,19 @@ class _Complete extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = context.gamePalette;
     final routeLabel = usedVoice ? t('声', 'voice') : t('文字', 'text');
-    final revisionLabel = revisedAfterHint ? t('ヒントから言い直し、', 'retried from a hint, ') : '';
+    final revisionLabel = revisedAfterHint
+        ? t('ヒントから言い直し、', 'retried from a hint, ')
+        : '';
     return Column(
       children: [
         Semantics(
           key: const ValueKey('science-explain-finished'),
           container: true,
-          label:
-              t('ティーチバック完了。$routeLabelで教え、$revisionLabel固定の問い返しと教材を比べました。'
-              '回答、選択内容、音声は保存せず、進捗だけを記録しました。', 'Teach-back complete. You taught by $routeLabel, ${revisionLabel}and compared the fixed follow-up with the material. Your answers, choices, and audio were not saved; only progress was recorded.'),
+          label: t(
+            'ティーチバック完了。$routeLabelで教え、$revisionLabel固定の問い返しと教材を比べました。'
+                '回答、選択内容、音声は保存せず、進捗だけを記録しました。',
+            'Teach-back complete. You taught by $routeLabel, ${revisionLabel}and compared the fixed follow-up with the material. Your answers, choices, and audio were not saved; only progress was recorded.',
+          ),
           child: ExcludeSemantics(
             child: Container(
               width: double.infinity,
@@ -1781,7 +1893,10 @@ class _Complete extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    t('$routeLabelで教えた内容と選択した答えは保存していません。端末には学習進捗だけを記録しました。', 'What you taught by $routeLabel and the answer you chose weren\'t saved. Only learning progress was recorded on this device.'),
+                    t(
+                      '$routeLabelで教えた内容と選択した答えは保存していません。端末には学習進捗だけを記録しました。',
+                      'What you taught by $routeLabel and the answer you chose weren\'t saved. Only learning progress was recorded on this device.',
+                    ),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colors.ink,
@@ -1797,7 +1912,7 @@ class _Complete extends StatelessWidget {
           key: const ValueKey('science-explain-return-to-path'),
           onPressed: onReturnToPath,
           icon: const Icon(Icons.route_outlined),
-          label: Text(t('学習パスへ戻る', 'Back to the learning path')),
+          label: Text(t('探究ノートへ戻る', 'Back to the learning path')),
           style: FilledButton.styleFrom(
             minimumSize: const Size(double.infinity, 52),
           ),
@@ -1882,7 +1997,10 @@ class _HiddenMaterialNotice extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              t('教材と正しい答えは隠れています。デキすぎ君へ、自分の言葉で教えます。', 'The material and the correct answer are hidden. Teach Dekisugi-kun in your own words.'),
+              t(
+                '教材と正しい答えは隠れています。デキすぎ君へ、自分の言葉で教えます。',
+                'The material and the correct answer are hidden. Teach Dekisugi-kun in your own words.',
+              ),
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: colors.ink)
                   .jaWeight(FontWeight.w700),
@@ -1908,10 +2026,12 @@ class _RevisionHint extends StatelessWidget {
       key: const ValueKey('science-explain-follow-up-hint'),
       liveRegion: true,
       container: true,
-      label:
-          t('もう一度考えるヒント。${attemptedText == null ? '' : '選んだ考え。$attemptedText。'}'
-          '${hint ?? '条件と理由をもう一度つなげます。'}', 'Hint to think again. ${attemptedText == null ? '' : 'Your idea: $attemptedText. '}'
-          '${hint ?? 'Connect the conditions and reasons again.'}'),
+      label: t(
+        'もう一度考えるヒント。${attemptedText == null ? '' : '選んだ考え。$attemptedText。'}'
+            '${hint ?? '条件と理由をもう一度つなげます。'}',
+        'Hint to think again. ${attemptedText == null ? '' : 'Your idea: $attemptedText. '}'
+            '${hint ?? 'Connect the conditions and reasons again.'}',
+      ),
       child: ExcludeSemantics(
         child: Container(
           width: double.infinity,
@@ -1947,7 +2067,11 @@ class _RevisionHint extends StatelessWidget {
                     ],
                     const SizedBox(height: 5),
                     Text(
-                      hint ?? t('条件と理由をもう一度つなげます。', 'Connect the conditions and reasons again.'),
+                      hint ??
+                          t(
+                            '条件と理由をもう一度つなげます。',
+                            'Connect the conditions and reasons again.',
+                          ),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: colors.ink,
                       ),
@@ -2091,9 +2215,7 @@ class _CoveragePanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surfaceRaised,
         borderRadius: BorderRadius.circular(GameTokens.radiusMd),
-        border: Border.all(
-          color: blocked ? colors.pathReview : colors.border,
-        ),
+        border: Border.all(color: blocked ? colors.pathReview : colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2140,7 +2262,10 @@ class _CoveragePanel extends StatelessWidget {
           if (blocked) ...[
             const SizedBox(height: 10),
             Text(
-              t('「もう少し聞かせて！」大事な言葉がまだ足りないみたい。理由や条件も入れて、もう一度説明してあげて。', '"Tell me a bit more!" Some key words seem to be missing. Add reasons and conditions and explain once more.'),
+              t(
+                '「もう少し聞かせて！」大事な言葉がまだ足りないみたい。理由や条件も入れて、もう一度説明してあげて。',
+                '"Tell me a bit more!" Some key words seem to be missing. Add reasons and conditions and explain once more.',
+              ),
               style: theme.textTheme.bodySmall?.copyWith(color: colors.ink),
             ),
             if (canBypass) ...[
@@ -2235,12 +2360,24 @@ class _EchoCheck extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 listening
-                    ? t('いまの説明の大事な言葉を、もう一度だけ声で聞かせてください', 'Please say the key words of your explanation one more time by voice')
+                    ? t(
+                        'いまの説明の大事な言葉を、もう一度だけ声で聞かせてください',
+                        'Please say the key words of your explanation one more time by voice',
+                      )
                     : heard
-                    ? t('$conceptLabel の言葉が届きました', 'The $conceptLabel words came through')
+                    ? t(
+                        '$conceptLabel の言葉が届きました',
+                        'The $conceptLabel words came through',
+                      )
                     : input == _EchoInput.voice
-                    ? t('「$conceptLabel」の大事な言葉が届かなかったみたい。理由や条件を入れて、もう一度言ってみて', 'The key words for "$conceptLabel" didn\'t seem to come through. Add reasons and conditions and try again')
-                    : t('録音から言葉を聞き取れない端末です。代わりに、説明の大事な言葉を書いて確かめます', 'This device can\'t recognize words from recordings. Instead, write the key words of your explanation to check'),
+                    ? t(
+                        '「$conceptLabel」の大事な言葉が届かなかったみたい。理由や条件を入れて、もう一度言ってみて',
+                        'The key words for "$conceptLabel" didn\'t seem to come through. Add reasons and conditions and try again',
+                      )
+                    : t(
+                        '録音から言葉を聞き取れない端末です。代わりに、説明の大事な言葉を書いて確かめます',
+                        'This device can\'t recognize words from recordings. Instead, write the key words of your explanation to check',
+                      ),
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colors.inkMuted,
@@ -2279,7 +2416,10 @@ class _EchoCheck extends StatelessWidget {
             maxLines: 3,
             maxLength: 500,
             decoration: InputDecoration(
-              hintText: t('説明に入れた大事な言葉を書く', 'Write the key words you used in your explanation'),
+              hintText: t(
+                '説明に入れた大事な言葉を書く',
+                'Write the key words you used in your explanation',
+              ),
               filled: true,
               fillColor: colors.surfaceRaised,
             ),
@@ -2313,7 +2453,9 @@ class _EchoCheck extends StatelessWidget {
           const SizedBox(height: 14),
           _Action(
             buttonKey: const ValueKey('science-explain-echo-advance'),
-            label: isRevision ? t('教材と比べる', 'Compare with the material') : t('デキすぎ君の質問へ', 'Go to Dekisugi-kun\'s question'),
+            label: isRevision
+                ? t('教材と比べる', 'Compare with the material')
+                : t('デキすぎ君の質問へ', 'Go to Dekisugi-kun\'s question'),
             icon: isRevision ? Icons.compare_arrows : Icons.question_answer,
             onPressed: onAdvance,
           ),

@@ -90,7 +90,7 @@ flutter run            # bundled-catalog mode works with no network
 ### Run the tests
 
 ```bash
-cd app && flutter test     # 1264 tests, no network
+cd app && flutter test     # 1337 tests, no network
 cd server && npm install && npm test   # 399 tests, no network
 ```
 
@@ -111,7 +111,7 @@ Optional Live-AI research endpoints are disabled in production by design
 ヒントを使った再説明と再生／再読を求める。
 
 音声PCMと自由記述はRAMだけに置き、学習DBやAPIへ保存・送信しない。
-保存するのは、固定教材ID、canonical need、heart、進行・報酬の冪等台帳だけである。
+保存するのは、固定教材ID、canonical need、試行余力（内部 `heart`）、進行・報酬の冪等台帳だけである。
 
 教材は文部科学省「中学校学習指導要領（平成29年告示）解説 理科編」を正本に、
 力学・圧力／浮力・電流／磁界・物質・生命・天気・大地・化学変化とイオン・生命の連続性・科学技術と自然と人間まで12単元35概念を収録している。
@@ -127,15 +127,15 @@ Optional Live-AI research endpoints are disabled in production by design
 | 外部生成AIとのLive会話 | production 6タブから到達不能。対象年齢の外部規約・DPA・安全運用を解決するまで再接続しない |
 | まいにちの声かけ（通知） | **予約〜alarm発火〜通知欄への表示まで実機で確認済み**（端末内完結・1日1通上限を仕組みで担保） |
 | 10分の壁（約9分の切断からの復帰） | 実装済み。**実機未確認** |
-| 教材を読む → 隠す → 説明する導線 | 動く。1文字入力や録音開始だけでは完了・XPを作らない |
-| 固定問い返しとRepair | 動く。誤答本文でなくcanonical needだけを保存し、exact Repairだけで解消する |
+| 教材を読む → 隠す → 説明する導線 | 動く。1文字入力や録音開始だけでは完了・探究記録を作らない |
+| 固定問い返しと修復実験（内部Repair） | 動く。誤答本文でなくcanonical needだけを保存し、対応する修復実験の成功だけで解消する |
 | 復習（間隔・考査日からの逆算） | 動く |
 | 中断と再開 | 動く |
 | 文字での説明 | 動く。**音声と対等**。本人の明示再読を経て同じ固定問い返しへ進む |
 | iOS / iPadOS | **iPhone / iPad Simulatorで動作確認済み**。物理端末の音声は未確認 |
 | 任意の Plus 購入 | RevenueCat Test Store で商品3点（月額・年額・買切）と公開鍵を設定済み。**購入→`plus` entitlement→オーロラマント装備→保護者レポート解放まで実機で確認済み**（`docs/shipaton-demo-2026/shipaton-demo-v7.mp4` に収録）。本番ストア鍵と webhook は配布時に切替（手順: `docs/monetization-setup.md`） |
 | 通信しない端末内モード | 同梱教材→想起→条件／理由→具体場面→Teach-back→固定checkpointまで動く。**自由記述・音声・選択内容の送信／永続保存、自動採点、習得認定なし**。固定教材ID、進行・再開状態、完了日時、端末内報酬など必要最小限の状態だけを端末内に保存 |
-| ゲーム型学習UI | 学ぶ／物語／練習／記号／競う／自分の6タブと蛇行Learning Pathを実装済み。連続学習・結晶・ハート・quest入口は6タブ共通headerに固定し、学習画面へ入っても戻る／連続／結晶／ハートHUDを保持する。デキすぎ君は開始・思考・訂正・完了で反応を変え、保存成功後だけ実XP・実結晶・今回時間を祝福面へ出す。**最新画面のAndroid / iOS物理端末目視と初見学習者pilotは未実施** |
+| 探究ノート型学習UI | 独自のField Notebookとして「探究／事件／実験／図解／共同／研究室」の6領域を実装。円形マスと蛇行を廃止した左の実験レール＋横長の探究ログ、全面彩色でないLab Brief、観測日／結晶／試行／予定の研究計器、放射・紙吹雪なしの観察記録票を使う。学習画面へ入っても戻る／研究計器HUDを保持し、デキすぎ君は開始・思考・訂正・完了で反応を変える。保存成功後だけ実際の探究記録・結晶・今回時間を返す。Android / iOSのアイコンと起動画面も同じruntimeキャラクター正本から生成する。**最新画面のAndroid / iOS物理端末目視と初見学習者pilotは未実施** |
 | クラスの合計（チーム戦） | **実機で確認済み**（参加・表示） |
 | 先生用の管理画面 | **無い** |
 | 教材の量 | **12単元35概念。** 化学変化と原子・分子、化学変化とイオン、生命の連続性、科学技術と自然と人間まで扱い、中学校理科の全領域を網羅 |
@@ -147,7 +147,7 @@ Optional Live-AI research endpoints are disabled in production by design
 ```text
 Flutter app
   ├─ 同梱catalog schema v10（12単元35概念）
-  ├─ SQLite / Memory SessionStore（進行・need・heart・報酬）
+  ├─ SQLite / Memory SessionStore（進行・need・試行余力〈内部heart〉・報酬）
   ├─ 端末内Teach-back（RAM録音／文字、固定問い返し）
   └─ 任意のLAN social client（成人online同意時だけ）
 
@@ -157,7 +157,7 @@ TypeScript server
   └─ LAN coordinator（自己署名TLS＋pin、実参加者だけ）
 ```
 
-productionの必修Pathはネットワーク、外部生成AI、マイクのいずれが無くても完了できる。
+productionの必修探究ノートはネットワーク、外部生成AI、マイクのいずれが無くても完了できる。
 Teach-backの録音・自由文・選択内容はAPIへ渡さず、SQLiteにも保存しない。
 `/api/live-token`と旧Director/Talk実装は研究用コードとして残るが、現行6タブから到達不能で、
 production / previewの制限対象データ処理は安全側に停止する。
@@ -172,8 +172,8 @@ production / previewの制限対象データ処理は安全側に停止する。
 2. 教材と正解を隠し、stage別の問いへ音声または文字で説明する。
 3. 音声は実際に最後まで再生し、文字は本人が明示的に読み返す。
 4. catalog固定checkpointを1問だけ問い返す。
-5. 誤答ならneedとheartを一度だけ記録し、ヒント後に説明を言い直す。
-6. 自己比較後、保存成功したeventだけをXP・quest・Pathへ反映する。
+5. 誤答ならneedと試行余力（内部heart）を一度だけ記録し、ヒント後に説明を言い直す。
+6. 自己比較後、保存成功したeventだけを探究記録・観察予定・探究ノートへ反映する。
 
 ### 旧Live研究実装（二重ループ・production未接続）
 
@@ -372,7 +372,7 @@ DEKISUGI_LIVE=1 npx tsx --test test/jailbreak.live.test.ts  # 役を降ろせる
 ## 検証
 
 ```
-app    1264 件   flutter test
+app    1337 件   flutter test
 server  399 件   通信しないぶん（通信するぶんは DEKISUGI_LIVE=1 で別に走らせる）
 ```
 

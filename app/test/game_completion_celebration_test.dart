@@ -6,8 +6,8 @@ import 'package:dekisugi/widgets/game_completion_celebration.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _summary = GameCompletionSummary(
-  eyebrow: 'PATH COMPLETE',
-  title: 'やった！一歩進んだ',
+  eyebrow: '教材観察 / 保存済み',
+  title: '観察記録を追加しました',
   message: '予想と観察を比べて、次の実験へ進めます。',
   elapsed: Duration(minutes: 4, seconds: 8),
   xpAwarded: 10,
@@ -62,14 +62,14 @@ Future<void> _pumpLauncher(
 }
 
 void main() {
-  testWidgets('保存済みのXP・結晶・一時時間と笑顔のマスコットを祝福面に出す', (tester) async {
+  testWidgets('保存済みの実値だけを探究ノートの記録票へ出す', (tester) async {
     final semantics = tester.ensureSemantics();
     GameCompletionAction? result;
     await _pumpLauncher(tester, onResult: (value) => result = value);
 
     expect(find.byKey(const ValueKey('game-completion-celebration')), findsOne);
-    expect(find.text('やった！一歩進んだ'), findsOne);
-    expect(find.bySemanticsLabel(RegExp('やった！一歩進んだ')), findsOneWidget);
+    expect(find.text('観察記録を追加しました'), findsOne);
+    expect(find.bySemanticsLabel(RegExp('観察記録を追加しました')), findsOneWidget);
     expect(
       find.bySemanticsLabel(RegExp('予想と観察を比べて、次の実験へ進めます。')),
       findsOneWidget,
@@ -77,12 +77,23 @@ void main() {
     expect(find.text('+10'), findsOne);
     expect(find.text('+1'), findsOne);
     expect(find.text('4:08'), findsOne);
-    expect(find.bySemanticsLabel('XP、+10'), findsOneWidget);
-    expect(find.bySemanticsLabel('結晶、+1'), findsOneWidget);
-    expect(find.bySemanticsLabel('今回の時間、4:08'), findsOneWidget);
-    expect(find.textContaining('時間はこの完了画面だけ'), findsOne);
-    expect(find.bySemanticsLabel('軌道リングのデキすぎ君が笑顔で学習完了を祝っています'), findsOne);
-    expect(find.bySemanticsLabel('次の一歩をマップで見る'), findsOneWidget);
+    expect(find.text('教材観察の記録'), findsOneWidget);
+    expect(find.text('観察記録を保存しました'), findsOneWidget);
+    expect(find.byKey(const ValueKey('completion-ledger')), findsOneWidget);
+    expect(find.bySemanticsLabel('探究記録、+10'), findsOneWidget);
+    expect(find.bySemanticsLabel('ひらめき結晶、+1'), findsOneWidget);
+    expect(find.bySemanticsLabel('今回の観察時間、4:08'), findsOneWidget);
+    expect(find.textContaining('観察時間はこの記録票だけ'), findsOne);
+    expect(find.bySemanticsLabel('軌道リングのデキすぎ君が観察記録へ完了印を押しています'), findsOne);
+    expect(find.bySemanticsLabel('次の観察へ'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is CustomPaint &&
+            widget.painter.runtimeType.toString() == '_CelebrationBurstPainter',
+      ),
+      findsNothing,
+    );
 
     await tester.tap(find.byKey(const ValueKey('completion-next-step')));
     await tester.pumpAndSettle();
@@ -112,15 +123,15 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('学校scopeでは個人XP・結晶を演出せず完了と時間だけを返せる', (tester) async {
+  testWidgets('学校scopeでは個人の探究記録・結晶を出さず完了と時間だけを返せる', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     const schoolSummary = GameCompletionSummary(
-      eyebrow: 'CLASS MISSION COMPLETE',
-      title: 'この端末の授業ミッションを完了',
-      message: '個人のXP・結晶・Pathには加算していません。',
+      eyebrow: '授業の観察記録 / 保存済み',
+      title: 'この端末の授業観察を完了',
+      message: '個人の探究記録・結晶・探究ノートには加算していません。',
       elapsed: Duration(seconds: 52),
       xpAwarded: 0,
       gemsAwarded: 0,
@@ -150,6 +161,6 @@ void main() {
     expect(find.byKey(const ValueKey('completion-xp')), findsNothing);
     expect(find.byKey(const ValueKey('completion-gems')), findsNothing);
     expect(find.text('52秒'), findsOne);
-    expect(find.textContaining('個人のXP・結晶・Pathには加算していません'), findsOne);
+    expect(find.textContaining('個人の探究記録・結晶・探究ノートには加算していません'), findsOne);
   });
 }

@@ -71,6 +71,7 @@ class ScienceChallengeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = context.gamePalette;
     return Semantics(
       container: true,
       header: true,
@@ -80,47 +81,70 @@ class ScienceChallengeHeader extends StatelessWidget {
       ),
       child: ExcludeSemantics(
         child: Container(
-          padding: const EdgeInsets.all(GameTokens.spaceXl),
+          key: const ValueKey('science-challenge-lab-brief'),
+          clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color: accent,
+            color: colors.benchRaised,
             borderRadius: BorderRadius.circular(GameTokens.radiusLg),
+            border: Border.all(color: colors.border),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Stack(
             children: [
-              SizedBox.square(
-                dimension: GameTokens.heroLeadingSize,
-                child: ScienceActivityMascotBadge(
-                  icon: icon,
-                  accent: accent,
-                  onAccent: onAccent,
-                  mascotStyle: mascotStyle,
-                  mascotReaction: mascotReaction,
+              PositionedDirectional(
+                start: 0,
+                top: 0,
+                bottom: 0,
+                width: GameTokens.accentRuleWidth,
+                child: ColoredBox(
+                  key: const ValueKey('science-challenge-accent-rule'),
+                  color: accent,
                 ),
               ),
-              const SizedBox(width: GameTokens.spaceMd),
-              Expanded(
-                child: Column(
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(
+                  GameTokens.spaceXl + GameTokens.accentRuleWidth,
+                  GameTokens.spaceXl,
+                  GameTokens.spaceXl,
+                  GameTokens.spaceXl,
+                ),
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      eyebrow,
-                      style: theme.textTheme.labelLarge
-                          ?.copyWith(color: onAccent)
-                          .jaWeight(FontWeight.w800),
+                    SizedBox.square(
+                      dimension: GameTokens.heroLeadingSize,
+                      child: ScienceActivityMascotBadge(
+                        icon: icon,
+                        accent: accent,
+                        onAccent: onAccent,
+                        mascotStyle: mascotStyle,
+                        mascotReaction: mascotReaction,
+                      ),
                     ),
-                    const SizedBox(height: GameTokens.spaceXs),
-                    Text(
-                      title,
-                      style: theme.textTheme.headlineSmall
-                          ?.copyWith(color: onAccent)
-                          .jaWeight(FontWeight.w900),
-                    ),
-                    const SizedBox(height: GameTokens.spaceSm),
-                    Text(
-                      body,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: onAccent,
+                    const SizedBox(width: GameTokens.spaceMd),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _ScienceLabLabel(
+                            color: accent,
+                            foregroundColor: onAccent,
+                            label: eyebrow,
+                          ),
+                          const SizedBox(height: GameTokens.spaceSm),
+                          Text(
+                            title,
+                            style: theme.textTheme.headlineSmall
+                                ?.copyWith(color: colors.ink)
+                                .jaWeight(FontWeight.w900),
+                          ),
+                          const SizedBox(height: GameTokens.spaceSm),
+                          Text(
+                            body,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colors.inkMuted,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -132,6 +156,39 @@ class ScienceChallengeHeader extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 実験段階を示す、低角丸の標本ラベル。
+class _ScienceLabLabel extends StatelessWidget {
+  const _ScienceLabLabel({
+    required this.color,
+    required this.foregroundColor,
+    required this.label,
+  });
+
+  final Color color;
+  final Color foregroundColor;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(GameTokens.radiusXs),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: GameTokens.spaceSm,
+        vertical: GameTokens.spaceXs,
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelLarge
+            ?.copyWith(color: foregroundColor)
+            .jaWeight(FontWeight.w800),
+      ),
+    ),
+  );
 }
 
 /// Static companion used at the entrance of learning activities.
@@ -185,11 +242,14 @@ class ScienceActivityMascotBadge extends StatelessWidget {
                       Container(
                         key: const ValueKey('science-activity-mascot-surface'),
                         decoration: BoxDecoration(
-                          color: colors.surface,
+                          color: colors.bench,
                           borderRadius: BorderRadius.circular(
-                            GameTokens.radiusMd,
+                            GameTokens.radiusSm,
                           ),
-                          border: Border.all(color: onAccent, width: 2),
+                          border: Border.all(
+                            color: colors.inkMuted,
+                            width: GameTokens.strongBorderWidth,
+                          ),
                         ),
                       ),
                       PathMascotPreview(
@@ -210,11 +270,14 @@ class ScienceActivityMascotBadge extends StatelessWidget {
                   width: _activityBadgeSize,
                   height: _activityBadgeSize,
                   decoration: BoxDecoration(
-                    color: onAccent,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: accent, width: 2),
+                    color: accent,
+                    borderRadius: BorderRadius.circular(GameTokens.radiusXs),
+                    border: Border.all(
+                      color: colors.bench,
+                      width: GameTokens.strongBorderWidth,
+                    ),
                   ),
-                  child: Icon(icon, color: accent, size: 12),
+                  child: Icon(icon, color: onAccent, size: 12),
                 ),
               ),
             ],

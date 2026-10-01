@@ -80,7 +80,7 @@ Widget _host({
 );
 
 void main() {
-  testWidgets('結晶消費は確認後だけ一度実行し、通常Pathを止めない説明を保つ', (tester) async {
+  testWidgets('結晶消費は確認後だけ一度実行し、通常の探究を止めない説明を保つ', (tester) async {
     var calls = 0;
     final gate = Completer<void>();
     await tester.pumpWidget(
@@ -96,7 +96,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('economy-freeze-action')));
     await tester.pump();
     expect(calls, 0);
-    expect(find.text('連続記録の保護を補充しますか？'), findsOneWidget);
+    expect(find.text('お休みの日の保護を補充しますか？'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('economy-freeze-confirm')));
     await tester.pump();
     expect(calls, 1);
@@ -107,10 +107,10 @@ void main() {
     gate.complete();
     await tester.pumpAndSettle();
     expect(find.text('交換を端末へ記録しました。'), findsOneWidget);
-    expect(find.textContaining('学習進行・XP・正答・ハートは購入できません'), findsOneWidget);
+    expect(find.textContaining('探究の進行・探究記録・正答・試行余力は購入できません'), findsOneWidget);
   });
 
-  testWidgets('Pathマスコットは価格確認後だけ固定product IDで購入する', (tester) async {
+  testWidgets('観察装備は価格確認後だけ固定product IDで購入する', (tester) async {
     String? purchased;
     await tester.pumpWidget(
       _host(
@@ -128,7 +128,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(purchased, isNull);
     expect(find.text('軌道リングを購入しますか？'), findsOneWidget);
-    expect(find.textContaining('学習進行や正答は変わりません'), findsOneWidget);
+    expect(find.textContaining('探究の進行や正答は変わりません'), findsOneWidget);
     await tester.tap(
       find.byKey(
         const ValueKey(

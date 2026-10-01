@@ -6,7 +6,7 @@ import '../ui/_material.dart';
 
 typedef GameQuestCallback = void Function(GameQuest quest);
 
-/// 6タブで固定する、プレイヤー状態とクエストへの入口。
+/// 全研究領域で固定する、研究計器と観察予定への入口。
 ///
 /// [PlayerStatusBar]単体は数値表示に責務を絞り、このwidgetが画面幅・余白・
 /// Quest sheetをまとめる。Pathを単独表示するときと[GameShell]配下で同じ
@@ -90,11 +90,10 @@ class GamePlayerStatusHeader extends StatelessWidget {
   }
 }
 
-/// Path上部の3つの継続情報。
+/// 探究ノート上部の研究計器。
 ///
-/// 数値を煽る見出しにはせず、学習Pathを開いたまま現在値を確かめる小さな
-/// 操作として置く。3セルとも320dpで48dp以上を保ち、200%文字でも横幅を
-/// 奪わないよう視覚ラベルは短い数字だけにする。
+/// ゲーム資源のアイコン列ではなく、観測日・結晶・残り試行を短いラベル付きで
+/// 返す。3セルとも320dpで48dp以上を保ち、色だけに意味を持たせない。
 class PlayerStatusBar extends StatelessWidget {
   const PlayerStatusBar({
     super.key,
@@ -114,70 +113,97 @@ class PlayerStatusBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
-    return DecoratedBox(
+    return Container(
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(GameTokens.radiusMd),
+        borderRadius: BorderRadius.circular(GameTokens.radiusSm),
         border: Border.all(color: colors.border),
       ),
-      child: Row(
-        key: const ValueKey('player-status-bar'),
-        crossAxisAlignment: CrossAxisAlignment.center,
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        fit: StackFit.passthrough,
         children: [
-          if (!schoolMode) ...[
-            Expanded(
-              child: _StatusItem(
-                key: const ValueKey('player-status-streak'),
-                icon: Icons.electric_bolt_rounded,
-                iconColor: colors.streak,
-                visualValue: _compact(status.streakDays),
-                semanticLabel: lang.t(
-                  '連続学習、${status.streakDays}日。'
-                      '連続記録の保護、${status.streakFreezeRemaining}回分',
-                  'Streak, ${status.streakDays} days. '
-                      'Streak freezes left: ${status.streakFreezeRemaining}',
-                ),
-                tooltip: lang.t('連続学習', 'Streak'),
-                onTap: onStreakTap,
-              ),
-            ),
-            _Divider(color: colors.border),
-            Expanded(
-              child: _StatusItem(
-                key: const ValueKey('player-status-gems'),
-                icon: Icons.diamond_rounded,
-                iconColor: colors.gem,
-                visualValue: _compact(status.gems),
-                semanticLabel: lang.t(
-                  'ひらめき結晶、${status.gems}個',
-                  'Spark gems, ${status.gems}',
-                ),
-                tooltip: lang.t('ひらめき結晶', 'Spark gems'),
-                onTap: onGemsTap,
-              ),
-            ),
-            _Divider(color: colors.border),
-          ],
-          Expanded(
-            child: _StatusItem(
-              key: const ValueKey('player-status-hearts'),
-              icon: Icons.favorite_rounded,
-              iconColor: colors.heart,
-              visualValue: status.unlimitedHearts ? '∞' : '${status.hearts}',
-              semanticLabel: status.unlimitedHearts
-                  ? schoolMode
-                        ? lang.t(
-                            '授業モード。ハート、無制限。個人報酬は記録しません',
-                            'Class mode. Hearts, unlimited. Personal rewards are not recorded',
-                          )
-                        : lang.t('ハート、無制限', 'Hearts, unlimited')
-                  : lang.t(
-                      '学習ハート、${status.maxHearts}個中${status.hearts}個',
-                      'Hearts, ${status.hearts} of ${status.maxHearts}',
+          Row(
+            key: ValueKey('player-status-bar'),
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (!schoolMode) ...[
+                Expanded(
+                  child: _StatusItem(
+                    key: ValueKey('player-status-streak'),
+                    icon: Icons.calendar_view_week_outlined,
+                    iconColor: colors.streak,
+                    visualValue: _compact(status.streakDays),
+                    visualLabel: lang.t('観測日', 'Observation days'),
+                    semanticLabel:
+                        lang.t(
+                          '連続観測、${status.streakDays}日。',
+                          'Observation streak, ${status.streakDays} days. ',
+                        ) +
+                        lang.t(
+                          'お休みの日の保護、${status.streakFreezeRemaining}回分',
+                          '${status.streakFreezeRemaining} rest-day shields remaining',
+                        ),
+                    tooltip: lang.t(
+                      '連続観測。忙しい日に1日空いても連続記録を守る保護を${status.streakFreezeRemaining}回分残しています',
+                      'Observation streak. You have ${status.streakFreezeRemaining} shields to protect your record when you miss a busy day',
                     ),
-              tooltip: lang.t('学習ハート', 'Hearts'),
-              onTap: onHeartsTap,
-            ),
+                    onTap: onStreakTap,
+                  ),
+                ),
+                _Divider(color: colors.border),
+                Expanded(
+                  child: _StatusItem(
+                    key: ValueKey('player-status-gems'),
+                    icon: Icons.hexagon_outlined,
+                    iconColor: colors.gem,
+                    visualValue: _compact(status.gems),
+                    visualLabel: lang.t('結晶', 'Gems'),
+                    semanticLabel: lang.t(
+                      'ひらめき結晶、${status.gems}個',
+                      'Spark gems, ${status.gems}',
+                    ),
+                    tooltip: lang.t(
+                      'ひらめき結晶。学習を速くしたり正答を買ったりせず、記録の補助だけに使えます',
+                      'Spark gems',
+                    ),
+                    onTap: onGemsTap,
+                  ),
+                ),
+                _Divider(color: colors.border),
+              ],
+              Expanded(
+                child: _StatusItem(
+                  key: ValueKey('player-status-hearts'),
+                  icon: Icons.science_outlined,
+                  iconColor: colors.heart,
+                  visualValue: status.unlimitedHearts
+                      ? '∞'
+                      : '${status.hearts}',
+                  visualLabel: lang.t('試行', 'Attempts'),
+                  semanticLabel: status.unlimitedHearts
+                      ? schoolMode
+                            ? lang.t(
+                                '授業モード。試行、無制限。個人報酬は記録しません',
+                                'Class mode. Unlimited attempts. Personal rewards are not recorded',
+                              )
+                            : lang.t('試行、無制限', 'Unlimited attempts')
+                      : lang.t(
+                          '試行余力、${status.maxHearts}枠中${status.hearts}枠',
+                          'Attempts remaining, ${status.hearts} of ${status.maxHearts}',
+                        ),
+                  tooltip: lang.t('試行余力', 'Attempts remaining'),
+                  onTap: onHeartsTap,
+                ),
+              ),
+            ],
+          ),
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 4,
+            child: ColoredBox(color: colors.pathActive),
           ),
         ],
       ),
@@ -203,6 +229,7 @@ class _StatusItem extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.visualValue,
+    required this.visualLabel,
     required this.semanticLabel,
     required this.tooltip,
     required this.onTap,
@@ -211,6 +238,7 @@ class _StatusItem extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String visualValue;
+  final String visualLabel;
   final String semanticLabel;
   final String tooltip;
   final VoidCallback? onTap;
@@ -225,23 +253,39 @@ class _StatusItem extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: GameTokens.spaceSm,
-          vertical: GameTokens.spaceSm,
+          horizontal: GameTokens.spaceXs,
+          vertical: 6,
         ),
-        child: Row(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 23, color: iconColor),
-            const SizedBox(width: GameTokens.spaceXs),
-            Flexible(
-              child: Text(
-                visualValue,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleSmall
-                    ?.copyWith(color: colors.ink, height: 1.0)
-                    .jaWeight(FontWeight.w800),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 19, color: iconColor),
+                const SizedBox(width: GameTokens.spaceXs),
+                Flexible(
+                  child: Text(
+                    visualValue,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall
+                        ?.copyWith(color: colors.ink, height: 1.0)
+                        .jaWeight(FontWeight.w800),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              visualLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall
+                  ?.copyWith(color: colors.inkMuted, height: 1.0)
+                  .jaWeight(FontWeight.w600),
             ),
           ],
         ),
@@ -253,6 +297,7 @@ class _StatusItem extends StatelessWidget {
       button: onTap != null,
       enabled: onTap == null ? null : true,
       label: semanticLabel,
+      onTap: onTap,
       child: ExcludeSemantics(
         child: onTap == null
             ? content
@@ -260,7 +305,7 @@ class _StatusItem extends StatelessWidget {
                 message: tooltip,
                 child: Material(
                   color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(GameTokens.radiusMd),
+                  borderRadius: BorderRadius.circular(GameTokens.radiusSm),
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(onTap: onTap, child: content),
                 ),
@@ -285,8 +330,8 @@ class _QuestButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
     final noun = schoolMode
-        ? lang.t('授業目標', 'Class goals')
-        : lang.t('クエスト', 'Quests');
+        ? lang.t('授業の観察予定', 'Class observation plans')
+        : lang.t('今日の観察予定', 'Today\'s observation plan');
     final label = count == 0
         ? lang.t('$noun。進行中はありません', '$noun. None in progress')
         : lang.t('$noun。進行中$count件', '$noun. $count in progress');
@@ -301,18 +346,35 @@ class _QuestButton extends StatelessWidget {
           child: Material(
             color: colors.surface,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(GameTokens.radiusMd),
+              borderRadius: BorderRadius.circular(GameTokens.radiusSm),
               side: BorderSide(color: colors.border),
             ),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: onTap,
-              child: SizedBox.square(
-                dimension: GameTokens.minTouchTarget,
+              child: SizedBox(
+                width: 58,
+                height: 58,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    Icon(Icons.emoji_events_rounded, color: colors.pathActive),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.event_note_outlined,
+                          size: 21,
+                          color: colors.pathActive,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '予定',
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(color: colors.inkMuted, height: 1)
+                              .jaWeight(FontWeight.w600),
+                        ),
+                      ],
+                    ),
                     if (count > 0)
                       Positioned(
                         right: 2,
@@ -326,7 +388,7 @@ class _QuestButton extends StatelessWidget {
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: colors.heart,
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(4),
                             border: Border.all(color: colors.surface, width: 2),
                           ),
                           child: Text(
@@ -416,8 +478,8 @@ class _QuestSheet extends StatelessWidget {
     final t = Theme.of(context);
     final colors = context.gamePalette;
     final title = schoolMode
-        ? lang.t('この端末の授業目標', 'Class goals on this device')
-        : lang.t('クエスト', 'Quests');
+        ? lang.t('この端末の授業予定', 'Class goals on this device')
+        : lang.t('観察予定', 'Observation plans');
     return Semantics(
       container: true,
       namesRoute: true,
@@ -454,7 +516,7 @@ class _QuestSheet extends StatelessWidget {
                                 'No rankings or class counts are tallied. Class learning continues on this device.',
                               )
                             : lang.t(
-                                '学習の中身につながる目標だけを集めています。',
+                                '今日の探究に直接つながる予定だけを集めています。',
                                 'Only goals tied to what you actually learn are collected here.',
                               ),
                         style: t.textTheme.bodyMedium?.copyWith(
@@ -487,11 +549,11 @@ class _QuestSheet extends StatelessWidget {
                     Text(
                       questUnavailable
                           ? lang.t(
-                              'クエストを読み込めませんでした。学習パスはそのまま使えます。',
+                              '観察予定を読み込めませんでした。探究ノートはそのまま使えます。',
                               'Could not load quests. The learning path still works.',
                             )
                           : lang.t(
-                              'いま進行中のクエストはありません。',
+                              'いま取り組み中の観察予定はありません。',
                               'No quests in progress right now.',
                             ),
                       style: t.textTheme.bodyLarge?.copyWith(color: colors.ink),
@@ -541,119 +603,130 @@ class _QuestCard extends StatelessWidget {
     final t = Theme.of(context);
     final colors = context.gamePalette;
     final kind = switch (quest.kind) {
-      GameQuestKind.daily => lang.t('デイリー', 'Daily'),
-      GameQuestKind.monthly => lang.t('マンスリー', 'Monthly'),
-      GameQuestKind.friend => lang.t('フレンズ', 'Friends'),
+      GameQuestKind.daily => lang.t('今日', 'Daily'),
+      GameQuestKind.monthly => lang.t('今月', 'Monthly'),
+      GameQuestKind.friend => lang.t('共同', 'Together'),
       GameQuestKind.classroom => lang.t('授業', 'Class'),
     };
     final state = switch (quest.state) {
-      GameQuestState.active => lang.t('進行中', 'In progress'),
+      GameQuestState.active => lang.t('取り組み中', 'In progress'),
       GameQuestState.completed =>
         schoolMode
-            ? lang.t('この端末で達成済み', 'Completed on this device')
-            : lang.t('達成。報酬を受け取れます', 'Completed. Reward ready to claim'),
+            ? lang.t('この端末に記録済み', 'Completed on this device')
+            : lang.t('記録済み。結晶を受け取れます', 'Completed. Reward ready to claim'),
       GameQuestState.claimed =>
         schoolMode
-            ? lang.t('この端末で達成済み', 'Completed on this device')
-            : lang.t('達成済み', 'Completed'),
+            ? lang.t('この端末に記録済み', 'Completed on this device')
+            : lang.t('記録済み', 'Completed'),
     };
-    final semantic = lang.t(
-      '$kindクエスト、${quest.title}。${quest.description}。'
-          '${quest.target}回中${quest.current}回。$state',
-      '$kind quest, ${quest.title}. ${quest.description}. '
-          '${quest.current} of ${quest.target}. $state',
-    );
+    final semantic =
+        '$kindの観察予定、${quest.title}。${quest.description}。'
+        '${quest.target}回中${quest.current}回。$state';
 
     return Semantics(
       container: true,
       button: onTap != null,
       label: semantic,
       child: Container(
-        padding: const EdgeInsets.all(GameTokens.spaceLg),
         decoration: BoxDecoration(
           color: colors.surfaceRaised,
-          borderRadius: BorderRadius.circular(GameTokens.radiusLg),
+          borderRadius: BorderRadius.circular(GameTokens.radiusMd),
           border: Border.all(color: colors.border),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
           children: [
-            ExcludeSemantics(
-              child: Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                spacing: GameTokens.spaceSm,
-                runSpacing: GameTokens.spaceXs,
+            Padding(
+              padding: const EdgeInsets.all(GameTokens.spaceLg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    kind,
-                    style: t.textTheme.labelLarge
-                        ?.copyWith(color: colors.pathActive)
-                        .jaWeight(FontWeight.w800),
-                  ),
-                  Text(
-                    state,
-                    style: t.textTheme.labelMedium?.copyWith(
-                      color: colors.inkMuted,
+                  ExcludeSemantics(
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      spacing: GameTokens.spaceSm,
+                      runSpacing: GameTokens.spaceXs,
+                      children: [
+                        Text(
+                          kind,
+                          style: t.textTheme.labelLarge
+                              ?.copyWith(color: colors.pathActive)
+                              .jaWeight(FontWeight.w800),
+                        ),
+                        Text(
+                          state,
+                          style: t.textTheme.labelMedium?.copyWith(
+                            color: colors.inkMuted,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: GameTokens.spaceSm),
-            Text(
-              quest.title,
-              style: t.textTheme.titleMedium
-                  ?.copyWith(color: colors.ink)
-                  .jaWeight(FontWeight.w800),
-            ),
-            const SizedBox(height: GameTokens.spaceXs),
-            Text(
-              quest.description,
-              style: t.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
-            ),
-            const SizedBox(height: GameTokens.spaceMd),
-            ExcludeSemantics(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(GameTokens.radiusPill),
-                child: LinearProgressIndicator(
-                  value: quest.progress,
-                  minHeight: 9,
-                  color: quest.state == GameQuestState.active
-                      ? colors.pathActive
-                      : colors.pathComplete,
-                  backgroundColor: colors.border,
-                ),
-              ),
-            ),
-            const SizedBox(height: GameTokens.spaceSm),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '${quest.current}/${quest.target}',
-                    style: t.textTheme.labelLarge
+                  const SizedBox(height: GameTokens.spaceSm),
+                  Text(
+                    quest.title,
+                    style: t.textTheme.titleMedium
                         ?.copyWith(color: colors.ink)
                         .jaWeight(FontWeight.w800),
                   ),
-                ),
-                if (!schoolMode && quest.rewardLabel != null)
+                  const SizedBox(height: GameTokens.spaceXs),
                   Text(
-                    quest.rewardLabel!,
-                    style: t.textTheme.labelLarge
-                        ?.copyWith(color: colors.gem)
-                        .jaWeight(FontWeight.w800),
+                    quest.description,
+                    style: t.textTheme.bodyMedium?.copyWith(
+                      color: colors.inkMuted,
+                    ),
                   ),
-              ],
-            ),
-            if (onTap != null) ...[
-              const SizedBox(height: GameTokens.spaceSm),
-              TextButton(
-                onPressed: onTap,
-                child: Text(
-                  quest.actionLabel ?? lang.t('このクエストを見る', 'View this quest'),
-                ),
+                  const SizedBox(height: GameTokens.spaceMd),
+                  ExcludeSemantics(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(GameTokens.radiusSm),
+                      child: LinearProgressIndicator(
+                        value: quest.progress,
+                        minHeight: 9,
+                        color: quest.state == GameQuestState.active
+                            ? colors.pathActive
+                            : colors.pathComplete,
+                        backgroundColor: colors.border,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: GameTokens.spaceSm),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${quest.current}/${quest.target}',
+                          style: t.textTheme.labelLarge
+                              ?.copyWith(color: colors.ink)
+                              .jaWeight(FontWeight.w800),
+                        ),
+                      ),
+                      if (!schoolMode && quest.rewardLabel != null)
+                        Text(
+                          quest.rewardLabel!,
+                          style: t.textTheme.labelLarge
+                              ?.copyWith(color: colors.gem)
+                              .jaWeight(FontWeight.w800),
+                        ),
+                    ],
+                  ),
+                  if (onTap != null) ...[
+                    const SizedBox(height: GameTokens.spaceSm),
+                    TextButton(
+                      onPressed: onTap,
+                      child: Text(quest.actionLabel ?? 'この予定を開く'),
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 4,
+              child: ColoredBox(color: colors.pathActive),
+            ),
           ],
         ),
       ),

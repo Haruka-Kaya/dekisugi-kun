@@ -127,15 +127,30 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
     try {
       code = LanSocialConnectionCode.parse(_connectionCode.text);
     } on FormatException {
-      _setMessage(t('参加コードを確認してください。', 'Please check the join code.'), isError: true);
+      _setMessage(
+        t('参加コードを確認してください。', 'Please check the join code.'),
+        isError: true,
+      );
       return;
     }
     if (widget.schoolMode && code.kind == LanSocialRoomKind.league) {
-      _setMessage(t('学校モードでは個人順位の週次リーグに参加できません。', 'In school mode, you can\'t join the weekly league with individual rankings.'), isError: true);
+      _setMessage(
+        t(
+          '学校モードでは個人順位の共同観測に参加できません。',
+          'In school mode, you can\'t join the weekly league with individual rankings.',
+        ),
+        isError: true,
+      );
       return;
     }
     if (code.kind != _selected) {
-      _setMessage(t('選んだ遊びと参加コードの種類が一致しません。', 'The join code doesn\'t match the activity you chose.'), isError: true);
+      _setMessage(
+        t(
+          '選んだ遊びと参加コードの種類が一致しません。',
+          'The join code doesn\'t match the activity you chose.',
+        ),
+        isError: true,
+      );
       return;
     }
 
@@ -148,7 +163,13 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
       client = _clientFor(code.endpoint);
     } on ArgumentError {
       setState(() => _busy = false);
-      _setMessage(t('private HTTPS接続先として確認できない参加コードです。', 'This join code can\'t be verified as a private HTTPS address.'), isError: true);
+      _setMessage(
+        t(
+          'private HTTPS接続先として確認できない参加コードです。',
+          'This join code can\'t be verified as a private HTTPS address.',
+        ),
+        isError: true,
+      );
       return;
     }
     LanSocialJoinResult result;
@@ -157,7 +178,13 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
     } on Object {
       if (!mounted) return;
       setState(() => _busy = false);
-      _setMessage(t('安全に参加状態を保存できなかったため、参加しませんでした。', 'Couldn\'t safely save your join status, so you were not joined.'), isError: true);
+      _setMessage(
+        t(
+          '安全に参加状態を保存できなかったため、参加しませんでした。',
+          'Couldn\'t safely save your join status, so you were not joined.',
+        ),
+        isError: true,
+      );
       return;
     }
     if (!mounted) return;
@@ -172,7 +199,10 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
     setState(() {
       _busy = false;
       _explicitOptIn = false;
-      _message = t('参加しました。学習成果が記録されると自動で共同進捗へ反映されます。', 'Joined. Your learning results will count toward shared progress automatically.');
+      _message = t(
+        '参加しました。学習成果が記録されると自動で共同進捗へ反映されます。',
+        'Joined. Your learning results will count toward shared progress automatically.',
+      );
       _messageIsError = false;
     });
     await _refresh(code.kind, announceFailure: false);
@@ -192,12 +222,18 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
         _connectionCode.text = code.encode();
         _selected = code.kind;
         _explicitOptIn = false;
-        _message = t('参加コードを読み取りました。送信範囲を確認してから参加に同意してください。', 'Join code scanned. Check what will be sent, then agree to join.');
+        _message = t(
+          '参加コードを読み取りました。送信範囲を確認してから参加に同意してください。',
+          'Join code scanned. Check what will be sent, then agree to join.',
+        );
         _messageIsError = false;
       });
     } on FormatException {
       _setMessage(
-        t('これはLAN参加コードのQRではありません。DKS1.から始まるコードを読み取ってください。', 'This isn\'t a LAN join code QR. Scan a code that starts with DKS1.'),
+        t(
+          'これはLAN参加コードのQRではありません。DKS1.から始まるコードを読み取ってください。',
+          'This isn\'t a LAN join code QR. Scan a code that starts with DKS1.',
+        ),
         isError: true,
       );
     }
@@ -234,7 +270,10 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
       setState(() {
         _busy = false;
         if (announceFailure) {
-          _message = t('コーディネーターに接続できませんでした。証明書や同じWi-Fiへの接続を確認してください。', 'Couldn\'t connect to the coordinator. Check the certificate and that you\'re on the same Wi-Fi.');
+          _message = t(
+            'コーディネーターに接続できませんでした。証明書や同じWi-Fiへの接続を確認してください。',
+            'Couldn\'t connect to the coordinator. Check the certificate and that you\'re on the same Wi-Fi.',
+          );
           _messageIsError = true;
         }
       });
@@ -270,17 +309,32 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
     return switch (receipt) {
       LanSocialFriendsTerminalReceipt(:final completed) =>
         completed
-            ? t('フレンズクエストの共同達成を端末に確定しました。結晶はこの部屋につき1個です。', 'Friends quest completion saved on this device. You get one crystal per room.')
-            : t('フレンズクエストは未達成で終了しました。', 'The friends quest ended without being completed.'),
+            ? t(
+                '共同観察の達成を端末に確定しました。結晶はこの部屋につき1個です。',
+                'Friends quest completion saved on this device. You get one crystal per room.',
+              )
+            : t(
+                '共同観察は未達成で終了しました。',
+                'The friends quest ended without being completed.',
+              ),
       LanSocialLeagueTerminalReceipt(
         :final privacyThresholdReached,
         :final rank,
       ) =>
         !privacyThresholdReached
-            ? t('参加者が5人未満だったため、順位を保存せずリーグを終了しました。', 'Fewer than 5 people joined, so the league ended without saving rankings.')
+            ? t(
+                '参加者が5人未満だったため、順位を保存せず共同観測を終了しました。',
+                'Fewer than 5 people joined, so the league ended without saving rankings.',
+              )
             : rank == null
-            ? t('週のリーグ結果を「順位なし」として端末に保存しました。', 'Saved this week\'s league result as "no rank" on this device.')
-            : t('週のリーグ$rank位を端末に保存しました。', 'Saved this week\'s league rank #$rank on this device.'),
+            ? t(
+                '共同観測の結果を「順位なし」として端末に保存しました。',
+                'Saved this week\'s league result as "no rank" on this device.',
+              )
+            : t(
+                '共同観測の$rank位を端末に保存しました。',
+                'Saved this week\'s league rank #$rank on this device.',
+              ),
     };
   }
 
@@ -290,7 +344,10 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
       builder: (context) => AlertDialog(
         title: Text(t('参加をやめますか？', 'Leave this room?')),
         content: Text(
-          t('この端末の参加資格を消し、コーディネーターにも退出を伝えます。これまでの週次tier履歴は端末内に残ります。', 'This deletes this device\'s membership and tells the coordinator you left. Your weekly tier history stays on this device.'),
+          t(
+            'この端末の参加資格を消し、コーディネーターにも退出を伝えます。これまでの週ごとの観測級履歴は端末内に残ります。',
+            'This deletes this device\'s membership and tells the coordinator you left. Your weekly tier history stays on this device.',
+          ),
         ),
         actions: [
           TextButton(
@@ -319,7 +376,13 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
         _busy = false;
         _pendingLeaves.add(kind);
       });
-      _setMessage(t('参加解除を安全に保存できませんでした。もう一度試してください。', 'Couldn\'t safely save that you left. Please try again.'), isError: true);
+      _setMessage(
+        t(
+          '参加解除を安全に保存できませんでした。もう一度試してください。',
+          'Couldn\'t safely save that you left. Please try again.',
+        ),
+        isError: true,
+      );
       return;
     }
     if (!mounted) return;
@@ -403,7 +466,10 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
             ),
             const SizedBox(height: GameTokens.spaceSm),
             Text(
-              t('架空の相手は出しません。同じWi-Fi上のコーディネーターに接続し、実在する参加者だけで遊びます。', 'No fake opponents. Connect to a coordinator on the same Wi-Fi and play only with real participants.'),
+              t(
+                '架空の相手は出しません。同じWi-Fi上のコーディネーターに接続し、実在する参加者だけで遊びます。',
+                'No fake opponents. Connect to a coordinator on the same Wi-Fi and play only with real participants.',
+              ),
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: colors.inkMuted,
               ),
@@ -473,7 +539,10 @@ class _LanSocialScreenState extends State<LanSocialScreen> {
                   ),
                   const SizedBox(height: GameTokens.spaceSm),
                   Text(
-                    t('学校・家庭の管理PCでLAN coordinatorを起動したあと、HTTPS接続先、証明書fingerprint、管理キーを設定します。', 'After starting the LAN coordinator on a school or home admin PC, set the HTTPS address, certificate fingerprint, and admin key.'),
+                    t(
+                      '学校・家庭の管理PCでLAN coordinatorを起動したあと、HTTPS接続先、証明書fingerprint、管理キーを設定します。',
+                      'After starting the LAN coordinator on a school or home admin PC, set the HTTPS address, certificate fingerprint, and admin key.',
+                    ),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colors.inkMuted,
                     ),
@@ -506,8 +575,10 @@ class _PrivacyDisclosure extends StatelessWidget {
     final colors = context.gamePalette;
     final theme = Theme.of(context);
     return _Surface(
-      semanticLabel:
-          t('送るものは明示同意、不透明な参加資格、学習日、学習成果の一方向ハッシュ。送らないものは氏名、回答、選択肢、音声、端末ID。', 'Sent: your explicit consent, an opaque membership token, the study date, and a one-way hash of your learning results. Not sent: your name, answers, choices, voice, or device ID.'),
+      semanticLabel: t(
+        '送るものは明示同意、不透明な参加資格、学習日、学習成果の一方向ハッシュ。送らないものは氏名、回答、選択肢、音声、端末ID。',
+        'Sent: your explicit consent, an opaque membership token, the study date, and a one-way hash of your learning results. Not sent: your name, answers, choices, voice, or device ID.',
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -530,17 +601,26 @@ class _PrivacyDisclosure extends StatelessWidget {
           _DisclosureLine(
             icon: Icons.upload_outlined,
             title: t('送るもの', 'What is sent'),
-            body: t('参加への同意、不透明な参加資格、学習日、学習成果eventの一方向ハッシュ', 'Your consent to join, an opaque membership token, the study date, and a one-way hash of learning events'),
+            body: t(
+              '参加への同意、不透明な参加資格、学習日、学習成果eventの一方向ハッシュ',
+              'Your consent to join, an opaque membership token, the study date, and a one-way hash of learning events',
+            ),
           ),
           const SizedBox(height: GameTokens.spaceMd),
           _DisclosureLine(
             icon: Icons.visibility_off_outlined,
             title: t('送らないもの', 'What is not sent'),
-            body: t('氏名、回答・選択肢、音声、端末ID', 'Name, answers and choices, voice, device ID'),
+            body: t(
+              '氏名、回答・選択肢、音声、端末ID',
+              'Name, answers and choices, voice, device ID',
+            ),
           ),
           const SizedBox(height: GameTokens.spaceMd),
           Text(
-            t('接続先はprivate/loopback HTTPSだけです。参加コード内の証明書fingerprintと一致しない相手には接続しません。', 'Only private/loopback HTTPS addresses are allowed. We never connect if the certificate fingerprint doesn\'t match the join code.'),
+            t(
+              '接続先はprivate/loopback HTTPSだけです。参加コード内の証明書fingerprintと一致しない相手には接続しません。',
+              'Only private/loopback HTTPS addresses are allowed. We never connect if the certificate fingerprint doesn\'t match the join code.',
+            ),
             style: theme.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
           ),
         ],
@@ -609,8 +689,8 @@ class _KindButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = switch (kind) {
-      LanSocialRoomKind.friends => t('ふたりクエスト', 'Duo quest'),
-      LanSocialRoomKind.league => t('週次リーグ', 'Weekly league'),
+      LanSocialRoomKind.friends => t('共同観察', 'Duo quest'),
+      LanSocialRoomKind.league => t('共同観測', 'Weekly league'),
     };
     return Semantics(
       button: true,
@@ -624,8 +704,8 @@ class _KindButton extends StatelessWidget {
                 onPressed: onPressed,
                 icon: Icon(
                   kind == LanSocialRoomKind.friends
-                      ? Icons.handshake_outlined
-                      : Icons.leaderboard_outlined,
+                      ? Icons.fact_check_outlined
+                      : Icons.format_list_numbered_outlined,
                 ),
                 label: Text('$label${joined ? t('（参加中）', ' (joined)') : ''}'),
               )
@@ -634,8 +714,8 @@ class _KindButton extends StatelessWidget {
                 onPressed: onPressed,
                 icon: Icon(
                   kind == LanSocialRoomKind.friends
-                      ? Icons.handshake_outlined
-                      : Icons.leaderboard_outlined,
+                      ? Icons.fact_check_outlined
+                      : Icons.format_list_numbered_outlined,
                 ),
                 label: Text('$label${joined ? t('（参加中）', ' (joined)') : ''}'),
               ),
@@ -667,7 +747,9 @@ class _JoinRoom extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
     final theme = Theme.of(context);
-    final title = kind == LanSocialRoomKind.friends ? t('ふたりクエストに参加', 'Join a duo quest') : t('週次リーグに参加', 'Join the weekly league');
+    final title = kind == LanSocialRoomKind.friends
+        ? t('共同観察に参加', 'Join a duo quest')
+        : t('共同観測に参加', 'Join the weekly league');
     return _Surface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -684,8 +766,14 @@ class _JoinRoom extends StatelessWidget {
           const SizedBox(height: GameTokens.spaceSm),
           Text(
             kind == LanSocialRoomKind.friends
-                ? t('別端末の相手と1回ずつ学習成果を積むと共同達成です。相手の回答や得点は見えません。', 'You complete it together when you and a partner on another device each add one learning result. You can\'t see their answers or score.')
-                : t('5人以上の実参加者がそろった週だけ匿名順位を表示します。5人未満では順位も得点も表示しません。', 'Anonymous rankings appear only in weeks with 5 or more real participants. With fewer than 5, no rankings or scores are shown.'),
+                ? t(
+                    '別端末の相手と1回ずつ学習成果を積むと共同達成です。相手の回答や得点は見えません。',
+                    'You complete it together when you and a partner on another device each add one learning result. You can\'t see their answers or score.',
+                  )
+                : t(
+                    '5人以上の実参加者がそろった週だけ匿名順位を表示します。5人未満では順位も得点も表示しません。',
+                    'Anonymous rankings appear only in weeks with 5 or more real participants. With fewer than 5, no rankings or scores are shown.',
+                  ),
             style: theme.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
           ),
           const SizedBox(height: GameTokens.spaceLg),
@@ -720,7 +808,12 @@ class _JoinRoom extends StatelessWidget {
             onChanged: busy ? null : (value) => onOptInChanged(value ?? false),
             contentPadding: EdgeInsets.zero,
             controlAffinity: ListTileControlAffinity.leading,
-            title: Text(t('上記の送信範囲を確認し、この部屋への参加に同意します', 'I\'ve checked what will be sent above and agree to join this room')),
+            title: Text(
+              t(
+                '上記の送信範囲を確認し、この部屋への参加に同意します',
+                'I\'ve checked what will be sent above and agree to join this room',
+              ),
+            ),
           ),
           const SizedBox(height: GameTokens.spaceMd),
           SizedBox(
@@ -734,7 +827,9 @@ class _JoinRoom extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.login_outlined),
-              label: Text(busy ? t('接続しています', 'Connecting') : t('参加する', 'Join')),
+              label: Text(
+                busy ? t('接続しています', 'Connecting') : t('参加する', 'Join'),
+              ),
             ),
           ),
         ],
@@ -769,11 +864,16 @@ class _JoinedRoom extends StatelessWidget {
       children: [
         if (leavePending)
           _LiveMessage(
-            value: t('退出を完了できませんでした。参加資格は端末に保持しています。接続を確認してもう一度試してください。', 'Couldn\'t finish leaving. Your membership is still kept on this device. Check your connection and try again.'),
+            value: t(
+              '退出を完了できませんでした。参加資格は端末に保持しています。接続を確認してもう一度試してください。',
+              'Couldn\'t finish leaving. Your membership is still kept on this device. Check your connection and try again.',
+            ),
             isError: true,
           )
         else if (snapshot == null)
-          _LoadingState(label: t('コーディネーターの状態を待っています', 'Waiting for the coordinator'))
+          _LoadingState(
+            label: t('コーディネーターの状態を待っています', 'Waiting for the coordinator'),
+          )
         else if (snapshot case final LanSocialFriendsSnapshot friends)
           _FriendsRoom(snapshot: friends)
         else if (snapshot case final LanSocialLeagueSnapshot league)
@@ -801,8 +901,8 @@ class _JoinedRoom extends StatelessWidget {
             leavePending
                 ? t('退出をもう一度送る', 'Send leave request again')
                 : kind == LanSocialRoomKind.friends
-                ? t('ふたりクエストの参加をやめる', 'Leave the duo quest')
-                : t('週次リーグの参加をやめる', 'Leave the weekly league'),
+                ? t('共同観察の参加をやめる', 'Leave the duo quest')
+                : t('共同観測の参加をやめる', 'Leave the weekly league'),
           ),
         ),
       ],
@@ -823,29 +923,46 @@ class _FriendsRoom extends StatelessWidget {
       LanSocialFriendsState.waitingForPartner => (
         icon: Icons.person_add_alt_1_outlined,
         title: t('相手を待っています', 'Waiting for your partner'),
-        body: t('参加コードを、いっしょに学ぶ1人へ渡してください。', 'Give the join code to the one person you\'re learning with.'),
+        body: t(
+          '参加コードを、いっしょに学ぶ1人へ渡してください。',
+          'Give the join code to the one person you\'re learning with.',
+        ),
       ),
       LanSocialFriendsState.active => (
-        icon: Icons.handshake_outlined,
+        icon: Icons.fact_check_outlined,
         title: t('ふたりそろいました', 'You\'re both here'),
         body: snapshot.myContributed
-            ? t('あなたの学習成果は届きました。相手の1回を待っています。', 'Your learning result arrived. Waiting for your partner\'s turn.')
-            : t('ふたりがそれぞれ学習成果を1回積むと達成し、結晶1個を受け取れます。', 'When you each add one learning result, you complete the quest and get 1 crystal.'),
+            ? t(
+                'あなたの学習成果は届きました。相手の1回を待っています。',
+                'Your learning result arrived. Waiting for your partner\'s turn.',
+              )
+            : t(
+                'ふたりがそれぞれ学習成果を1回積むと達成し、結晶1個を受け取れます。',
+                'When you each add one learning result, you complete the quest and get 1 crystal.',
+              ),
       ),
       LanSocialFriendsState.completed => (
-        icon: Icons.celebration_outlined,
-        title: t('ふたりのクエスト達成', 'Duo quest complete'),
-        body: t('実在するふたりが、それぞれ学習成果を積みました。達成報酬の結晶1個は、この端末に一度だけ記録されます。', 'Two real people each added a learning result. The 1-crystal reward is recorded on this device only once.'),
+        icon: Icons.assignment_turned_in_outlined,
+        title: t('共同観察を達成しました', 'Duo quest complete'),
+        body: t(
+          '実在するふたりが、それぞれ学習成果を積みました。達成報酬の結晶1個は、この端末に一度だけ記録されます。',
+          'Two real people each added a learning result. The 1-crystal reward is recorded on this device only once.',
+        ),
       ),
       LanSocialFriendsState.expired => (
         icon: Icons.event_busy_outlined,
-        title: t('このクエストは終了しました', 'This quest has ended'),
+        title: t('この共同観察は終了しました', 'This quest has ended'),
         body: snapshot.completed
             ? t('終了前に、ふたりで達成しています。', 'You two completed it before it ended.')
-            : t('新しい参加コードで次のクエストへ参加できます。', 'Use a new join code to join the next quest.'),
+            : t(
+                '新しい参加コードで次の共同観察へ参加できます。',
+                'Use a new join code to join the next quest.',
+              ),
       ),
     };
-    final myState = snapshot.myContributed ? t('自分の1回：完了', 'Your turn: done') : t('自分の1回：まだ', 'Your turn: not yet');
+    final myState = snapshot.myContributed
+        ? t('自分の1回：完了', 'Your turn: done')
+        : t('自分の1回：まだ', 'Your turn: not yet');
     final partnerState = !snapshot.partnerJoined
         ? t('相手：参加待ち', 'Partner: waiting to join')
         : snapshot.completed
@@ -853,7 +970,10 @@ class _FriendsRoom extends StatelessWidget {
         : t('相手の1回：内容・得点は非表示', 'Partner\'s turn: details and score hidden');
     return Semantics(
       container: true,
-      label: t('${state.title}。$myState。$partnerState。', '${state.title}. $myState. $partnerState.'),
+      label: t(
+        '${state.title}。$myState。$partnerState。',
+        '${state.title}. $myState. $partnerState.',
+      ),
       child: ExcludeSemantics(
         child: _Surface(
           child: Column(
@@ -893,7 +1013,10 @@ class _FriendsRoom extends StatelessWidget {
               ),
               const SizedBox(height: GameTokens.spaceLg),
               Text(
-                t('相手の氏名・回答・音声・端末ID・個別得点は受け取りません。', 'We never receive your partner\'s name, answers, voice, device ID, or individual score.'),
+                t(
+                  '相手の氏名・回答・音声・端末ID・個別得点は受け取りません。',
+                  'We never receive your partner\'s name, answers, voice, device ID, or individual score.',
+                ),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colors.inkMuted,
                 ),
@@ -920,19 +1043,22 @@ class _LeagueRoom extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _Surface(
-          semanticLabel: t('現在のtierは${profile.currentTier.label}', 'Current tier: ${profile.currentTier.label}'),
+          semanticLabel: t(
+            '現在の観測級は${profile.currentTier.displayLabel}',
+            'Current tier: ${profile.currentTier.label}',
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                t('自分の週次tier', 'Your weekly tier'),
+                t('自分の観測級', 'Your weekly tier'),
                 style: theme.textTheme.labelLarge?.copyWith(
                   color: colors.inkMuted,
                 ),
               ),
               const SizedBox(height: GameTokens.spaceXs),
               Text(
-                profile.currentTier.label,
+                profile.currentTier.displayLabel,
                 key: const ValueKey('lan-social-current-tier'),
                 style: theme.textTheme.headlineSmall
                     ?.copyWith(color: colors.ink)
@@ -952,7 +1078,10 @@ class _LeagueRoom extends StatelessWidget {
               ),
               const SizedBox(height: GameTokens.spaceMd),
               Text(
-                t('実参加者の今週順位と、端末内だけのtier履歴は別に扱います。', 'This week\'s ranking among real participants is kept separate from your on-device tier history.'),
+                t(
+                  '実参加者の今週順位と、端末内だけの観測級履歴は別に扱います。',
+                  'This week\'s ranking among real participants is kept separate from your on-device tier history.',
+                ),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colors.inkMuted,
                 ),
@@ -984,7 +1113,10 @@ class _LeaguePrivacyShield extends StatelessWidget {
     final colors = context.gamePalette;
     final theme = Theme.of(context);
     return _Surface(
-      semanticLabel: t('プライバシー保護中。5人未満のため順位と得点は非表示。', 'Privacy protected. Rankings and scores are hidden with fewer than 5 people.'),
+      semanticLabel: t(
+        'プライバシー保護中。5人未満のため順位と得点は非表示。',
+        'Privacy protected. Rankings and scores are hidden with fewer than 5 people.',
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1000,8 +1132,14 @@ class _LeaguePrivacyShield extends StatelessWidget {
           const SizedBox(height: GameTokens.spaceSm),
           Text(
             expired
-                ? t('この週は5人のプライバシー閾値に届かなかったため、順位も得点も作らずに終了しました。', 'This week didn\'t reach the 5-person privacy threshold, so it ended without any rankings or scores.')
-                : t('5人以上になるまで、順位、自分を含む得点、実人数を表示しません。架空の参加者で埋めることもありません。', 'Until there are 5 or more people, we don\'t show rankings, scores (including yours), or the headcount. We never fill in fake participants.'),
+                ? t(
+                    'この週は5人のプライバシー閾値に届かなかったため、順位も得点も作らずに終了しました。',
+                    'This week didn\'t reach the 5-person privacy threshold, so it ended without any rankings or scores.',
+                  )
+                : t(
+                    '5人以上になるまで、順位、自分を含む得点、実人数を表示しません。架空の参加者で埋めることもありません。',
+                    'Until there are 5 or more people, we don\'t show rankings, scores (including yours), or the headcount. We never fill in fake participants.',
+                  ),
             style: theme.textTheme.bodyLarge?.copyWith(color: colors.inkMuted),
           ),
         ],
@@ -1026,7 +1164,9 @@ class _LeagueStandings extends StatelessWidget {
           Semantics(
             header: true,
             child: Text(
-              snapshot.expired ? t('今週の確定順位', 'This week\'s final ranking') : t('今週の匿名順位', 'This week\'s anonymous ranking'),
+              snapshot.expired
+                  ? t('今週の確定順位', 'This week\'s final ranking')
+                  : t('今週の匿名順位', 'This week\'s anonymous ranking'),
               style: theme.textTheme.titleLarge
                   ?.copyWith(color: colors.ink)
                   .jaWeight(FontWeight.w900),
@@ -1034,7 +1174,10 @@ class _LeagueStandings extends StatelessWidget {
           ),
           const SizedBox(height: GameTokens.spaceXs),
           Text(
-            t('${snapshot.weekStart} 〜 ${snapshot.weekEnd}', '${snapshot.weekStart} – ${snapshot.weekEnd}'),
+            t(
+              '${snapshot.weekStart} 〜 ${snapshot.weekEnd}',
+              '${snapshot.weekStart} – ${snapshot.weekEnd}',
+            ),
             style: theme.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
           ),
           const SizedBox(height: GameTokens.spaceLg),
@@ -1049,7 +1192,10 @@ class _LeagueStandings extends StatelessWidget {
           ],
           const SizedBox(height: GameTokens.spaceMd),
           Text(
-            t('名前や公開participant IDはありません。表示行は、参加した実在端末の分だけです。', 'No names or public participant IDs. Each row is one real device that joined.'),
+            t(
+              '名前や公開participant IDはありません。表示行は、参加した実在端末の分だけです。',
+              'No names or public participant IDs. Each row is one real device that joined.',
+            ),
             style: theme.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
           ),
         ],
@@ -1068,12 +1214,19 @@ class _StandingRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
     final theme = Theme.of(context);
-    final rank = standing.rank == null ? t('順位なし', 'No rank') : t('${standing.rank}位', '#${standing.rank}');
-    final participant = standing.isMe ? t('自分', 'You') : t('匿名の参加者 ${index + 1}', 'Anonymous participant ${index + 1}');
+    final rank = standing.rank == null
+        ? t('順位なし', 'No rank')
+        : t('${standing.rank}位', '#${standing.rank}');
+    final participant = standing.isMe
+        ? t('自分', 'You')
+        : t('匿名の参加者 ${index + 1}', 'Anonymous participant ${index + 1}');
     final tied = standing.tied ? t('、同順位', ', tied') : '';
     return Semantics(
       container: true,
-      label: t('$rank、$participant、${standing.xp} XP$tied', '$rank, $participant, ${standing.xp} XP$tied'),
+      label: t(
+        '$rank、$participant、${standing.xp} 探究記録$tied',
+        '$rank, $participant, ${standing.xp} XP$tied',
+      ),
       child: ExcludeSemantics(
         child: Container(
           key: ValueKey('lan-social-standing-$index'),
@@ -1092,7 +1245,7 @@ class _StandingRow extends StatelessWidget {
               ),
               const SizedBox(height: GameTokens.spaceXs),
               Text(
-                '${standing.xp} XP',
+                '${standing.xp} 探究記録',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: colors.inkMuted,
                 ),
@@ -1162,8 +1315,10 @@ class _LeagueHistoryRow extends StatelessWidget {
       ),
     };
     return Semantics(
-      label:
-          t('${week.weekStart}の週、${week.previousTier.label}から${week.tier.label}へ${movement.label}', 'Week of ${week.weekStart}: ${movement.label} from ${week.previousTier.label} to ${week.tier.label}'),
+      label: t(
+        '${week.weekStart}の週、${week.previousTier.displayLabel}から${week.tier.displayLabel}へ${movement.label}',
+        'Week of ${week.weekStart}: ${movement.label} from ${week.previousTier.label} to ${week.tier.label}',
+      ),
       child: ExcludeSemantics(
         child: Container(
           key: ValueKey('lan-social-history-${week.weekStart}'),
@@ -1182,7 +1337,7 @@ class _LeagueHistoryRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      t('${movement.label}：${week.previousTier.label} → ${week.tier.label}', '${movement.label}: ${week.previousTier.label} → ${week.tier.label}'),
+                      '${movement.label}：${week.previousTier.displayLabel} → ${week.tier.displayLabel}',
                       style: theme.textTheme.titleSmall
                           ?.copyWith(color: colors.ink)
                           .jaWeight(FontWeight.w800),
@@ -1214,8 +1369,9 @@ class _TierLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
     final theme = Theme.of(context);
+    final label = tier.displayLabel;
     return Semantics(
-      label: '${tier.label}${current ? t('、現在', ', current') : ''}',
+      label: '$label${current ? '、現在' : ''}',
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.symmetric(
@@ -1227,7 +1383,7 @@ class _TierLabel extends StatelessWidget {
             borderRadius: BorderRadius.circular(GameTokens.radiusPill),
           ),
           child: Text(
-            tier.label,
+            label,
             style: theme.textTheme.labelMedium
                 ?.copyWith(color: current ? colors.onPathActive : colors.ink)
                 .jaWeight(current ? FontWeight.w900 : FontWeight.w600),
@@ -1424,14 +1580,23 @@ class _LanSocialRoomCreateScreenState extends State<LanSocialRoomCreateScreen> {
       client = _clientFor(endpoint);
     } on ArgumentError {
       _setMessage(
-        t('接続先はprivate/loopback HTTPSのIP、fingerprintは64桁のSHA-256を入力してください。', 'Enter a private/loopback HTTPS IP as the address, and a 64-character SHA-256 as the fingerprint.'),
+        t(
+          '接続先はprivate/loopback HTTPSのIP、fingerprintは64桁のSHA-256を入力してください。',
+          'Enter a private/loopback HTTPS IP as the address, and a 64-character SHA-256 as the fingerprint.',
+        ),
         isError: true,
       );
       return;
     }
     final adminKey = _coordinatorKey.text;
     if (adminKey.length < 32) {
-      _setMessage(t('管理キーを確認してください。参加コードとは別の値です。', 'Please check the admin key. It is different from the join code.'), isError: true);
+      _setMessage(
+        t(
+          '管理キーを確認してください。参加コードとは別の値です。',
+          'Please check the admin key. It is different from the join code.',
+        ),
+        isError: true,
+      );
       return;
     }
     setState(() {
@@ -1455,7 +1620,13 @@ class _LanSocialRoomCreateScreenState extends State<LanSocialRoomCreateScreen> {
     if (!mounted) return;
     if (room == null) {
       setState(() => _busy = false);
-      _setMessage(t('部屋を作れませんでした。管理キー、証明書、同じWi-Fiへの接続を確認してください。', 'Couldn\'t create the room. Check the admin key, certificate, and that you\'re on the same Wi-Fi.'), isError: true);
+      _setMessage(
+        t(
+          '部屋を作れませんでした。管理キー、証明書、同じWi-Fiへの接続を確認してください。',
+          'Couldn\'t create the room. Check the admin key, certificate, and that you\'re on the same Wi-Fi.',
+        ),
+        isError: true,
+      );
       return;
     }
     final code = client.connectionCodeFor(room).encode();
@@ -1463,7 +1634,10 @@ class _LanSocialRoomCreateScreenState extends State<LanSocialRoomCreateScreen> {
       _busy = false;
       _explicitOptIn = false;
       _createdCode = code;
-      _message = t('参加者用コードを作りました。管理キーは含まれていません。', 'Participant code created. It does not include the admin key.');
+      _message = t(
+        '参加者用コードを作りました。管理キーは含まれていません。',
+        'Participant code created. It does not include the admin key.',
+      );
       _messageIsError = false;
     });
   }
@@ -1473,9 +1647,9 @@ class _LanSocialRoomCreateScreenState extends State<LanSocialRoomCreateScreen> {
     if (code == null) return;
     await Clipboard.setData(ClipboardData(text: code));
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(t('参加者用コードをコピーしました', 'Participant code copied'))));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(t('参加者用コードをコピーしました', 'Participant code copied'))),
+    );
   }
 
   void _setMessage(String value, {required bool isError}) {
@@ -1510,7 +1684,10 @@ class _LanSocialRoomCreateScreenState extends State<LanSocialRoomCreateScreen> {
             Semantics(
               header: true,
               child: Text(
-                t('管理キーは参加者へ渡しません', 'Never share the admin key with participants'),
+                t(
+                  '管理キーは参加者へ渡しません',
+                  'Never share the admin key with participants',
+                ),
                 style: theme.textTheme.headlineSmall
                     ?.copyWith(color: colors.ink)
                     .jaWeight(FontWeight.w900),
@@ -1518,7 +1695,10 @@ class _LanSocialRoomCreateScreenState extends State<LanSocialRoomCreateScreen> {
             ),
             const SizedBox(height: GameTokens.spaceSm),
             Text(
-              t('この設定は、管理PCでLAN coordinatorを起動した先生・保護者向けです。参加者用コードにはHTTPS接続先、証明書fingerprint、room inviteだけが入ります。', 'This setup is for teachers or parents who started the LAN coordinator on an admin PC. The participant code contains only the HTTPS address, certificate fingerprint, and room invite.'),
+              t(
+                'この設定は、管理PCでLAN coordinatorを起動した先生・保護者向けです。参加者用コードにはHTTPS接続先、証明書fingerprint、room inviteだけが入ります。',
+                'This setup is for teachers or parents who started the LAN coordinator on an admin PC. The participant code contains only the HTTPS address, certificate fingerprint, and room invite.',
+              ),
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: colors.inkMuted,
               ),
@@ -1550,7 +1730,10 @@ class _LanSocialRoomCreateScreenState extends State<LanSocialRoomCreateScreen> {
                     autocorrect: false,
                     enableSuggestions: false,
                     decoration: InputDecoration(
-                      labelText: t('証明書SHA-256 fingerprint', 'Certificate SHA-256 fingerprint'),
+                      labelText: t(
+                        '証明書SHA-256 fingerprint',
+                        'Certificate SHA-256 fingerprint',
+                      ),
                       hintText: t('64桁の小文字hex', '64 lowercase hex characters'),
                     ),
                   ),
@@ -1564,7 +1747,10 @@ class _LanSocialRoomCreateScreenState extends State<LanSocialRoomCreateScreen> {
                     enableSuggestions: false,
                     decoration: InputDecoration(
                       labelText: t('管理キー', 'Admin key'),
-                      helperText: t('管理PCの画面から直接入力し、保存しません', 'Type it directly from the admin PC screen. It is not saved'),
+                      helperText: t(
+                        '管理PCの画面から直接入力し、保存しません',
+                        'Type it directly from the admin PC screen. It is not saved',
+                      ),
                     ),
                   ),
                 ],
@@ -1639,8 +1825,18 @@ class _LanSocialRoomCreateScreenState extends State<LanSocialRoomCreateScreen> {
                   : (value) => setState(() => _explicitOptIn = value ?? false),
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
-              title: Text(t('この管理PCに部屋情報を保存し、参加コードを発行することに同意します', 'I agree to save room info on this admin PC and issue a join code')),
-              subtitle: Text(t('氏名、回答、音声、端末IDを部屋情報として受け取りません', 'Names, answers, voice, and device IDs are never collected as room info')),
+              title: Text(
+                t(
+                  'この管理PCに部屋情報を保存し、参加コードを発行することに同意します',
+                  'I agree to save room info on this admin PC and issue a join code',
+                ),
+              ),
+              subtitle: Text(
+                t(
+                  '氏名、回答、音声、端末IDを部屋情報として受け取りません',
+                  'Names, answers, voice, and device IDs are never collected as room info',
+                ),
+              ),
             ),
             const SizedBox(height: GameTokens.spaceMd),
             SizedBox(
@@ -1654,7 +1850,11 @@ class _LanSocialRoomCreateScreenState extends State<LanSocialRoomCreateScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.add_link_outlined),
-                label: Text(_busy ? t('作成しています', 'Creating') : t('参加者用コードを作る', 'Create participant code')),
+                label: Text(
+                  _busy
+                      ? t('作成しています', 'Creating')
+                      : t('参加者用コードを作る', 'Create participant code'),
+                ),
               ),
             ),
             if (_message != null) ...[
@@ -1664,7 +1864,10 @@ class _LanSocialRoomCreateScreenState extends State<LanSocialRoomCreateScreen> {
             if (_createdCode != null) ...[
               const SizedBox(height: GameTokens.spaceLg),
               _Surface(
-                semanticLabel: t('参加者用コード。管理キーは含まれていません。', 'Participant code. Does not include the admin key.'),
+                semanticLabel: t(
+                  '参加者用コード。管理キーは含まれていません。',
+                  'Participant code. Does not include the admin key.',
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1678,7 +1881,10 @@ class _LanSocialRoomCreateScreenState extends State<LanSocialRoomCreateScreen> {
                     Center(
                       child: ParticipantQrCode(
                         data: _createdCode!,
-                        semanticLabel: t('参加者用QR。管理キー、生徒名、回答、音声、端末IDは含まれていません。', 'Participant QR. Does not include the admin key, student names, answers, voice, or device IDs.'),
+                        semanticLabel: t(
+                          '参加者用QR。管理キー、生徒名、回答、音声、端末IDは含まれていません。',
+                          'Participant QR. Does not include the admin key, student names, answers, voice, or device IDs.',
+                        ),
                       ),
                     ),
                     const SizedBox(height: GameTokens.spaceMd),
@@ -1701,7 +1907,10 @@ class _LanSocialRoomCreateScreenState extends State<LanSocialRoomCreateScreen> {
                     ),
                     const SizedBox(height: GameTokens.spaceSm),
                     Text(
-                      t('管理キーは構造上このコードとQRへ入りません。参加する人は、読み取り後にも送信範囲への同意が必要です。', 'By design, the admin key can never be in this code or QR. Participants still have to agree to what is sent after scanning.'),
+                      t(
+                        '管理キーは構造上このコードとQRへ入りません。参加する人は、読み取り後にも送信範囲への同意が必要です。',
+                        'By design, the admin key can never be in this code or QR. Participants still have to agree to what is sent after scanning.',
+                      ),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colors.inkMuted,
                       ),
@@ -1726,10 +1935,18 @@ class _LanSocialUnavailableScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gamePalette;
     final theme = Theme.of(context);
-    final title = schoolMode ? t('学校の端末内モードでは利用できません', 'Not available in school on-device mode') : t('通信しないモードでは利用できません', 'Not available in offline mode');
+    final title = schoolMode
+        ? t('学校の端末内モードでは利用できません', 'Not available in school on-device mode')
+        : t('通信しないモードでは利用できません', 'Not available in offline mode');
     final body = schoolMode
-        ? t('現在の学校向け契約は、学校serverへ接続せず、入力も学習記録も送らないlocal-onlyです。LAN coordinatorへも参加資格、学習日、event hashを送信しません。', 'The current school plan is local-only: it never connects to a school server or sends your input or learning records. Nothing (membership, study date, or event hash) is sent to a LAN coordinator either.')
-        : t('LANの共同機能は、成人onlineモードで送信範囲へ明示同意した場合だけ利用できます。local-onlyでは接続先を作らず、何も送信しません。', 'LAN group features are available only in adult online mode after you explicitly agree to what is sent. Local-only mode creates no connections and sends nothing.');
+        ? t(
+            '現在の学校向け契約は、学校serverへ接続せず、入力も学習記録も送らないlocal-onlyです。LAN coordinatorへも参加資格、学習日、event hashを送信しません。',
+            'The current school plan is local-only: it never connects to a school server or sends your input or learning records. Nothing (membership, study date, or event hash) is sent to a LAN coordinator either.',
+          )
+        : t(
+            'LANの共同機能は、成人onlineモードで送信範囲へ明示同意した場合だけ利用できます。local-onlyでは接続先を作らず、何も送信しません。',
+            'LAN group features are available only in adult online mode after you explicitly agree to what is sent. Local-only mode creates no connections and sends nothing.',
+          );
     return Scaffold(
       key: const ValueKey('lan-social-unavailable'),
       backgroundColor: colors.canvas,
@@ -1745,7 +1962,10 @@ class _LanSocialUnavailableScreen extends StatelessWidget {
           ),
           children: [
             _Surface(
-              semanticLabel: t('$title。LANへの接続と送信はありません。', '$title. No LAN connection and nothing is sent.'),
+              semanticLabel: t(
+                '$title。LANへの接続と送信はありません。',
+                '$title. No LAN connection and nothing is sent.',
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1779,19 +1999,49 @@ class _LanSocialUnavailableScreen extends StatelessWidget {
 }
 
 String _joinErrorLabel(LanSocialClientError? error) => switch (error) {
-  LanSocialClientError.optInRequired => t('参加前の同意が必要です。', 'You need to agree before joining.'),
-  LanSocialClientError.invalidConnectionCode => t('参加コードを確認してください。', 'Please check the join code.'),
-  LanSocialClientError.alreadyJoined => t('この種類の部屋にはすでに参加しています。', 'You\'ve already joined this type of room.'),
+  LanSocialClientError.optInRequired => t(
+    '参加前の同意が必要です。',
+    'You need to agree before joining.',
+  ),
+  LanSocialClientError.invalidConnectionCode => t(
+    '参加コードを確認してください。',
+    'Please check the join code.',
+  ),
+  LanSocialClientError.alreadyJoined => t(
+    'この種類の部屋にはすでに参加しています。',
+    'You\'ve already joined this type of room.',
+  ),
   LanSocialClientError.roomNotFound => t('部屋が見つかりません。', 'Room not found.'),
-  LanSocialClientError.roomExpired => t('この部屋は終了しています。', 'This room has ended.'),
+  LanSocialClientError.roomExpired => t(
+    'この部屋は終了しています。',
+    'This room has ended.',
+  ),
   LanSocialClientError.roomFull => t('この部屋の参加枠は埋まっています。', 'This room is full.'),
-  LanSocialClientError.rateLimited => t('試行回数の上限です。しばらく待ってください。', 'Too many attempts. Please wait a while.'),
-  LanSocialClientError.unauthorized => t('参加資格を確認できませんでした。', 'Couldn\'t verify your membership.'),
-  LanSocialClientError.schoolLeagueDisabled => t('学校モードでは週次リーグに参加できません。', 'You can\'t join the weekly league in school mode.'),
-  LanSocialClientError.wrongDay => t('学習日の確認に失敗しました。', 'Couldn\'t verify the study date.'),
-  LanSocialClientError.invalidResponse => t('安全な応答として確認できなかったため、参加しませんでした。', 'The response couldn\'t be verified as safe, so you were not joined.'),
+  LanSocialClientError.rateLimited => t(
+    '試行回数の上限です。しばらく待ってください。',
+    'Too many attempts. Please wait a while.',
+  ),
+  LanSocialClientError.unauthorized => t(
+    '参加資格を確認できませんでした。',
+    'Couldn\'t verify your membership.',
+  ),
+  LanSocialClientError.schoolLeagueDisabled => t(
+    '学校モードでは共同観測に参加できません。',
+    'You can\'t join the weekly league in school mode.',
+  ),
+  LanSocialClientError.wrongDay => t(
+    '学習日の確認に失敗しました。',
+    'Couldn\'t verify the study date.',
+  ),
+  LanSocialClientError.invalidResponse => t(
+    '安全な応答として確認できなかったため、参加しませんでした。',
+    'The response couldn\'t be verified as safe, so you were not joined.',
+  ),
   LanSocialClientError.notJoined ||
   LanSocialClientError.notMeaningful ||
   LanSocialClientError.unavailable ||
-  null => t('接続できませんでした。証明書と同じWi-Fiへの接続を確認してください。', 'Couldn\'t connect. Check the certificate and that you\'re on the same Wi-Fi.'),
+  null => t(
+    '接続できませんでした。証明書と同じWi-Fiへの接続を確認してください。',
+    'Couldn\'t connect. Check the certificate and that you\'re on the same Wi-Fi.',
+  ),
 };

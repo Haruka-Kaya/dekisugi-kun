@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#F6F2E9</color>
-    <color name="launch_background">#F6F2E9</color>
+    <!-- Field Notebook の観察紙。Flutter GamePalette.light.canvas と同値。 -->
+    <color name="ic_launcher_background">#F4F1E9</color>
+    <color name="launch_background">#F4F1E9</color>
 </resources>

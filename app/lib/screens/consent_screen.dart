@@ -3,6 +3,7 @@ import 'dart:async';
 import '../config/app_language.dart' as l10n;
 import '../config/app_radius.dart';
 import '../config/app_theme.dart';
+import '../config/game_tokens.dart';
 import '../config/motion.dart';
 import '../models/team.dart';
 import '../services/consent.dart';
@@ -76,6 +77,7 @@ class _ConsentScreenState extends State<ConsentScreen> {
   bool _guardianPresent = false;
   bool _agreedTransfer = false;
   bool _busy = false;
+  _ConsentStep _step = _ConsentStep.age;
 
   /// 学校が案内した経路を確認するための、サーバ発行の学校コード。
   final _schoolCode = TextEditingController();
@@ -96,6 +98,26 @@ class _ConsentScreenState extends State<ConsentScreen> {
       (!_needsGuardian || _guardianPresent) &&
       (!_viaSchool || _schoolCode.text.trim().isNotEmpty) &&
       !_busy;
+
+  bool get _canAdvance => switch (_step) {
+    _ConsentStep.age => _band != null,
+    _ConsentStep.route => !_busy,
+    _ConsentStep.transfer => _canProceed,
+  };
+
+  void _previous() {
+    if (_step == _ConsentStep.age || _busy) return;
+    setState(() => _step = _ConsentStep.values[_step.index - 1]);
+  }
+
+  void _next() {
+    if (!_canAdvance || _busy) return;
+    if (_step == _ConsentStep.transfer) {
+      unawaited(_submit());
+      return;
+    }
+    setState(() => _step = _ConsentStep.values[_step.index + 1]);
+  }
 
   void _useRestrictedLocal() {
     final route = _viaSchool
@@ -147,15 +169,33 @@ class _ConsentScreenState extends State<ConsentScreen> {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
+    final isUnavailableRoute =
+        _step == _ConsentStep.route && _currentlyUnavailable;
+    final pageTitle = switch (_step) {
+      _ConsentStep.age => l10n.t('年齢の確認', 'Check your age'),
+      _ConsentStep.route => l10n.t('利用する経路', 'How you will use the app'),
+      _ConsentStep.transfer => l10n.t('送信内容の確認', 'Check what is sent'),
+    };
+    final pageDescription = switch (_step) {
+      _ConsentStep.age => l10n.t(
+        '生年月日や氏名は集めません。',
+        'Your birth date and name are not collected.',
+      ),
+      _ConsentStep.route => l10n.t(
+        '学校からの案内か、本人の利用かを選びます。',
+        'Choose whether you were invited by a school or are using the app yourself.',
+      ),
+      _ConsentStep.transfer => l10n.t(
+        '会話を始める前に、実際の送信内容を確認します。',
+        'Review what is actually sent before starting a conversation.',
+      ),
+    };
 
     return Scaffold(
       body: SafeArea(
         bottom: false,
         child: ReadableWidth(
           child: ListView(
-            // **下のシステム余白を自分で足す。** ListView に padding を渡すと
-            // Flutter は MediaQuery の余白を足さなくなるので、
-            // 最後の「はじめる」がナビゲーションバーの下に潜る（実機で確認）
             padding: EdgeInsets.fromLTRB(
               16,
               18,
@@ -164,120 +204,109 @@ class _ConsentScreenState extends State<ConsentScreen> {
             ),
             children: [
               const StudioWordmark(),
+              const SizedBox(height: 24),
+              Text(
+                'はじめる前の確認  ${_step.index + 1} / ${_ConsentStep.values.length}',
+                style: t.textTheme.labelLarge
+                    ?.copyWith(color: context.gamePalette.pathActive)
+                    .jaWeight(FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              LinearProgressIndicator(
+                value: (_step.index + 1) / _ConsentStep.values.length,
+                minHeight: 8,
+                borderRadius: BorderRadius.circular(GameTokens.radiusPill),
+              ),
               const SizedBox(height: 20),
-              const _FirstMissionPreview(),
-              const SizedBox(height: 30),
+              if (_step == _ConsentStep.age) ...[
+                const _FirstMissionPreview(),
+                SizedBox(height: 24),
+              ],
               StudioPageIntro(
-                eyebrow: l10n.t('はじめまして', 'Nice to meet you'),
-                title: l10n.t(
-                  'あなたの言葉で、\n「わかった」を確かめる。',
-                  'Check that you\n"get it" in your own words.',
-                ),
-                body: l10n.t(
-                  '教材を読んだら、今度はあなたが先生役。'
-                      'デキすぎ君に教えると、考えの抜けを一緒に見つけられます。',
-                  'After reading the lesson, you become the teacher. '
-                      'Teach Dekisugi-kun and find the gaps in your thinking together.',
-                ),
+                eyebrow: pageTitle,
+                title: switch (_step) {
+                  _ConsentStep.age => l10n.t(
+                    '最初に、年齢を\n確認します。',
+                    'First, check\nyour age.',
+                  ),
+                  _ConsentStep.route => l10n.t(
+                    'どこから使うかを\n確認します。',
+                    'Check how you\nwill use the app.',
+                  ),
+                  _ConsentStep.transfer => l10n.t(
+                    '送る内容を\n確認します。',
+                    'Check what\nis sent.',
+                  ),
+                },
+                body: pageDescription,
               ),
-              const SizedBox(height: 34),
-              Text(
-                _currentlyUnavailable
-                    ? l10n.t(
-                        '端末内モードなら、確認はここまでです。',
-                        'In on-device mode, that\'s all you need to check.',
-                      )
-                    : l10n.t(
-                        'ここからは、3つだけ確認します。',
-                        'Next, just three quick checks.',
-                      ),
-                style: t.textTheme.titleMedium?.jaWeight(FontWeight.w700),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                _currentlyUnavailable
-                    ? l10n.t(
-                        '年齢や同意を保存せず、同梱教材だけで学べます。',
-                        'Learn with the built-in lessons only. Your age and consent are not saved.',
-                      )
-                    : l10n.t(
-                        '安心して話せるように、必要な手続きを順番にご案内します。',
-                        'So you can talk safely, we\'ll guide you through each required step.',
-                      ),
-                style: t.textTheme.bodySmall?.copyWith(
-                  color: t.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 18),
-              _PaperSection(
-                header: StudioSectionHeader(
-                  leading: _StepBadge(step: 1),
-                  title: l10n.t('年齢だけ教えてください', 'Just tell us your age'),
-                  description: l10n.t(
-                    '生年月日や氏名は集めません。',
-                    'We don\'t collect your birthday or name.',
+              SizedBox(height: 24),
+              switch (_step) {
+                _ConsentStep.age => _PaperSection(
+                  header: StudioSectionHeader(
+                    leading: _StepBadge(step: 1),
+                    title: l10n.t('年齢だけ教えてください', 'Just tell us your age'),
+                    description: l10n.t(
+                      '生年月日や氏名は集めません。',
+                      'Your birth date and name are not collected.',
+                    ),
+                  ),
+                  child: RadioGroup<AgeBand>(
+                    groupValue: _band,
+                    onChanged: (v) => setState(() => _band = v),
+                    child: Column(
+                      children: [
+                        for (final band in AgeBand.values)
+                          RadioListTile<AgeBand>(
+                            value: band,
+                            title: Text(band.label),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-                child: RadioGroup<AgeBand>(
-                  groupValue: _band,
-                  onChanged: (v) => setState(() => _band = v),
+                _ConsentStep.route => _PaperSection(
+                  header: StudioSectionHeader(
+                    leading: _StepBadge(step: 2),
+                    title: l10n.t('どこから使いますか？', 'How will you use the app?'),
+                    description: l10n.t(
+                      '学校から案内された場合だけ、学校コードが必要です。',
+                      'A school code is needed only when your school invited you.',
+                    ),
+                  ),
                   child: Column(
                     children: [
-                      for (final band in AgeBand.values)
-                        RadioListTile<AgeBand>(
-                          value: band,
-                          title: Text(band.label),
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              _PaperSection(
-                header: StudioSectionHeader(
-                  leading: _StepBadge(step: 2),
-                  title: l10n.t('どこから使いますか？', 'Where are you using this from?'),
-                  description: l10n.t(
-                    '学校から案内された場合だけ、学校コードが必要です。',
-                    'You only need a school code if your school told you to use this app.',
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    _SchoolCard(
-                      on: _viaSchool,
-                      controller: _schoolCode,
-                      onToggle: (v) => setState(() {
-                        _viaSchool = v;
-                        _schoolJoinFailure = null;
-                        // 学校経由に切り替えたら、端末での保護者確認は捨てる。
-                        // 残したままだと、戻したときに押した覚えのないチェックが生きる
-                        if (v) _guardianPresent = false;
-                      }),
-                      onChanged: () => setState(() {
-                        _schoolJoinFailure = null;
-                      }),
-                      failure: _schoolJoinFailure,
-                      busy: _busy,
-                      acceptingCodes: !_currentlyUnavailable,
-                    ),
-                    if (_currentlyUnavailable) ...[
-                      const SizedBox(height: 12),
-                      _UnavailableNotice(onUseLocalOnly: _useRestrictedLocal),
-                    ] else if (_needsGuardian) ...[
-                      const SizedBox(height: 12),
-                      _GuardianCard(
-                        checked: _guardianPresent,
-                        onChanged: (v) => setState(() => _guardianPresent = v),
+                      _SchoolCard(
+                        on: _viaSchool,
+                        controller: _schoolCode,
+                        onToggle: (v) => setState(() {
+                          _viaSchool = v;
+                          _schoolJoinFailure = null;
+                          if (v) _guardianPresent = false;
+                        }),
+                        onChanged: () => setState(() {
+                          _schoolJoinFailure = null;
+                        }),
+                        failure: _schoolJoinFailure,
+                        busy: _busy,
+                        acceptingCodes: !_currentlyUnavailable,
                       ),
+                      if (_currentlyUnavailable) ...[
+                        const SizedBox(height: 12),
+                        _UnavailableNotice(onUseLocalOnly: _useRestrictedLocal),
+                      ] else if (_needsGuardian) ...[
+                        const SizedBox(height: 12),
+                        _GuardianCard(
+                          checked: _guardianPresent,
+                          onChanged: (v) =>
+                              setState(() => _guardianPresent = v),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              if (!_currentlyUnavailable) ...[
-                const SizedBox(height: 14),
-                _PaperSection(
+                _ConsentStep.transfer => _PaperSection(
                   header: StudioSectionHeader(
                     leading: _StepBadge(step: 3),
                     title: l10n.t(
@@ -309,23 +338,48 @@ class _ConsentScreenState extends State<ConsentScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 18),
+              },
+              const SizedBox(height: 24),
+              if (isUnavailableRoute) ...[
+                OutlinedButton.icon(
+                  onPressed: _previous,
+                  icon: const Icon(Icons.arrow_back),
+                  label: Text('前の確認へ戻る'),
+                ),
+              ] else ...[
+                if (_step != _ConsentStep.age)
+                  OutlinedButton.icon(
+                    key: const ValueKey('consent-previous'),
+                    onPressed: _busy ? null : _previous,
+                    icon: const Icon(Icons.arrow_back),
+                    label: Text('前の確認へ戻る'),
+                  ),
+                if (_step != _ConsentStep.age) const SizedBox(height: 10),
                 FilledButton.icon(
-                  // 同意していないときは**押せない**ようにする。
-                  // 押せてしまうと「同意した」の記録が実態と食い違う
-                  onPressed: _canProceed ? _submit : null,
+                  key: const ValueKey('consent-next'),
+                  onPressed: _canAdvance ? _next : null,
                   icon: _busy
                       ? const SizedBox.square(
                           dimension: 18,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.arrow_forward),
-                  label: Text(l10n.t('はじめる', 'Start')),
+                      : Icon(
+                          _step == _ConsentStep.transfer
+                              ? Icons.check_rounded
+                              : Icons.arrow_forward,
+                        ),
+                  label: Text(
+                    _step == _ConsentStep.transfer
+                        ? l10n.t('同意してはじめる', 'Agree and start')
+                        : l10n.t('次へ', 'Next'),
+                  ),
                 ),
                 const SizedBox(height: 10),
                 OutlinedButton.icon(
                   key: const ValueKey('use-local-only-mode'),
-                  onPressed: widget.onUseLocalOnly,
+                  onPressed: _currentlyUnavailable
+                      ? _useRestrictedLocal
+                      : widget.onUseLocalOnly,
                   icon: const Icon(Icons.phone_android_outlined),
                   label: Text(
                     l10n.t('通信しない端末内モードを使う', 'Use offline on-device mode'),
@@ -364,6 +418,8 @@ class _ConsentScreenState extends State<ConsentScreen> {
     );
   }
 }
+
+enum _ConsentStep { age, route, transfer }
 
 enum _PreviewPhase { predict, challenge, clear }
 
@@ -480,10 +536,10 @@ class _FirstMissionPreviewState extends State<_FirstMissionPreview> {
                     Text(
                       _phase == _PreviewPhase.clear
                           ? l10n.t(
-                              'TUTORIAL CLEAR  /  流れを体験',
-                              'TUTORIAL CLEAR  /  You tried the flow',
+                              'おためし観察  /  完了',
+                              'Trial Observation  /  Complete',
                             )
-                          : l10n.t('30秒おためしミッション', '30-second trial mission'),
+                          : l10n.t('30秒おためし観察', '30-second trial observation'),
                       style: t.textTheme.labelMedium
                           ?.copyWith(color: c.heroMuted)
                           .jaWeight(FontWeight.w700),
@@ -589,7 +645,7 @@ class _FirstMissionPreviewState extends State<_FirstMissionPreview> {
               container: true,
               liveRegion: true,
               label: l10n.t(
-                'おためしミッションクリア。条件を使って思い込みを見破りました。',
+                'おためし観察を完了。条件を使って思い込みを見破りました。',
                 'Trial mission cleared. You used the condition to spot the misconception.',
               ),
               child: ExcludeSemantics(

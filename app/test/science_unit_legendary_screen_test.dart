@@ -158,7 +158,7 @@ void main() {
     await tester.pumpWidget(_wrap(isUnlocked: false));
 
     expect(find.byKey(const ValueKey('unit-legendary-locked')), findsOneWidget);
-    expect(find.textContaining('全章ボス'), findsOneWidget);
+    expect(find.textContaining('全総合検証'), findsOneWidget);
     expect(find.text(challengeVariant.transferPrompt), findsNothing);
     expect(find.text(_inertiaVariant.transferPrompt), findsNothing);
     _expectReferencesHidden();
@@ -175,7 +175,7 @@ void main() {
       find.byKey(const ValueKey('unit-legendary-task-fall')),
       findsOneWidget,
     );
-    expect(find.textContaining('1 OF 4'), findsOneWidget);
+    expect(find.textContaining('1/4'), findsOneWidget);
     _expectReferencesHidden();
     await _answerTask(tester, 'task-together');
     await _answerCheckpoint(tester, 'fall', 'same-time');
@@ -184,7 +184,7 @@ void main() {
       find.byKey(const ValueKey('unit-legendary-task-inertia')),
       findsOneWidget,
     );
-    expect(find.textContaining('3 OF 4'), findsOneWidget);
+    expect(find.textContaining('3/4'), findsOneWidget);
     _expectReferencesHidden();
     await _answerTask(tester, 'keep-moving');
     await _answerCheckpoint(tester, 'inertia', 'keep-then-slow');
@@ -214,7 +214,7 @@ void main() {
 
     expect(completed, 1);
     expect(find.byKey(const ValueKey('unit-legendary-done')), findsOneWidget);
-    expect(find.text('Unit高難度課題クリア'), findsOneWidget);
+    expect(find.text('単元の高難度検証を完了'), findsOneWidget);
     expect(find.textContaining('習得した'), findsNothing);
     expect(returned, 0);
     await _tapVisible(

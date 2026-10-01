@@ -567,4 +567,3 @@ export const STAGE2_NOTATION_LABS: Readonly<
     ],
   },
 }
-

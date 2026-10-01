@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+print -u2 -- "ERROR: この撮影契約は旧30秒ミッションUI専用のため廃止しました。Field Notebook用の状態遷移とOCR契約を実装してから再有効化してください。"
+exit 2
+
 script_dir="${0:A:h}"
 repo_root="${script_dir:h}"
 app_dir="$repo_root/app"

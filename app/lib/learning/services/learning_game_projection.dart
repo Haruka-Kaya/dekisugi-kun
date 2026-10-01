@@ -92,8 +92,8 @@ class LearningEconomyView {
 
 /// append-only台帳から、6タブで共有する表示値を一度だけ導く。
 ///
-/// 画面ごとにXP・streak・dueを再計算させない。学校scopeはDBで報酬不可だが、
-/// ここでも個人walletを混ぜず、ハート無制限・gem 0として表示する。
+/// 画面ごとに探究記録・連続観測・期限到来を再計算させない。学校scopeはDBで
+/// 報酬不可だが、ここでも個人walletを混ぜず、試行余力無制限・結晶0として表示する。
 class LearningGameProjection {
   const LearningGameProjection({
     this.pathProjection = const GamePathProjection(),
@@ -130,7 +130,7 @@ class LearningGameProjection {
       }
     }
     // 回答は保存しないが、OS終了後も「このノードに取り組んでいた」ことだけは
-    // Pathへ戻す。完了projectionが既にあるnodeはcompletedを優先する。
+    // 探究ノートへ戻す。完了projectionが既にあるnodeはcompletedを優先する。
     for (final run in snapshot.runs) {
       if (!cleared.contains(run.nodeId)) inProgress.add(run.nodeId);
     }
@@ -272,8 +272,14 @@ class LearningGameProjection {
           id: id,
           title: questTitles[id] ?? _questTitle(id),
           description: schoolMode
-              ? t('この端末で取り組む授業目標です。クラス全体の件数は集計しません。', 'A class goal for this device. Class-wide totals aren\'t counted.')
-              : t('学習パスの中身を進めるクエストです。', 'A quest that moves your learning path forward.'),
+              ? t(
+                  'この端末で取り組む授業の観察予定です。クラス全体の件数は集計しません。',
+                  'A class goal for this device. Class-wide totals aren\'t counted.',
+                )
+              : t(
+                  '探究ノートに観察記録を残す予定です。',
+                  'A quest that moves your learning path forward.',
+                ),
           kind: id.startsWith('monthly:')
               ? GameQuestKind.monthly
               : schoolMode
@@ -683,11 +689,13 @@ class LearningGameProjection {
       amount > 0 ? t('結晶$amount個', '$amount gems') : null;
 
   static String _questTitle(String id) {
-    if (id.contains('transfer')) return t('別の場面へ1回使う', 'Use it once in a new situation');
-    if (id.contains('retrieval') || id.contains('review')) {
-      return t('期限の来た復習を進める', 'Do a due review');
+    if (id.contains('transfer')) {
+      return t('別の場面で原理を1回確かめる', 'Use it once in a new situation');
     }
-    return t('学習パスを1件進める', 'Complete 1 learning path step');
+    if (id.contains('retrieval') || id.contains('review')) {
+      return t('期限の来た観察を1件確かめる', 'Do a due review');
+    }
+    return t('探究ノートへ観察を1件記録する', 'Complete 1 learning path step');
   }
 
   static String _dayKey(DateTime date) =>

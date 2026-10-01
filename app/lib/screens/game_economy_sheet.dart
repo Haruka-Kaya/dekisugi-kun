@@ -43,7 +43,7 @@ Future<void> showGameEconomySheet(
 /// 端末内で獲得した結晶だけを使う、用途限定の交換面。
 ///
 /// 実課金、汎用アイテムID、回答・正誤は扱わない。通常Pathと通常Practiceの
-/// 利用資格にも影響させず、保護・ハートとPathの見た目だけを補助する。
+/// 利用資格にも影響させず、観測記録の保護・試行余力・観察装備だけを補助する。
 class GameEconomySheet extends StatefulWidget {
   const GameEconomySheet({
     super.key,
@@ -196,7 +196,7 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
             const SizedBox(height: GameTokens.spaceMd),
             Text(
               lang.t(
-                '学習で得た結晶を、保護・ハート・Pathの見た目に使えます。実課金では増やせません。',
+                '探究で得た結晶は、忙しい日に連続観察を守る保護、試行余力、デキすぎ君の装いにだけ使えます。学習を速くしたり、正答を買ったりはできません。実課金では増やせません。',
                 'Use gems earned from learning for streak shields, hearts, or your Path mascot. Gems cannot be bought with money.',
               ),
               style: t.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
@@ -206,9 +206,9 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
               key: const ValueKey('economy-freeze-item'),
               actionId: 'freeze',
               icon: Icons.ac_unit_rounded,
-              title: lang.t('連続記録の保護を補充', 'Refill a streak shield'),
+              title: lang.t('お休みの日の保護を補充', 'Refill a streak shield'),
               description: lang.t(
-                '今週使える保護を1回分補充します。週の補充上限に達した場合は使えません。',
+                '1日観察できない日があっても、連続観察の記録を守る1回分です。今週の補充上限に達した場合は使えません。',
                 'Add one shield for this week. Unavailable when the weekly refill limit is reached.',
               ),
               currentLabel: lang.t(
@@ -226,11 +226,11 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
                   : () => _confirmAndRun(
                       actionId: 'freeze',
                       title: lang.t(
-                        '連続記録の保護を補充しますか？',
+                        'お休みの日の保護を補充しますか？',
                         'Refill a streak shield?',
                       ),
                       body: lang.t(
-                        '結晶$freezeCost個を使い、今週の保護を1回分補充します。',
+                        '結晶$freezeCost個を使い、1日空いても連続観察の記録を守る保護を1回分補充します。',
                         'Spend $freezeCost gems to add one shield this week.',
                       ),
                       action: widget.onRefillStreakFreeze,
@@ -240,10 +240,10 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
             _EconomyItem(
               key: const ValueKey('economy-hearts-item'),
               actionId: 'hearts',
-              icon: Icons.favorite_rounded,
-              title: lang.t('学習ハートを全回復', 'Refill all learning hearts'),
+              icon: Icons.science_rounded,
+              title: lang.t('試行余力を全回復', 'Refill all learning hearts'),
               description: lang.t(
-                '固定課題で使うハートを${widget.player.maxChallengeHearts}個まで戻します。30分ごと、または回復練習でも1個戻ります。',
+                '固定課題で使う試行余力を${widget.player.maxChallengeHearts}枠まで戻します。30分ごと、または回復実験でも1枠戻ります。',
                 'Restore hearts to ${widget.player.maxChallengeHearts}. You can also recover one every 30 minutes or with a recovery exercise.',
               ),
               currentLabel: lang.t(
@@ -261,11 +261,11 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
                   : () => _confirmAndRun(
                       actionId: 'hearts',
                       title: lang.t(
-                        '学習ハートを全回復しますか？',
+                        '試行余力を全回復しますか？',
                         'Refill all learning hearts?',
                       ),
                       body: lang.t(
-                        '結晶$heartCost個を使い、学習ハートを全回復します。',
+                        '結晶$heartCost個を使い、試行余力を全回復します。',
                         'Spend $heartCost gems to refill all learning hearts.',
                       ),
                       action: widget.onRecoverChallengeHearts,
@@ -273,7 +273,7 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
             ),
             const SizedBox(height: GameTokens.spaceXl),
             Text(
-              lang.t('Pathマスコット', 'Path mascot'),
+              lang.t('デキすぎ君の観察装備', 'Path mascot'),
               style: t.textTheme.titleLarge
                   ?.copyWith(color: colors.ink)
                   .jaWeight(FontWeight.w900),
@@ -281,7 +281,7 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
             const SizedBox(height: GameTokens.spaceXs),
             Text(
               lang.t(
-                '見た目だけを変更します。学習進行・XP・正答・ハートは購入できません。',
+                '見た目だけを変更します。探究の進行・探究記録・正答・試行余力は購入できません。',
                 'Change the look only. You cannot buy progress, XP, correct answers, or hearts.',
               ),
               style: t.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
@@ -309,7 +309,7 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
                     'Buy ${economy.cosmeticItems[index].title}?',
                   ),
                   body: lang.t(
-                    '結晶${economy.cosmeticItems[index].gemCost}個を使い、Pathの見た目だけを変更します。学習進行や正答は変わりません。',
+                    '結晶${economy.cosmeticItems[index].gemCost}個を使い、探究ノートの見た目だけを変更します。探究の進行や正答は変わりません。',
                     'Spend ${economy.cosmeticItems[index].gemCost} gems to change the look of your Path. Progress and answers stay the same.',
                   ),
                   action: () => widget.onPurchaseCosmetic(
@@ -347,7 +347,7 @@ class _GameEconomySheetState extends State<GameEconomySheet> {
               ),
               child: Text(
                 lang.t(
-                  '結晶は速度や誤答回数では増減しません。Timed当日券は練習タブで参加前に確認します。Match / Lightning、時間回復、ハート回復練習は無料です。学校モードでは結晶経済を使いません。',
+                  '結晶は速度や誤答回数では増減しません。時間観察の当日券は「実験」で参加前に確認します。対応づけ実験、連続観察、時間回復、試行余力の回復実験は無料です。学校モードでは結晶経済を使いません。',
                   'Speed and wrong answers do not affect gems. Confirm a Timed day pass in Practice before joining. Match, Lightning, timed recovery, and heart recovery practice are free. Gems are not used in class mode.',
                 ),
                 style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
@@ -449,7 +449,7 @@ class _EconomyItem extends StatelessWidget {
                         dimension: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Icons.diamond_rounded),
+                    : const Icon(Icons.hexagon_rounded),
                 label: Text(
                   busy
                       ? lang.t('記録中…', 'Saving…')

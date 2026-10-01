@@ -741,7 +741,7 @@ class _Answer extends StatelessWidget {
         if (textOnlySource case final source?) ...[
           ScienceChallengeSurface(
             label: t(
-              '文字教材（Listeningとは別の学習）',
+              '文字教材（聞き取り観察とは別の学習）',
               'Text material (separate from Listening)',
             ),
             icon: Icons.article_outlined,
@@ -968,7 +968,7 @@ class _Done extends StatelessWidget {
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('listening-return-to-path'),
-          label: t('学習パスへ戻る', 'Back to learning path'),
+          label: t('探究ノートへ戻る', 'Back to learning path'),
           icon: Icons.route_rounded,
           onPressed: onReturnToPath,
           backgroundColor: colors.pathActive,
@@ -996,7 +996,7 @@ class _TextOnlyDone extends StatelessWidget {
           backgroundColor: colors.pathReview.withValues(alpha: .12),
           child: Text(
             t(
-              '音声を再生できなかったため、Listening完了・XP・連続記録には数えません。文字で意味だけを確認しました。',
+              '音声を再生できなかったため、聞き取り観察・探究記録・連続観測には数えません。文字で意味だけを確認しました。',
               'Audio couldn\'t be played, so this doesn\'t count toward Listening completion, XP, or your streak. You checked the meaning with text only.',
             ),
           ),
@@ -1004,7 +1004,7 @@ class _TextOnlyDone extends StatelessWidget {
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('listening-text-only-return-to-path'),
-          label: t('学習パスへ戻る', 'Back to learning path'),
+          label: t('探究ノートへ戻る', 'Back to learning path'),
           icon: Icons.route_rounded,
           onPressed: onReturnToPath,
           backgroundColor: colors.pathActive,

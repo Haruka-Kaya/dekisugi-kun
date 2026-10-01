@@ -1,3 +1,4 @@
+import 'package:dekisugi/config/app_language.dart';
 import 'package:dekisugi/config/app_theme.dart';
 import 'package:dekisugi/models/game_path.dart';
 import 'package:dekisugi/ui/_material.dart';
@@ -57,6 +58,65 @@ const _friendQuest = GameQuest(
 );
 
 void main() {
+  testWidgets('英語でも初回案内と探究の役割を読んで次へ進める', (tester) async {
+    final previous = appLanguage;
+    appLanguage = AppLanguage.en;
+    addTearDown(() => appLanguage = previous);
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    var dismissed = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: GameTabGuide(
+          schoolMode: false,
+          onDismissed: () => dismissed = true,
+        ),
+      ),
+    );
+    expect(find.text('Field Notebook'), findsWidgets);
+    expect(find.text('Next'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('game-tab-guide-next')));
+    await tester.pumpAndSettle();
+    expect(find.text('Science Cases'), findsWidgets);
+    await tester.tap(find.byKey(const ValueKey('game-tab-guide-dismiss')));
+    expect(dismissed, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('初回案内は各タブの役割を順番に示し、いつでも閉じられる', (tester) async {
+    var dismissed = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: GameShell(
+          showTabGuide: true,
+          onTabGuideDismissed: () => dismissed += 1,
+          path: const Center(child: Text('PATH')),
+          stories: const Center(child: Text('STORIES')),
+          practice: const Center(child: Text('PRACTICE')),
+          notation: const Center(child: Text('NOTATION')),
+          league: const Center(child: Text('LEAGUE')),
+          profile: const Center(child: Text('PROFILE')),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('game-tab-guide')), findsOneWidget);
+    expect(find.text('探究ノート'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('game-tab-guide-next')));
+    await tester.pumpAndSettle();
+    expect(find.text('理科事件簿'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('game-tab-guide-dismiss')));
+    await tester.pumpAndSettle();
+    expect(dismissed, 1);
+    expect(find.byKey(const ValueKey('game-tab-guide')), findsNothing);
+    expect(find.text('PATH'), findsOneWidget);
+  });
+
   testWidgets('6タブは状態を保持し、320dp・文字200%でも操作できる', (tester) async {
     tester.view.physicalSize = const Size(320, 568);
     tester.view.devicePixelRatio = 1;
@@ -98,7 +158,27 @@ void main() {
     await tester.pump();
 
     expect(find.text('PATH'), findsOneWidget);
-    expect(find.bySemanticsLabel('学習パス'), findsOneWidget);
+    expect(find.bySemanticsLabel('探究ノート'), findsOneWidget);
+    for (final mimeticResourceIcon in <IconData>[
+      Icons.local_fire_department_rounded,
+      Icons.diamond_rounded,
+      Icons.favorite_rounded,
+      Icons.emoji_events_rounded,
+      Icons.bolt_rounded,
+    ]) {
+      expect(
+        find.byIcon(mimeticResourceIcon),
+        findsNothing,
+        reason: '固定headerとnavigationへ旧ゲーム資源の記号を戻さない',
+      );
+    }
+    for (final oldTabLabel in <String>['学ぶ', '物語', '練習', '記号', '競う', '自分']) {
+      expect(
+        find.text(oldTabLabel),
+        findsNothing,
+        reason: '6領域はField Notebookの情報設計を正本にする',
+      );
+    }
     final header = find.byKey(const ValueKey('game-player-status-header'));
     final initialHeaderTop = tester.getTopLeft(header);
     expect(header, findsOneWidget);
@@ -213,7 +293,7 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('クエストの主操作は固有callbackなしでも学習Pathへ戻す', (tester) async {
+  testWidgets('観察予定の主操作は固有callbackなしでも探究ノートへ戻す', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildAppTheme(Brightness.light),
@@ -237,13 +317,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('game-quest-sheet')), findsOneWidget);
 
-    await tester.tap(find.text('このクエストを見る'));
+    await tester.tap(find.text('この予定を開く'));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('game-quest-sheet')), findsNothing);
     expect(find.text('PATH'), findsOneWidget);
     expect(
-      find.bySemanticsLabel('学習パス'),
+      find.bySemanticsLabel('探究ノート'),
       findsOneWidget,
       reason: 'クエストを閉じた後は次のPath nodeを選べる状態へ戻す',
     );
@@ -272,7 +352,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('game-quest-button')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('このクエストを見る'));
+    await tester.tap(find.text('この予定を開く'));
     await tester.pumpAndSettle();
 
     expect(find.text('PROFILE'), findsOneWidget);
@@ -315,8 +395,8 @@ void main() {
     expect(find.byKey(const ValueKey('player-status-streak')), findsNothing);
     expect(find.byKey(const ValueKey('player-status-gems')), findsNothing);
     expect(find.byKey(const ValueKey('player-status-hearts')), findsOneWidget);
-    expect(find.bySemanticsLabel('授業モード。ハート、無制限。個人報酬は記録しません'), findsOneWidget);
-    expect(find.bySemanticsLabel('授業目標。進行中はありません'), findsOneWidget);
+    expect(find.bySemanticsLabel('授業モード。試行、無制限。個人報酬は記録しません'), findsOneWidget);
+    expect(find.bySemanticsLabel('授業の観察予定。進行中はありません'), findsOneWidget);
 
     for (final tab in GameTab.values) {
       await tester.tap(find.byKey(ValueKey<String>('game-tab-${tab.name}')));
@@ -326,8 +406,8 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('game-quest-button')));
     await tester.pumpAndSettle();
-    expect(find.text('この端末の授業目標'), findsOneWidget);
-    expect(find.text('この端末で達成済み'), findsOneWidget);
+    expect(find.text('この端末の授業予定'), findsOneWidget);
+    expect(find.text('この端末に記録済み'), findsOneWidget);
     expect(find.text('結晶 5個'), findsNothing);
     expect(tester.takeException(), isNull);
     semantics.dispose();

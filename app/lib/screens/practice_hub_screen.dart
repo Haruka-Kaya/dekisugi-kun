@@ -91,7 +91,7 @@ class PracticeHubScreen extends StatelessWidget {
                             'Even after today\'s reviews, you can freely choose other practice.',
                           )
                         : lang.t(
-                            '学習パスはいつでも進められます。',
+                            '探究ノートはいつでも進められます。',
                             'You can continue the learning path anytime.',
                           ),
                     style: Theme.of(
@@ -106,7 +106,7 @@ class PracticeHubScreen extends StatelessWidget {
         if (dailyAudioPlan case final plan?) ...[
           const SizedBox(height: GameTokens.spaceXl),
           GameSectionHeader(
-            title: lang.t('音声ミッション', 'Audio missions'),
+            title: lang.t('音声観察', 'Audio missions'),
             description: lang.t(
               '聞く課題と話す課題を、別々の学習として開きます。',
               'Listening and speaking tasks open as separate activities.',
@@ -150,7 +150,7 @@ class PracticeHubScreen extends StatelessWidget {
               Expanded(
                 child: Text(
                   lang.t(
-                    '時間制は任意です。時間切れでも学習パス、連続学習、学校課題は失いません。',
+                    '時間観察は任意です。時間切れでも探究ノート、連続観測、学校課題は失いません。',
                     'Timed modes are optional. Running out of time won\'t cost your learning path, streak, or school assignments.',
                   ),
                   style: Theme.of(
@@ -177,7 +177,7 @@ class _PracticeLane extends StatelessWidget {
     final t = Theme.of(context);
     final colors = context.gamePalette;
     final icon = switch (mode.kind) {
-      PracticeModeKind.heartRecovery => Icons.favorite_rounded,
+      PracticeModeKind.heartRecovery => Icons.battery_charging_full_rounded,
       PracticeModeKind.personalized => Icons.tune_rounded,
       PracticeModeKind.resume => Icons.play_arrow_rounded,
       PracticeModeKind.repair => Icons.build_circle_outlined,
@@ -185,7 +185,7 @@ class _PracticeLane extends StatelessWidget {
       PracticeModeKind.diagram => Icons.account_tree_outlined,
       PracticeModeKind.timed => Icons.timer_outlined,
       PracticeModeKind.match => Icons.grid_view_rounded,
-      PracticeModeKind.lightning => Icons.bolt_rounded,
+      PracticeModeKind.lightning => Icons.playlist_add_check_rounded,
     };
     return Semantics(
       button: mode.enabled,

@@ -47,7 +47,11 @@ class FakeLive {
         (raw) {
           final m = jsonDecode(raw as String) as Map<String, dynamic>;
           _received.add(m);
-          if (m.containsKey('setup')) ws.add(jsonEncode({'setupComplete': {}}));
+          // A buffered setup frame can arrive after hangUp has closed this
+          // socket. Match say's open-state guard before acknowledging it.
+          if (m.containsKey('setup') && ws.readyState == WebSocket.open) {
+            ws.add(jsonEncode({'setupComplete': {}}));
+          }
           // **閉じたソケットを溜めない。** 繋ぎ直しを何度も試すテストで、
           // 古いソケットに書こうとして StreamSink is closed で落ちる
         },

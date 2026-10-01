@@ -1,5 +1,6 @@
 import 'package:dekisugi/config/app_theme.dart';
 import 'package:dekisugi/config/motion.dart';
+import 'package:dekisugi/learning/domain/learning_heart.dart';
 import 'package:dekisugi/learning/domain/learning_need.dart';
 import 'package:dekisugi/models/unit.dart';
 import 'package:dekisugi/screens/science_diagram_screen.dart';
@@ -123,6 +124,7 @@ Widget _wrap({
   double textScale = 1,
   bool disableAnimations = false,
   LearningNeedEvidenceReported? onNeedEvidence,
+  LearningHeartLossReported? onHeartLoss,
 }) => MaterialApp(
   theme: buildAppTheme(Brightness.light),
   builder: (context, child) => MediaQuery(
@@ -139,6 +141,7 @@ Widget _wrap({
     onCompleted: onCompleted ?? () {},
     onReturnToPath: onReturnToPath,
     onNeedEvidence: onNeedEvidence,
+    onHeartLoss: onHeartLoss,
   ),
 );
 
@@ -156,28 +159,44 @@ Future<void> _scrollToAndTap(WidgetTester tester, Finder target) async {
   await tester.pump();
 }
 
-Future<void> _answerTask(WidgetTester tester, int practiceAttempt) async {
+Future<void> _answerTask(
+  WidgetTester tester,
+  int practiceAttempt, {
+  bool correct = true,
+}) async {
   switch (practiceAttempt) {
     case 0:
-      // 教材と違う組み方でも、正誤判定せず先へ進める。
       await _scrollToAndTap(
         tester,
-        find.byKey(const ValueKey('cognitive-task-choice-single-a')),
+        find.byKey(
+          ValueKey(
+            'cognitive-task-choice-${correct ? 'single-b' : 'single-a'}',
+          ),
+        ),
       );
     case 1:
-      for (final pair in [
-        ('heater', 'hold'),
-        ('water', 'hold'),
-        ('temperature', 'hold'),
-      ]) {
+      final pairs = correct
+          ? const [
+              ('heater', 'change'),
+              ('water', 'hold'),
+              ('temperature', 'measure'),
+            ]
+          : const [
+              ('heater', 'hold'),
+              ('water', 'hold'),
+              ('temperature', 'hold'),
+            ];
+      for (final pair in pairs) {
         await _scrollToAndTap(
           tester,
           find.byKey(ValueKey('cognitive-task-classify-${pair.$1}-${pair.$2}')),
         );
       }
     case 2:
-      // 著者順のままで、solutionと異なる順序を残す。
-      for (final id in ['steam', 'heat', 'boil']) {
+      for (final id
+          in correct
+              ? const ['heat', 'boil', 'steam']
+              : const ['steam', 'heat', 'boil']) {
         await _scrollToAndTap(
           tester,
           find.byKey(ValueKey('cognitive-task-sequence-add-$id')),
@@ -226,6 +245,11 @@ void main() {
       );
       await tester.pump();
 
+      expect(find.text('しくみ図  /  観察中'), findsOneWidget);
+      expect(find.text('しくみを組む'), findsOneWidget);
+      expect(find.textContaining('観察手順 1 / 2'), findsOneWidget);
+      expect(find.textContaining('DIAGRAM'), findsNothing);
+      expect(find.textContaining('STEP'), findsNothing);
       expect(find.textContaining('固定の復習コードだけ'), findsOneWidget);
       expect(find.textContaining('成績や理解度の認定には使いません'), findsOneWidget);
       expect(find.text(variant.transferPrompt), findsOneWidget);
@@ -252,10 +276,12 @@ void main() {
         tester,
         find.byKey(const ValueKey('science-diagram-submit')),
       );
+      expect(find.text('教材と比べる'), findsOneWidget);
+      expect(find.textContaining('観察手順 2 / 2'), findsOneWidget);
       expect(needs, hasLength(1));
       expect(needs.single.conceptKey, 'heat-transfer');
       expect(needs.single.needCode, variant.cognitiveTask.needCode);
-      expect(needs.single.kind, LearningNeedEvidenceKind.observed);
+      expect(needs.single.kind, LearningNeedEvidenceKind.demonstrated);
       expect(
         find.byKey(const ValueKey('science-diagram-compare')),
         findsOneWidget,
@@ -266,7 +292,7 @@ void main() {
       );
       expect(
         find.text(cognitiveTaskSolutionSummary(variant.cognitiveTask)),
-        findsOneWidget,
+        findsAtLeastNWidgets(1),
       );
       expect(find.text(variant.expectedOutcome), findsOneWidget);
       expect(find.text(variant.expectedReason), findsOneWidget);
@@ -321,7 +347,7 @@ void main() {
     expect(find.text('1. 水を加熱する\n2. 水が沸騰する\n3. 水蒸気が増える'), findsNothing);
     expect(find.bySemanticsLabel(RegExp('教材の組み方')), findsNothing);
 
-    await _answerTask(tester, 2);
+    await _answerTask(tester, 2, correct: false);
     await tester.enterText(
       find.byKey(const ValueKey('science-diagram-reason')),
       '現象の前後関係からこの順番にした。',
@@ -335,6 +361,49 @@ void main() {
     );
     expect(find.bySemanticsLabel(RegExp('教材の組み方.*水を加熱する')), findsOneWidget);
     semantics.dispose();
+  });
+
+  testWidgets('教材と違う固定回答は自由記述だけでは完了できず、組み直しに戻る', (tester) async {
+    var completed = 0;
+    final needs = <LearningNeedEvidence>[];
+    final hearts = <LearningHeartLossEvidence>[];
+    await tester.pumpWidget(
+      _wrap(
+        practiceAttempt: 0,
+        disableAnimations: true,
+        onCompleted: () => completed++,
+        onNeedEvidence: needs.add,
+        onHeartLoss: hearts.add,
+      ),
+    );
+
+    await _answerTask(tester, 0, correct: false);
+    await tester.enterText(
+      find.byKey(const ValueKey('science-diagram-reason')),
+      '水は加熱されないと考えた。',
+    );
+    await _scrollToAndTap(
+      tester,
+      find.byKey(const ValueKey('science-diagram-submit')),
+    );
+
+    expect(needs.single.kind, LearningNeedEvidenceKind.observed);
+    expect(hearts, hasLength(1));
+    expect(find.text('教材の組み方と違うところがあります'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('science-diagram-try-again')),
+      findsOneWidget,
+    );
+
+    await _scrollToAndTap(
+      tester,
+      find.byKey(const ValueKey('science-diagram-try-again')),
+    );
+    expect(
+      find.byKey(const ValueKey('science-diagram-compose')),
+      findsOneWidget,
+    );
+    expect(completed, 0);
   });
 
   testWidgets('320x568・文200%・Reduce Motionでも操作できタッチ面は48dp以上', (tester) async {
@@ -363,9 +432,9 @@ void main() {
     }
 
     for (final pair in [
-      ('heater', 'hold'),
+      ('heater', 'change'),
       ('water', 'hold'),
-      ('temperature', 'hold'),
+      ('temperature', 'measure'),
     ]) {
       final target = find.byKey(
         ValueKey('cognitive-task-classify-${pair.$1}-${pair.$2}'),

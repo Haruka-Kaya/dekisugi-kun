@@ -217,6 +217,14 @@ void main() {
           findsOneWidget,
         );
         expect(
+          _decoration(
+            tester,
+            find.byKey(ValueKey('story-node-${episode.id}')),
+          ).shape,
+          isNot(BoxShape.circle),
+          reason: '事件ファイルへ丸いゲームnodeを再導入しない',
+        );
+        expect(
           find.bySemanticsLabel(
             RegExp(
               '${RegExp.escape(episode.title)}.*${expected[episode.id]!.$1}',
@@ -278,13 +286,12 @@ void main() {
       await tester.pump();
 
       expect(find.bySemanticsLabel(RegExp('今日が期限の復習、2件')), findsOneWidget);
-      expect(
-        _decoration(
-          tester,
-          find.byKey(const ValueKey('practice-due-summary')),
-        ).color,
-        palette.pathReview,
+      final brief = _decoration(
+        tester,
+        find.byKey(const ValueKey('practice-due-summary')),
       );
+      expect(brief.color, palette.surfaceRaised);
+      expect(brief.border, Border.all(color: palette.border));
 
       final enabled = find.byKey(const ValueKey('practice-mode-personalized'));
       await _show(tester, enabled, const ValueKey('practice-hub-screen'));
@@ -364,8 +371,8 @@ void main() {
       );
       final hero = find.byKey(const ValueKey('league-school-local'));
       final decoration = _decoration(tester, hero);
-      expect(decoration.color, palette.story);
-      expect(decoration.border, isNull);
+      expect(decoration.color, palette.surfaceRaised);
+      expect(decoration.border, isNotNull);
 
       final rules = find.byKey(const ValueKey('league-rules-disclosure'));
       await _show(tester, rules, const ValueKey('league-screen'));
@@ -392,7 +399,7 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text('この端末の授業ミッション'), findsOneWidget);
+      expect(find.text('この端末の観察目標'), findsOneWidget);
       expect(find.text('クラス共同ミッション'), findsNothing);
       expect(
         find.bySemanticsLabel(RegExp('この端末の授業目標、1、目標1.*クラス全体の件数は集計しません')),
@@ -413,10 +420,10 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text('ゴールドリーグ'), findsOneWidget);
+      expect(find.text('観測級03の共同観測'), findsOneWidget);
       expect(find.textContaining('120 / 500'), findsNothing);
       expect(
-        find.bySemanticsLabel(RegExp('ゴールドリーグ.*実在5人から8人')),
+        find.bySemanticsLabel(RegExp('観測級03の共同観測.*実在5人から8人')),
         findsOneWidget,
       );
       expect(
@@ -424,7 +431,7 @@ void main() {
           tester,
           find.byKey(const ValueKey('league-progress')),
         ).color,
-        palette.pathActive,
+        palette.surfaceRaised,
       );
       await _show(
         tester,
@@ -432,7 +439,7 @@ void main() {
         const ValueKey('league-screen'),
       );
       expect(
-        find.bySemanticsLabel('2026-08-03の週、ゴールド、1位、2件、昇格'),
+        find.bySemanticsLabel('2026-08-03の週、観測級03、1位、観察2件、上位級へ'),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
@@ -474,7 +481,7 @@ void main() {
           tester,
           find.byKey(const ValueKey('game-profile-progress')),
         ).color,
-        palette.pathActive,
+        palette.surfaceRaised,
       );
       await tester.tap(find.byKey(const ValueKey('game-profile-settings')));
       expect(settings, 1);
@@ -491,7 +498,10 @@ void main() {
         ),
         const ValueKey('game-profile-screen'),
       );
-      expect(find.bySemanticsLabel(RegExp('学習パスを1件進める.*結晶1個')), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(RegExp('探究ノートを1件進める.*結晶1個')),
+        findsOneWidget,
+      );
 
       final policy = find.byKey(const ValueKey('game-profile-policy'));
       await _show(tester, policy, const ValueKey('game-profile-screen'));
@@ -516,7 +526,7 @@ void main() {
     );
     await tester.pump();
     expect(
-      find.byKey(const ValueKey('game-profile-metric-連続学習')),
+      find.byKey(const ValueKey('game-profile-metric-連続観測')),
       findsNothing,
     );
     expect(

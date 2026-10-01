@@ -7,6 +7,9 @@ on:
       - '.github/workflows/flutter-app.yml'
       - 'app/**'
       - 'server/**'
+      - 'tools/make-icon.py'
+      - 'tools/requirements-icons.txt'
+      - 'tools/test_make_icon.py'
   push:
     branches:
       - dev
@@ -15,6 +18,9 @@ on:
       - '.github/workflows/flutter-app.yml'
       - 'app/**'
       - 'server/**'
+      - 'tools/make-icon.py'
+      - 'tools/requirements-icons.txt'
+      - 'tools/test_make_icon.py'
 
 permissions:
   contents: read
@@ -43,6 +49,12 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/requirements-icons.txt
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.5'
@@ -61,6 +73,12 @@ jobs:
         working-directory: server
         run: npm run catalog:check
 
+      - name: Verify native brand assets are reproducible
+        run: |
+          python3 -m pip install --requirement tools/requirements-icons.txt
+          python3 tools/test_make_icon.py
+          python3 tools/make-icon.py --check
+
       - name: Audit production server dependencies
         working-directory: server
         run: npm audit --omit=dev
@@ -75,7 +93,7 @@ jobs:
 
       - name: Test
         working-directory: app
-        run: flutter test --no-pub
+        run: flutter test --no-pub --exclude-tags macos-golden
 
       - name: Build Android debug APK
         working-directory: app
@@ -113,6 +131,24 @@ jobs:
       - name: Install iOS pods from lockfile
         working-directory: app/ios
         run: bundle exec pod install --deployment
+
+      # Noto Sans JP golden baselines are authored on macOS. Comparing them on
+      # Linux changes glyph rasterization; enforce the same strict comparison
+      # on their canonical platform instead of widening the tolerance.
+      - name: Verify macOS visual baselines
+        working-directory: app
+        env:
+          DEKISUGI_GOLDEN_PLATFORM: macos15
+        run: flutter test --no-pub --tags macos-golden
+
+      - name: Save visual differences for review
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-visual-differences
+          path: app/test/failures/
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Build iOS Simulator app
         working-directory: app

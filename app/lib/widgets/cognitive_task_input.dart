@@ -112,6 +112,25 @@ bool isCognitiveTaskResponseComplete(
   _ => false,
 };
 
+/// 正解を含まない構造課題を、人が読める導入文へ変換する。
+///
+/// [LocalCognitiveTaskPrompt] は表示用DTOではあるが `toString()` を持たない。
+/// 画面で直接文字列補間すると `Instance of ...` が露出するため、候補・分類先を
+/// 著者順のまま明示し、solution は参照しないこの関数だけを使う。
+String cognitiveTaskPromptSummary(LocalCognitiveTaskPrompt prompt) {
+  final instruction = _operationLabel(
+    prompt.operation,
+  ).replaceFirst('科学タスク、', '');
+  final items = prompt.items.map((item) => item.text).join(' / ');
+  return switch (prompt.kind) {
+    LocalCognitiveTaskKind.singleSelect => '$instruction\n候補: $items',
+    LocalCognitiveTaskKind.classify =>
+      '$instruction\n分類する項目: $items\n分類先: '
+          '${prompt.targets.map((target) => target.label).join(' / ')}',
+    LocalCognitiveTaskKind.sequence => '$instruction\n並べる項目: $items',
+  };
+}
+
 /// 本人が組んだ回答を、理由を書く画面と比較画面へ同じ表現で渡す。
 ///
 /// 教材のsolutionは参照せず、本人が選んだIDをpromptの表示文へ戻すだけ。

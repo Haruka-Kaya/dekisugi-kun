@@ -12,9 +12,9 @@ import 'dekisugi_character_art.dart';
 typedef GamePathNodeCallback = void Function(GamePathNode node);
 typedef GamePathUnitCallback = void Function(GamePathUnit unit);
 
-/// 単元・復習・物語・高難度課題を、前へ進む一本のPathとして描く。
+/// 単元・復習・物語・高難度課題を、連続する探究ログとして描く。
 ///
-/// Pathは表示専用DTOだけを受け取る。どのノードを解放するか、完了と認めるかは
+/// 表示専用DTOだけを受け取る。どのログを解放するか、完了と認めるかは
 /// 呼び出し側の学習ロジックが決める。
 class LearningPath extends StatefulWidget {
   const LearningPath({
@@ -142,7 +142,7 @@ class _EmptyPath extends StatelessWidget {
             ),
             const SizedBox(height: GameTokens.spaceLg),
             Text(
-              lang.t('学習パスを準備しています', 'Preparing your learning path'),
+              lang.t('探究ノートを準備しています', 'Preparing your learning path'),
               style: Theme.of(context).textTheme.headlineSmall
                   ?.copyWith(color: colors.ink)
                   .jaWeight(FontWeight.w800),
@@ -150,7 +150,7 @@ class _EmptyPath extends StatelessWidget {
             const SizedBox(height: GameTokens.spaceSm),
             Text(
               lang.t(
-                '教材を読み込めると、ここに次の一歩が現れます。',
+                '教材を読み込めると、ここに次の観察記録が現れます。',
                 'Once the lessons load, your next step will appear here.',
               ),
               style: Theme.of(
@@ -205,7 +205,7 @@ class _PathUnitSection extends StatelessWidget {
       if (unit.nodes.isEmpty)
         const SizedBox(height: GameTokens.spaceXl)
       else
-        _NodeCanvas(
+        _InquiryTimeline(
           nodes: unit.nodes,
           currentNodeId: currentNodeId,
           currentNodeKey: currentNodeKey,
@@ -244,8 +244,9 @@ class _UnitBanner extends StatelessWidget {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: colors.pathActive,
-          borderRadius: BorderRadius.circular(GameTokens.radiusLg),
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(GameTokens.radiusSm),
+          border: Border.all(color: colors.border),
         ),
         padding: const EdgeInsets.fromLTRB(
           GameTokens.spaceLg,
@@ -264,16 +265,16 @@ class _UnitBanner extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'UNIT ${unit.ordinal.toString().padLeft(2, '0')}',
+                        '研究テーマ ${unit.ordinal.toString().padLeft(2, '0')}',
                         style: t.textTheme.labelLarge
-                            ?.copyWith(color: colors.onPathActive)
+                            ?.copyWith(color: colors.pathActive)
                             .jaWeight(FontWeight.w800),
                       ),
                       const SizedBox(height: GameTokens.spaceXs),
                       Text(
                         unit.title,
                         style: t.textTheme.headlineSmall
-                            ?.copyWith(color: colors.onPathActive, height: 1.35)
+                            ?.copyWith(color: colors.ink, height: 1.35)
                             .jaWeight(FontWeight.w800),
                       ),
                     ],
@@ -295,7 +296,7 @@ class _UnitBanner extends StatelessWidget {
                         minimumSize: const Size.square(
                           GameTokens.minTouchTarget,
                         ),
-                        backgroundColor: colors.surface,
+                        backgroundColor: colors.surfaceRaised,
                         foregroundColor: colors.pathActive,
                       ),
                       icon: const Icon(Icons.menu_book_rounded),
@@ -307,9 +308,7 @@ class _UnitBanner extends StatelessWidget {
             const SizedBox(height: GameTokens.spaceSm),
             Text(
               unit.objective,
-              style: t.textTheme.bodyMedium?.copyWith(
-                color: colors.onPathActive,
-              ),
+              style: t.textTheme.bodyMedium?.copyWith(color: colors.inkMuted),
             ),
             const SizedBox(height: GameTokens.spaceMd),
             Row(
@@ -328,10 +327,8 @@ class _UnitBanner extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: unit.progress,
                           minHeight: 8,
-                          color: colors.surface,
-                          backgroundColor: colors.onPathActive.withValues(
-                            alpha: 0.28,
-                          ),
+                          color: colors.pathActive,
+                          backgroundColor: colors.border,
                         ),
                       ),
                     ),
@@ -341,7 +338,7 @@ class _UnitBanner extends StatelessWidget {
                 Text(
                   '${unit.completedSteps}/${unit.totalSteps}',
                   style: t.textTheme.labelLarge
-                      ?.copyWith(color: colors.onPathActive)
+                      ?.copyWith(color: colors.ink)
                       .jaWeight(FontWeight.w800),
                 ),
               ],
@@ -495,23 +492,17 @@ class PathMascotPreview extends StatelessWidget {
   }
 }
 
-class _NodeCanvas extends StatelessWidget {
-  const _NodeCanvas({
+/// 左の実験レールと、横長の探究ログで学びの連続を示す。
+///
+/// 各ログの高さは内容と文字サイズに追従する。固定高の画布に配置しないため、
+/// 320dp・文字200%でもログ本文と状態ラベルを省略しない。
+class _InquiryTimeline extends StatelessWidget {
+  const _InquiryTimeline({
     required this.nodes,
     required this.currentNodeId,
     required this.currentNodeKey,
     required this.onNodeStart,
   });
-
-  static const _horizontalPattern = <double>[
-    -0.05,
-    0.72,
-    0.34,
-    -0.38,
-    -0.72,
-    -0.18,
-    0.54,
-  ];
 
   final List<GamePathNode> nodes;
   final String? currentNodeId;
@@ -520,65 +511,189 @@ class _NodeCanvas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.gamePalette;
-    final height = nodes.length * GameTokens.pathRowHeight;
-    return SizedBox(
-      height: height,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final halfTravel = math.max(
-            0.0,
-            constraints.maxWidth / 2 - GameTokens.pathNodeHitSize / 2 - 8,
-          );
-          final centers = <Offset>[
-            for (var index = 0; index < nodes.length; index++)
-              Offset(
-                constraints.maxWidth / 2 +
-                    _horizontalPattern[index % _horizontalPattern.length] *
-                        halfTravel,
-                GameTokens.pathRowHeight / 2 + index * GameTokens.pathRowHeight,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        GameTokens.spaceMd,
+        GameTokens.spaceLg,
+        GameTokens.spaceMd,
+        GameTokens.spaceXl,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            header: true,
+            label: '実験レールと探究ログ',
+            child: ExcludeSemantics(
+              child: Row(
+                children: [
+                  const SizedBox(
+                    width: 52,
+                    child: Icon(Icons.straighten_rounded, size: 20),
+                  ),
+                  const SizedBox(width: GameTokens.spaceSm),
+                  Text(
+                    '探究ログ',
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(color: context.gamePalette.ink)
+                        .jaWeight(FontWeight.w800),
+                  ),
+                ],
               ),
-          ];
+            ),
+          ),
+          const SizedBox(height: GameTokens.spaceSm),
+          for (var index = 0; index < nodes.length; index++)
+            _InquiryLogRow(
+              node: nodes[index],
+              index: index,
+              first: index == 0,
+              last: index == nodes.length - 1,
+              current: nodes[index].id == currentNodeId,
+              currentNodeKey: currentNodeKey,
+              onOpen: nodes[index].canOpen
+                  ? () => _showNodeSheet(
+                      context,
+                      node: nodes[index],
+                      onStart: onNodeStart,
+                    )
+                  : null,
+            ),
+        ],
+      ),
+    );
+  }
+}
 
-          return RepaintBoundary(
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned.fill(
-                  child: ExcludeSemantics(
-                    child: CustomPaint(
-                      painter: _PathConnectorPainter(
-                        centers: centers,
-                        states: [for (final node in nodes) node.state],
-                        colors: colors,
-                      ),
-                    ),
+class _InquiryLogRow extends StatelessWidget {
+  const _InquiryLogRow({
+    required this.node,
+    required this.index,
+    required this.first,
+    required this.last,
+    required this.current,
+    required this.currentNodeKey,
+    required this.onOpen,
+  });
+
+  final GamePathNode node;
+  final int index;
+  final bool first;
+  final bool last;
+  final bool current;
+  final GlobalKey currentNodeKey;
+  final VoidCallback? onOpen;
+
+  @override
+  Widget build(BuildContext context) => IntrinsicHeight(
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: 52,
+          child: _ExperimentRail(
+            node: node,
+            index: index,
+            first: first,
+            last: last,
+            current: current,
+          ),
+        ),
+        const SizedBox(width: GameTokens.spaceSm),
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: last ? 0 : GameTokens.spaceMd),
+            child: _PathNodeButton(
+              key: current ? currentNodeKey : null,
+              node: node,
+              current: current,
+              onOpen: onOpen,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _ExperimentRail extends StatelessWidget {
+  const _ExperimentRail({
+    required this.node,
+    required this.index,
+    required this.first,
+    required this.last,
+    required this.current,
+  });
+
+  final GamePathNode node;
+  final int index;
+  final bool first;
+  final bool last;
+  final bool current;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gamePalette;
+    final style = _nodeStyle(node, colors);
+    final reduceMotion = ReduceMotionScope.of(context);
+    final lineColor = switch (node.state) {
+      GamePathNodeState.completed ||
+      GamePathNodeState.legendaryCompleted => colors.pathComplete,
+      _ => colors.border,
+    };
+
+    return Semantics(
+      container: true,
+      label: '実験レール${index + 1}、${current ? '現在位置、' : ''}${_nodeBadge(node)}',
+      child: ExcludeSemantics(
+        child: Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            if (!first)
+              Positioned(
+                top: 0,
+                width: 2,
+                height: 14,
+                child: ColoredBox(color: lineColor),
+              ),
+            if (!last)
+              Positioned(
+                top: 48,
+                bottom: 0,
+                width: 2,
+                child: ColoredBox(color: lineColor),
+              ),
+            Positioned(
+              top: 12,
+              child: AnimatedContainer(
+                key: ValueKey<String>(
+                  current
+                      ? 'game-path-current-ring-${node.id}'
+                      : 'game-experiment-marker-${node.id}',
+                ),
+                duration: reduceMotion ? Duration.zero : Motion.quick,
+                curve: Motion.quickCurve,
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: style.accent,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: current ? colors.pathActive : style.border,
+                    width: current ? 3 : 1,
                   ),
                 ),
-                for (var index = 0; index < nodes.length; index++)
-                  Positioned(
-                    left: centers[index].dx - GameTokens.pathNodeHitSize / 2,
-                    top: centers[index].dy - GameTokens.pathNodeHitSize / 2 - 4,
-                    width: GameTokens.pathNodeHitSize,
-                    child: _PathNodeButton(
-                      key: nodes[index].id == currentNodeId
-                          ? currentNodeKey
-                          : null,
-                      node: nodes[index],
-                      current: nodes[index].id == currentNodeId,
-                      onOpen: nodes[index].canOpen
-                          ? () => _showNodeSheet(
-                              context,
-                              node: nodes[index],
-                              onStart: onNodeStart,
-                            )
-                          : null,
-                    ),
-                  ),
-              ],
+                child: Text(
+                  '${index + 1}'.padLeft(2, '0'),
+                  style: Theme.of(context).textTheme.labelMedium
+                      ?.copyWith(color: style.onAccent, height: 1)
+                      .jaWeight(FontWeight.w900),
+                ),
+              ),
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
@@ -589,13 +704,15 @@ class _NodeVisualStyle {
     required this.fill,
     required this.foreground,
     required this.border,
-    required this.rim,
+    required this.accent,
+    required this.onAccent,
   });
 
   final Color fill;
   final Color foreground;
   final Color border;
-  final Color rim;
+  final Color accent;
+  final Color onAccent;
 }
 
 _NodeVisualStyle _nodeStyle(GamePathNode node, GamePalette colors) {
@@ -614,55 +731,52 @@ _NodeVisualStyle _nodeStyle(GamePathNode node, GamePalette colors) {
 
   return switch (node.state) {
     GamePathNodeState.locked => _NodeVisualStyle(
-      fill: colors.pathLocked,
+      fill: colors.surfaceRaised,
       foreground: colors.onPathLocked,
       border: colors.border,
-      rim: colors.border,
+      accent: colors.pathLocked,
+      onAccent: colors.onPathLocked,
     ),
     GamePathNodeState.available => _NodeVisualStyle(
       fill: colors.surface,
-      foreground: kindColor,
+      foreground: colors.ink,
       border: kindColor,
-      rim: kindColor,
+      accent: kindColor,
+      onAccent: onKind,
     ),
     GamePathNodeState.inProgress => _NodeVisualStyle(
-      fill: kindColor,
-      foreground: onKind,
+      fill: colors.surface,
+      foreground: colors.ink,
       border: kindColor,
-      rim: Color.alphaBlend(Colors.black.withValues(alpha: 0.22), kindColor),
+      accent: kindColor,
+      onAccent: onKind,
     ),
     GamePathNodeState.completed => _NodeVisualStyle(
-      fill: colors.pathComplete,
-      foreground: colors.onPathComplete,
+      fill: colors.surface,
+      foreground: colors.ink,
       border: colors.pathComplete,
-      rim: Color.alphaBlend(
-        Colors.black.withValues(alpha: 0.22),
-        colors.pathComplete,
-      ),
+      accent: colors.pathComplete,
+      onAccent: colors.onPathComplete,
     ),
     GamePathNodeState.reviewDue => _NodeVisualStyle(
-      fill: colors.pathReview,
-      foreground: colors.onPathReview,
+      fill: colors.surface,
+      foreground: colors.ink,
       border: colors.pathReview,
-      rim: Color.alphaBlend(
-        Colors.black.withValues(alpha: 0.22),
-        colors.pathReview,
-      ),
+      accent: colors.pathReview,
+      onAccent: colors.onPathReview,
     ),
     GamePathNodeState.legendaryAvailable ||
     GamePathNodeState.legendaryCompleted => _NodeVisualStyle(
-      fill: colors.legendary,
-      foreground: colors.onLegendary,
-      border: colors.onLegendary,
-      rim: Color.alphaBlend(
-        Colors.black.withValues(alpha: 0.18),
-        colors.legendary,
-      ),
+      fill: colors.surface,
+      foreground: colors.ink,
+      border: colors.legendary,
+      accent: colors.legendary,
+      onAccent: colors.onLegendary,
     ),
   };
 }
 
-class _PathNodeButton extends StatefulWidget {
+class _PathNodeButton extends StatelessWidget {
   const _PathNodeButton({
     super.key,
     required this.node,
@@ -675,239 +789,195 @@ class _PathNodeButton extends StatefulWidget {
   final VoidCallback? onOpen;
 
   @override
-  State<_PathNodeButton> createState() => _PathNodeButtonState();
-}
-
-class _PathNodeButtonState extends State<_PathNodeButton> {
-  bool _pressed = false;
-
-  void _setPressed(bool value) {
-    if (_pressed == value || widget.onOpen == null) return;
-    setState(() => _pressed = value);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final node = widget.node;
     final colors = context.gamePalette;
     final style = _nodeStyle(node, colors);
     final reduceMotion = ReduceMotionScope.of(context);
-    final legendary = node.kind == GamePathNodeKind.legendary;
     final progress = node.state == GamePathNodeState.inProgress
         ? node.progress
         : null;
-    final semantic = _nodeSemanticLabel(node, current: widget.current);
+    final semantic = _nodeSemanticLabel(node, current: current);
 
     return Semantics(
       key: ValueKey<String>('game-path-node-${node.id}'),
       container: true,
-      button: widget.onOpen != null,
-      enabled: widget.onOpen != null,
+      button: onOpen != null,
+      enabled: onOpen != null,
       label: semantic,
-      onTap: widget.onOpen,
+      onTap: onOpen,
       child: ExcludeSemantics(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Tooltip(
-              message: node.title,
-              child: GestureDetector(
-                excludeFromSemantics: true,
-                behavior: HitTestBehavior.opaque,
-                onTap: widget.onOpen,
-                onTapDown: (_) => _setPressed(true),
-                onTapCancel: () => _setPressed(false),
-                onTapUp: (_) => _setPressed(false),
-                child: SizedBox.square(
-                  dimension: GameTokens.pathNodeHitSize,
-                  child: Stack(
-                    alignment: Alignment.topCenter,
-                    children: [
-                      Positioned(
-                        top: 10,
-                        child: _NodeShape(
-                          size: GameTokens.pathNodeSize,
-                          legendary: legendary,
-                          fill: style.rim,
-                          border: style.rim,
-                          borderWidth: 0,
-                        ),
-                      ),
-                      if (progress != null)
-                        Positioned(
-                          top: 0,
-                          child: SizedBox.square(
-                            dimension: 82,
-                            child: CircularProgressIndicator(
-                              value: progress,
-                              strokeWidth: 5,
-                              color: colors.pathActive,
-                              backgroundColor: colors.border,
-                            ),
-                          ),
-                        ),
-                      if (widget.current && progress == null)
-                        Positioned(
-                          top: 0,
-                          child: IgnorePointer(
-                            child: Container(
-                              key: ValueKey(
-                                'game-path-current-ring-${node.id}',
-                              ),
-                              width: 82,
-                              height: 82,
-                              decoration: BoxDecoration(
-                                shape: legendary
-                                    ? BoxShape.rectangle
-                                    : BoxShape.circle,
-                                borderRadius: legendary
-                                    ? BorderRadius.circular(GameTokens.radiusLg)
-                                    : null,
-                                border: Border.all(
-                                  color: colors.pathActive,
-                                  width: 3,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      AnimatedContainer(
-                        duration: reduceMotion
-                            ? Duration.zero
-                            : const Duration(milliseconds: 100),
-                        curve: Curves.easeOut,
-                        transform: Matrix4.translationValues(
-                          0,
-                          _pressed ? 6 : 2,
-                          0,
-                        ),
-                        child: _NodeShape(
-                          size: GameTokens.pathNodeSize,
-                          legendary: legendary,
-                          fill: style.fill,
-                          border: style.border,
-                          borderWidth: node.state == GamePathNodeState.available
-                              ? 4
-                              : 2,
-                          child: Icon(
-                            _nodeIcon(node),
-                            size: 31,
-                            color: style.foreground,
-                          ),
-                        ),
-                      ),
-                      if (node.state == GamePathNodeState.legendaryCompleted)
-                        Positioned(
-                          right: 3,
-                          top: 0,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: colors.pathComplete,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: colors.surface,
-                                width: 2,
-                              ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(3),
-                              child: Icon(
-                                Icons.check_rounded,
-                                size: 15,
-                                color: colors.onPathComplete,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
+        child: Tooltip(
+          message: node.title,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onOpen,
+              borderRadius: BorderRadius.circular(GameTokens.radiusSm),
+              child: AnimatedContainer(
+                key: ValueKey<String>('game-inquiry-log-${node.id}'),
+                duration: reduceMotion ? Duration.zero : Motion.quick,
+                curve: Motion.quickCurve,
+                constraints: const BoxConstraints(
+                  minHeight: GameTokens.pathNodeHitSize,
+                ),
+                decoration: BoxDecoration(
+                  color: style.fill,
+                  borderRadius: BorderRadius.circular(GameTokens.radiusSm),
+                  border: Border.all(
+                    color: current ? colors.pathActive : style.border,
+                    width: current ? 3 : 1,
                   ),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 0,
+                      bottom: 0,
+                      left: 0,
+                      width: 6,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: style.accent,
+                          borderRadius: const BorderRadius.horizontal(
+                            left: Radius.circular(GameTokens.radiusSm - 1),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        GameTokens.spaceLg + 4,
+                        GameTokens.spaceMd,
+                        GameTokens.spaceLg,
+                        GameTokens.spaceMd,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Wrap(
+                            spacing: GameTokens.spaceSm,
+                            runSpacing: GameTokens.spaceXs,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              _LogLabel(
+                                icon: _nodeIcon(node),
+                                label: _kindLabel(node.kind),
+                                foreground: style.foreground,
+                                background: colors.surfaceRaised,
+                                border: style.border,
+                              ),
+                              _LogLabel(
+                                label: current ? '次はここ' : _nodeBadge(node),
+                                foreground: current
+                                    ? colors.onPathActive
+                                    : style.foreground,
+                                background: current
+                                    ? colors.pathActive
+                                    : colors.surface,
+                                border: current
+                                    ? colors.pathActive
+                                    : style.border,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: GameTokens.spaceSm),
+                          Text(
+                            node.title,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  color: style.foreground,
+                                  height: 1.35,
+                                )
+                                .jaWeight(FontWeight.w800),
+                          ),
+                          const SizedBox(height: GameTokens.spaceXs),
+                          Text(
+                            node.description,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: colors.inkMuted),
+                          ),
+                          if (node.estimatedMinutes != null) ...[
+                            const SizedBox(height: GameTokens.spaceSm),
+                            Text(
+                              '観察目安 ${node.estimatedMinutes}分',
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(color: colors.inkMuted)
+                                  .jaWeight(FontWeight.w700),
+                            ),
+                          ],
+                          if (progress != null) ...[
+                            const SizedBox(height: GameTokens.spaceMd),
+                            Text(
+                              '探究記録 ${node.completedLessons}/${node.totalLessons}',
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(color: colors.ink)
+                                  .jaWeight(FontWeight.w700),
+                            ),
+                            const SizedBox(height: GameTokens.spaceXs),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(3),
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                minHeight: 6,
+                                color: style.accent,
+                                backgroundColor: colors.border,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            Transform.translate(
-              offset: const Offset(0, -5),
-              child: _NodeBadge(
-                label: widget.current
-                    ? lang.t('次はここ', 'Next up')
-                    : _nodeBadge(node),
-                foreground: style.foreground,
-                background: style.fill,
-                border: style.border,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _NodeShape extends StatelessWidget {
-  const _NodeShape({
-    required this.size,
-    required this.legendary,
-    required this.fill,
-    required this.border,
-    required this.borderWidth,
-    this.child,
-  });
-
-  final double size;
-  final bool legendary;
-  final Color fill;
-  final Color border;
-  final double borderWidth;
-  final Widget? child;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: size,
-    height: size,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: fill,
-      shape: legendary ? BoxShape.rectangle : BoxShape.circle,
-      borderRadius: legendary
-          ? BorderRadius.circular(GameTokens.radiusLg)
-          : null,
-      border: borderWidth == 0
-          ? null
-          : Border.all(color: border, width: borderWidth),
-    ),
-    child: child,
-  );
-}
-
-class _NodeBadge extends StatelessWidget {
-  const _NodeBadge({
+class _LogLabel extends StatelessWidget {
+  const _LogLabel({
     required this.label,
     required this.foreground,
     required this.background,
     required this.border,
+    this.icon,
   });
 
   final String label;
   final Color foreground;
   final Color background;
   final Color border;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) => Container(
-    constraints: const BoxConstraints(minHeight: 24),
-    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+    constraints: const BoxConstraints(minHeight: 28),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     decoration: BoxDecoration(
       color: background,
-      borderRadius: BorderRadius.circular(GameTokens.radiusPill),
+      borderRadius: BorderRadius.circular(6),
       border: Border.all(color: border),
     ),
-    child: Text(
-      label,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      textAlign: TextAlign.center,
-      style: Theme.of(context).textTheme.labelSmall
-          ?.copyWith(color: foreground, height: 1.0)
-          .jaWeight(FontWeight.w800),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icon != null) ...[
+          Icon(icon, size: 16, color: foreground),
+          const SizedBox(width: GameTokens.spaceXs),
+        ],
+        Flexible(
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall
+                ?.copyWith(color: foreground, height: 1.2)
+                .jaWeight(FontWeight.w800),
+          ),
+        ),
+      ],
     ),
   );
 }
@@ -917,15 +987,15 @@ IconData _nodeIcon(GamePathNode node) => switch (node.state) {
   GamePathNodeState.completed => Icons.check_rounded,
   GamePathNodeState.reviewDue => Icons.replay_rounded,
   GamePathNodeState.legendaryAvailable ||
-  GamePathNodeState.legendaryCompleted => Icons.workspace_premium_rounded,
+  GamePathNodeState.legendaryCompleted => Icons.fact_check_rounded,
   _ => switch (node.kind) {
     GamePathNodeKind.lesson => Icons.science_rounded,
     GamePathNodeKind.story => Icons.menu_book_rounded,
     GamePathNodeKind.listening => Icons.headphones_rounded,
     GamePathNodeKind.speaking => Icons.mic_rounded,
     GamePathNodeKind.practice => Icons.fitness_center_rounded,
-    GamePathNodeKind.challenge => Icons.flag_circle_rounded,
-    GamePathNodeKind.legendary => Icons.workspace_premium_rounded,
+    GamePathNodeKind.challenge => Icons.assignment_turned_in_rounded,
+    GamePathNodeKind.legendary => Icons.fact_check_rounded,
   },
 };
 
@@ -941,18 +1011,18 @@ String _nodeBadge(GamePathNode node) => switch (node.state) {
 };
 
 String _kindLabel(GamePathNodeKind kind) => switch (kind) {
-  GamePathNodeKind.lesson => lang.t('理科レッスン', 'Science lesson'),
-  GamePathNodeKind.story => lang.t('理科ストーリー', 'Science story'),
-  GamePathNodeKind.listening => lang.t('聞く問題', 'Listening'),
-  GamePathNodeKind.speaking => lang.t('説明する問題', 'Explaining'),
-  GamePathNodeKind.practice => lang.t('復習', 'Review'),
-  GamePathNodeKind.challenge => lang.t('章ボス', 'Chapter boss'),
-  GamePathNodeKind.legendary => lang.t('高難度チャレンジ', 'Hard challenge'),
+  GamePathNodeKind.lesson => lang.t('教材観察', 'Science lesson'),
+  GamePathNodeKind.story => lang.t('理科事件簿', 'Science story'),
+  GamePathNodeKind.listening => lang.t('聞き取り観察', 'Listening'),
+  GamePathNodeKind.speaking => lang.t('教え返し', 'Explaining'),
+  GamePathNodeKind.practice => lang.t('再観察', 'Review'),
+  GamePathNodeKind.challenge => lang.t('総合検証', 'Chapter boss'),
+  GamePathNodeKind.legendary => lang.t('高難度検証', 'Hard challenge'),
 };
 
 String _stateLabel(GamePathNode node) => switch (node.state) {
   GamePathNodeState.locked => lang.t(
-    '未解放。前のレッスンを終えると開きます',
+    '未解放。前の観察記録を終えると開きます',
     'Locked. Finish the previous lesson to open it',
   ),
   GamePathNodeState.available => lang.t('次に進めます', 'Ready to go'),
@@ -1118,7 +1188,7 @@ class _NodeDetailSheet extends StatelessWidget {
             if (node.learningActions.isNotEmpty) ...[
               const SizedBox(height: GameTokens.spaceXl),
               Text(
-                lang.t('このレッスンでやること', 'What you will do in this lesson'),
+                lang.t('この観察でやること', 'What you will do in this lesson'),
                 style: t.textTheme.titleMedium
                     ?.copyWith(color: colors.ink)
                     .jaWeight(FontWeight.w800),
@@ -1187,7 +1257,7 @@ class _NodeDetailSheet extends StatelessWidget {
                     '高難度に挑戦',
                     'Try the hard challenge',
                   ),
-                  _ => lang.t('レッスン開始', 'Start lesson'),
+                  _ => lang.t('観察を始める', 'Start lesson'),
                 }, textAlign: TextAlign.center),
               ),
             ],
@@ -1226,65 +1296,4 @@ class _SheetPill extends StatelessWidget {
           .jaWeight(FontWeight.w700),
     ),
   );
-}
-
-class _PathConnectorPainter extends CustomPainter {
-  const _PathConnectorPainter({
-    required this.centers,
-    required this.states,
-    required this.colors,
-  });
-
-  final List<Offset> centers;
-  final List<GamePathNodeState> states;
-  final GamePalette colors;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (centers.length < 2) return;
-    for (var index = 0; index < centers.length - 1; index++) {
-      final from = centers[index];
-      final to = centers[index + 1];
-      final middleY = (from.dy + to.dy) / 2;
-      final segment = Path()
-        ..moveTo(from.dx, from.dy)
-        ..cubicTo(from.dx, middleY, to.dx, middleY, to.dx, to.dy);
-      final future = states[index + 1] == GamePathNodeState.locked;
-      final completed = _connectorCompleted(states[index + 1]);
-      final paint = Paint()
-        ..color = completed ? colors.pathComplete : colors.border
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 5
-        ..strokeCap = StrokeCap.round;
-      if (future) {
-        _drawDashedPath(canvas, segment, paint);
-      } else {
-        canvas.drawPath(segment, paint);
-      }
-    }
-  }
-
-  static bool _connectorCompleted(GamePathNodeState state) => switch (state) {
-    GamePathNodeState.completed || GamePathNodeState.legendaryCompleted => true,
-    _ => false,
-  };
-
-  static void _drawDashedPath(Canvas canvas, Path path, Paint paint) {
-    const dash = 9.0;
-    const gap = 8.0;
-    for (final metric in path.computeMetrics()) {
-      var distance = 0.0;
-      while (distance < metric.length) {
-        final end = math.min(distance + dash, metric.length);
-        canvas.drawPath(metric.extractPath(distance, end), paint);
-        distance = end + gap;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _PathConnectorPainter oldDelegate) =>
-      oldDelegate.centers != centers ||
-      oldDelegate.states != states ||
-      oldDelegate.colors != colors;
 }

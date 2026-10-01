@@ -46,7 +46,10 @@ extension GameCharacterReactionPresentation on GameCharacterReaction {
       'Inviting you to the next lesson',
     ),
     GameCharacterReaction.listening => t('話を聞いています', 'Listening to you'),
-    GameCharacterReaction.thinking => t('一緒に考えています', 'Thinking it through with you'),
+    GameCharacterReaction.thinking => t(
+      '一緒に考えています',
+      'Thinking it through with you',
+    ),
     GameCharacterReaction.encourage => t('学習を応援しています', 'Cheering you on'),
     GameCharacterReaction.speaking => t('説明しています', 'Explaining'),
     GameCharacterReaction.celebrate => t(
@@ -125,7 +128,7 @@ class GamePathNode {
   /// 正解ではなく、このノードで行う学習行為だけを渡す。
   final List<String> learningActions;
 
-  /// 「+10 XP」等。学習内容より上へ置かず、無い場合は表示しない。
+  /// 「+10 探究記録」等。学習内容より上へ置かず、無い場合は表示しない。
   final String? rewardLabel;
 
   double get progress => completedLessons / totalLessons;
@@ -216,7 +219,7 @@ class GamePathViewData {
   });
 
   final String? _title;
-  String get title => _title ?? t('学習パス', 'Learning Path');
+  String get title => _title ?? t('探究ノート', 'Field Notebook');
   final GamePlayerStatus status;
   final List<GamePathUnit> units;
   final String? currentNodeId;

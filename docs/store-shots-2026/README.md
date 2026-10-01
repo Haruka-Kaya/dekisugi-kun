@@ -3,6 +3,9 @@
 > [!danger] 旧提出候補を配布・提出に使わない
 > このディレクトリの画像・SHA・撮影手順は**現行productionの正本ではない旧候補**です。
 > 現行buildから再撮影・再検証するまで、Store、Shipaton、学校向け資料へ提出してはいけません。
+> `tools/capture-store-shots.sh` と `tools/verify-store-shots.sh` も、旧「30秒ミッション」を
+> 現行画面として誤認証しないようfail-closedで停止しています。Field Notebookの撮影状態と
+> OCR契約を作り直すまで、過去のPASSや下記SHAを現行証拠に数えません。
 
 2026-08-10 時点の旧候補UIを、App Store Connect / Google Play の受理条件に合わせて
 再撮影するための出力先です。旧 `docs/shots/` は履歴として残し、ここからは提出しません。
@@ -86,9 +89,10 @@ tools/capture-store-shots.sh --skip-build
 tools/verify-store-shots.sh
 ```
 
-検証は寸法・RGB 8-bit x 3 channel・alphaなし・形式・Googleの辺比だけでなく、
-Vision OCRで旧候補UIの`30秒おためしミッション` / challenge / `TUTORIAL CLEAR` /
-`答えを送らず`に加え、現行productionの保存境界を確認します。保存するのは
+以下は旧候補を作った当時の手順で、現在は実行時に停止します。旧検証は寸法・RGB
+8-bit x 3 channel・alphaなし・形式・Googleの辺比に加え、Vision OCRで旧候補UIの
+`30秒おためしミッション` / challenge / `TUTORIAL CLEAR` / `答えを送らず`を確認していました。
+これらの文言はField Notebookの現行productionを証明しません。現行で保存するのは
 教材ID・概念ID・進行・canonical need・heart・完了時刻・冪等報酬台帳だけで、
 音声・自由文・選択肢IDは保存しません。
 `Ready for Apple Intelligence`などSimulatorの通知が写った候補は出力ファイルへ昇格しません。

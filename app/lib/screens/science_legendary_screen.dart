@@ -259,8 +259,8 @@ class _ScienceLegendaryScreenState extends State<ScienceLegendaryScreen> {
               foregroundColor: colors.ink,
               title: Text(
                 widget.presentation == ScienceLegendaryPresentation.legendary
-                    ? 'Legendary'
-                    : lang.t('期限の復習', 'Scheduled review'),
+                    ? '高難度検証'
+                    : lang.t('間隔を空けた再検証', 'Scheduled review'),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
@@ -357,10 +357,10 @@ class _LegendaryLocked extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'LEGENDARY  /  LOCKED',
+          eyebrow: 'ラボ・ブリーフ  /  高難度検証  /  準備中',
           title: conceptLabel,
           body: lang.t(
-            'この高難度課題は、通常課題を終えた翌学習日以降に開きます。',
+            'この高難度検証は、通常課題を終えた翌学習日以降に開きます。',
             'This advanced challenge unlocks on the next learning day after you finish the regular task.',
           ),
           icon: Icons.lock_clock_outlined,
@@ -371,13 +371,13 @@ class _LegendaryLocked extends StatelessWidget {
         const SizedBox(height: GameTokens.spaceXl),
         ScienceChallengeSurface(
           label: lang.t(
-            '今は通常Pathを進められます',
+            '今は探究ノートを進められます',
             'You can continue on your regular Path',
           ),
           icon: Icons.route_outlined,
           child: Text(
             lang.t(
-              '待っている間も、通常レッスン・復習・学校課題は止まりません。解放日はこの画面では推測しません。',
+              '待っている間も、通常課題・復習・学校課題は止まりません。解放日はこの画面では推測しません。',
               'You can still do regular lessons, reviews, and class work while you wait. This screen does not guess the unlock date.',
             ),
           ),
@@ -415,14 +415,14 @@ class _LegendaryTask extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: '${legendary ? 'LEGENDARY' : 'SPACED REVIEW'}  /  1 OF 3',
+          eyebrow: 'ラボ・ブリーフ  /  ${legendary ? '高難度検証' : '間隔を空けた再検証'}  /  1/3',
           title: conceptLabel,
           body: lang.t(
             'ヒントなし・一度だけの回答です。まず構造課題を組みます。',
             'No hints and only one first answer. Start by building the structure.',
           ),
           icon: legendary
-              ? Icons.workspace_premium_outlined
+              ? Icons.fact_check_outlined
               : Icons.event_repeat_outlined,
           accent: accent,
           onAccent: onAccent,
@@ -482,7 +482,7 @@ class _LegendaryCheckpoint extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: '${legendary ? 'LEGENDARY' : 'SPACED REVIEW'}  /  2 OF 3',
+          eyebrow: 'ラボ・ブリーフ  /  ${legendary ? '高難度検証' : '間隔を空けた再検証'}  /  2/3',
           title: lang.t('思い込みを見破る', 'Spot the misconception'),
           body: lang.t(
             'ヒントは出ません。最初の判断を確定すると、すぐ自己比較へ進みます。',
@@ -632,7 +632,7 @@ class _LegendaryComparison extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: '${legendary ? 'LEGENDARY' : 'SPACED REVIEW'}  /  3 OF 3',
+          eyebrow: 'ラボ・ブリーフ  /  ${legendary ? '高難度検証' : '間隔を空けた再検証'}  /  3/3',
           title: lang.t('正本と自己比較する', 'Compare with the model answer'),
           body: cleared
               ? lang.t(
@@ -644,7 +644,7 @@ class _LegendaryComparison extends StatelessWidget {
                   'Your first answer is final. Find the differences and use them in regular practice.',
                 ),
           icon: cleared
-              ? Icons.workspace_premium_outlined
+              ? Icons.fact_check_outlined
               : Icons.compare_arrows_rounded,
           accent: accent,
           onAccent: onAccent,
@@ -694,8 +694,8 @@ class _LegendaryComparison extends StatelessWidget {
           key: const ValueKey('legendary-finish'),
           label: cleared
               ? legendary
-                    ? lang.t('高難度課題をクリア', 'Advanced challenge cleared')
-                    : lang.t('期限の復習をクリア', 'Scheduled review cleared')
+                    ? lang.t('高難度検証を完了', 'Advanced challenge cleared')
+                    : lang.t('間隔を空けた再検証を完了', 'Scheduled review cleared')
               : lang.t(
                   '答えを比べて通常練習へ戻る',
                   'Compare answers and return to practice',
@@ -736,11 +736,11 @@ class _LegendaryDone extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: '${legendary ? 'LEGENDARY' : 'SPACED REVIEW'}  /  COMPLETE',
+          eyebrow: 'ラボ・ブリーフ  /  ${legendary ? '高難度検証' : '間隔を空けた再検証'}  /  記録',
           title: cleared
               ? legendary
-                    ? lang.t('高難度課題クリア', 'Advanced challenge cleared')
-                    : lang.t('期限の復習クリア', 'Scheduled review cleared')
+                    ? lang.t('高難度検証を完了', 'Advanced challenge cleared')
+                    : lang.t('間隔を空けた再検証を完了', 'Scheduled review cleared')
               : stoppedAfterWrong
               ? lang.t('今回はここまで', 'That\'s it for now')
               : lang.t('自己比較を完了', 'Self-check complete'),
@@ -751,20 +751,20 @@ class _LegendaryDone extends StatelessWidget {
                 )
               : stoppedAfterWrong
               ? lang.t(
-                  '最初の誤答でこの挑戦を終了しました。ハートが0なら、回復練習の後で別の固定問題に挑戦できます。',
+                  '最初の誤答でこの検証を終了しました。試行余力が0なら、回復練習の後で別の固定問題を検証できます。',
                   'This challenge ended after the first wrong answer. If you have zero hearts, do a recovery exercise before trying a different set question.',
                 )
               : legendary
               ? lang.t(
-                  'Legendaryは未クリアです。通常練習で確かめ、また挑戦できます。',
+                  '高難度検証は未完了です。通常練習で確かめ、また検証できます。',
                   'Legendary is not cleared yet. Review in regular practice, then try again.',
                 )
               : lang.t(
-                  '今回は復習クリアになりません。別の問題でまた確かめられます。',
+                  '今回は再検証の完了になりません。別の問題でまた確かめられます。',
                   'This review is not cleared yet. You can try a different question later.',
                 ),
           icon: cleared
-              ? Icons.workspace_premium_outlined
+              ? Icons.fact_check_outlined
               : Icons.psychology_alt_outlined,
           accent: cleared ? accent : colors.pathReview,
           onAccent: cleared ? onAccent : colors.onPathReview,
@@ -782,7 +782,7 @@ class _LegendaryDone extends StatelessWidget {
             cleared
                 ? legendary
                       ? lang.t(
-                          '表示するのは「高難度課題クリア」です。内容全体の理解を自動判定しません。',
+                          '表示するのは「高難度検証を完了」です。内容全体の理解を自動判定しません。',
                           'This shows "Advanced challenge cleared." It does not judge your overall understanding.',
                         )
                       : lang.t(
@@ -795,7 +795,7 @@ class _LegendaryDone extends StatelessWidget {
                     'The next set question and its answer stay hidden. Your answers are not saved.',
                   )
                 : lang.t(
-                    'Path・連続学習・報酬・通常練習の利用条件は変わりません。',
+                    '探究ノート・連続観測・報酬・通常練習の利用条件は変わりません。',
                     'Your Path, streak, rewards, and regular practice remain available.',
                   ),
           ),
@@ -806,7 +806,7 @@ class _LegendaryDone extends StatelessWidget {
             key: const ValueKey('legendary-return-to-path'),
             label: cleared
                 ? legendary
-                      ? lang.t('学習パスへ戻る', 'Back to learning path')
+                      ? lang.t('探究ノートへ戻る', 'Back to learning path')
                       : lang.t('練習タブへ戻る', 'Back to Practice')
                 : lang.t('通常練習へ戻る', 'Back to regular practice'),
             icon: Icons.route_outlined,

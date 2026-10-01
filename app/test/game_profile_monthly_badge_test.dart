@@ -69,10 +69,10 @@ void main() {
         240,
       );
 
-      expect(find.text('月間バッジ'), findsOneWidget);
+      expect(find.text('月間観測印'), findsOneWidget);
       expect(find.textContaining('結晶では購入できません'), findsOneWidget);
       expect(
-        find.bySemanticsLabel(RegExp(r'2026年8月 観測バッジ。獲得済み')),
+        find.bySemanticsLabel(RegExp(r'2026年8月 観測印。記録済み')),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
@@ -103,9 +103,7 @@ void main() {
     expect(find.text('応援中'), findsOneWidget);
   });
 
-  testWidgets('schoolLocalはplusSupporterフラグがあっても印を出さない', (
-    tester,
-  ) async {
+  testWidgets('schoolLocalはplusSupporterフラグがあっても印を出さない', (tester) async {
     await tester.pumpWidget(_host(schoolMode: true, plusSupporter: true));
     await tester.pumpAndSettle();
 

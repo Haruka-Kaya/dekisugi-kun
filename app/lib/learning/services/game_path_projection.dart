@@ -156,7 +156,10 @@ class GamePathProjection {
           characterMessage:
               currentRequiredId != null &&
                   nodes.any((n) => n.id == currentRequiredId)
-              ? t('次はここ。予想してから、ぼくの思い込みを直して！', 'Here\'s next. Make a prediction, then fix my misconception!')
+              ? t(
+                  '次はここ。予想してから、ぼくの思い込みを直して！',
+                  'Here\'s next. Make a prediction, then fix my misconception!',
+                )
               : null,
         ),
       );
@@ -202,54 +205,106 @@ class GamePathProjection {
     required int rewardXpAvailable,
     bool rewardEligible = true,
   }) {
-    final standardReward = t('+$rewardXpAvailable XP（初回・期限復習・1日上限まで）', '+$rewardXpAvailable XP (first time, due reviews, up to daily limit)');
+    final standardReward = t(
+      '+$rewardXpAvailable 探究記録（初回・期限復習・1日上限まで）',
+      '+$rewardXpAvailable XP (first time, due reviews, up to daily limit)',
+    );
     final (title, description, actions, minutes, reward) = switch (kind) {
       GamePathNodeKind.lesson => (
         t('まず予想する', 'Predict first'),
-        t('$conceptLabelの原理を、答えを見る前に予想します。', 'Predict the principle of $conceptLabel before seeing the answer.'),
-        [t('予想する', 'Predict'), t('教材を読む', 'Read the material'), t('自分の答えと比べる', 'Compare with your answer')],
+        t(
+          '$conceptLabelの原理を、答えを見る前に予想します。',
+          'Predict the principle of $conceptLabel before seeing the answer.',
+        ),
+        [
+          t('予想する', 'Predict'),
+          t('教材を読む', 'Read the material'),
+          t('自分の答えと比べる', 'Compare with your answer'),
+        ],
         4,
         standardReward,
       ),
       GamePathNodeKind.practice => (
         t('図と条件を組む', 'Build diagrams & conditions'),
-        t('$conceptLabelを、選ぶ・分類する・順に組む操作で確かめます。', 'Check $conceptLabel by choosing, sorting, and ordering.'),
-        [t('図式化する', 'Make a diagram'), t('理由を言葉にする', 'Put reasons into words'), t('教材と比べる', 'Compare with the material')],
+        t(
+          '$conceptLabelを、選ぶ・分類する・順に組む操作で確かめます。',
+          'Check $conceptLabel by choosing, sorting, and ordering.',
+        ),
+        [
+          t('図式化する', 'Make a diagram'),
+          t('理由を言葉にする', 'Put reasons into words'),
+          t('教材と比べる', 'Compare with the material'),
+        ],
         4,
         standardReward,
       ),
       GamePathNodeKind.story => (
         t('思い込み事件簿', 'Misconception Casebook'),
-        t('デキすぎ君の思い込みを、観察と理由で直します。', 'Fix Dekisugi-kun\'s misconception with observations and reasons.'),
-        [t('物語を読む', 'Read the story'), t('途中で判断する', 'Decide along the way'), t('誤概念を直す', 'Fix the misconception')],
+        t(
+          'デキすぎ君の思い込みを、観察と理由で直します。',
+          'Fix Dekisugi-kun\'s misconception with observations and reasons.',
+        ),
+        [
+          t('物語を読む', 'Read the story'),
+          t('途中で判断する', 'Decide along the way'),
+          t('誤概念を直す', 'Fix the misconception'),
+        ],
         3,
         standardReward,
       ),
       GamePathNodeKind.listening => (
         t('説明を聞いて見抜く', 'Listen and spot it'),
-        t('教材の説明を聞き、条件を判断してから正しい理由と照合します。', 'Listen to the material\'s explanation, judge the conditions, then match the correct reason.'),
-        [t('説明を聞く', 'Listen to the explanation'), t('条件を判断する', 'Judge the conditions'), t('教材と照合する', 'Match with the material')],
+        t(
+          '教材の説明を聞き、条件を判断してから正しい理由と照合します。',
+          'Listen to the material\'s explanation, judge the conditions, then match the correct reason.',
+        ),
+        [
+          t('説明を聞く', 'Listen to the explanation'),
+          t('条件を判断する', 'Judge the conditions'),
+          t('教材と照合する', 'Match with the material'),
+        ],
         3,
         standardReward,
       ),
       GamePathNodeKind.speaking => (
         t('自分の言葉で説明', 'Explain in your own words'),
-        t('声または文字で説明し、自分で再生・再読して教材と比べます。', 'Explain by voice or text, replay or reread it yourself, and compare with the material.'),
-        [t('説明する', 'Explain'), t('自分で聞き直す', 'Listen back yourself'), t('理由を直す', 'Fix your reasons')],
+        t(
+          '声または文字で説明し、自分で再生・再読して教材と比べます。',
+          'Explain by voice or text, replay or reread it yourself, and compare with the material.',
+        ),
+        [
+          t('説明する', 'Explain'),
+          t('自分で聞き直す', 'Listen back yourself'),
+          t('理由を直す', 'Fix your reasons'),
+        ],
         4,
         standardReward,
       ),
       GamePathNodeKind.challenge => (
-        t('$conceptLabelの章ボス', '$conceptLabel chapter boss'),
-        t('$conceptLabelを別の場面へ使い、最後にまとめて答え合わせします。', 'Use $conceptLabel in a new situation, then check all answers at the end.'),
-        [t('ヒントなしで解く', 'Solve without hints'), t('別場面へ使う', 'Use in a new situation'), t('まとめて比較する', 'Compare all at once')],
+        t('$conceptLabelの総合検証', '$conceptLabel chapter boss'),
+        t(
+          '$conceptLabelを別の場面へ使い、最後にまとめて答え合わせします。',
+          'Use $conceptLabel in a new situation, then check all answers at the end.',
+        ),
+        [
+          t('ヒントなしで解く', 'Solve without hints'),
+          t('別場面へ使う', 'Use in a new situation'),
+          t('まとめて比較する', 'Compare all at once'),
+        ],
         5,
         standardReward,
       ),
       GamePathNodeKind.legendary => (
-        t('レジェンド', 'Legendary'),
-        t('翌学習日から挑める、ヒントなしの高難度課題です。', 'A hard, no-hint task you can try from your next study day.'),
-        [t('間隔を空けて思い出す', 'Recall after a gap'), t('ヒントなしで解く', 'Solve without hints'), t('転移を確かめる', 'Check transfer')],
+        t('単元の高難度検証', 'Legendary'),
+        t(
+          '翌学習日から挑める、ヒントなしの高難度課題です。',
+          'A hard, no-hint task you can try from your next study day.',
+        ),
+        [
+          t('間隔を空けて思い出す', 'Recall after a gap'),
+          t('ヒントなしで解く', 'Solve without hints'),
+          t('転移を確かめる', 'Check transfer'),
+        ],
         5,
         standardReward,
       ),

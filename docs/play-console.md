@@ -197,5 +197,5 @@ RevenueCat SDK、匿名UUID、購入・復元のクライアント境界、サ�
 |---|---|
 | アプリアイコン（512×512 PNG） | `docs/store/icon-512.png`（RGBA） |
 | フィーチャーグラフィック（1024×500） | `docs/store/feature-1024x500.png` |
-| スクリーンショット（スマホ用 最低2枚） | `docs/store-shots-2026/google-play/phone/`に現UI 3枚。1080×1920 JPEG、RGB、alphaなし、OCR検査済み。推薦面向け4枚目は未作成 |
+| スクリーンショット（スマホ用 最低2枚） | 旧UI候補だけが残っており提出禁止。Field Notebookの現行buildから最低2枚（推薦面向けは4枚）を再撮影し、寸法・RGB・alphaなし・新語彙を再検証する |
 | 対象 API レベルの確認 | Flutter 3.41.9 の既定に従っている。提出時に Play の要求水準を確認する |

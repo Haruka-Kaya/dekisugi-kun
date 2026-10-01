@@ -79,7 +79,7 @@ class _SessionStoreOpeningPage extends StatelessWidget {
             'The app will not start in a temporary mode where records would be lost. Check your device storage and try again.',
           )
         : t(
-            '前回の続きと、今日の学習パスを読み込んでいます。',
+            '前回の続きと、今日の探究ノートを読み込んでいます。',
             "Loading your last session and today's learning path.",
           );
 

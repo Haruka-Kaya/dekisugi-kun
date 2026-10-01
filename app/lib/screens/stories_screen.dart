@@ -195,7 +195,7 @@ _StoryHeroState _storyHeroState(List<StoryEpisodeView> episodes) {
       eyebrow: lang.t('理科事件簿 ・ 解明済み', 'SCIENCE CASE FILES · SOLVED'),
       title: lang.t('すべての事件を解明しました', 'All cases solved'),
       body: lang.t(
-        '観察した条件と結果を、学習パスで次の問いにつなげられます。',
+        '観察した条件と結果を、探究ノートで次の問いにつなげられます。',
         'Use the conditions and results you observed to tackle the next question on your learning path.',
       ),
       semanticState: lang.t('すべての事件を解明済みです', 'All cases solved'),
@@ -211,7 +211,7 @@ _StoryHeroState _storyHeroState(List<StoryEpisodeView> episodes) {
       eyebrow: lang.t('理科事件簿', 'Science case files'),
       title: lang.t('最初の事件を準備中', 'Preparing your first case'),
       body: lang.t(
-        '学習パスを進めると、ここに観察ストーリーが現れます。',
+        '探究ノートを進めると、ここに観察事件が現れます。',
         'Move along the learning path to unlock an observation story here.',
       ),
       semanticState: lang.t('事件を準備中です', 'Preparing a case'),
@@ -224,7 +224,10 @@ _StoryHeroState _storyHeroState(List<StoryEpisodeView> episodes) {
 
   return (
     eyebrow: lang.t('理科事件簿 ・ 未解放', 'SCIENCE CASE FILES · LOCKED'),
-    title: lang.t('次の事件は学習パスで解放', 'Unlock the next case on your learning path'),
+    title: lang.t(
+      '次の事件は探究ノートで解放',
+      'Unlock the next case on your learning path',
+    ),
     body: lang.t(
       '現在の必修ノードを終えると、次の事件ファイルを読めます。',
       'Finish the current required node to read the next case file.',
@@ -248,7 +251,7 @@ class _EmptyStories extends StatelessWidget {
       key: const ValueKey('stories-empty'),
       container: true,
       label: lang.t(
-        '事件簿はまだ未解放。学習パスを進めると開きます',
+        '事件簿はまだ未解放。探究ノートを進めると開きます',
         'Case files are locked. Continue on the learning path to open them.',
       ),
       child: ExcludeSemantics(
@@ -262,7 +265,8 @@ class _EmptyStories extends StatelessWidget {
                 height: GameTokens.minTouchTarget,
                 decoration: BoxDecoration(
                   color: colors.pathLocked,
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(GameTokens.radiusSm),
+                  border: Border.all(color: colors.border),
                 ),
                 child: Icon(
                   Icons.lock_outline_rounded,
@@ -283,7 +287,7 @@ class _EmptyStories extends StatelessWidget {
                     const SizedBox(height: GameTokens.spaceSm),
                     Text(
                       lang.t(
-                        '学習パスを進めると、事件簿が開きます。',
+                        '探究ノートを進めると、事件簿が開きます。',
                         'Keep going on the learning path to open case files.',
                       ),
                       style: t.textTheme.bodyMedium?.copyWith(
@@ -377,7 +381,9 @@ class _EpisodeCard extends StatelessWidget {
                           width: GameTokens.minTouchTarget,
                           height: GameTokens.minTouchTarget,
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(
+                              GameTokens.radiusSm,
+                            ),
                             color: nodeColor,
                             border: Border.all(
                               color: enabled ? nodeColor : colors.border,

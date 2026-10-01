@@ -80,7 +80,7 @@
 	     学校・家庭管理PCへ接続する。Bonjour discoveryは使わず、参加QRに入った
 	     private IPと自己署名証明書fingerprintへだけ接続する。 -->
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>同じWi-Fiにいる実在の学習仲間と、ペアクエストや週次リーグに参加するために使います。氏名・回答・音声は送りません。</string>
+	<string>同じWi-Fiにいる実在の学習仲間と、共同観察や共同観測に参加するために使います。氏名・回答・音声は送りません。</string>
 
 	<!-- 必修SpeakingではSpeech frameworkをオンデバイス専用で使う。
 	     認識候補は固定語句との比較後に破棄し、保存・送信しない。 -->

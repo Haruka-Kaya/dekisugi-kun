@@ -1,0 +1,2 @@
+# native/store brand assetのPNG encoderを固定し、byte再現性を保つ。
+Pillow==11.3.0

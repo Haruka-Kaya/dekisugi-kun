@@ -266,6 +266,19 @@ void main() {
           home: ConsentScreen(onAgreed: onAgreed, onUseLocalOnly: () {}),
         );
 
+    Future<void> next(WidgetTester tester) async {
+      final button = find.byKey(const ValueKey('consent-next'));
+      await tester.ensureVisible(button);
+      await tester.pump();
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> moveToTransfer(WidgetTester tester) async {
+      await next(tester);
+      await next(tester);
+    }
+
     setUp(() {
       // 既定の 800x600 だと ListView の下半分が組まれず、
       // ボタンもチェックボックスも見つからない
@@ -280,7 +293,7 @@ void main() {
           .resetPhysicalSize();
     });
 
-    testWidgets('同意前に通信なしのおためしミッションを完了できる', (tester) async {
+    testWidgets('同意前に通信なしのおためし観察を完了できる', (tester) async {
       var agreed = false;
       await tester.pumpWidget(
         wrap((_) async {
@@ -289,6 +302,8 @@ void main() {
         }),
       );
 
+      expect(find.text('30秒おためし観察'), findsOneWidget);
+      expect(find.textContaining('TUTORIAL CLEAR'), findsNothing);
       expect(find.byKey(const Key('preview-predict-question')), findsOneWidget);
       await tester.tap(find.byKey(const Key('preview-predict-heavy')));
       await tester.pump();
@@ -302,6 +317,7 @@ void main() {
       await tester.tap(find.byKey(const Key('preview-correct-challenge')));
       await tester.pump();
       expect(find.byKey(const Key('preview-clear')), findsOneWidget);
+      expect(find.text('おためし観察  /  完了'), findsOneWidget);
       expect(find.text('空気の抵抗を無視すれば、落下の速さは重さに関係しません。'), findsOneWidget);
       expect(agreed, isFalse, reason: 'おためしで同意完了にしない');
       expect(
@@ -310,7 +326,7 @@ void main() {
       );
     });
 
-    testWidgets('320dp・文字200%でもおためしミッションを操作できる', (tester) async {
+    testWidgets('320dp・文字200%でもおためし観察を操作できる', (tester) async {
       final view =
           TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
       view.physicalSize = const Size(320, 568);
@@ -387,7 +403,7 @@ void main() {
         expect(
           tester.getSemantics(clearRegion),
           matchesSemantics(
-            label: 'おためしミッションクリア。条件を使って思い込みを見破りました。',
+            label: 'おためし観察を完了。条件を使って思い込みを見破りました。',
             isLiveRegion: true,
           ),
         );
@@ -455,11 +471,7 @@ void main() {
 
       await tester.tap(find.text('18歳以上'));
       await tester.pump();
-      final transferAgreement = find.ancestor(
-        of: find.text('上の内容を読んで、会話時の海外送信に同意します'),
-        matching: find.byType(CheckboxListTile),
-      );
-      expect(tester.widget<CheckboxListTile>(transferAgreement).value, isFalse);
+      expect(find.byKey(const ValueKey('consent-next')), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('use-local-only-mode')));
       await tester.pump();
 
@@ -476,14 +488,17 @@ void main() {
         }),
       );
       await tester.tap(find.text('18歳以上'));
+      await moveToTransfer(tester);
       await tester.tap(find.text('上の内容を読んで、会話時の海外送信に同意します'));
       await tester.pumpAndSettle();
 
       expect(
-        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        tester
+            .widget<FilledButton>(find.byKey(const ValueKey('consent-next')))
+            .onPressed,
         isNotNull,
       );
-      await tester.tap(find.text('はじめる'));
+      await next(tester);
       await tester.pumpAndSettle();
       expect(got?.ageBand, AgeBand.adult);
       expect(got?.route, ConsentRoute.self);
@@ -510,6 +525,7 @@ void main() {
         ),
       );
       await tester.tap(find.text('15歳以下'));
+      await next(tester);
       await tester.pumpAndSettle();
       expect(find.text('外部サービスを使うモードは、18歳未満・学校向けに提供していません。'), findsOneWidget);
       expect(find.text('上の内容を読んで、会話時の海外送信に同意します'), findsNothing);
@@ -535,6 +551,7 @@ void main() {
       );
 
       await tester.tap(find.text('15歳以下'));
+      await next(tester);
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('use-local-only-mode')));
       await tester.pumpAndSettle();
@@ -551,6 +568,7 @@ void main() {
         }),
       );
       await tester.tap(find.text('16〜17歳'));
+      await next(tester);
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('use-local-only-mode')), findsOneWidget);
       expect(find.text('はじめる'), findsNothing);
@@ -560,6 +578,8 @@ void main() {
 
     testWidgets('越境移転の3点が画面に出ている', (tester) async {
       await tester.pumpWidget(wrap((_) async => null));
+      await tester.tap(find.text('18歳以上'));
+      await moveToTransfer(tester);
       for (final (label, _) in kTransferDisclosure) {
         expect(find.text(label), findsOneWidget, reason: '$label が出ていない');
       }
@@ -567,6 +587,8 @@ void main() {
 
     testWidgets('RevenueCat の送信内容と非送信内容が画面に出る', (tester) async {
       await tester.pumpWidget(wrap((_) async => null));
+      await tester.tap(find.text('18歳以上'));
+      await moveToTransfer(tester);
       expect(find.text('RevenueCat（Plus の購入管理）'), findsOneWidget);
       expect(find.text('RevenueCat へ送らないもの'), findsOneWidget);
       expect(find.text('Plus を使わない間は、RevenueCat SDK を起動しません。'), findsOneWidget);
@@ -592,6 +614,7 @@ void main() {
         );
 
         await tester.tap(find.text('18歳以上'));
+        await next(tester);
         await tester.tap(find.text('学校からもらって使います'));
         await tester.pumpAndSettle();
 

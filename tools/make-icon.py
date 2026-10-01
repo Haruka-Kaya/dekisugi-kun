@@ -1,190 +1,356 @@
-# アプリアイコンを、キャラクターと同じ図形から作る。
-#
-# 画面の中のデキすぎ君と別物を描くと、ストアで見たものと開いたものが食い違う。
-# 形も色も `app/lib/widgets/character.dart` と `app_theme.dart` に合わせてある。
-#
-#   python tools/make-icon.py
-#
-# 出力:
-#   docs/store/icon-1024.png         iOS / 元画像
-#   docs/store/icon-512.png          Play の「アプリアイコン」
-#   docs/store/feature-1024x500.png  フィーチャーグラフィック
-#   Android のlegacy / adaptive foregroundと、iOSの全ランチャーアイコン
+#!/usr/bin/env python3
+"""Runtimeのデキすぎ君からnative/storeブランド画像を再生成する。
 
+キャラクターの形・色をPythonへ複製しない。Flutter testが公開Widget
+``DekisugiCharacterArt`` を直接PNGへ書き出し、このscriptは合成、resize、
+PNGのRGB/RGBA化だけを行う。
+
+生成:
+    uv run --with-requirements tools/requirements-icons.txt tools/make-icon.py
+
+追跡済みassetとの一致、2回生成のbyte一致、寸法・alpha・safe-zone・参照:
+    uv run --with-requirements tools/requirements-icons.txt tools/make-icon.py --check
+"""
+
+from __future__ import annotations
+
+import argparse
+import io
+import json
 from pathlib import Path
+from typing import Dict, Iterable, Mapping
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageOps
+
 
 ROOT = Path(__file__).resolve().parent.parent
+APP = ROOT / "app"
+RES = APP / "android" / "app" / "src" / "main" / "res"
+IOS_ASSETS = APP / "ios" / "Runner" / "Assets.xcassets"
+STORE = ROOT / "docs" / "store"
 
-# app/lib/config/app_theme.dart の light と同じ値
-BODY = (0x5B, 0x62, 0xD6)
-FACE = (0xFF, 0xFF, 0xFF)
-ACCENT = (0xFF, 0xC4, 0x6B)
-BG = (0xF6, 0xF2, 0xE9)
-INK = (0x1C, 0x23, 0x33)
-MUTED = (0x62, 0x67, 0x75)
+LIGHT_GOLDEN = APP / "test" / "goldens" / "native_brand_character_light.png"
+DARK_GOLDEN = APP / "test" / "goldens" / "native_brand_character_dark.png"
+MONOCHROME_GOLDEN = (
+    APP / "test" / "goldens" / "native_brand_character_monochrome.png"
+)
+FEATURE_GOLDEN = APP / "test" / "goldens" / "native_brand_feature.png"
 
+ANDROID_DENSITIES = {
+    "mdpi": (48, 108, 1),
+    "hdpi": (72, 162, 1.5),
+    "xhdpi": (96, 216, 2),
+    "xxhdpi": (144, 324, 3),
+    "xxxhdpi": (192, 432, 4),
+}
 
-def draw_character(d: ImageDraw.ImageDraw, cx: float, cy: float, r: float) -> None:
-    """character.dart の paint() と同じ順・同じ比率で描く。"""
-    # ① 房（右上）
-    d.rounded_rectangle(
-        [cx + r * 0.35 - r * 0.09, cy - r * 1.12 - r * 0.21,
-         cx + r * 0.35 + r * 0.09, cy - r * 1.12 + r * 0.21],
-        radius=r * 0.09, fill=BODY)
-    d.ellipse(
-        [cx + r * 0.35 - r * 0.15, cy - r * 1.35 - r * 0.15,
-         cx + r * 0.35 + r * 0.15, cy - r * 1.35 + r * 0.15],
-        fill=ACCENT)
-
-    # ② 体（**頭より横に広い**。狭いと「あご」に見える）
-    bw = r * 2.3
-    d.rounded_rectangle(
-        [cx - bw / 2, cy + r * 1.28 - r * 0.45,
-         cx + bw / 2, cy + r * 1.28 + r * 0.45],
-        radius=r * 0.34, fill=BODY)
-
-    # ③ 頭
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=BODY)
-
-    # ④ 目とハイライト
-    eye_r = r * 0.20
-    for side in (-1, 1):
-        ex = cx + r * 0.40 * side
-        ey = cy - r * 0.05
-        d.ellipse([ex - eye_r, ey - eye_r, ex + eye_r, ey + eye_r], fill=FACE)
-        hr = eye_r * 0.26
-        hx, hy = ex + eye_r * 0.32, ey - eye_r * 0.34
-        d.ellipse([hx - hr, hy - hr, hx + hr, hy + hr], fill=BODY)
+IOS_ICONS = {
+    "Icon-App-20x20@1x.png": 20,
+    "Icon-App-20x20@2x.png": 40,
+    "Icon-App-20x20@3x.png": 60,
+    "Icon-App-29x29@1x.png": 29,
+    "Icon-App-29x29@2x.png": 58,
+    "Icon-App-29x29@3x.png": 87,
+    "Icon-App-40x40@1x.png": 40,
+    "Icon-App-40x40@2x.png": 80,
+    "Icon-App-40x40@3x.png": 120,
+    "Icon-App-60x60@2x.png": 120,
+    "Icon-App-60x60@3x.png": 180,
+    "Icon-App-76x76@1x.png": 76,
+    "Icon-App-76x76@2x.png": 152,
+    "Icon-App-83.5x83.5@2x.png": 167,
+    "Icon-App-1024x1024@1x.png": 1024,
+}
 
 
-def render(size: int, scale: int = 4) -> Image.Image:
-    """アンチエイリアスのため大きく描いて縮める。"""
-    s = size * scale
-    img = Image.new("RGB", (s, s), BG)
-    d = ImageDraw.Draw(img)
-    # 頭の半径は 0.22 が上限。これより大きいと体の下端が切れる。
-    # Android はランチャーで角丸に切り取るので、四辺に余白が要る
-    draw_character(d, s / 2, s * 0.42, s * 0.22)
-    return img.resize((size, size), Image.LANCZOS)
+def _golden(path: Path, expected: tuple[int, int]) -> Image.Image:
+    image = Image.open(path).convert("RGBA")
+    if image.size != expected:
+        raise RuntimeError(f"native brand source goldenの寸法が不正です: {path}: {image.size}")
+    return image
 
 
-def adaptive_foreground(size: int, scale: int = 4) -> Image.Image:
-    """Android Adaptive Iconの108dp前景。安全領域の中へ図形だけを置く。"""
-    s = size * scale
-    img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    # マスクや端末ごとの視差移動で切れないよう、66dpの安全領域に収める。
-    draw_character(d, s / 2, s * 0.48, s * 0.18)
-    return img.resize((size, size), Image.LANCZOS)
+def _rgb(hex_value: str) -> tuple[int, int, int]:
+    value = hex_value.removeprefix("#")
+    if len(value) != 6:
+        raise ValueError(f"6桁sRGBではありません: {hex_value}")
+    return tuple(int(value[index : index + 2], 16) for index in (0, 2, 4))
 
 
-def launch_mascot(width: int, height: int, scale: int = 4) -> Image.Image:
-    """起動画面用の透明マスコット。文字や進捗表示は入れない。"""
-    w, h = width * scale, height * scale
-    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    draw_character(d, w / 2, h * 0.43, h * 0.235)
-    return img.resize((width, height), Image.LANCZOS)
+def _png(image: Image.Image, *, mode: str) -> bytes:
+    converted = image.convert(mode)
+    output = io.BytesIO()
+    # metadataを付けず、同一環境・同一encoder設定でbyteを固定する。
+    converted.save(output, format="PNG", optimize=False, compress_level=9)
+    return output.getvalue()
 
 
-def feature_graphic() -> Image.Image:
-    scale = 4
-    w, h = 1024 * scale, 500 * scale
-    img = Image.new("RGB", (w, h), BG)
-    d = ImageDraw.Draw(img)
-    draw_character(d, w * 0.25, h * 0.42, h * 0.24)
+def _square_icon(
+    source: Image.Image,
+    size: int,
+    background: tuple[int, int, int],
+) -> Image.Image:
+    canvas = Image.new("RGB", (size, size), background)
+    art_size = round(size * 0.82)
+    art = source.resize((art_size, art_size), Image.Resampling.LANCZOS)
+    offset = ((size - art_size) // 2, (size - art_size) // 2)
+    canvas.paste(art, offset, art)
+    return canvas
 
-    font_path = ROOT / "app" / "assets" / "fonts" / "NotoSansJP-Variable.ttf"
-    title = ImageFont.truetype(str(font_path), 48 * scale)
-    body = ImageFont.truetype(str(font_path), 22 * scale)
-    label = ImageFont.truetype(str(font_path), 16 * scale)
 
-    d.text((520 * scale, 102 * scale), "AIデキすぎ君", font=label, fill=MUTED)
-    d.text((520 * scale, 145 * scale), "覚える側から、", font=title, fill=INK)
-    d.text((520 * scale, 207 * scale), "教える側へ。", font=title, fill=INK)
-    d.text(
-        (520 * scale, 310 * scale),
-        "読んで、閉じて、AIに教える。",
-        font=body,
-        fill=MUTED,
+def _adaptive_foreground(source: Image.Image, size: int) -> Image.Image:
+    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    # Androidの108dp canvas中央66dpが全maskで残る領域。runtime art自体の
+    # ink boundsは72dp square内の約61dpなので、この寸法なら完全に収まる。
+    art_size = round(size * (72 / 108))
+    art = source.resize((art_size, art_size), Image.Resampling.LANCZOS)
+    # idle artは斜めアンテナぶん上側のinkが長い。全adaptive maskの
+    # 中央66dpへ輪郭を収めつつ腕・本を縮めないよう、3dpだけ下へ置く。
+    offset = (
+        (size - art_size) // 2,
+        (size - art_size) // 2 + round(size * (3 / 108)),
     )
-    return img.resize((1024, 500), Image.LANCZOS)
+    canvas.alpha_composite(art, offset)
+    return canvas
 
 
-def main() -> None:
-    store = ROOT / "docs" / "store"
-    store.mkdir(parents=True, exist_ok=True)
+def _transparent_launch(
+    source: Image.Image,
+    width: int,
+    height: int,
+    *,
+    art_size: int | None = None,
+) -> Image.Image:
+    canvas = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    side = art_size or min(width, height)
+    art = source.resize((side, side), Image.Resampling.LANCZOS)
+    canvas.alpha_composite(art, ((width - side) // 2, (height - side) // 2))
+    return canvas
 
-    render(1024).save(store / "icon-1024.png")
-    # Google Playのストアアイコンは32-bit PNGが必要。見た目は不透明でも
-    # alpha channelを持つRGBAで保存する。
-    render(512).convert("RGBA").save(store / "icon-512.png")
-    feature_graphic().save(store / "feature-1024x500.png")
 
-    # Android のランチャーアイコン。密度ごとの寸法は固定
-    res = ROOT / "app" / "android" / "app" / "src" / "main" / "res"
-    for folder, legacy_px, adaptive_px in [
-        ("mipmap-mdpi", 48, 108),
-        ("mipmap-hdpi", 72, 162),
-        ("mipmap-xhdpi", 96, 216),
-        ("mipmap-xxhdpi", 144, 324),
-        ("mipmap-xxxhdpi", 192, 432),
-    ]:
-        out = res / folder
-        out.mkdir(parents=True, exist_ok=True)
-        render(legacy_px).save(out / "ic_launcher.png")
-        adaptive_foreground(adaptive_px).save(out / "ic_launcher_foreground.png")
-
-    launch = res / "drawable-nodpi"
-    launch.mkdir(parents=True, exist_ok=True)
-    # nodpiは端末密度で再拡大されないため、Android用は2倍で持つ。
-    launch_mascot(336, 370).save(launch / "launch_mascot.png")
-
-    ios = (
-        ROOT
-        / "app"
-        / "ios"
-        / "Runner"
-        / "Assets.xcassets"
-        / "AppIcon.appiconset"
+def _monochrome_mask(source: Image.Image, size: int = 108) -> Image.Image:
+    # Flutterが直接描いたblack body / white eyes+bookをalphaへ移す。
+    # 元alphaも掛けるため、透明なcanvasは着色されず、eyes/bookはnegative spaceになる。
+    rgba = source.convert("RGBA")
+    alpha_source = ImageChops.multiply(
+        rgba.getchannel("A"),
+        ImageOps.invert(rgba.convert("L")),
     )
-    for filename, px in [
-        ("Icon-App-20x20@1x.png", 20),
-        ("Icon-App-20x20@2x.png", 40),
-        ("Icon-App-20x20@3x.png", 60),
-        ("Icon-App-29x29@1x.png", 29),
-        ("Icon-App-29x29@2x.png", 58),
-        ("Icon-App-29x29@3x.png", 87),
-        ("Icon-App-40x40@1x.png", 40),
-        ("Icon-App-40x40@2x.png", 80),
-        ("Icon-App-40x40@3x.png", 120),
-        ("Icon-App-60x60@2x.png", 120),
-        ("Icon-App-60x60@3x.png", 180),
-        ("Icon-App-76x76@1x.png", 76),
-        ("Icon-App-76x76@2x.png", 152),
-        ("Icon-App-83.5x83.5@2x.png", 167),
-        ("Icon-App-1024x1024@1x.png", 1024),
-    ]:
-        render(px).save(ios / filename)
+    alpha_rgba = Image.new("RGBA", source.size, (0, 0, 0, 0))
+    alpha_rgba.putalpha(alpha_source)
+    return _adaptive_foreground(alpha_rgba, size)
 
-    ios_launch = (
-        ROOT
-        / "app"
-        / "ios"
-        / "Runner"
-        / "Assets.xcassets"
-        / "LaunchImage.imageset"
+
+def build_outputs() -> Dict[Path, bytes]:
+    light_canvas = _rgb("F4F1E9")
+    dark_canvas = _rgb("121719")
+    light = _golden(LIGHT_GOLDEN, (512, 512))
+    dark = _golden(DARK_GOLDEN, (512, 512))
+    monochrome = _golden(MONOCHROME_GOLDEN, (512, 512))
+    feature = _golden(FEATURE_GOLDEN, (1024, 500)).convert("RGB")
+    outputs: Dict[Path, bytes] = {}
+
+    light_1024 = _square_icon(light, 1024, light_canvas)
+    outputs[STORE / "icon-1024.png"] = _png(light_1024, mode="RGB")
+    outputs[STORE / "icon-512.png"] = _png(
+        light_1024.resize((512, 512), Image.Resampling.LANCZOS),
+        mode="RGBA",
     )
-    for filename, scale in [
-        ("LaunchImage.png", 1),
-        ("LaunchImage@2x.png", 2),
-        ("LaunchImage@3x.png", 3),
-    ]:
-        launch_mascot(168 * scale, 185 * scale).save(ios_launch / filename)
+    outputs[STORE / "feature-1024x500.png"] = _png(feature, mode="RGB")
 
-    print("store画像 / Android / iOS アイコンを出力した")
+    for qualifier, (legacy_size, adaptive_size, _) in ANDROID_DENSITIES.items():
+        light_dir = RES / f"mipmap-{qualifier}"
+        dark_dir = RES / f"mipmap-night-{qualifier}"
+        outputs[light_dir / "ic_launcher.png"] = _png(
+            _square_icon(light, legacy_size, light_canvas), mode="RGB"
+        )
+        outputs[light_dir / "ic_launcher_foreground.png"] = _png(
+            _adaptive_foreground(light, adaptive_size), mode="RGBA"
+        )
+        outputs[dark_dir / "ic_launcher.png"] = _png(
+            _square_icon(dark, legacy_size, dark_canvas), mode="RGB"
+        )
+        outputs[dark_dir / "ic_launcher_foreground.png"] = _png(
+            _adaptive_foreground(dark, adaptive_size), mode="RGBA"
+        )
+
+    outputs[RES / "drawable-nodpi" / "ic_launcher_monochrome.png"] = _png(
+        _monochrome_mask(monochrome), mode="RGBA"
+    )
+    outputs[RES / "drawable-nodpi" / "launch_mascot.png"] = _png(
+        _transparent_launch(light, 336, 370), mode="RGBA"
+    )
+    outputs[RES / "drawable-night-nodpi" / "launch_mascot.png"] = _png(
+        _transparent_launch(dark, 336, 370), mode="RGBA"
+    )
+    # Android 12+ splashは288dp canvas内の192dp領域へ静止artを置く。
+    outputs[RES / "drawable-nodpi" / "launch_mascot_v31.png"] = _png(
+        _transparent_launch(light, 288, 288, art_size=192), mode="RGBA"
+    )
+    outputs[RES / "drawable-night-nodpi" / "launch_mascot_v31.png"] = _png(
+        _transparent_launch(dark, 288, 288, art_size=192), mode="RGBA"
+    )
+
+    ios_icons = IOS_ASSETS / "AppIcon.appiconset"
+    for filename, size in IOS_ICONS.items():
+        outputs[ios_icons / filename] = _png(
+            _square_icon(light, size, light_canvas), mode="RGB"
+        )
+
+    ios_launch = IOS_ASSETS / "LaunchImage.imageset"
+    for scale in (1, 2, 3):
+        suffix = "" if scale == 1 else f"@{scale}x"
+        outputs[ios_launch / f"LaunchImage{suffix}.png"] = _png(
+            _transparent_launch(light, 168 * scale, 185 * scale), mode="RGBA"
+        )
+        outputs[ios_launch / f"LaunchImage-dark{suffix}.png"] = _png(
+            _transparent_launch(dark, 168 * scale, 185 * scale), mode="RGBA"
+        )
+
+    return outputs
+
+
+def _image_mode_and_size(payload: bytes) -> tuple[str, tuple[int, int]]:
+    with Image.open(io.BytesIO(payload)) as image:
+        return image.mode, image.size
+
+
+def _assert_output_contract(outputs: Mapping[Path, bytes]) -> None:
+    for path, payload in outputs.items():
+        mode, size = _image_mode_and_size(payload)
+        name = path.name
+        if "AppIcon.appiconset" in str(path) or (
+            name == "ic_launcher.png" and "mipmap" in str(path)
+        ) or name in {"icon-1024.png", "feature-1024x500.png"}:
+            if mode != "RGB":
+                raise AssertionError(f"alpha禁止assetが{mode}です: {path}")
+        elif mode != "RGBA":
+            raise AssertionError(f"透明assetが{mode}ではありません: {path}")
+        if size[0] <= 0 or size[1] <= 0:
+            raise AssertionError(f"空のassetです: {path}")
+
+    foreground = outputs[
+        RES / "mipmap-mdpi" / "ic_launcher_foreground.png"
+    ]
+    with Image.open(io.BytesIO(foreground)).convert("RGBA") as image:
+        alpha = image.getchannel("A")
+        bounds = alpha.point(lambda value: 255 if value > 4 else 0).getbbox()
+    if bounds is None:
+        raise AssertionError("adaptive foregroundが透明です")
+    left, top, right, bottom = bounds
+    # getbboxのright/bottomはexclusive。中央66dp=[21,87)。
+    if left < 21 or top < 21 or right > 87 or bottom > 87:
+        raise AssertionError(f"adaptive foregroundが66dp safe-zone外です: {bounds}")
+
+
+def _assert_references() -> None:
+    v33 = (RES / "mipmap-anydpi-v33" / "ic_launcher.xml").read_text(
+        encoding="utf-8"
+    )
+    if "@drawable/ic_launcher_monochrome" not in v33:
+        raise AssertionError("Android 13 themed icon参照がありません")
+    if not (RES / "drawable-nodpi" / "ic_launcher_monochrome.png").is_file():
+        raise AssertionError("Android monochrome PNGがありません")
+
+    for qualifier in ("values-v31", "values-night-v31"):
+        styles = (RES / qualifier / "styles.xml").read_text(encoding="utf-8")
+        if "windowSplashScreenBackground" not in styles:
+            raise AssertionError(f"{qualifier}にAndroid 12 splash背景がありません")
+        if "@drawable/launch_mascot_v31" not in styles:
+            raise AssertionError(f"{qualifier}にAndroid 12 mascot参照がありません")
+
+    for set_name in ("AppIcon.appiconset", "LaunchImage.imageset"):
+        directory = IOS_ASSETS / set_name
+        contents = json.loads((directory / "Contents.json").read_text(encoding="utf-8"))
+        for item in contents["images"]:
+            filename = item.get("filename")
+            if filename and not (directory / filename).is_file():
+                raise AssertionError(f"iOS asset参照切れ: {set_name}/{filename}")
+
+
+def _compare_maps(first: Mapping[Path, bytes], second: Mapping[Path, bytes]) -> None:
+    if set(first) != set(second):
+        raise AssertionError("2回の生成で出力file集合が変わりました")
+    changed = [path for path in first if first[path] != second[path]]
+    if changed:
+        raise AssertionError(
+            "2回の生成がbyte-identicalではありません: "
+            + ", ".join(str(path.relative_to(ROOT)) for path in changed)
+        )
+
+
+def _write_outputs(outputs: Mapping[Path, bytes]) -> None:
+    for path, payload in outputs.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(payload)
+
+
+def _check_current(outputs: Mapping[Path, bytes]) -> None:
+    missing = [path for path in outputs if not path.is_file()]
+    if missing:
+        raise AssertionError(
+            "生成assetが不足しています: "
+            + ", ".join(str(path.relative_to(ROOT)) for path in missing)
+        )
+    changed = [
+        path for path, payload in outputs.items()
+        if not _same_asset(path.read_bytes(), payload, png=path.suffix == ".png")
+    ]
+    if changed:
+        raise AssertionError(
+            "runtime正本と一致しないassetがあります。tools/make-icon.pyを実行してください: "
+            + ", ".join(str(path.relative_to(ROOT)) for path in changed)
+        )
+
+
+def _same_asset(actual: bytes, expected: bytes, *, png: bool) -> bool:
+    if actual == expected:
+        return True
+    if not png:
+        return False
+    # macOS/Linuxのzlibは同じ画素でもPNGの圧縮byteが異なる。
+    # sourceとの一致はmode・寸法・全画素で判定し、同一環境での
+    # 2回生成のbyte一致は_compare_mapsで別途要求する。
+    try:
+        with Image.open(io.BytesIO(actual)) as got, Image.open(io.BytesIO(expected)) as want:
+            return (
+                got.format == want.format == "PNG"
+                and got.mode == want.mode
+                and got.size == want.size
+                and got.tobytes() == want.tobytes()
+            )
+    except (OSError, ValueError):
+        return False
+
+
+def generate(*, check: bool) -> None:
+    if check:
+        first = build_outputs()
+        second = build_outputs()
+        _compare_maps(first, second)
+        _assert_output_contract(first)
+        _check_current(first)
+        _assert_references()
+        print("runtime正本との一致、2回生成、寸法・alpha・safe-zone・参照: OK")
+        return
+
+    outputs = build_outputs()
+    # 同じgolden正本から2回buildし、encoder処理自体の非決定性も書込前に止める。
+    _compare_maps(outputs, build_outputs())
+    _assert_output_contract(outputs)
+    _write_outputs(outputs)
+    print(f"runtime正本からnative/store画像を{len(outputs)}件生成しました")
+
+
+def main(argv: Iterable[str] | None = None) -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="書き込まず、runtime正本との一致と2回生成の再現性を検証する",
+    )
+    args = parser.parse_args(argv)
+    generate(check=args.check)
 
 
 if __name__ == "__main__":

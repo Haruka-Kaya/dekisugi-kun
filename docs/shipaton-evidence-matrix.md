@@ -52,7 +52,7 @@ Status meanings:
 | Voice and text are equal learning inputs | Talk UI exposes both paths; typed turns use the same session evidence pipeline | Use both paths in the exact store build | **GREEN source / live provider blocked** |
 | Status is not conveyed by color alone | State labels, icons, and semantics are tested across mission, dossier, quota, and completion widgets | TalkBack and VoiceOver pass on physical devices | **GREEN source / AMBER device audit** |
 | Reduce Motion is respected | Tutorial transition chooses immediate visibility instead of animation when accessibility navigation is set | Toggle Reduce Motion on iOS and record the tutorial transition | **GREEN source / AMBER manual proof** |
-| Store screenshots show current UI and contain no alpha | `capture-store-shots.sh` reproduces native simulator/emulator frames; `verify-store-shots.sh` checks exact dimensions, RGB/no-alpha, current-UI OCR, forbidden notification text, corners, and legacy non-identity | Generated iPhone/iPad/Shipaton/Android samples pass; upload validation in both store consoles remains | **GREEN files / AMBER console upload** |
+| Store screenshots show current UI and contain no alpha | The former capture/verification scripts are fail-closed because their OCR contract targets the retired 30-second mission UI | Only legacy candidates exist; recapture Field Notebook on current iPhone/iPad/Android builds, then add exact dimensions, RGB/no-alpha, new-copy OCR, notification, and corner checks | **RED — do not submit existing files** |
 
 ## RevenueCat and distribution claims
 

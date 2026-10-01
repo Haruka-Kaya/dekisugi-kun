@@ -19,7 +19,7 @@ Widget _host({required ValueChanged<bool> onResult}) => MaterialApp(
 );
 
 void main() {
-  testWidgets('Timed当日券は用途と無料challengeを明示して確認後だけ承認する', (tester) async {
+  testWidgets('時間観察券は用途と無料実験を明示して確認後だけ承認する', (tester) async {
     bool? result;
     await tester.pumpWidget(_host(onResult: (value) => result = value));
 
@@ -30,8 +30,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('今日の学習日は何度でも'), findsOneWidget);
-    expect(find.textContaining('Path・XP・正答は購入できません'), findsOneWidget);
-    expect(find.textContaining('Match / Lightningは無料'), findsOneWidget);
+    expect(find.textContaining('探究ノート・探究記録・正答は購入できません'), findsOneWidget);
+    expect(find.textContaining('対応づけ実験と連続観察は無料'), findsOneWidget);
     expect(result, isNull);
 
     await tester.tap(find.byKey(const ValueKey('timed-entry-confirm')));

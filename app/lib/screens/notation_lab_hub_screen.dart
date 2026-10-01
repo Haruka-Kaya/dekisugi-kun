@@ -119,7 +119,7 @@ class NotationLabHubScreen extends StatelessWidget {
             raised: true,
             child: Text(
               t(
-                '学習パスを進めると、ここに記号の課題が加わります。',
+                '探究ノートを進めると、ここに記号の観察が加わります。',
                 'Notation tasks appear here as you progress along the learning path.',
               ),
             ),
@@ -251,7 +251,7 @@ _NotationHeroState _notationHeroState(List<NotationLabEntry> entries) {
       eyebrow: t('記号ラボ', 'Notation Lab'),
       title: t('最初の記号課題を準備中', 'Preparing your first notation task'),
       body: t(
-        '学習パスを進めると、式・単位・矢印・グラフの課題が加わります。',
+        '探究ノートを進めると、式・単位・矢印・グラフの観察が加わります。',
         'Equation, unit, arrow, and graph tasks are added as you progress along the learning path.',
       ),
       semanticState: t('記号課題を準備中です', 'Notation tasks are being prepared'),
@@ -265,7 +265,7 @@ _NotationHeroState _notationHeroState(List<NotationLabEntry> entries) {
   return (
     eyebrow: t('記号ラボ ・ 未解放', 'Notation Lab · Locked'),
     title: t(
-      '次の記号課題は学習パスで解放',
+      '次の記号観察は探究ノートで解放',
       'Unlock the next notation task on the learning path',
     ),
     body: t(

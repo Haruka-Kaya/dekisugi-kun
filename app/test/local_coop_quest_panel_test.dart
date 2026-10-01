@@ -50,6 +50,12 @@ void main() {
       _host(run: _run(), onSelect: (value) => selected = value),
     );
     expect(find.textContaining('名前・回答・正誤は保存しません'), findsOneWidget);
+    expect(find.text('ふたりの共同観察'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('local-coop-record-rule')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('ペアクエスト'), findsNothing);
     expect(find.textContaining('友達A'), findsNothing);
     final done = find.byKey(const ValueKey('local-coop-participant-pair-1:a'));
     final pending = find.byKey(
@@ -75,7 +81,7 @@ void main() {
       ),
     );
     expect(find.bySemanticsLabel(RegExp('2件中2件、達成済み')), findsOneWidget);
-    expect(find.textContaining('個人walletへ一度だけ'), findsOneWidget);
+    expect(find.textContaining('個人の結晶残高へ一度だけ'), findsOneWidget);
     expect(tester.takeException(), isNull);
     semantics.dispose();
   });

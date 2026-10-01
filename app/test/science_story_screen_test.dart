@@ -274,6 +274,8 @@ void main() {
     await tester.pumpWidget(_wrap(practiceAttempt: 1));
 
     expect(find.text(_story.title), findsWidgets);
+    expect(find.text('理科事件  /  第1幕・全3幕'), findsOneWidget);
+    expect(find.textContaining('SCIENCE STORY'), findsNothing);
     expect(find.text(_story.setting), findsOneWidget);
     expect(
       find.text(_section.localPracticeVariants[1].transferPrompt),
@@ -632,10 +634,7 @@ void main() {
 
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
     expect(scaffold.backgroundColor, GamePalette.dark.canvas);
-    expect(
-      find.bySemanticsLabel(RegExp('科学ストーリー.*デキすぎ君.*手招き')),
-      findsOneWidget,
-    );
+    expect(find.bySemanticsLabel(RegExp('理科事件.*デキすぎ君.*手招き')), findsOneWidget);
     final open = find.byKey(const ValueKey('science-story-open-judgment'));
     expect(tester.getSize(open).height, greaterThanOrEqualTo(48));
     expect(tester.takeException(), isNull);

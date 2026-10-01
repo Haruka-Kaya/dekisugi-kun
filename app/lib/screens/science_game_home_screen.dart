@@ -118,6 +118,8 @@ class ScienceGameHomeScreen extends StatefulWidget {
     this.lanSocialMeaningfulEventContributor,
     this.lanSocialFriendsQuestLoader,
     this.now,
+    this.showTabGuide = false,
+    this.onTabGuideDismissed,
   });
 
   final UnitsClient units;
@@ -151,6 +153,10 @@ class ScienceGameHomeScreen extends StatefulWidget {
   /// 学習日の午前4時境界を決定する時計。productionでは端末時刻を使う。
   @visibleForTesting
   final DateTime Function()? now;
+
+  /// 初回確認の直後だけ、各タブの役割を案内する。
+  final bool showTabGuide;
+  final VoidCallback? onTabGuideDismissed;
 
   /// 旧4段階で確実に完了した概念だけをread/diagramへ橋渡しする。
   /// 新規書込は現行学習台帳だけに行い、旧回数を増やさない。
@@ -848,14 +854,14 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       if (!widget.schoolMode)
         PracticeModeView(
           id: 'practice:heart-recovery',
-          title: lang.t('ハート回復練習', 'Heart recovery practice'),
+          title: lang.t('試行余力の回復実験', 'Heart recovery practice'),
           description: hearts?.current == hearts?.maximum
               ? lang.t(
-                  'ハートは満タンです。減ったときに、固定課題の練習で1個戻せます。',
+                  '試行余力は満タンです。減ったときに、固定課題の再現で1枠戻せます。',
                   'Your hearts are full. When you lose one, complete a set exercise to recover it.',
                 )
               : lang.t(
-                  '固定課題を最後まで見直すと、ハートを1個戻せます。',
+                  '固定課題を最後まで見直すと、試行余力を1枠戻せます。',
                   'Complete a set review exercise to recover one heart.',
                 ),
           kind: PracticeModeKind.heartRecovery,
@@ -868,12 +874,12 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
             id: mode.id,
             title: mode.title,
             description: lang.t(
-              'ハート回復練習を終えると再開できます。',
+              '試行余力の回復実験を終えると再開できます。',
               'Complete heart recovery practice to continue.',
             ),
             kind: mode.kind,
             enabled: false,
-            badge: lang.t('ハート0', '0 hearts'),
+            badge: lang.t('試行0', '0 hearts'),
           )
         else
           mode,
@@ -904,7 +910,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     if (mounted) {
       _message(
         lang.t(
-          'ハートがありません。練習タブの「ハート回復練習」で1個戻せます。',
+          '試行余力がありません。「実験」の回復実験で1枠戻せます。',
           'You have no hearts. Recover one with Heart recovery practice in the Practice tab.',
         ),
       );
@@ -1859,7 +1865,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
         elapsed: elapsed,
         eyebrow: _completionEyebrow(target.kind),
         title: result.inserted
-            ? lang.t('やった！一歩進んだ', 'Nice! One step forward')
+            ? lang.t('観察記録を追加しました', 'Nice! One step forward')
             : lang.t('もう一度、確かめられた', 'You checked it again'),
         message: _completionMessage(target.kind, hasObservedNeed),
       );
@@ -1867,7 +1873,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       if (mounted) {
         _message(
           lang.t(
-            '端末への進捗保存が完了していません。Pathからもう一度開けます。',
+            '端末への進捗保存が完了していません。探究ノートからもう一度開けます。',
             'Your progress was not saved. Open it again from the Path.',
           ),
         );
@@ -1924,8 +1930,8 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       return await _showCompletionCelebration(
         result: result,
         elapsed: elapsed,
-        eyebrow: 'UNIT LEGENDARY COMPLETE',
-        title: lang.t('高難度チャレンジをクリア！', 'Advanced challenge cleared!'),
+        eyebrow: '単元の高難度検証 / 保存済み',
+        title: lang.t('単元の高難度検証を記録しました', 'Advanced challenge cleared!'),
         message: lang.t(
           '${target.unit.title}の固定課題を最後まで確かめました。',
           'You completed the set questions for ${target.unit.title}.',
@@ -1935,7 +1941,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       if (mounted) {
         _message(
           lang.t(
-            '端末への進捗保存が完了していません。Pathからもう一度開けます。',
+            '端末への進捗保存が完了していません。探究ノートからもう一度開けます。',
             'Your progress was not saved. Open it again from the Path.',
           ),
         );
@@ -1966,16 +1972,13 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     return showGameCompletionCelebration(
       context,
       summary: GameCompletionSummary(
-        eyebrow: widget.schoolMode ? 'CLASS MISSION COMPLETE' : eyebrow,
+        eyebrow: widget.schoolMode ? '授業の観察記録 / 保存済み' : eyebrow,
         title: widget.schoolMode
-            ? lang.t(
-                'この端末の授業ミッションを完了',
-                'Class mission completed on this device',
-              )
+            ? lang.t('この端末の授業観察を完了', 'Class mission completed on this device')
             : title,
         message: widget.schoolMode
             ? lang.t(
-                '個人のXP・結晶・Pathには加算せず、この端末の授業記録だけを更新しました。',
+                '個人の探究記録・結晶・探究ノートには加算せず、この端末の授業記録だけを更新しました。',
                 'Only this device\'s class record was updated. Personal XP, gems, and Path progress did not change.',
               )
             : message,
@@ -2235,7 +2238,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       }
     } catch (_) {
       if (mounted) {
-        _message(lang.t('ハートの記録が完了していません。', 'Could not save your hearts.'));
+        _message(lang.t('試行余力の記録が完了していません。', 'Could not save your hearts.'));
       }
       rethrow;
     }
@@ -2530,9 +2533,9 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       return await _showCompletionCelebration(
         result: result,
         elapsed: elapsed,
-        eyebrow: 'NOTATION LAB COMPLETE',
+        eyebrow: '記号と図解 / 保存済み',
         title: result.inserted
-            ? lang.t('やった！記号を読み切った', 'Nice! You figured out the symbols')
+            ? lang.t('記号の観察を記録しました', 'Nice! You figured out the symbols')
             : lang.t('記号をもう一度確かめた', 'You checked the symbols again'),
         message: lang.t(
           'なぞる・組む・読む課題を終え、記号と意味をつなげました。',
@@ -2599,7 +2602,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
         LocalWeeklyLeagueAvailability.active) {
       _message(
         lang.t(
-          '今週は週次リーグを開始済みです。仲間クエストは次の週に作れます。',
+          '今週は共同観測を開始済みです。ふたりの観察は次の週に作れます。',
           'This week\'s league has started. You can make a team quest next week.',
         ),
       );
@@ -2632,16 +2635,14 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       if (mounted) {
         _message(
           lang.t(
-            '端末内ペアクエストを始めました。1人目の学習を選択中です。',
+            '端末内の共同観察を始めました。1人目の探究を選択中です。',
             'Pair quest started on this device. Choosing the first learner.',
           ),
         );
       }
     } catch (_) {
       if (mounted) {
-        _message(
-          lang.t('ペアクエストを開始できませんでした。', 'Could not start the pair quest.'),
-        );
+        _message(lang.t('共同観察を開始できませんでした。', 'Could not start the pair quest.'));
       }
     } finally {
       if (mounted) setState(() => _startingCoop = false);
@@ -2690,7 +2691,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       if (mounted) {
         _message(
           lang.t(
-            '実在する$participantCount人の週次リーグを始めました。',
+            '実在する$participantCount人の共同観測を始めました。',
             'Started a weekly league with $participantCount real players.',
           ),
         );
@@ -2698,7 +2699,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     } catch (_) {
       if (mounted) {
         _message(
-          lang.t('週次リーグを開始できませんでした。', 'Could not start the weekly league.'),
+          lang.t('共同観測を開始できませんでした。', 'Could not start the weekly league.'),
         );
       }
     } finally {
@@ -2826,7 +2827,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
           contribution.run.completed
               ? isPair
                     ? lang.t(
-                        '2人の学習がそろいました。仲間クエスト達成です。',
+                        '2人の探究がそろいました。共同観察を記録しました。',
                         'Both learners finished. Team quest complete!',
                       )
                     : lang.t(
@@ -2843,7 +2844,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       if (mounted) {
         _message(
           lang.t(
-            'この完了は周回だったため、参加者リーグには数えませんでした。',
+            'この完了は周回だったため、共同観測には数えませんでした。',
             'This repeat did not count toward the player league.',
           ),
         );
@@ -2852,7 +2853,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       if (mounted) {
         _message(
           lang.t(
-            '参加者リーグへの記録が完了していません。',
+            '共同観測への記録が完了していません。',
             'Could not record this in the player league.',
           ),
         );
@@ -2925,7 +2926,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     if (mounted) {
       _message(
         lang.t(
-          '連続記録の保護を補充しました。結晶は残り${result.remainingGems}個です。',
+          'お休みの日の保護を補充しました。結晶は残り${result.remainingGems}個です。',
           'Streak protection refilled. You have ${result.remainingGems} gems left.',
         ),
       );
@@ -2949,7 +2950,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     if (mounted) {
       _message(
         lang.t(
-          '学習ハートを${result.challengeHearts.current}個へ戻しました。結晶は残り${result.remainingGems}個です。',
+          '試行余力を${result.challengeHearts.current}枠へ戻しました。結晶は残り${result.remainingGems}個です。',
           'Restored ${result.challengeHearts.current} hearts. You have ${result.remainingGems} gems left.',
         ),
       );
@@ -2981,7 +2982,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     if (mounted) {
       _message(
         lang.t(
-          'Pathマスコットを変更しました。結晶は残り${result.remainingGems}個です。',
+          '探究ノートのデキすぎ君を変更しました。結晶は残り${result.remainingGems}個です。',
           'Path mascot changed. You have ${result.remainingGems} gems left.',
         ),
       );
@@ -3001,7 +3002,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     await _reloadSnapshot();
     if (mounted) {
       _message(
-        lang.t('Pathマスコットの見た目を変更しました。', 'Path mascot appearance changed.'),
+        lang.t('探究ノートのデキすぎ君を変更しました。', 'Path mascot appearance changed.'),
       );
     }
   }
@@ -3031,7 +3032,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
         if (node == null || !node.canOpen) {
           _message(
             lang.t(
-              'この見直し課題は、学習パスを進めると開きます。',
+              'この見直し課題は、探究ノートを進めると開きます。',
               'Continue along the learning path to unlock this review exercise.',
             ),
           );
@@ -3055,7 +3056,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
         if (node == null || !node.canOpen) {
           _message(
             lang.t(
-              'この聞き直し課題は、学習パスを進めると開きます。',
+              'この聞き直し課題は、探究ノートを進めると開きます。',
               'Continue along the learning path to unlock this listening review.',
             ),
           );
@@ -3081,7 +3082,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
         if (entry == null || !entry.canOpen) {
           _message(
             lang.t(
-              'この記号の見直しは、学習パスを進めると開きます。',
+              'この記号の見直しは、探究ノートを進めると開きます。',
               'Continue along the learning path to unlock this symbol review.',
             ),
           );
@@ -3107,13 +3108,13 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       await _reloadSnapshot();
     } catch (_) {
       if (mounted) {
-        _message(lang.t('ハートの状態を確認できませんでした。', 'Could not check your hearts.'));
+        _message(lang.t('試行余力の状態を確認できませんでした。', 'Could not check your hearts.'));
       }
       return;
     }
     final hearts = _snapshot?.challengeHearts;
     if (hearts == null || hearts.current >= hearts.maximum) {
-      if (mounted) _message(lang.t('ハートは満タンです。', 'Your hearts are full.'));
+      if (mounted) _message(lang.t('試行余力は満タンです。', 'Your hearts are full.'));
       return;
     }
     final node = _game?.path.units
@@ -3127,7 +3128,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     if (target == null) {
       _message(
         lang.t(
-          '最初の「しくみ図」を開くと、ハート回復練習を使えます。',
+          '最初の「しくみ図」を開くと、試行余力の回復実験を使えます。',
           'Open your first diagram to unlock heart recovery practice.',
         ),
       );
@@ -3143,7 +3144,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       if (section == null) {
         _message(
           lang.t(
-            'ハート回復練習を開けませんでした。',
+            '試行余力の回復実験を開けませんでした。',
             'Could not open heart recovery practice.',
           ),
         );
@@ -3221,7 +3222,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       if (mounted) {
         _message(
           lang.t(
-            'ハート回復練習を完了できませんでした。もう一度お試しください。',
+            '試行余力の回復実験を完了できませんでした。もう一度お試しください。',
             'Could not complete heart recovery practice. Please try again.',
           ),
         );
@@ -3275,11 +3276,11 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
         _message(
           recovery.recovered > 0
               ? lang.t(
-                  'ハート +1（${recovery.state.current}/${recovery.state.maximum}）',
+                  '試行余力 +1（${recovery.state.current}/${recovery.state.maximum}）',
                   'Heart +1 (${recovery.state.current}/${recovery.state.maximum})',
                 )
               : lang.t(
-                  '練習中の時間回復で、ハートは満タンになりました。',
+                  '実験中の時間回復で、試行余力は満タンになりました。',
                   'Your hearts refilled while you practiced.',
                 ),
         );
@@ -3287,7 +3288,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     } catch (_) {
       if (mounted) {
         _message(
-          lang.t('ハート回復の保存が完了していません。', 'Could not save heart recovery.'),
+          lang.t('試行余力回復の保存が完了していません。', 'Could not save heart recovery.'),
         );
       }
       rethrow;
@@ -3304,7 +3305,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     if (mode.kind == PracticeModeKind.repair && widget.schoolMode) {
       _message(
         lang.t(
-          '見直し課題は個人学習で使えます。授業では学習パスから進めます。',
+          '見直し課題は個人学習で使えます。授業では探究ノートから進めます。',
           'Review exercises are for personal study. In class, continue from the learning path.',
         ),
       );
@@ -3376,7 +3377,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     if (target == null) {
       _message(
         lang.t(
-          'この練習は、学習パスを進めると開きます。',
+          'この実験は、探究ノートを進めると開きます。',
           'Continue along the learning path to unlock this practice.',
         ),
       );
@@ -3421,7 +3422,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       if (section == null) {
         _message(
           lang.t(
-            '今日の音声ミッションを開けませんでした。もう一度お試しください。',
+            '今日の音声観察を開けませんでした。もう一度お試しください。',
             'Could not open today\'s audio mission. Please try again.',
           ),
         );
@@ -3526,7 +3527,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       if (mounted) {
         _message(
           lang.t(
-            '今日の音声ミッションを開始できませんでした。',
+            '今日の音声観察を開始できませんでした。',
             'Could not start today\'s audio mission.',
           ),
         );
@@ -3545,7 +3546,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     if (cost == null || !game.economy.canPurchaseTimedChallengePass) {
       _message(
         lang.t(
-          '結晶が足りません。Match / Lightningは結晶なしで遊べます。',
+          '結晶が足りません。対応づけ実験と連続観察は結晶なしで使えます。',
           'Not enough gems. Match and Lightning are free to play.',
         ),
       );
@@ -3567,7 +3568,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       if (mounted && result.applied) {
         _message(
           lang.t(
-            '今日のタイム挑戦券を使いました。結晶は残り${result.remainingGems}個です。',
+            '今日の時間観察券を使いました。結晶は残り${result.remainingGems}個です。',
             'Today\'s timed challenge pass is active. You have ${result.remainingGems} gems left.',
           ),
         );
@@ -3577,7 +3578,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
       if (mounted) {
         _message(
           lang.t(
-            'タイム挑戦券を記録できませんでした。残高を確認してください。',
+            '時間観察券を記録できませんでした。残高を確認してください。',
             'Could not record the timed challenge pass. Check your gem balance.',
           ),
         );
@@ -3747,7 +3748,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
                   const SizedBox(height: 14),
                   Text(
                     lang.t(
-                      '学習パスを準備できませんでした。',
+                      '探究ノートを準備できませんでした。',
                       'Could not load the learning path.',
                     ),
                   ),
@@ -3772,6 +3773,8 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
 
     return GameShell(
       schoolMode: widget.schoolMode,
+      showTabGuide: widget.showTabGuide,
+      onTabGuideDismissed: widget.onTabGuideDismissed,
       playerStatus: game.path.status,
       quests: headerQuests,
       questTabFor: _questTabFor,
@@ -3867,7 +3870,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
                 _localWeeklyLeague?.availability ==
                     LocalWeeklyLeagueAvailability.active
             ? lang.t(
-                '今週は週次リーグを開始済みです。学習イベントを二重計上しないため、ペアクエストは次の週に作れます。',
+                '今週は共同観測を開始済みです。探究イベントを二重計上しないため、ふたりの観察は次の週に作れます。',
                 'This week\'s league has started. To avoid counting an activity twice, you can make a pair quest next week.',
               )
             : null,
@@ -4098,19 +4101,19 @@ LearningEvidenceLevel _evidenceFor(GamePathNodeKind kind) => switch (kind) {
 };
 
 String _completionEyebrow(GamePathNodeKind kind) => switch (kind) {
-  GamePathNodeKind.lesson => 'TEXT LAB COMPLETE',
-  GamePathNodeKind.practice => 'SCIENCE LAB COMPLETE',
-  GamePathNodeKind.story => 'SCIENCE STORY COMPLETE',
-  GamePathNodeKind.listening => 'LISTEN LAB COMPLETE',
-  GamePathNodeKind.speaking => 'SPEAK LAB COMPLETE',
-  GamePathNodeKind.challenge => 'BOSS COMPLETE',
-  GamePathNodeKind.legendary => 'LEGENDARY COMPLETE',
+  GamePathNodeKind.lesson => '教材観察 / 保存済み',
+  GamePathNodeKind.practice => '構造実験 / 保存済み',
+  GamePathNodeKind.story => '理科事件簿 / 保存済み',
+  GamePathNodeKind.listening => '聞き取り観察 / 保存済み',
+  GamePathNodeKind.speaking => '教え返し / 保存済み',
+  GamePathNodeKind.challenge => '総合検証 / 保存済み',
+  GamePathNodeKind.legendary => '高難度検証 / 保存済み',
 };
 
 String _completionMessage(GamePathNodeKind kind, bool foundRepairNeed) {
   if (foundRepairNeed) {
     return lang.t(
-      '見直したポイントを次の個別練習へつなぎ、マップの一歩を進めました。',
+      '見直したポイントを次の個別実験へつなぎ、探究ログを一歩進めました。',
       'You used what you reviewed in practice and moved one step forward on the map.',
     );
   }
@@ -4136,7 +4139,7 @@ String _completionMessage(GamePathNodeKind kind, bool foundRepairNeed) {
       'You taught by voice or text and improved your explanation by thinking about a follow-up question.',
     ),
     GamePathNodeKind.challenge => lang.t(
-      '別の場面へ考え方を使い、章ボスをクリアしました。',
+      '別の場面へ考え方を使い、単元の総合検証を終えました。',
       'You applied your thinking to a new situation and cleared the chapter boss.',
     ),
     GamePathNodeKind.legendary => lang.t(

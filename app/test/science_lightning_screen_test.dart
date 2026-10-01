@@ -109,6 +109,8 @@ void main() {
     await tester.pumpWidget(
       _wrap(disableAnimations: true, onCompleted: () => completed++),
     );
+    expect(find.text('連続観察'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('ラボ・ブリーフ.*連続観察')), findsOneWidget);
     expect(find.textContaining('Instance of'), findsNothing);
     await _start(tester);
 
@@ -120,7 +122,7 @@ void main() {
     expect(find.textContaining('横軸で右へ進む'), findsOneWidget);
     await _answer(tester, 'time');
 
-    expect(find.text('固定問題列を完走'), findsOneWidget);
+    expect(find.text('連続観察を完了'), findsOneWidget);
     expect(completed, 0);
     final complete = find.byKey(const ValueKey('lightning-complete'));
     await tester.scrollUntilVisible(complete, 160, scrollable: _scrollable);
@@ -187,7 +189,7 @@ void main() {
         },
       ),
     );
-    expect(find.textContaining('学校モードはハート無制限'), findsOneWidget);
+    expect(find.textContaining('学校モードは試行余力が無制限'), findsOneWidget);
     await _start(tester);
     await tester.pump(const Duration(seconds: 2));
 
@@ -196,7 +198,7 @@ void main() {
       find.bySemanticsLabel(RegExp('時間になったことを落ち着いて伝えています')),
       findsOneWidget,
     );
-    expect(find.textContaining('Path・連続学習・報酬は変わりません'), findsOneWidget);
+    expect(find.textContaining('探究ノート・連続観測・報酬は変わりません'), findsOneWidget);
     expect(find.byKey(const ValueKey('lightning-complete')), findsNothing);
     expect(completed, 0);
     expect(heartLosses, isEmpty, reason: '時間切れではハートを失わない');

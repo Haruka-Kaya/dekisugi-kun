@@ -508,7 +508,7 @@ void main() {
       now: DateTime(2026, 8, 10, 12),
     );
     expect(_legendary(noLegacy).state, GamePathNodeState.legendaryAvailable);
-    expect(_legendary(noLegacy).rewardLabel, contains('XP'));
+    expect(_legendary(noLegacy).rewardLabel, contains('探究記録'));
 
     final oldRun = LearningRun(
       runId: 'run.old.legendary',
@@ -656,6 +656,8 @@ void main() {
     expect(after.quests, hasLength(1));
     expect(after.quests.single.progress, 1);
     expect(after.quests.single.gemReward, 1);
+    expect(after.quests.single.title, '探究ノートへ観察を1件記録する');
+    expect(after.path.quests.single.description, '探究ノートに観察記録を残す予定です。');
 
     final school = projection.build(
       catalog: _catalog,
@@ -682,6 +684,7 @@ void main() {
     expect(school.quests.single.progress, 1);
     expect(school.path.quests.single.kind, GameQuestKind.classroom);
     expect(school.path.quests.single.rewardLabel, isNull);
+    expect(school.path.quests.single.description, contains('授業の観察予定'));
   });
 
   test('rewarded monthly questだけを個人badgeへ一度投影し学校には出さない', () {
@@ -951,10 +954,7 @@ void main() {
 
     final school = projection.build(
       catalog: _catalog,
-      snapshot: snapshot(
-        scope: LearningScope.schoolLocal,
-        cosmetics: granted,
-      ),
+      snapshot: snapshot(scope: LearningScope.schoolLocal, cosmetics: granted),
       now: DateTime(2026, 8, 10, 12),
       schoolMode: true,
     );

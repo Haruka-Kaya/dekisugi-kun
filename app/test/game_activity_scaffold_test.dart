@@ -102,7 +102,7 @@ void main() {
           exitSemantics.getSemanticsData().hasAction(SemanticsAction.tap),
           isTrue,
         );
-        expect(find.bySemanticsLabel('学習ハート、5個中4個'), findsOne);
+        expect(find.bySemanticsLabel('試行余力、5枠中4枠'), findsOne);
         final exitSize = tester.getSize(
           find.byKey(const ValueKey('game-activity-exit')),
         );
@@ -119,8 +119,8 @@ void main() {
           ),
         );
         await tester.pump();
-        expect(find.bySemanticsLabel('学習ハート、5個中3個'), findsOne);
-        expect(find.bySemanticsLabel('学習ハート、5個中4個'), findsNothing);
+        expect(find.bySemanticsLabel('試行余力、5枠中3枠'), findsOne);
+        expect(find.bySemanticsLabel('試行余力、5枠中4枠'), findsNothing);
 
         await tester.tap(find.byKey(const ValueKey('game-activity-exit')));
         expect(exits, 1);

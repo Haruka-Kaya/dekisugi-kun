@@ -73,12 +73,12 @@ Widget _app({
 );
 
 void main() {
-  testWidgets('聞く・話すを別の実ミッションとして起動する', (tester) async {
+  testWidgets('聞き取り観察・教え返しを別の実課題として起動する', (tester) async {
     DailyAudioMission? opened;
     await tester.pumpWidget(_app(onOpen: (mission) => opened = mission));
 
-    expect(find.bySemanticsLabel(RegExp('今日の「聞く」')), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp('今日の「話す」')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('聞き取り観察。.*今日の観察')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('教え返し。.*今日の観察')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('daily-audio-listening')));
     expect(opened, same(_listening));
     await tester.tap(find.byKey(const ValueKey('daily-audio-speaking')));
@@ -97,8 +97,10 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.bySemanticsLabel(RegExp('Listeningまで進む')), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp('Speakingまで進む')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('聞き取り観察まで進む')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('教え返しまで進む')), findsOneWidget);
+    expect(find.textContaining('Listening'), findsNothing);
+    expect(find.textContaining('Speaking'), findsNothing);
     await tester.tap(find.byKey(const ValueKey('daily-audio-listening')));
     await tester.ensureVisible(
       find.byKey(const ValueKey('daily-audio-speaking')),
@@ -120,9 +122,9 @@ void main() {
 
     expect(find.byIcon(Icons.headphones_rounded), findsOneWidget);
     expect(find.byIcon(Icons.mic_rounded), findsOneWidget);
-    expect(find.text('今日の「聞く」'), findsOneWidget);
-    expect(find.text('今日の「話す」'), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp('今日の1件、利用できます')), findsNWidgets(2));
+    expect(find.text('聞き取り観察'), findsOneWidget);
+    expect(find.text('教え返し'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('今日の観察、利用できます')), findsNWidgets(2));
     expect(tester.takeException(), isNull);
     semantics.dispose();
   });
@@ -146,13 +148,10 @@ void main() {
       findsNothing,
     );
     expect(
-      find.bySemanticsLabel(RegExp('今日の「聞く」.*今日完了.*もう一度練習')),
+      find.bySemanticsLabel(RegExp('聞き取り観察.*本日記録済み.*もう一度観察')),
       findsOneWidget,
     );
-    expect(
-      find.bySemanticsLabel(RegExp('今日の「話す」.*今日の1件、利用できます')),
-      findsOneWidget,
-    );
+    expect(find.bySemanticsLabel(RegExp('教え返し.*今日の観察、利用できます')), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('daily-audio-listening')));
     await tester.tap(find.byKey(const ValueKey('daily-audio-speaking')));
@@ -206,7 +205,7 @@ void main() {
     );
 
     expect(find.byKey(const ValueKey('practice-hub-screen')), findsOneWidget);
-    expect(find.text('今日の音声ミッション'), findsOneWidget);
+    expect(find.text('今日の音声観察'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('daily-audio-listening')));
     await tester.tap(find.byKey(const ValueKey('daily-audio-speaking')));
     expect(opened, [_listening, _speaking]);

@@ -104,7 +104,7 @@ void main() {
     expect(fallNodes[3].state, GamePathNodeState.locked);
   });
 
-  test('unit Legendaryのavailable/completedと無報酬昇格をunit IDで受け取る', () {
+  test('単元末の高難度検証は報酬表示を探究記録へ統一し、unit IDで状態を受け取る', () {
     final available = projection.build(
       catalog: _catalog,
       progress: const GamePathProgressInput(
@@ -117,7 +117,7 @@ void main() {
       (node) => node.kind == GamePathNodeKind.legendary,
     );
     expect(availableNode.state, GamePathNodeState.legendaryAvailable);
-    expect(availableNode.rewardLabel, contains('XP'));
+    expect(availableNode.rewardLabel, contains('探究記録'));
 
     final migrated = projection.build(
       catalog: _catalog,

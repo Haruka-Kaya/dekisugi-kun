@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+print -u2 -- "ERROR: この検証契約は旧30秒ミッションUI専用のため廃止しました。Field Notebook画面を再撮影するまでStore素材を検証済みとして扱えません。"
+exit 2
+
 script_dir="${0:A:h}"
 repo_root="${script_dir:h}"
 shots_root="${1:-$repo_root/docs/store-shots-2026}"

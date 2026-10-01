@@ -2,7 +2,7 @@ import 'package:dekisugi/models/league_ladder.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('BronzeからDiamondの10段ラベルを成人LANとlocalで共用する', () {
+  test('保存互換の宝石名を保ち、表示だけ観測級01〜10へ分離する', () {
     expect(LanSocialLeagueTier.values.map((tier) => tier.label), [
       'ブロンズ',
       'シルバー',
@@ -14,6 +14,18 @@ void main() {
       'パール',
       'オブシディアン',
       'ダイヤモンド',
+    ]);
+    expect(LanSocialLeagueTier.values.map((tier) => tier.displayLabel), [
+      '観測級01',
+      '観測級02',
+      '観測級03',
+      '観測級04',
+      '観測級05',
+      '観測級06',
+      '観測級07',
+      '観測級08',
+      '観測級09',
+      '観測級10',
     ]);
   });
 

@@ -86,25 +86,21 @@ class LocalWeeklyLeaguePanel extends StatelessWidget {
 
   String get _panelSemantics => switch (view.availability) {
     LocalWeeklyLeagueAvailability.schoolDisabled => lang.t(
-      '端末手渡し週次リーグ。学校モードでは個人順位を作りません',
+      '端末手渡し共同観測。学校モードでは個人順位を作りません',
       'Pass-the-device weekly league. No individual rankings in school mode',
     ),
     LocalWeeklyLeagueAvailability.invalidData => lang.t(
-      '端末手渡し週次リーグ。データを推測せず表示を停止しました',
+      '端末手渡し共同観測。データを推測せず表示を停止しました',
       'Pass-the-device weekly league. Display stopped instead of guessing the data',
     ),
     LocalWeeklyLeagueAvailability.notStarted => lang.t(
-      '端末手渡し週次リーグ。実在する2人から8人で開始できます',
+      '端末手渡し共同観測。実在する2人から8人で開始できます',
       'Pass-the-device weekly league. Start with 2 to 8 real people',
     ),
-    LocalWeeklyLeagueAvailability.active => lang.t(
-      '端末手渡し週次リーグ。実在する${view.participantCount}人、'
-          '意味のある学習${view.totalMeaningfulEventCount}件、'
-          '${view.tierFinalizationEligible ? '週終了後にtier確定' : '5人未満のためtier確定なし'}',
-      'Pass-the-device weekly league. ${view.participantCount} real people, '
-          '${view.totalMeaningfulEventCount} meaningful lessons, '
-          '${view.tierFinalizationEligible ? 'tier set after the week ends' : 'no tier (fewer than 5 people)'}',
-    ),
+    LocalWeeklyLeagueAvailability.active =>
+      '端末手渡し共同観測。実在する${view.participantCount}人、'
+          '観察${view.totalMeaningfulEventCount}件、'
+          '${view.tierFinalizationEligible ? '週終了後に観測級確定' : '5人未満のため観測級確定なし'}',
   };
 }
 
@@ -119,7 +115,7 @@ class _LeagueHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(
-          Icons.emoji_events_outlined,
+          Icons.assignment_outlined,
           color: colors.story,
           size: GameTokens.spaceXxl,
         ),
@@ -129,7 +125,7 @@ class _LeagueHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                lang.t('端末手渡し週次リーグ', 'Pass-the-device weekly league'),
+                lang.t('端末手渡し共同観測', 'Pass-the-device weekly league'),
                 style: t.textTheme.titleLarge
                     ?.copyWith(color: colors.ink)
                     .jaWeight(FontWeight.w900),
@@ -137,7 +133,7 @@ class _LeagueHeader extends StatelessWidget {
               const SizedBox(height: GameTokens.spaceXs),
               Text(
                 lang.t(
-                  'slot 1は「この端末の学習者」、他slotは週内匿名です。架空の相手やオンラインの偽順位は足しません。',
+                  'slot 1は「この端末の観測者」、他slotは週内匿名です。架空の相手やオンラインの偽順位は足しません。',
                   'Slot 1 is "the learner on this device"; other slots stay anonymous for the week. No fake opponents or fake online rankings are added.',
                 ),
                 style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
@@ -177,7 +173,7 @@ class _LeagueSetup extends StatelessWidget {
         const SizedBox(height: GameTokens.spaceSm),
         Text(
           lang.t(
-            '同じ場所にいる2〜8人が端末を手渡します。2〜4人は途中順位だけ、5〜8人の週は終了後に10段tierを確定します。',
+            '同じ場所にいる2〜8人が端末を手渡します。2〜4人は途中順位だけ、5〜8人の週は終了後に10段階の観測級を確定します。',
             '2–8 people in the same place pass the device around. With 2–4 people you only see live standings; with 5–8, a 10-level tier is set after the week ends.',
           ),
           style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
@@ -199,7 +195,7 @@ class _LeagueSetup extends StatelessWidget {
     var selectedCount = participantCount;
     await showGamePageSheet<void>(
       context: context,
-      title: lang.t('端末手渡しリーグを作る', 'Create a pass-the-device league'),
+      title: lang.t('端末手渡し共同観測を作る', 'Create a pass-the-device league'),
       child: StatefulBuilder(
         builder: (sheetContext, setSheetState) {
           void update(int next) {
@@ -279,7 +275,7 @@ class _LeagueSetup extends StatelessWidget {
               const SizedBox(height: GameTokens.spaceSm),
               Text(
                 lang.t(
-                  'slot 1だけを「この端末の学習者」と明示します。他slotは週内匿名で、名前・account・回答・正誤は保存しません。',
+                  'slot 1だけを「この端末の観測者」と明示します。他slotは週内匿名で、名前・account・回答・正誤は保存しません。',
                   'Only slot 1 is labeled "the learner on this device". Other slots stay anonymous for the week; names, accounts, answers, and results are not saved.',
                 ),
                 style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
@@ -374,7 +370,7 @@ class _ActiveLeague extends StatelessWidget {
         const SizedBox(height: GameTokens.spaceMd),
         _InlineNotice(
           icon: view.tierFinalizationEligible
-              ? Icons.workspace_premium_outlined
+              ? Icons.fact_check_outlined
               : Icons.info_outline_rounded,
           text: view.tierFinalizationEligible
               ? lang.t(
@@ -382,7 +378,7 @@ class _ActiveLeague extends StatelessWidget {
                   'This week is finalized once after it ends. A sole 1st place moves up one level, a sole last place moves down one, and ties or all-zero stay the same.',
                 )
               : lang.t(
-                  '5人未満のため、この週は途中順位を表示してもtier履歴を作りません。',
+                  '5人未満のため、この週は途中順位を表示しても観測級の履歴を作りません。',
                   'With fewer than 5 people, this week shows live standings but creates no tier history.',
                 ),
         ),
@@ -421,11 +417,11 @@ class _ActiveLeague extends StatelessWidget {
           Text(
             canSelect
                 ? lang.t(
-                    '次に学ぶ人を選ぶと、その人の次の意味ある学習1件だけを数えます。',
+                    '次に観察する人を選ぶと、その人の次の意味ある観察1件だけを数えます。',
                     'When you choose who learns next, only their next meaningful lesson is counted.',
                   )
                 : lang.t(
-                    '次の学習を記録する参加枠は、学習画面側から選べます。',
+                    '次の観察を記録する参加枠は、探究画面側から選べます。',
                     'You can choose the slot for the next lesson from the learning screen.',
                   ),
             style: t.textTheme.bodySmall?.copyWith(color: colors.inkMuted),
@@ -436,7 +432,7 @@ class _ActiveLeague extends StatelessWidget {
             key: const ValueKey('local-weekly-league-rules'),
             onPressed: () => showGamePageSheet<void>(
               context: context,
-              title: lang.t('端末手渡しリーグの計測ルール', 'Pass-the-device league rules'),
+              title: lang.t('端末手渡し共同観測の計測ルール', 'Pass-the-device league rules'),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -451,7 +447,7 @@ class _ActiveLeague extends StatelessWidget {
                   _InlineNotice(
                     icon: Icons.lock_open_outlined,
                     text: lang.t(
-                      '順位や参加枠を選ばなくても、Pathと練習はいつでも続けられます。',
+                      '順位や参加枠を選ばなくても、探究ノートと練習はいつでも続けられます。',
                       'Even without choosing a ranking or slot, you can always keep going with the Path and practice.',
                     ),
                   ),
@@ -459,7 +455,7 @@ class _ActiveLeague extends StatelessWidget {
                   _InlineNotice(
                     icon: Icons.shield_outlined,
                     text: lang.t(
-                      'slot 1は「この端末の学習者」、他slotは「2人目〜8人目」と件数だけを使い、名前・account・回答・正誤を表示・保存しません。',
+                      'slot 1は「この端末の観測者」、他slotは「2人目〜8人目」と件数だけを使い、名前・account・回答・正誤を表示・保存しません。',
                       'Slot 1 is "the learner on this device" and other slots are "Person 2–8" with counts only. Names, accounts, answers, and results are never shown or saved.',
                     ),
                   ),
@@ -495,14 +491,10 @@ class _StandingRow extends StatelessWidget {
         : standing.tied
         ? lang.t('同率${standing.rank}位', 'Tied #${standing.rank}')
         : lang.t('${standing.rank}位', '#${standing.rank}');
-    final semanticLabel = lang.t(
-      '${standing.slotNumber == 1 ? 'この端末の学習者' : '${standing.slotNumber}人目'}、$rankLabel、'
-          '意味のある学習${standing.meaningfulEventCount}件'
-          '${selected ? '、次に学ぶ人として選択中' : ''}',
-      '${standing.slotNumber == 1 ? 'Learner on this device' : 'Person ${standing.slotNumber}'}, $rankLabel, '
-          '${standing.meaningfulEventCount} meaningful lessons'
-          '${selected ? ', selected to learn next' : ''}',
-    );
+    final semanticLabel =
+        '${standing.slotNumber == 1 ? 'この端末の観測者' : '${standing.slotNumber}人目'}、$rankLabel、'
+        '観察${standing.meaningfulEventCount}件'
+        '${selected ? '、次に観察する人として選択中' : ''}';
     final content = ConstrainedBox(
       constraints: const BoxConstraints(minHeight: GameTokens.minTouchTarget),
       child: Padding(
@@ -518,7 +510,8 @@ class _StandingRow extends StatelessWidget {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: selected ? colors.story : colors.surfaceRaised,
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(GameTokens.radiusSm),
+                    border: Border.all(color: colors.border),
                   ),
                   child: Icon(
                     selected
@@ -531,7 +524,7 @@ class _StandingRow extends StatelessWidget {
                 Expanded(
                   child: Text(
                     standing.slotNumber == 1
-                        ? lang.t('この端末の学習者', 'Learner on this device')
+                        ? lang.t('この端末の観測者', 'Learner on this device')
                         : lang.t(
                             '${standing.slotNumber}人目',
                             'Person ${standing.slotNumber}',
@@ -553,7 +546,7 @@ class _StandingRow extends StatelessWidget {
                       ? Icons.people_outline
                       : standing.rank == null
                       ? Icons.horizontal_rule_rounded
-                      : Icons.emoji_events_outlined,
+                      : Icons.format_list_numbered_rounded,
                   label: rankLabel,
                 ),
                 _StatusLabel(

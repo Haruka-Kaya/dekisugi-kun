@@ -407,7 +407,7 @@ class _OfflinePracticeScreenState extends State<OfflinePracticeScreen> {
               surfaceTintColor: Colors.transparent,
               title: Text(
                 widget.missionKind == MissionKind.caseRetry
-                    ? lang.t('章ボス', 'Chapter boss')
+                    ? lang.t('総合検証', 'Chapter boss')
                     : lang.t('端末内で練習', 'On-device practice'),
                 style: Theme.of(
                   context,
@@ -616,7 +616,7 @@ class _PracticeHeader extends StatelessWidget {
           children: [
             ScienceChallengeHeader(
               eyebrow:
-                  'BOSS LAB  /  ${practiceStage.label}  /  STEP $step OF 4',
+                  'ラボ・ブリーフ  /  総合検証  /  ${practiceStage.label}  /  $step/4',
               title: conceptLabel,
               body: _missionLabel,
               icon: Icons.fitness_center_rounded,
@@ -1268,7 +1268,7 @@ class _CheckpointHint extends StatelessWidget {
       container: true,
       liveRegion: true,
       label: lang.t(
-        'まだ決着していません。選んだ考え、$attemptedOption。見直す観点、$hint。訂正メモを書いてから再挑戦します',
+        'まだ決着していません。選んだ考え、$attemptedOption。見直す観点、$hint。訂正メモを書いてから再検証します',
         'Not settled yet. Your choice: $attemptedOption. What to review: $hint. Write a correction note, then try again',
       ),
       child: ExcludeSemantics(
@@ -1381,7 +1381,7 @@ class _StepTitle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'STEP $number',
+          '手順 $number',
           style: t.textTheme.labelMedium
               ?.copyWith(color: colors.pathReview)
               .jaWeight(FontWeight.w700),
@@ -1560,13 +1560,13 @@ class _Completion extends StatelessWidget {
         children: [
           ExcludeSemantics(
             child: ScienceChallengeHeader(
-              eyebrow: 'BOSS LAB  /  COMPLETE',
+              eyebrow: 'ラボ・ブリーフ  /  総合検証  /  記録',
               title: conceptLabel,
               body: lang.t(
                 '自分で組んだ答えと教材の組み方を比べ、この課題を最後まで見直しました。',
                 'You compared your build with the material\'s and reviewed this task to the end.',
               ),
-              icon: Icons.workspace_premium_rounded,
+              icon: Icons.fact_check_outlined,
               accent: colors.pathComplete,
               onAccent: colors.onPathComplete,
               mascotReaction: GameCharacterReaction.celebrate,

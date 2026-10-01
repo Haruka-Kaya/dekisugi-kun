@@ -35,9 +35,18 @@ enum LearningPathMascotStyle {
 
   String get label => switch (this) {
     LearningPathMascotStyle.standard => t('いつものデキすぎ君', 'Classic Dekisugi-kun'),
-    LearningPathMascotStyle.orbit => t('軌道リングのデキすぎ君', 'Orbit Ring Dekisugi-kun'),
-    LearningPathMascotStyle.nova => t('星雲スーツのデキすぎ君', 'Nebula Suit Dekisugi-kun'),
-    LearningPathMascotStyle.aurora => t('オーロラマントのデキすぎ君', 'Aurora Cape Dekisugi-kun'),
+    LearningPathMascotStyle.orbit => t(
+      '軌道リングのデキすぎ君',
+      'Orbit Ring Dekisugi-kun',
+    ),
+    LearningPathMascotStyle.nova => t(
+      '星雲スーツのデキすぎ君',
+      'Nebula Suit Dekisugi-kun',
+    ),
+    LearningPathMascotStyle.aurora => t(
+      'オーロラマントのデキすぎ君',
+      'Aurora Cape Dekisugi-kun',
+    ),
   };
 }
 
@@ -142,7 +151,7 @@ final class LearningChallengePassPurchaseResult {
 
 /// launch時点で保存層とUIが共有するversionedカタログ。
 ///
-/// - cosmeticはPathマスコットの描画だけを変える
+/// - cosmeticは探究ノート用マスコットの描画だけを変える
 /// - challenge passは任意の時間制画面への当日入場だけを許可する
 /// - 学習node、証拠レベル、報酬、正答へ影響する商品を持たない
 final class SafeLearningEconomyCatalogV1 {
@@ -158,8 +167,8 @@ final class SafeLearningEconomyCatalogV1 {
     productId: standardMascotId,
     title: 'いつものデキすぎ君',
     titleEn: 'Everyday Dekisugi-kun',
-    description: '標準のPathマスコットです。いつでも選べます。',
-    descriptionEn: 'The standard Path mascot. Always available.',
+    description: '標準の探究ノート用マスコットです。いつでも選べます。',
+    descriptionEn: 'The standard field-notebook mascot. Always available.',
     slot: LearningCosmeticSlot.pathMascot,
     mascotStyle: LearningPathMascotStyle.standard,
     gemCost: 0,
@@ -170,7 +179,8 @@ final class SafeLearningEconomyCatalogV1 {
     title: '軌道リング',
     titleEn: 'Orbit Ring',
     description: 'デキすぎ君の周りを、小さな観測衛星が回る見た目です。',
-    descriptionEn: 'A look with a tiny observation satellite orbiting Dekisugi-kun.',
+    descriptionEn:
+        'A look with a tiny observation satellite orbiting Dekisugi-kun.',
     slot: LearningCosmeticSlot.pathMascot,
     mascotStyle: LearningPathMascotStyle.orbit,
     gemCost: 4,
@@ -191,24 +201,22 @@ final class SafeLearningEconomyCatalogV1 {
       LearningChallengePassProduct(
         productId: timedDayPassId,
         title: '今日のタイム挑戦券',
-        description: '購入した学習日は、タイムチャレンジへ何度でも入れます。',
+        description: '購入した学習日は、時間観察へ何度でも入れます。',
         gemCost: 1,
       );
 
-  static const LearningCosmeticProduct auroraMascot =
-      LearningCosmeticProduct(
-        productId: auroraMascotId,
-        title: 'オーロラマント',
-        titleEn: 'Aurora Cape',
-        description:
-            'Plusサポーターへの印。オーロラの光をまとった、夜空色のマントの見た目です。',
-        descriptionEn:
-            'A badge for Plus supporters: a night-sky cape wrapped in aurora light.',
-        slot: LearningCosmeticSlot.pathMascot,
-        mascotStyle: LearningPathMascotStyle.aurora,
-        gemCost: 0,
-        requiresPlusAccess: true,
-      );
+  static const LearningCosmeticProduct auroraMascot = LearningCosmeticProduct(
+    productId: auroraMascotId,
+    title: 'オーロラマント',
+    titleEn: 'Aurora Cape',
+    description: 'Plusサポーターへの印。オーロラの光をまとった、夜空色のマントの見た目です。',
+    descriptionEn:
+        'A badge for Plus supporters: a night-sky cape wrapped in aurora light.',
+    slot: LearningCosmeticSlot.pathMascot,
+    mascotStyle: LearningPathMascotStyle.aurora,
+    gemCost: 0,
+    requiresPlusAccess: true,
+  );
 
   static const List<LearningCosmeticProduct> cosmetics = [
     standardMascot,
@@ -218,9 +226,8 @@ final class SafeLearningEconomyCatalogV1 {
   ];
 
   /// Plus entitlement が確認できたときに所有へ付ける特典一覧。
-  static List<LearningCosmeticProduct> get plusCosmetics => List.unmodifiable(
-    cosmetics.where((item) => item.requiresPlusAccess),
-  );
+  static List<LearningCosmeticProduct> get plusCosmetics =>
+      List.unmodifiable(cosmetics.where((item) => item.requiresPlusAccess));
 
   LearningCosmeticProduct cosmetic(String productId) {
     for (final product in cosmetics) {

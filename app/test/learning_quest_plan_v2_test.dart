@@ -96,7 +96,7 @@ void main() {
       );
     });
 
-    test('Pathとは別の未完了Listening・Speaking missionも固有候補に含める', () {
+    test('探究ノートとは別の未完了聞き取り観察・教え返しも固有候補に含める', () {
       final path = const GamePathProjection().build(
         catalog: _catalog,
         progress: const GamePathProgressInput(),
@@ -215,6 +215,21 @@ void main() {
         ),
         reason: 'dailyはunder-18本人利用でも成立する端末内学習だけへ送る',
       );
+
+      final listening = _planner.build(
+        now: DateTime(2026, 8, 10, 12),
+        audience: LearningQuestAudience.personalLocalOnly,
+        availableVariants: const {LearningDailyQuestVariant.listening},
+      );
+      final speaking = _planner.build(
+        now: DateTime(2026, 8, 10, 12),
+        audience: LearningQuestAudience.personalLocalOnly,
+        availableVariants: const {LearningDailyQuestVariant.speaking},
+      );
+      expect(listening.dailyPresentation.title, contains('聞き取り観察'));
+      expect(listening.dailyPresentation.action.label, '聞き取り観察を始める');
+      expect(speaking.dailyPresentation.title, contains('教え返す'));
+      expect(speaking.dailyPresentation.action.label, '教え返しを始める');
     });
 
     test('各variantは固有activityだけを数え、無関係なmeaningful eventを数えない', () {
@@ -390,7 +405,7 @@ void main() {
       expect(plan.definitionsToMaterialize, hasLength(1));
       expect(board, hasLength(1));
       expect(board.single.kind, LearningQuestPresentationKind.monthly);
-      expect(board.single.description, contains('次の復習日を待ちます'));
+      expect(board.single.description, contains('次の再観察日を待ちます'));
       expect(board.single.action.label, '今月の記録を見る');
       expect(board.single.action.destination, LearningQuestDestination.profile);
     });
@@ -410,6 +425,8 @@ void main() {
         plan.dailyPresentation.kind,
         LearningQuestPresentationKind.classroom,
       );
+      expect(plan.dailyPresentation.title, 'この端末で授業観察を1件記録する');
+      expect(plan.dailyPresentation.description, isNot(contains('個人XP')));
       expect(board.single.rewardGems, 0);
       expect(board.single.state, LearningQuestBoardState.completed);
     });
@@ -449,8 +466,10 @@ void main() {
       expect(items.first.action.label, '今日の事件簿を開く');
       expect(items.first.action.destination, LearningQuestDestination.stories);
       expect(items[1].state, LearningQuestBoardState.rewarded);
-      expect(items[1].action.label, '獲得バッジを見る');
-      expect(items.last.action.label, '2人のクエストを準備する');
+      expect(items[1].action.label, '観測印を見る');
+      expect(items.last.title, '端末内で共同観察を始める');
+      expect(items.last.action.label, 'ふたりの観察を準備する');
+      expect(items.last.title, isNot(contains('クエスト')));
       expect(items.last.action.destination, LearningQuestDestination.profile);
     });
 
@@ -543,6 +562,8 @@ void main() {
       expect(completed.current, 2);
       expect(completed.state, LearningQuestBoardState.rewarded);
       expect(completed.rewardGems, 1);
+      expect(completed.title, 'ふたりの共同観察');
+      expect(completed.description, contains('観察記録'));
       expect(completed.action.destination, LearningQuestDestination.lanSocial);
     });
   });

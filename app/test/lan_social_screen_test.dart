@@ -261,6 +261,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(find.textContaining('共同観察'), findsWidgets);
+    expect(find.text('共同観測'), findsOneWidget);
+    expect(find.textContaining('クエスト'), findsNothing);
+    expect(find.textContaining('リーグ'), findsNothing);
 
     await tester.enterText(
       find.byKey(const ValueKey('lan-social-connection-code')),
@@ -277,6 +281,7 @@ void main() {
 
     expect(find.text('ふたりそろいました'), findsOneWidget);
     expect(find.textContaining('結晶1個'), findsOneWidget);
+    expect(find.textContaining('共同観察'), findsWidgets);
     expect(find.bySemanticsLabel(RegExp('ふたりそろいました。自分の1回：まだ')), findsOneWidget);
     final joinRequest = requests.singleWhere(
       (request) => request.path.endsWith('/join'),
@@ -421,7 +426,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('5人未満は自分のXPも実人数も画面へ出さず320dp・文200%で崩れない', (tester) async {
+  testWidgets('5人未満は自分の探究記録も実人数も画面へ出さず320dp・文200%で崩れない', (tester) async {
     compactLargeText(tester);
     final store = MemorySessionStore();
     final dio = socialDio(
@@ -450,7 +455,7 @@ void main() {
     await pumpUntilFound(tester, shield);
 
     expect(shield, findsOneWidget);
-    expect(find.text('20 XP'), findsNothing);
+    expect(find.text('20 探究記録'), findsNothing);
     for (var index = 0; index < 8; index += 1) {
       expect(find.byKey(ValueKey('lan-social-standing-$index')), findsNothing);
     }
@@ -489,9 +494,9 @@ void main() {
     await pumpUntilFound(tester, currentTier);
 
     expect(currentTier, findsOneWidget);
-    expect(find.text('シルバー'), findsWidgets);
+    expect(find.text('観測級02'), findsWidgets);
     for (final tier in LanSocialLeagueTier.values) {
-      expect(find.text(tier.label), findsWidgets);
+      expect(find.text(tier.displayLabel), findsWidgets);
     }
     for (var index = 0; index < 5; index += 1) {
       expect(
@@ -502,8 +507,10 @@ void main() {
     expect(find.byKey(const ValueKey('lan-social-standing-5')), findsNothing);
     expect(find.textContaining(_roomId), findsNothing);
     expect(find.textContaining(_participantId), findsNothing);
-    expect(find.bySemanticsLabel(RegExp('1位、自分、30 XP')), findsOneWidget);
-    expect(find.textContaining('昇格：ブロンズ → シルバー'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('1位、自分、30 探究記録')), findsOneWidget);
+    expect(find.textContaining('昇格：観測級01 → 観測級02'), findsOneWidget);
+    expect(find.textContaining(' XP'), findsNothing);
+    expect(find.textContaining('リーグ'), findsNothing);
     await scrollThrough(tester);
     semantics.dispose();
   });
@@ -536,9 +543,9 @@ void main() {
         ),
       ),
     );
-    await pumpUntilFound(tester, find.text('週のリーグ1位を端末に保存しました。'));
+    await pumpUntilFound(tester, find.text('共同観測の1位を端末に保存しました。'));
 
-    expect(find.text('週のリーグ1位を端末に保存しました。'), findsOneWidget);
+    expect(find.text('共同観測の1位を端末に保存しました。'), findsOneWidget);
     await pumpUntilFound(tester, find.byKey(const ValueKey('lan-social-join')));
     expect(find.byKey(const ValueKey('lan-social-join')), findsOneWidget);
     expect(await LanSocialClient.savedMemberships(store), isEmpty);

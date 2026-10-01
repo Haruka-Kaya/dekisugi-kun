@@ -156,30 +156,30 @@ class DekisugiApp extends StatelessWidget {
             builder: (context, _) {
               final lang = language?.language ?? appLanguage;
               return MaterialApp(
-            title: l10n.t('デキすぎ君', 'Dekisugi-kun'),
-            debugShowCheckedModeBanner: false,
-            locale: lang.locale,
-            supportedLocales: const [Locale('ja'), Locale('en')],
-            localizationsDelegates: const [
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            theme: buildAppTheme(Brightness.light),
-            darkTheme: buildAppTheme(Brightness.dark),
-            themeMode: _themeMode,
-            navigatorObservers: [routeObserver],
-            // Android 14 の最大200%まで端末設定を尊重する。
-            // 主要画面は320dp・200%でスクロール可能なことをテストする。
-            builder: (context, child) => MediaQuery.withClampedTextScaling(
-              minScaleFactor: 1.0,
-              maxScaleFactor: 2.0,
-              // 「動きを減らす」設定は Android と iOS で出所が違う。
-              // ここで両方を1つにまとめて配る
-              child: ReduceMotionScope(
-                child: child ?? const SizedBox.shrink(),
-              ),
-            ),
+                title: l10n.t('デキすぎ君', 'Dekisugi-kun'),
+                debugShowCheckedModeBanner: false,
+                locale: lang.locale,
+                supportedLocales: const [Locale('ja'), Locale('en')],
+                localizationsDelegates: const [
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                theme: buildAppTheme(Brightness.light),
+                darkTheme: buildAppTheme(Brightness.dark),
+                themeMode: _themeMode,
+                navigatorObservers: [routeObserver],
+                // Android 14 の最大200%まで端末設定を尊重する。
+                // 主要画面は320dp・200%でスクロール可能なことをテストする。
+                builder: (context, child) => MediaQuery.withClampedTextScaling(
+                  minScaleFactor: 1.0,
+                  maxScaleFactor: 2.0,
+                  // 「動きを減らす」設定は Android と iOS で出所が違う。
+                  // ここで両方を1つにまとめて配る
+                  child: ReduceMotionScope(
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+                ),
                 home: _Gate(
                   serverUrl: serverUrl,
                   localCatalogAssets: localCatalogAssets,
@@ -207,10 +207,7 @@ final class _NeverNotify implements Listenable {
 /// **同意の判定は毎回読み直す。** 「同意済み」を1つのフラグで持つと、
 /// 文面の版を上げたときや条件を足したときに、古い記録が通り続ける。
 class _Gate extends StatefulWidget {
-  const _Gate({
-    required this.serverUrl,
-    required this.localCatalogAssets,
-  });
+  const _Gate({required this.serverUrl, required this.localCatalogAssets});
 
   final String serverUrl;
   final AssetBundle? localCatalogAssets;
@@ -227,6 +224,7 @@ class _GateState extends State<_Gate> {
   LocalClassroomRunStore? _localClassroomRun;
   LearningScope _localOnlyScope = LearningScope.personal;
   bool _loading = true;
+  bool _showTabGuide = false;
 
   @override
   void initState() {
@@ -269,6 +267,8 @@ class _GateState extends State<_Gate> {
         serverUrl: widget.serverUrl,
         localCatalogAssets: widget.localCatalogAssets,
         allowIndividualPurchases: _consent!.allowsIndividualPurchases,
+        showTabGuide: _showTabGuide,
+        onTabGuideDismissed: () => setState(() => _showTabGuide = false),
       );
     }
     if (_localOnlyUnits case final units?) {
@@ -280,6 +280,8 @@ class _GateState extends State<_Gate> {
         sessionStore: store,
         scope: _localOnlyScope,
         schoolMode: schoolMode,
+        showTabGuide: _showTabGuide,
+        onTabGuideDismissed: () => setState(() => _showTabGuide = false),
         reminders: context.read<Reminders>(),
         lanSocialAllowed: false,
         controller: _localGameController,
@@ -313,7 +315,12 @@ class _GateState extends State<_Gate> {
           return JoinFailure.unknown;
         }
         await consentStore.save(record);
-        if (mounted) setState(() => _consent = record);
+        if (mounted) {
+          setState(() {
+            _consent = record;
+            _showTabGuide = true;
+          });
+        }
         return null;
       },
     );
@@ -328,6 +335,7 @@ class _GateState extends State<_Gate> {
     // 入口へ戻り、今回選んだ経路だけをpersonal/schoolLocalへ明示的に割り当てる。
     setState(() {
       _localOnlyScope = scope;
+      _showTabGuide = true;
       _localOnlyUnits = UnitsClient(
         baseUrl: '',
         // 保存済みのサーバ教材も読まず、このビルドに同梱した正本だけを使う。
@@ -401,11 +409,15 @@ class _OnlineServices extends StatelessWidget {
     required this.serverUrl,
     required this.localCatalogAssets,
     required this.allowIndividualPurchases,
+    required this.showTabGuide,
+    required this.onTabGuideDismissed,
   });
 
   final String serverUrl;
   final AssetBundle? localCatalogAssets;
   final bool allowIndividualPurchases;
+  final bool showTabGuide;
+  final VoidCallback onTabGuideDismissed;
 
   @override
   Widget build(BuildContext context) {
@@ -453,6 +465,8 @@ class _OnlineServices extends StatelessWidget {
           schoolMode: false,
           reminders: providerContext.read<Reminders>(),
           lanSocialAllowed: true,
+          showTabGuide: showTabGuide,
+          onTabGuideDismissed: onTabGuideDismissed,
           legacyProgress: LocalPracticeStore(store),
           onOpenSettings: () => _openOnlineSettings(providerContext),
           onOpenPlus:
@@ -681,13 +695,13 @@ class _LocalOnlyHomeState extends State<_LocalOnlyHome>
     if (section == null || conceptLabel == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(
-              l10n.t(
-                'この教材を読み込めませんでした。もう一度お試しください。',
-                "Couldn't load this material. Please try again.",
-              ),
+          content: Text(
+            l10n.t(
+              'この教材を読み込めませんでした。もう一度お試しください。',
+              "Couldn't load this material. Please try again.",
             ),
           ),
+        ),
       );
       return;
     }
@@ -795,8 +809,14 @@ class _LocalOnlyHomeState extends State<_LocalOnlyHome>
               const StudioWordmark(),
               const SizedBox(height: 28),
               StudioPageIntro(
-                eyebrow: l10n.t('DEVICE-ONLY STUDIO  /  端末内', 'DEVICE-ONLY STUDIO'),
-                title: l10n.t('答えを送らず、\n考え抜く。', "Don't send answers.\nThink it through."),
+                eyebrow: l10n.t(
+                  'DEVICE-ONLY STUDIO  /  端末内',
+                  'DEVICE-ONLY STUDIO',
+                ),
+                title: l10n.t(
+                  '答えを送らず、\n考え抜く。',
+                  "Don't send answers.\nThink it through.",
+                ),
                 body: l10n.t(
                   '同梱教材を読んで、自分の言葉で思い出し、固定の思い込みを直して、次の1件へ進みます。',
                   'Read the built-in material, recall it in your own words, fix the set misconception, then move on to the next one.',
@@ -826,7 +846,9 @@ class _LocalOnlyHomeState extends State<_LocalOnlyHome>
                 key: const ValueKey('local-only-pick-unit'),
                 onPressed: _opening ? null : _openPicker,
                 icon: const Icon(Icons.auto_stories_outlined),
-                label: Text(l10n.t('自分でほかの教材を選ぶ', 'Choose other material yourself')),
+                label: Text(
+                  l10n.t('自分でほかの教材を選ぶ', 'Choose other material yourself'),
+                ),
               ),
               const SizedBox(height: 12),
               LocalClassroomEntryCard(
@@ -859,7 +881,10 @@ class _LocalOnlyHomeState extends State<_LocalOnlyHome>
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                l10n.t('この端末の中だけで学びます', 'You learn only on this device'),
+                                l10n.t(
+                                  'この端末の中だけで学びます',
+                                  'You learn only on this device',
+                                ),
                                 style: t.textTheme.titleSmall
                                     ?.copyWith(color: colors.onCoolSurface)
                                     .jaWeight(FontWeight.w700),
@@ -905,17 +930,26 @@ class _LocalOnlyHomeState extends State<_LocalOnlyHome>
               ),
               const SizedBox(height: 28),
               StudioSectionHeader(
-                title: l10n.t('4段階で、考えを強くする', 'Strengthen your thinking in 4 steps'),
+                title: l10n.t(
+                  '4段階で、考えを強くする',
+                  'Strengthen your thinking in 4 steps',
+                ),
                 description: l10n.t(
                   '点数ではなく、説明の中身を自分で見直します。',
                   'Not a score: you review what your explanation says yourself.',
                 ),
               ),
               const SizedBox(height: 14),
-              _LocalStep(number: '01', label: l10n.t('同梱教材を読む', 'Read the built-in material')),
+              _LocalStep(
+                number: '01',
+                label: l10n.t('同梱教材を読む', 'Read the built-in material'),
+              ),
               _LocalStep(
                 number: '02',
-                label: l10n.t('見ずに、自分の言葉で思い出す', 'Without looking, recall it in your own words'),
+                label: l10n.t(
+                  '見ずに、自分の言葉で思い出す',
+                  'Without looking, recall it in your own words',
+                ),
               ),
               _LocalStep(
                 number: '03',
@@ -939,14 +973,19 @@ class _LocalOnlyHomeState extends State<_LocalOnlyHome>
                   child: Text(
                     _clearing
                         ? l10n.t('消しています…', 'Clearing…')
-                        : l10n.t('端末内の練習履歴を消す', 'Clear practice history on this device'),
+                        : l10n.t(
+                            '端末内の練習履歴を消す',
+                            'Clear practice history on this device',
+                          ),
                   ),
                 ),
               ],
               const SizedBox(height: 10),
               TextButton(
                 onPressed: widget.onExit,
-                child: Text(l10n.t('通信を使うモードの確認に戻る', 'Back to the online mode check')),
+                child: Text(
+                  l10n.t('通信を使うモードの確認に戻る', 'Back to the online mode check'),
+                ),
               ),
             ],
           ),
@@ -982,15 +1021,14 @@ class _LocalMissionCard extends StatelessWidget {
       key: const ValueKey('local-only-next-mission-card'),
       container: true,
       explicitChildNodes: true,
-      label:
-          l10n.t(
-            '次の端末内ミッション、${mission.conceptLabel}。'
-                '今回は${practiceStage.label}。'
-                '全$totalConcepts件のうち$practicedConcepts件に練習済みの印があります',
-            'Next device-only mission: ${mission.conceptLabel}. '
-                'This time: ${practiceStage.label}. '
-                '$practicedConcepts of $totalConcepts marked as practiced',
-          ),
+      label: l10n.t(
+        '次の端末内ミッション、${mission.conceptLabel}。'
+            '今回は${practiceStage.label}。'
+            '全$totalConcepts件のうち$practicedConcepts件に練習済みの印があります',
+        'Next device-only mission: ${mission.conceptLabel}. '
+            'This time: ${practiceStage.label}. '
+            '$practicedConcepts of $totalConcepts marked as practiced',
+      ),
       child: Container(
         padding: const EdgeInsets.fromLTRB(18, 17, 18, 18),
         decoration: BoxDecoration(
@@ -1026,7 +1064,10 @@ class _LocalMissionCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    l10n.t('今回：${practiceStage.label}', 'This time: ${practiceStage.label}'),
+                    l10n.t(
+                      '今回：${practiceStage.label}',
+                      'This time: ${practiceStage.label}',
+                    ),
                     style: t.textTheme.labelLarge
                         ?.copyWith(color: colors.onWarmSurface)
                         .jaWeight(FontWeight.w700),
@@ -1079,15 +1120,14 @@ class _LocalMissionWaiting extends StatelessWidget {
     return Semantics(
       key: const ValueKey('local-only-next-day'),
       container: true,
-      label:
-          l10n.t(
-            'きょうの予定分はここまで。全$totalConcepts件のうち、'
-                '$practicedConcepts件に練習済みの印があります。'
-                '次のケースは次の学習日から出します。自分で選ぶ練習と先生の教材番号は今も使えます',
-            "That's all planned for today. $practicedConcepts of $totalConcepts "
-                'marked as practiced. The next case comes on your next study day. '
-                "You can still choose practice yourself or use your teacher's material number",
-          ),
+      label: l10n.t(
+        'きょうの予定分はここまで。全$totalConcepts件のうち、'
+            '$practicedConcepts件に練習済みの印があります。'
+            '次のケースは次の学習日から出します。自分で選ぶ練習と先生の教材番号は今も使えます',
+        "That's all planned for today. $practicedConcepts of $totalConcepts "
+            'marked as practiced. The next case comes on your next study day. '
+            "You can still choose practice yourself or use your teacher's material number",
+      ),
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.fromLTRB(18, 17, 18, 18),
@@ -1132,7 +1172,10 @@ class _LocalMissionLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     key: const ValueKey('local-only-mission-loading'),
-    label: l10n.t('次の端末内ミッションを準備しています', 'Preparing the next device-only mission'),
+    label: l10n.t(
+      '次の端末内ミッションを準備しています',
+      'Preparing the next device-only mission',
+    ),
     child: const Padding(
       padding: EdgeInsets.symmetric(vertical: 18),
       child: LinearProgressIndicator(),
@@ -1153,7 +1196,10 @@ class _LocalMissionUnavailable extends StatelessWidget {
     children: [
       Text(
         failed
-            ? l10n.t('端末内の教材を読み込めませんでした。', "Couldn't load the material on this device.")
+            ? l10n.t(
+                '端末内の教材を読み込めませんでした。',
+                "Couldn't load the material on this device.",
+              )
             : l10n.t('端末内の教材がまだありません。', 'No material on this device yet.'),
       ),
       const SizedBox(height: 8),
@@ -1265,8 +1311,8 @@ class _Home extends StatelessWidget {
     final record = focusConceptKey == null
         ? null
         : (await progress.records())
-            .where((r) => r.id == '${unit.id}/$focusConceptKey')
-            .firstOrNull;
+              .where((r) => r.id == '${unit.id}/$focusConceptKey')
+              .firstOrNull;
     final practiceAttempt = record?.completedCount ?? 0;
     if (!context.mounted) return;
     await Navigator.of(context).push(
@@ -1279,7 +1325,8 @@ class _Home extends StatelessWidget {
             // **教材の画面を残さない**（C2）。戻れると音読になる
             Navigator.of(context).pushReplacement(
               MaterialPageRoute<void>(
-                builder: (ctx2) => !kGenerativeAiLiveEnabled &&
+                builder: (ctx2) =>
+                    !kGenerativeAiLiveEnabled &&
                         focusedSection != null &&
                         focusConceptKey != null &&
                         focusedConceptLabel != null
@@ -1288,8 +1335,7 @@ class _Home extends StatelessWidget {
                         conceptLabel: focusedConceptLabel,
                         missionKind: missionKind,
                         practiceAttempt: practiceAttempt,
-                        onCheckpointCompleted: () =>
-                            progress.recordCompletion(
+                        onCheckpointCompleted: () => progress.recordCompletion(
                           unitId: unit.id,
                           conceptKey: focusConceptKey,
                         ),
@@ -1364,9 +1410,8 @@ class _Home extends StatelessWidget {
             final access = await subscriptionSync.sync();
             return access.entitled;
           },
-          onPlusActivated: () => context
-              .read<SessionStore>()
-              .grantLearningPlusCosmetics(
+          onPlusActivated: () =>
+              context.read<SessionStore>().grantLearningPlusCosmetics(
                 scope: LearningScope.personal,
                 occurredAt: DateTime.now().toUtc(),
               ),
@@ -1398,9 +1443,7 @@ class _Home extends StatelessWidget {
         final detail = await client.detail(summary.id);
         if (!context.mounted) return;
         if (detail == null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
                 l10n.t('この教材をまだ読み込めていません。', "This material hasn't loaded yet."),

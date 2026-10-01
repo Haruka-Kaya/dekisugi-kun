@@ -14,7 +14,7 @@ class GameContentProjectionResult {
   final List<PracticeModeView> practiceModes;
 }
 
-/// Pathと別タブを同じnode状態から組み立てる。
+/// 探究ノートと別タブを同じnode状態から組み立てる。
 ///
 /// Story一覧や練習ラボが独自に「完了したはず」と推測しないための境界。
 /// 正答・教材本文は複製せず、表示用IDから起動時にcatalog detailを読み直す。
@@ -97,14 +97,23 @@ class GameContentProjection {
     final timedBadge = !hasChallenge
         ? null
         : schoolMode
-        ? t('任意・ハート無制限', 'Optional · Unlimited hearts')
+        ? t('任意・試行余力は無制限', 'Optional · Unlimited hearts')
         : timedChallengeGemCost == null
-        ? t('任意・誤答はハート-1', 'Optional · Wrong answer: -1 heart')
+        ? t('任意・誤答は試行余力-1', 'Optional · Wrong answer: -1 heart')
         : timedChallengePassActive
-        ? t('今日の挑戦券あり・誤答はハート-1', 'Today\'s pass active · Wrong answer: -1 heart')
+        ? t(
+            '今日の時間観察券あり・誤答は試行余力-1',
+            'Today\'s pass active · Wrong answer: -1 heart',
+          )
         : canPurchaseTimedChallengePass
-        ? t('◆ $timedChallengeGemCostで今日参加・誤答はハート-1', '◆ $timedChallengeGemCost to join today · Wrong answer: -1 heart')
-        : t('結晶不足・Match / Lightningは無料', 'Not enough gems · Match / Lightning are free');
+        ? t(
+            '◆ $timedChallengeGemCostで今日参加・誤答は試行余力-1',
+            '◆ $timedChallengeGemCost to join today · Wrong answer: -1 heart',
+          )
+        : t(
+            '結晶不足・対応づけ実験／連続観察は無料',
+            'Not enough gems · Match / Lightning are free',
+          );
 
     return GameContentProjectionResult(
       stories: List.unmodifiable(stories),
@@ -113,18 +122,29 @@ class GameContentProjection {
           id: 'practice:personalized',
           title: t('今日の個別練習', 'Today\'s personal practice'),
           description: duePracticeCount == 0
-              ? t('期限が来るまではPathを進めます。', 'Continue the Path until something\'s due.')
-              : t('期限が来た概念を、別の操作で取り出します。', 'Recall due concepts with a different activity.'),
+              ? t(
+                  '期限が来るまでは探究ノートを進めます。',
+                  'Continue the Path until something\'s due.',
+                )
+              : t(
+                  '期限が来た概念を、別の操作で取り出します。',
+                  'Recall due concepts with a different activity.',
+                ),
           kind: PracticeModeKind.personalized,
           enabled: duePracticeCount > 0,
-          badge: duePracticeCount == 0 ? null : t('$duePracticeCount件', '$duePracticeCount'),
+          badge: duePracticeCount == 0
+              ? null
+              : t('$duePracticeCount件', '$duePracticeCount'),
         ),
         PracticeModeView(
           id: 'practice:resume',
           title: t('続きから', 'Continue'),
           description: resumeCount == 0
-              ? t('中断中のPath課題はありません。', 'No paused Path tasks.')
-              : t('中断したPath課題を、保存された位置から再開します。', 'Resume a paused Path task from where you saved it.'),
+              ? t('中断中の探究課題はありません。', 'No paused Path tasks.')
+              : t(
+                  '中断した探究課題を、保存された位置から再開します。',
+                  'Resume a paused Path task from where you saved it.',
+                ),
           kind: PracticeModeKind.resume,
           enabled: resumeCount > 0,
           badge: resumeCount == 0 ? null : t('$resumeCount件', '$resumeCount'),
@@ -133,56 +153,79 @@ class GameContentProjection {
           id: 'practice:repair',
           title: t('思い込みを直す', 'Fix misconceptions'),
           description: activeRepairCount == 0
-              ? t('固定課題で見つかった復習ポイントはありません。', 'No review points found in fixed tasks.')
-              : t('見つかった復習ポイントを、対応する固定課題で確かめます。', 'Check the review points you found with matching fixed tasks.'),
+              ? t(
+                  '固定課題で見つかった復習ポイントはありません。',
+                  'No review points found in fixed tasks.',
+                )
+              : t(
+                  '見つかった復習ポイントを、対応する固定課題で確かめます。',
+                  'Check the review points you found with matching fixed tasks.',
+                ),
           kind: PracticeModeKind.repair,
           enabled: activeRepairCount > 0,
-          badge: activeRepairCount == 0 ? null : t('$activeRepairCount件', '$activeRepairCount'),
+          badge: activeRepairCount == 0
+              ? null
+              : t('$activeRepairCount件', '$activeRepairCount'),
         ),
         PracticeModeView(
           id: 'practice:listen-speak',
           title: t('聞く・話すラボ', 'Listen & Speak Lab'),
-          description: t('声と文字を同格にして、自分の説明を聞き直します。', 'Treat voice and text equally, and listen back to your own explanation.'),
+          description: t(
+            '声と文字を同格にして、自分の説明を聞き直します。',
+            'Treat voice and text equally, and listen back to your own explanation.',
+          ),
           kind: PracticeModeKind.listenSpeak,
           enabled: hasListenSpeak,
         ),
         PracticeModeView(
           id: 'practice:diagram',
           title: t('図と条件のラボ', 'Diagrams & Conditions Lab'),
-          description: t('選ぶ・分類する・順に組む操作で関係を確かめます。', 'Check relationships by choosing, sorting, and ordering.'),
+          description: t(
+            '選ぶ・分類する・順に組む操作で関係を確かめます。',
+            'Check relationships by choosing, sorting, and ordering.',
+          ),
           kind: PracticeModeKind.diagram,
           enabled: hasDiagram,
         ),
         PracticeModeView(
           id: 'practice:timed',
-          title: t('タイムチャレンジ', 'Time Challenge'),
-          description: t('固定の転移問題を時間内に解きます。', 'Solve fixed transfer problems within the time limit.'),
+          title: t('時間観察', 'Time Challenge'),
+          description: t(
+            '時間を観察しながら、固定の転移問題を解きます。',
+            'Solve fixed transfer problems within the time limit.',
+          ),
           kind: PracticeModeKind.timed,
           enabled: hasChallenge && timedHasEntry,
           badge: timedBadge,
         ),
         PracticeModeView(
           id: 'practice:match',
-          title: 'Match Lab',
-          description: t('観察・理由・訂正を、対応する説明へすばやく結びます。', 'Quickly link observations, reasons, and corrections to the right explanations.'),
+          title: '対応づけ実験',
+          description: t(
+            '観察・理由・訂正を、対応する説明へすばやく結びます。',
+            'Quickly link observations, reasons, and corrections to the right explanations.',
+          ),
           kind: PracticeModeKind.match,
           enabled: hasChallenge,
           badge: hasChallenge
               ? schoolMode
-                    ? t('45秒・ハート無制限', '45 sec · Unlimited hearts')
-                    : t('45秒・誤答はハート-1', '45 sec · Wrong answer: -1 heart')
+                    ? t('45秒・試行余力は無制限', '45 sec · Unlimited hearts')
+                    : t('45秒・誤答は試行余力-1', '45 sec · Wrong answer: -1 heart')
               : null,
         ),
         PracticeModeView(
           id: 'practice:lightning',
-          title: 'Lightning',
-          description: t('3ラウンドの思い込み訂正を順番に判断します。', 'Judge 3 rounds of misconception fixes in order.'),
+          title: '連続観察',
+          description: t(
+            '3ラウンドの思い込み訂正を順番に判断します。',
+            'Judge 3 rounds of misconception fixes in order.',
+          ),
           kind: PracticeModeKind.lightning,
           enabled: hasChallenge,
           badge: hasChallenge
               ? schoolMode
-                    ? t('50秒・ハート無制限', '50 sec · Unlimited hearts')
-                    : t('50秒・誤答はハート-1', '50 sec · Wrong answer: -1 heart')
+                    ? t('50秒・試行余力は無制限', '50 sec · Unlimited hearts')
+                    : t('50秒・誤答は試行余力-1', '50 sec · Wrong answer: -1 heart')
               : null,
         ),
       ]),

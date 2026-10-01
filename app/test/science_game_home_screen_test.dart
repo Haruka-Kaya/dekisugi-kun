@@ -757,7 +757,7 @@ Future<void> _acceptCompletionCelebration(WidgetTester tester) async {
   expect(
     find.descendant(
       of: celebration,
-      matching: find.text('時間はこの完了画面だけに表示し、端末へ保存しません。'),
+      matching: find.text('観察時間はこの記録票だけに表示し、端末へ保存しません。'),
     ),
     findsOneWidget,
   );
@@ -888,6 +888,13 @@ Future<void> _finishDiagram(
     tester,
     find.byKey(const ValueKey('science-diagram-submit')),
   );
+  if (!fixedTaskCorrect) {
+    await _tapDiagram(
+      tester,
+      find.byKey(const ValueKey('science-diagram-defer')),
+    );
+    return;
+  }
   await _tapDiagram(
     tester,
     find.byKey(const ValueKey('science-diagram-revise')),
@@ -1027,15 +1034,18 @@ Future<void> _completeAvailableLesson(
   await tester.pumpAndSettle();
 
   Future<void> scrollToAndTap(Finder target) async {
-    await tester.ensureVisible(target);
-    await tester.pumpAndSettle();
-    await tester.drag(
-      find.byKey(const ValueKey('science-lesson-scroll')),
-      const Offset(0, -120),
+    await tester.scrollUntilVisible(
+      target,
+      160,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('science-lesson-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
     );
     await tester.pumpAndSettle();
-    final bounds = tester.getRect(target);
-    await tester.tapAt(Offset(bounds.center.dx, bounds.top + 12));
+    await tester.tap(target);
     await tester.pumpAndSettle();
   }
 
@@ -1045,7 +1055,8 @@ Future<void> _completeAvailableLesson(
   );
   await scrollToAndTap(find.byKey(const ValueKey('science-lesson-reveal')));
   await scrollToAndTap(find.byKey(const ValueKey('science-lesson-compare')));
-  await tester.tap(find.text('残す点'));
+  await scrollToAndTap(find.text('真空では同じ加速度'));
+  await scrollToAndTap(find.text('残す点'));
   await tester.enterText(
     find.byKey(const ValueKey('science-lesson-reflection')),
     '真空という条件を残す',
@@ -1337,7 +1348,7 @@ void main() {
       find.byKey(const PageStorageKey<String>('game-learning-path')),
       findsOneWidget,
     );
-    expect(find.text('学習パスを準備できませんでした。'), findsNothing);
+    expect(find.text('探究ノートを準備できませんでした。'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -1370,7 +1381,7 @@ void main() {
       find.byKey(const PageStorageKey<String>('game-learning-path')),
       findsOneWidget,
     );
-    expect(find.text('学習パスを準備できませんでした。'), findsNothing);
+    expect(find.text('探究ノートを準備できませんでした。'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -1443,7 +1454,7 @@ void main() {
     );
     expect(find.byKey(const ValueKey('game-activity-status')), findsOneWidget);
     expect(find.byKey(const ValueKey('game-activity-exit')), findsOneWidget);
-    expect(find.bySemanticsLabel('学習ハート、5個中5個'), findsOneWidget);
+    expect(find.bySemanticsLabel('試行余力、5枠中5枠'), findsOneWidget);
     _expectSingleActivityChrome(tester);
     expect(find.text('物体には重力がはたらく。'), findsNothing);
   });
@@ -1460,7 +1471,7 @@ void main() {
       find.byKey(const ValueKey('game-completion-celebration')),
       findsNothing,
     );
-    expect(find.text('端末への進捗保存が完了していません。Pathからもう一度開けます。'), findsOneWidget);
+    expect(find.text('端末への進捗保存が完了していません。探究ノートからもう一度開けます。'), findsOneWidget);
     final snapshot = await store.learningProgressSnapshot(
       LearningScope.personal,
     );
@@ -1514,18 +1525,18 @@ void main() {
     var now = DateTime(2026, 8, 12, 3, 59);
     await tester.pumpWidget(_app(store, now: () => now));
     await tester.pumpAndSettle();
-    expect(find.bySemanticsLabel(RegExp(r'連続記録の保護、1回分')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'お休みの日の保護、1回分')), findsOneWidget);
 
     now = DateTime(2026, 8, 12, 4);
     await tester.pump(const Duration(minutes: 1));
     await tester.pumpAndSettle();
-    expect(find.bySemanticsLabel(RegExp(r'連続記録の保護、0回分')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'お休みの日の保護、0回分')), findsOneWidget);
 
     now = DateTime(2026, 8, 13, 4);
     await tester.pump(const Duration(days: 1));
     await tester.pumpAndSettle();
     expect(
-      find.bySemanticsLabel(RegExp(r'連続記録の保護、1回分')),
+      find.bySemanticsLabel(RegExp(r'お休みの日の保護、1回分')),
       findsOneWidget,
       reason: '最初の4時更新後も翌日の境界timerを再設定する',
     );
@@ -1609,7 +1620,7 @@ void main() {
     expect(daily.definitionVersion, LearningQuestPlannerV2.definitionVersion);
     expect(daily.target, 1);
     expect(daily.progress, 1);
-    expect(find.bySemanticsLabel(RegExp(r'^連続学習、1日')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'^連続観測、1日')), findsOneWidget);
 
     final storyId = GamePathProjection.nodeId(
       'motion',
@@ -1629,19 +1640,19 @@ void main() {
     await tester.tap(storyNode);
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('game-node-sheet')), findsOneWidget);
-    expect(find.text('レッスン開始'), findsOneWidget);
+    expect(find.text('観察を始める'), findsOneWidget);
   });
 
   testWidgets('学校modeは個人報酬を表示せずハート無制限', (tester) async {
     final store = MemorySessionStore();
     await tester.pumpWidget(_app(store, schoolMode: true));
     await tester.pumpAndSettle();
-    expect(find.bySemanticsLabel(RegExp('ハート、無制限')), findsOneWidget);
-    expect(find.text('協力'), findsOneWidget);
-    expect(find.bySemanticsLabel('この端末の授業目標'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('試行、無制限')), findsOneWidget);
+    expect(find.text('共同'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('授業の観察予定。進行中')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('game-tab-league')));
     await tester.pumpAndSettle();
-    expect(find.text('同じ課題に、並んで挑む'), findsOneWidget);
+    expect(find.text('同じ課題を、並んで観察する'), findsOneWidget);
     expect(find.text('0 / 0'), findsNothing);
   });
 
@@ -1660,7 +1671,7 @@ void main() {
     await _depletePersonalHearts(store);
     await tester.pumpWidget(_app(store, textScale: 2));
     await tester.pumpAndSettle();
-    expect(find.bySemanticsLabel(RegExp('学習ハート.*5個中0個')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('試行余力.*5枠中0枠')), findsOneWidget);
 
     final practiceId = GamePathProjection.nodeId(
       'motion',
@@ -1684,7 +1695,7 @@ void main() {
     await tester.tap(sheetStart);
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('science-diagram-screen')), findsNothing);
-    expect(find.textContaining('ハートがありません'), findsOneWidget);
+    expect(find.textContaining('試行余力がありません'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('game-tab-practice')));
     await tester.pumpAndSettle();
@@ -2322,13 +2333,10 @@ void main() {
       findsNothing,
     );
     expect(
-      find.bySemanticsLabel(RegExp('今日の「聞く」.*今日完了.*もう一度練習')),
+      find.bySemanticsLabel(RegExp('聞き取り観察.*本日記録済み.*もう一度観察')),
       findsOneWidget,
     );
-    expect(
-      find.bySemanticsLabel(RegExp('今日の「話す」.*今日の1件、利用できます')),
-      findsOneWidget,
-    );
+    expect(find.bySemanticsLabel(RegExp('教え返し.*今日の観察、利用できます')), findsOneWidget);
   });
 
   testWidgets('中断runは「続きから」だけを開き、active mistakeのRepairにはしない', (tester) async {
@@ -2976,7 +2984,7 @@ void main() {
 
     expect(find.text('速度―時間グラフの傾きが表す量を選ぶ。'), findsOneWidget);
     expect(find.text('力の矢印を意味の順に並べる。'), findsNothing);
-    expect(find.textContaining('STEP 1 / 1'), findsOneWidget);
+    expect(find.textContaining('観察 1 / 1'), findsOneWidget);
     final notationScroll = find
         .descendant(
           of: find.byKey(const ValueKey('science-notation-scroll')),
@@ -3135,7 +3143,7 @@ void main() {
     await notationTap('notation-retry');
 
     expect(find.text('ここで一度、見直す'), findsOneWidget);
-    expect(find.textContaining('ハートがありません'), findsOneWidget);
+    expect(find.textContaining('試行余力がありません'), findsOneWidget);
     final snapshot = await store.learningProgressSnapshot(
       LearningScope.personal,
     );
@@ -3154,18 +3162,18 @@ void main() {
     await tester.pumpWidget(_app(store));
     await tester.pumpAndSettle();
 
-    expect(find.bySemanticsLabel('クエスト。進行中3件'), findsOneWidget);
+    expect(find.bySemanticsLabel('今日の観察予定。進行中3件'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('game-quest-button')));
     await tester.pumpAndSettle();
-    final dailyQuest = find.bySemanticsLabel(RegExp('デイリークエスト、予想してから教材と比べる。'));
+    final dailyQuest = find.bySemanticsLabel(RegExp('今日の観察予定、予想と教材を1回照合する。'));
     expect(dailyQuest, findsOneWidget);
     expect(
       find.descendant(of: dailyQuest, matching: find.text('0/1')),
       findsOneWidget,
     );
     expect(find.text('結晶1個'), findsOneWidget);
-    expect(find.text('今月の観測バッジを完成させる'), findsOneWidget);
-    expect(find.textContaining('意味のある学習を12件積み重ねます'), findsOneWidget);
+    expect(find.text('今月の観測印を完成させる'), findsOneWidget);
+    expect(find.textContaining('意味のある観察記録を12件積み重ねます'), findsOneWidget);
     expect(find.text('0/12'), findsOneWidget);
     expect(find.text('結晶8個'), findsOneWidget);
   });
@@ -3224,10 +3232,10 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('game-quest-button')));
     await tester.pumpAndSettle();
-    final daily = find.bySemanticsLabel(RegExp('デイリークエスト、予想してから教材と比べる。'));
+    final daily = find.bySemanticsLabel(RegExp('今日の観察予定、予想と教材を1回照合する。'));
     expect(daily, findsOneWidget);
     expect(
-      find.descendant(of: daily, matching: find.text('予想の一歩を始める')),
+      find.descendant(of: daily, matching: find.text('予想の観察を始める')),
       findsOneWidget,
     );
   });
@@ -3245,8 +3253,8 @@ void main() {
       >[
         (
           key: 'compare-prediction',
-          title: '予想してから教材と比べる',
-          action: '予想の一歩を始める',
+          title: '予想と教材を1回照合する',
+          action: '予想の観察を始める',
           clearedBeforeHome: const [],
           seedAge: Duration.zero,
           destinationKey: 'science-lesson-scroll',
@@ -3264,8 +3272,8 @@ void main() {
         ),
         (
           key: 'listen-for-conditions',
-          title: '説明を聞いて条件を見抜く',
-          action: '聞くミッションを始める',
+          title: '聞き取り観察で条件を見抜く',
+          action: '聞き取り観察を始める',
           clearedBeforeHome: const [
             GamePathNodeKind.lesson,
             GamePathNodeKind.practice,
@@ -3276,8 +3284,8 @@ void main() {
         ),
         (
           key: 'explain-it-back',
-          title: '理科の説明を自分で伝える',
-          action: '話すミッションを始める',
+          title: '自分のことばで教え返す',
+          action: '教え返しを始める',
           clearedBeforeHome: const [
             GamePathNodeKind.lesson,
             GamePathNodeKind.practice,
@@ -3289,24 +3297,24 @@ void main() {
         ),
         (
           key: 'diagram-relations',
-          title: '図と条件を1つ組み立てる',
-          action: '図の課題を始める',
+          title: '図と条件の関係を1つ記録する',
+          action: '図の観察を始める',
           clearedBeforeHome: const [GamePathNodeKind.lesson],
           seedAge: Duration.zero,
           destinationKey: 'science-diagram-screen',
         ),
         (
           key: 'notation-trace',
-          title: '式・単位・矢印を意味の順になぞる',
-          action: '記号ラボを開く',
+          title: '式・単位・矢印を意味の順に観察する',
+          action: '記号の観察を開く',
           clearedBeforeHome: const [GamePathNodeKind.lesson],
           seedAge: Duration.zero,
           destinationKey: 'science-notation-lab-screen',
         ),
         (
           key: 'transfer-challenge',
-          title: '別の場面へ原理を1回使う',
-          action: 'チャレンジへ進む',
+          title: '別の場面で原理を1回検証する',
+          action: '総合検証へ進む',
           clearedBeforeHome: const [
             GamePathNodeKind.lesson,
             GamePathNodeKind.practice,
@@ -3319,8 +3327,8 @@ void main() {
         ),
         (
           key: 'spaced-review',
-          title: '期限の来た内容を思い出す',
-          action: '今日の復習を始める',
+          title: '期限の来た記録を思い出す',
+          action: '再観察を始める',
           clearedBeforeHome: const [GamePathNodeKind.lesson],
           seedAge: const Duration(days: 2),
           destinationKey: 'science-legendary-scroll',
@@ -3345,7 +3353,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('game-quest-button')));
       await tester.pumpAndSettle();
       final quest = find.bySemanticsLabel(
-        RegExp('デイリークエスト、${RegExp.escape(cta.title)}。'),
+        RegExp('今日の観察予定、${RegExp.escape(cta.title)}。'),
       );
       expect(quest, findsOneWidget);
       final action = find.descendant(
@@ -3373,7 +3381,7 @@ void main() {
       find.byKey(const PageStorageKey<String>('game-learning-path')),
       findsOneWidget,
     );
-    expect(find.text('学習パスを準備できませんでした。'), findsNothing);
+    expect(find.text('探究ノートを準備できませんでした。'), findsNothing);
     final snapshot = await store.learningProgressSnapshot(
       LearningScope.personal,
     );
@@ -3392,7 +3400,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('game-quest-button')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('次の復習日を待ちます'), findsOneWidget);
+    expect(find.textContaining('次の再観察日を待ちます'), findsOneWidget);
     await tester.tap(find.text('今月の記録を見る'));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('game-profile-screen')), findsOneWidget);
@@ -3409,14 +3417,14 @@ void main() {
       find.byKey(const PageStorageKey<String>('game-learning-path')),
       findsOneWidget,
     );
-    expect(find.text('学習パスを準備できませんでした。'), findsNothing);
+    expect(find.text('探究ノートを準備できませんでした。'), findsNothing);
     expect(
       (await store.learningProgressSnapshot(LearningScope.personal)).quests,
       isEmpty,
     );
     await tester.tap(find.byKey(const ValueKey('game-quest-button')));
     await tester.pumpAndSettle();
-    expect(find.text('クエストを読み込めませんでした。学習パスはそのまま使えます。'), findsOneWidget);
+    expect(find.text('観察予定を読み込めませんでした。探究ノートはそのまま使えます。'), findsOneWidget);
     expect(find.byKey(const ValueKey('game-quest-retry')), findsOneWidget);
   });
 
@@ -3446,12 +3454,12 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('game-quest-button')));
     await tester.pumpAndSettle();
     final friends = find.bySemanticsLabel(
-      RegExp('フレンズクエスト、ふたりクエスト。.*2回中1回。進行中'),
+      RegExp('共同の観察予定、ふたりの共同観察。.*2回中1回。取り組み中'),
     );
     expect(friends, findsOneWidget);
     final action = find.descendant(
       of: friends,
-      matching: find.text('ふたりの進捗を開く'),
+      matching: find.text('ふたりの観察記録を開く'),
     );
     await tester.ensureVisible(action);
     await tester.tap(action);
@@ -3493,13 +3501,13 @@ void main() {
 
     expect(badge, findsOneWidget);
     expect(find.textContaining('結晶では購入できません'), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp('観測バッジ。獲得済み')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('観測印。記録済み')), findsOneWidget);
     final after = await store.learningProgressSnapshot(LearningScope.personal);
     expect(after.wallet.gems, 8);
     expect(after.gemSpends, isEmpty);
   });
 
-  testWidgets('獲得した結晶で学習ハートを確認後に全回復する', (tester) async {
+  testWidgets('獲得した結晶で試行余力を確認後に全回復する', (tester) async {
     final store = MemorySessionStore();
     final now = DateTime.now();
     final day = dayKeyOf(now);
@@ -3554,7 +3562,7 @@ void main() {
 
     await tester.pumpWidget(_app(store));
     await tester.pumpAndSettle();
-    expect(find.bySemanticsLabel('学習ハート、5個中4個'), findsOneWidget);
+    expect(find.bySemanticsLabel('試行余力、5枠中4枠'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('player-status-gems')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('game-economy-sheet')), findsOneWidget);
@@ -3578,7 +3586,7 @@ void main() {
     expect(find.byKey(const ValueKey('game-economy-sheet')), findsNothing);
   });
 
-  testWidgets('結晶でPathマスコットだけを購入・装備し、学習進行を変えない', (tester) async {
+  testWidgets('結晶で探究ノートのマスコットだけを購入・装備し、学習進行を変えない', (tester) async {
     final store = MemorySessionStore();
     await _seedEconomyGems(store, seedId: 'cosmetic', amount: 10);
     final before = await store.learningProgressSnapshot(LearningScope.personal);
@@ -3602,7 +3610,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('軌道リングを購入しますか？'), findsOneWidget);
     expect(
-      find.text('結晶4個を使い、Pathの見た目だけを変更します。学習進行や正答は変わりません。'),
+      find.text('結晶4個を使い、探究ノートの見た目だけを変更します。探究の進行や正答は変わりません。'),
       findsOneWidget,
     );
     await tester.tap(
@@ -3730,17 +3738,17 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('game-quest-button')));
     await tester.pumpAndSettle();
     final inviteQuest = find.bySemanticsLabel(
-      RegExp('フレンズクエスト、端末内ペアクエストを作る。.*2回中0回。進行中'),
+      RegExp('共同の観察予定、端末内で共同観察を始める。.*2回中0回。取り組み中'),
     );
     expect(inviteQuest, findsOneWidget);
     await tester.tap(
-      find.descendant(of: inviteQuest, matching: find.text('2人のクエストを準備する')),
+      find.descendant(of: inviteQuest, matching: find.text('ふたりの観察を準備する')),
     );
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('game-profile-screen')), findsOneWidget);
     expect(find.byKey(const ValueKey('local-coop-start')), findsNothing);
-    expect(find.textContaining('1人目の学習を選択中'), findsOneWidget);
-    expect(find.text('0 / 2  ・  ◆ 3'), findsOneWidget);
+    expect(find.text('1人目 ・ 選択中'), findsOneWidget);
+    expect(find.text('観察記録 0 / 2  ・  結晶 3'), findsOneWidget);
 
     Future<void> expectPairQuestInSheet(int progress, String state) async {
       await tester.tap(find.byKey(const ValueKey('game-quest-button')));
@@ -3748,7 +3756,7 @@ void main() {
       expect(
         find.bySemanticsLabel(
           RegExp(
-            'フレンズクエスト、端末内ペアクエスト。'
+            '共同の観察予定、端末内の共同観察。'
             '.*2回中$progress回。$state',
           ),
         ),
@@ -3758,7 +3766,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    await expectPairQuestInSheet(0, '進行中');
+    await expectPairQuestInSheet(0, '取り組み中');
 
     var snapshot = await store.learningProgressSnapshot(LearningScope.personal);
     expect(snapshot.localCoopRuns, hasLength(1));
@@ -3785,7 +3793,7 @@ void main() {
       180,
       scrollable: leagueScroll,
     );
-    expect(find.bySemanticsLabel(RegExp('端末手渡し週次リーグ。実在する2人')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('端末手渡し共同観測。実在する2人')), findsOneWidget);
     expect(
       find.byKey(
         ValueKey<String>(
@@ -3827,7 +3835,7 @@ void main() {
     expect(updatedPair.progress, 1);
     expect(updatedPair.contributingParticipantIds, hasLength(1));
     expect(updatedPair.completed, isFalse);
-    await expectPairQuestInSheet(1, '進行中');
+    await expectPairQuestInSheet(1, '取り組み中');
     expect(
       snapshot.wallet.gems,
       1,
@@ -3888,7 +3896,7 @@ void main() {
     );
     expect(pairEvents.every((event) => event.meaningfulProgress), isTrue);
 
-    await expectPairQuestInSheet(2, '達成済み');
+    await expectPairQuestInSheet(2, '記録済み');
     await tester.tap(find.byKey(const ValueKey('game-tab-profile')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
@@ -3905,14 +3913,14 @@ void main() {
     expect(
       find.descendant(
         of: completedPairPanel,
-        matching: find.text('2 / 2  ・  ◆ 3'),
+        matching: find.text('観察記録 2 / 2  ・  結晶 3'),
       ),
       findsOneWidget,
     );
     expect(
       find.descendant(
         of: completedPairPanel,
-        matching: find.text('2人の学習がそろいました。報酬は端末内の個人walletへ一度だけ記録済みです。'),
+        matching: find.text('ふたりの観察記録がそろいました。報酬は端末内の個人の結晶残高へ一度だけ記録済みです。'),
       ),
       findsOneWidget,
       reason: 'Profileの恒常表示を一時的なSnackBarとは別に検証する',
@@ -4070,7 +4078,7 @@ void main() {
       180,
       scrollable: profileScroll,
     );
-    expect(find.textContaining('学習イベントを二重計上しないため'), findsOneWidget);
+    expect(find.textContaining('探究イベントを二重計上しないため'), findsOneWidget);
     expect(
       tester
           .widget<FilledButton>(find.byKey(const ValueKey('local-coop-start')))
@@ -4102,10 +4110,7 @@ void main() {
       180,
       scrollable: leagueScroll,
     );
-    expect(
-      find.bySemanticsLabel(RegExp('この端末の学習者、1位、意味のある学習1件')),
-      findsOneWidget,
-    );
+    expect(find.bySemanticsLabel(RegExp('この端末の観測者、1位、観察1件')), findsOneWidget);
     expect(find.textContaining('実在する仲間との週次順位だけ'), findsOneWidget);
   });
 
@@ -4137,7 +4142,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('game-tab-league')));
     await tester.pumpAndSettle();
-    expect(find.text('ゴールドリーグ'), findsOneWidget);
+    expect(find.text('観測級03の共同観測'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
@@ -4368,7 +4373,7 @@ void main() {
       await _depletePersonalHearts(store, remaining: 1);
       await tester.pumpWidget(_app(store));
       await tester.pumpAndSettle();
-      expect(find.bySemanticsLabel('学習ハート、5個中1個'), findsOneWidget);
+      expect(find.bySemanticsLabel('試行余力、5枠中1枠'), findsOneWidget);
 
       await _openOptionalPracticeMode(tester, challenge.mode);
       await _tapMiniGameControl(
@@ -4394,9 +4399,9 @@ void main() {
 
       expect(find.byKey(ValueKey(challenge.startKey)), findsNothing);
       expect(find.byKey(ValueKey(challenge.retryKey)), findsOneWidget);
-      expect(find.textContaining('ハートがありません'), findsOneWidget);
+      expect(find.textContaining('試行余力がありません'), findsOneWidget);
       expect(
-        find.bySemanticsLabel('学習ハート、5個中0個'),
+        find.bySemanticsLabel('試行余力、5枠中0枠'),
         findsOneWidget,
         reason: '誤答保存後の実snapshotがactivity内固定statusへ反映される',
       );
@@ -4424,7 +4429,7 @@ void main() {
       ], scope: LearningScope.schoolLocal);
       await tester.pumpWidget(_app(store, schoolMode: true));
       await tester.pumpAndSettle();
-      expect(find.bySemanticsLabel(RegExp('ハート、無制限')), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp('試行、無制限')), findsOneWidget);
 
       await _openOptionalPracticeMode(tester, challenge.mode);
       await _tapMiniGameControl(
@@ -4826,7 +4831,7 @@ void main() {
         .onTap!();
     await tester.pumpAndSettle();
     await tester.pumpAndSettle();
-    expect(find.textContaining('SPACED REVIEW'), findsOneWidget);
+    expect(find.textContaining('間隔を空けた再検証'), findsOneWidget);
 
     final reviewScroll = find
         .descendant(
@@ -5004,7 +5009,7 @@ void main() {
       ),
       hasLength(1),
     );
-    expect(find.bySemanticsLabel('学習ハート、5個中0個'), findsOneWidget);
+    expect(find.bySemanticsLabel('試行余力、5枠中0枠'), findsOneWidget);
   });
 
   testWidgets('Legendary未クリアはハートを1個だけ減らしてPathへ戻る', (tester) async {
@@ -5094,7 +5099,7 @@ void main() {
       find.byKey(const ValueKey('science-unit-legendary-screen')),
       findsNothing,
     );
-    expect(find.bySemanticsLabel('学習ハート、5個中4個'), findsOneWidget);
+    expect(find.bySemanticsLabel('試行余力、5枠中4枠'), findsOneWidget);
 
     await tester.tap(node);
     await tester.pumpAndSettle();

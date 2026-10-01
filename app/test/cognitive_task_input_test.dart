@@ -70,6 +70,30 @@ Widget _wrap(Widget child, {double textScale = 1}) => MaterialApp(
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('prompt要約は正解を参照せず3構造を人が読める文字へ変換する', () {
+    expect(
+      cognitiveTaskPromptSummary(_choicePrompt),
+      '結果を予測する\n候補: 重い球が先に着く / ほぼ同時に着く / 軽い球が先に着く',
+    );
+    expect(
+      cognitiveTaskPromptSummary(_classifyTask.prompt),
+      '実験の条件を組む\n分類する項目: 球の質量 / 球の形 / 着地時刻\n分類先: 変える / そろえる / 測る',
+    );
+    expect(
+      cognitiveTaskPromptSummary(_sequenceTask.prompt),
+      '原因と結果を順に組む\n並べる項目: 誘導電圧が生じる / 磁束が変化する / 閉回路に電流が流れる',
+    );
+    for (final text in [
+      cognitiveTaskPromptSummary(_choicePrompt),
+      cognitiveTaskPromptSummary(_classifyTask.prompt),
+      cognitiveTaskPromptSummary(_sequenceTask.prompt),
+    ]) {
+      expect(text, isNot(contains('Instance of')));
+      expect(text, isNot(contains('same-time')));
+      expect(text, isNot(contains('selectedItemId')));
+    }
+  });
+
   testWidgets('singleSelectは著者順の2〜4択を正誤なしで選び、回答完成だけを返す', (tester) async {
     final semantics = tester.ensureSemantics();
     CognitiveTaskResponse? response;

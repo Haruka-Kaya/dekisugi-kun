@@ -158,8 +158,8 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color weakFg, weakChip;
   final Color untouchedFg, untouchedChip;
 
-  /// ホームと会話の主役になる濃い面。
-  /// Material の汎用カードを並べず、「デキすぎ君と話す場所」を1枚で作る。
+  /// ホームと会話の主役になる記録面。
+  /// [buildAppTheme] では Field Notebook の中立な raised surface へ接続する。
   final Color heroSurface;
   final Color onHeroSurface;
   final Color heroMuted;
@@ -178,9 +178,9 @@ class AppColors extends ThemeExtension<AppColors> {
     charAccent: Color(0xFFFFC46B), // 体の上で 3.17:1
     borderStrong: Color(0xFF7A7C84), // warm canvas に対し 3:1 以上
     highlightFlash: Color(0xFFD8EBFB),
-    gotItFg: Color(0xFF207F40),
+    gotItFg: Color(0xFF1D753A),
     gotItChip: Color(0xFFE9F6EB),
-    shakyFg: Color(0xFF9B612E),
+    shakyFg: Color(0xFF925A29),
     shakyChip: Color(0xFFFEEFE3),
     weakFg: Color(0xFFBA4643),
     weakChip: Color(0xFFFDECEA),
@@ -341,41 +341,41 @@ ThemeData buildAppTheme(Brightness brightness) {
   final gamePalette = isDark ? GamePalette.dark : GamePalette.light;
   final legacyColors = isDark ? AppColors.dark : AppColors.light;
   final appColors = legacyColors.copyWith(
-    heroSurface: gamePalette.pathActive,
-    onHeroSurface: gamePalette.onPathActive,
-    heroMuted: gamePalette.surfaceRaised,
-    warmSurface: gamePalette.surfaceRaised,
+    heroSurface: gamePalette.benchRaised,
+    onHeroSurface: gamePalette.ink,
+    heroMuted: gamePalette.inkMuted,
+    warmSurface: gamePalette.benchRaised,
     onWarmSurface: gamePalette.ink,
-    coolSurface: gamePalette.surfaceRaised,
+    coolSurface: gamePalette.benchRaised,
     onCoolSurface: gamePalette.ink,
   );
 
-  // Material 標準部品も Orbit Lab と同じ canvas / surface / ink から作る。
-  // Path からレッスンへ遷移したときだけ旧来のベージュへ戻ると、同じ冒険の
-  // 続きではなく別アプリに見える。状態色は引き続き AppColors が担う。
+  // Material 標準部品も Field Notebook と同じ paper / bench / ink から作る。
+  // 探究ログからレッスンへ移っても、同じ観察記録の続きとして読めるようにする。
+  // 状態色は引き続き AppColors が担う。
   final scheme =
       ColorScheme.fromSeed(
-        seedColor: gamePalette.pathActive,
+        seedColor: gamePalette.action,
         brightness: brightness,
       ).copyWith(
-        primary: gamePalette.pathActive,
-        onPrimary: gamePalette.onPathActive,
-        primaryContainer: gamePalette.surfaceRaised,
+        primary: gamePalette.action,
+        onPrimary: gamePalette.onAction,
+        primaryContainer: gamePalette.benchRaised,
         onPrimaryContainer: gamePalette.ink,
-        secondary: gamePalette.story,
-        onSecondary: gamePalette.onStory,
-        secondaryContainer: gamePalette.surfaceRaised,
+        secondary: gamePalette.caseFile,
+        onSecondary: gamePalette.onCaseFile,
+        secondaryContainer: gamePalette.benchRaised,
         onSecondaryContainer: gamePalette.ink,
         // ColorScheme.copyWith は ThemeData.copyWith とは別物で、
         // 「M3 が半分しか効かない」罠には該当しない。
-        surface: gamePalette.canvas,
+        surface: gamePalette.paper,
         onSurface: gamePalette.ink,
         onSurfaceVariant: gamePalette.inkMuted,
-        surfaceContainerLowest: gamePalette.surface,
-        surfaceContainerLow: gamePalette.surface,
-        surfaceContainer: gamePalette.surfaceRaised,
-        surfaceContainerHigh: gamePalette.surfaceRaised,
-        surfaceContainerHighest: gamePalette.pathLocked,
+        surfaceContainerLowest: gamePalette.bench,
+        surfaceContainerLow: gamePalette.bench,
+        surfaceContainer: gamePalette.benchRaised,
+        surfaceContainerHigh: gamePalette.benchRaised,
+        surfaceContainerHighest: gamePalette.locked,
         outline: gamePalette.inkMuted,
         outlineVariant: gamePalette.border,
       );
@@ -434,6 +434,9 @@ ThemeData buildAppTheme(Brightness brightness) {
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       indicatorColor: scheme.secondaryContainer,
+      indicatorShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(GameTokens.radiusSm),
+      ),
       height: 64,
     ),
 
@@ -490,9 +493,9 @@ ThemeData buildAppTheme(Brightness brightness) {
     ),
     chipTheme: ChipThemeData(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(GameTokens.radiusPill),
+        borderRadius: BorderRadius.circular(GameTokens.radiusSm),
       ),
-      side: BorderSide.none,
+      side: BorderSide(color: scheme.outlineVariant),
     ),
     dividerTheme: DividerThemeData(
       color: scheme.outlineVariant,
@@ -501,12 +504,21 @@ ThemeData buildAppTheme(Brightness brightness) {
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
-      backgroundColor: appColors.heroSurface,
+      backgroundColor: gamePalette.ink,
       contentTextStyle: textTheme.bodyMedium?.copyWith(
-        color: appColors.onHeroSurface,
+        color: gamePalette.bench,
       ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(GameTokens.radiusMd),
+        borderRadius: BorderRadius.circular(GameTokens.radiusSm),
+      ),
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: gamePalette.bench,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(GameTokens.radiusSheet),
+        ),
       ),
     ),
     dialogTheme: DialogThemeData(

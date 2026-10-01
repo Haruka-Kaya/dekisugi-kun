@@ -194,6 +194,8 @@ void main() {
 
     expect(find.byKey(const ValueKey('legendary-locked')), findsOneWidget);
     expect(find.textContaining('翌学習日以降'), findsOneWidget);
+    expect(find.textContaining('通常課題・復習・学校課題'), findsOneWidget);
+    expect(find.textContaining('通常レッスン'), findsNothing);
     expect(find.text(challengeVariant.transferPrompt), findsNothing);
     expect(find.text(challengeCheckpoint.lure), findsNothing);
     expect(find.byKey(const ValueKey('cognitive-task-input')), findsNothing);
@@ -222,7 +224,7 @@ void main() {
 
     expect(find.byKey(const ValueKey('legendary-task')), findsOneWidget);
     expect(
-      find.bySemanticsLabel(RegExp('LEGENDARY.*1 OF 3.*落下の速さ.*ヒントなし')),
+      find.bySemanticsLabel(RegExp('ラボ・ブリーフ.*高難度検証.*1/3.*落下の速さ.*ヒントなし')),
       findsOneWidget,
     );
     _expectReferenceHidden(tester);
@@ -273,13 +275,13 @@ void main() {
 
     expect(completed, 1);
     expect(find.byKey(const ValueKey('legendary-done')), findsOneWidget);
-    expect(find.text('高難度課題クリア'), findsOneWidget);
+    expect(find.text('高難度検証を完了'), findsOneWidget);
     expect(find.textContaining('習得した'), findsNothing);
     expect(returned, 0, reason: 'onCompletedで自動帰還しない');
 
     final returnToPath = find.byKey(const ValueKey('legendary-return-to-path'));
     expect(tester.getSize(returnToPath).height, greaterThanOrEqualTo(56));
-    expect(find.bySemanticsLabel('学習パスへ戻る'), findsOneWidget);
+    expect(find.bySemanticsLabel('探究ノートへ戻る'), findsOneWidget);
     await tester.tap(returnToPath);
     await tester.tap(returnToPath);
     await tester.pump();
@@ -401,7 +403,7 @@ void main() {
     await tester.pump();
 
     expect(completed, 1);
-    expect(find.text('高難度課題クリア'), findsOneWidget);
+    expect(find.text('高難度検証を完了'), findsOneWidget);
     expect(returned, 0);
     final returnToPath = find.byKey(const ValueKey('legendary-return-to-path'));
     await tester.scrollUntilVisible(returnToPath, 160, scrollable: _scrollable);

@@ -302,7 +302,7 @@ class _ScienceTimedChallengeScreenState
               backgroundColor: colors.canvas,
               foregroundColor: colors.ink,
               title: Text(
-                t('時間制チャレンジ', 'Timed challenge'),
+                t('時間観察', 'Timed challenge'),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.jaWeight(FontWeight.w800),
@@ -391,9 +391,12 @@ class _TimedIntro extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'OPTIONAL  /  TIMED LAB',
+          eyebrow: 'ラボ・ブリーフ  /  時間観察  /  任意',
           title: conceptLabel,
-          body: t('固定の2問を$seconds秒で解きます。速さは学習の代わりにはなりません。', 'Answer 2 fixed questions in $seconds seconds. Speed is no substitute for learning.'),
+          body: t(
+            '固定の2問を$seconds秒で解きます。速さは学習の代わりにはなりません。',
+            'Answer 2 fixed questions in $seconds seconds. Speed is no substitute for learning.',
+          ),
           icon: Icons.timer_outlined,
           accent: colors.pathReview,
           onAccent: colors.onPathReview,
@@ -403,15 +406,15 @@ class _TimedIntro extends StatelessWidget {
         ScienceChallengeSurface(
           label: t('時間切れは失点なし', 'No penalty for running out of time'),
           icon: Icons.shield_outlined,
-          child: Text(
-            t('時間切れでは学習ハートは減りません。固定問題の誤答だけ、個人モードでは学習ハートが1つ減ります。'
-            'Path・連続学習・報酬・学校課題は変わらず、学校モードはハート無制限です。', 'Running out of time doesn\'t cost learning hearts. Only wrong answers on fixed questions cost 1 learning heart in personal mode. Path, streak, rewards, and school assignments don\'t change, and school mode has unlimited hearts.'),
+          child: const Text(
+            '時間切れでは試行余力は減りません。固定問題の誤答だけ、個人モードでは試行余力が1つ減ります。'
+            '探究ノート・連続観測・報酬・学校課題は変わらず、学校モードは試行余力が無制限です。',
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('timed-start'),
-          label: t('任意チャレンジを始める', 'Start optional challenge'),
+          label: t('時間観察を始める', 'Start optional challenge'),
           icon: Icons.play_arrow_rounded,
           onPressed: onStart,
           backgroundColor: colors.pathReview,
@@ -446,7 +449,10 @@ class _TimedTask extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Countdown(seconds: remainingSeconds, stepLabel: t('1問目、しくみを組む', 'Question 1: build the mechanism')),
+        _Countdown(
+          seconds: remainingSeconds,
+          stepLabel: t('1問目、しくみを組む', 'Question 1: build the mechanism'),
+        ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
           label: t('場面', 'Scenario'),
@@ -497,7 +503,10 @@ class _TimedCheckpoint extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Countdown(seconds: remainingSeconds, stepLabel: t('2問目、思い込みを見破る', 'Question 2: catch the misconception')),
+        _Countdown(
+          seconds: remainingSeconds,
+          stepLabel: t('2問目、思い込みを見破る', 'Question 2: catch the misconception'),
+        ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengeSurface(
           label: t('デキすぎ君の説明', 'Dekisugi-kun\'s explanation'),
@@ -610,7 +619,10 @@ class _CheckpointChoice extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: t('選択肢$position、全$count件中。$text${selected ? '。選択中' : ''}', 'Option $position of $count. $text${selected ? '. Selected' : ''}'),
+      label: t(
+        '選択肢$position、全$count件中。$text${selected ? '。選択中' : ''}',
+        'Option $position of $count. $text${selected ? '. Selected' : ''}',
+      ),
       child: ExcludeSemantics(
         child: Material(
           color: selected ? colors.surfaceRaised : colors.surface,
@@ -673,22 +685,31 @@ class _TimedResult extends StatelessWidget {
     final colors = context.gamePalette;
     final (title, body, icon, accent, foreground) = switch (outcome) {
       _TimedOutcome.cleared => (
-        t('2問クリア', 'Both questions cleared'),
-        t('固定問題を最後まで解きました。速さによる追加報酬はありません。', 'You finished the fixed questions. There are no extra rewards for speed.'),
+        t('時間観察を完了', 'Both questions cleared'),
+        t(
+          '固定問題を最後まで解きました。速さによる追加報酬はありません。',
+          'You finished the fixed questions. There are no extra rewards for speed.',
+        ),
         Icons.check_circle_outline,
         colors.pathComplete,
         colors.onPathComplete,
       ),
       _TimedOutcome.needsReview => (
         t('今回はここまで', 'That\'s it for this round'),
-        t('一度の回答で終了です。答えを比べ、通常練習でゆっくり確かめられます。', 'One answer ends the run. Compare answers and check them at your own pace in regular practice.'),
+        t(
+          '一度の回答で終了です。答えを比べ、通常練習でゆっくり確かめられます。',
+          'One answer ends the run. Compare answers and check them at your own pace in regular practice.',
+        ),
         Icons.compare_arrows_rounded,
         colors.pathReview,
         colors.onPathReview,
       ),
       _TimedOutcome.timeUp => (
         t('時間になりました', 'Time\'s up'),
-        t('未回答でも失うものはありません。答えを見て、通常練習へ戻れます。', 'You lose nothing for unanswered questions. See the answers and return to regular practice.'),
+        t(
+          '未回答でも失うものはありません。答えを見て、通常練習へ戻れます。',
+          'You lose nothing for unanswered questions. See the answers and return to regular practice.',
+        ),
         Icons.timer_off_outlined,
         colors.surfaceRaised,
         colors.ink,
@@ -698,7 +719,7 @@ class _TimedResult extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ScienceChallengeHeader(
-          eyebrow: 'TIMED LAB  /  RESULT',
+          eyebrow: 'ラボ・ブリーフ  /  時間観察  /  記録',
           title: title,
           body: body,
           icon: icon,
@@ -739,15 +760,15 @@ class _TimedResult extends StatelessWidget {
         ScienceChallengeSurface(
           label: t('進行と報酬はそのまま', 'Progress and rewards unchanged'),
           icon: Icons.shield_outlined,
-          child: Text(
-            t('Path・連続学習・報酬・学校課題は増減しません。時間切れでは学習ハートも減らず、'
-            '固定問題に誤答した場合だけ個人モードの学習ハートが1つ減ります。', 'Path, streak, rewards, and school assignments don\'t change. Running out of time doesn\'t cost learning hearts; only wrong answers on fixed questions cost 1 learning heart in personal mode.'),
+          child: const Text(
+            '探究ノート・連続観測・報酬・学校課題は増減しません。時間切れでは試行余力も減らず、'
+            '固定問題に誤答した場合だけ個人モードの試行余力が1つ減ります。',
           ),
         ),
         const SizedBox(height: GameTokens.spaceLg),
         ScienceChallengePrimaryButton(
           key: const ValueKey('timed-finish'),
-          label: t('練習ラボへ戻る', 'Back to Practice Lab'),
+          label: t('探究ノートの練習へ戻る', 'Back to Practice Lab'),
           icon: Icons.arrow_back_rounded,
           onPressed: onFinish,
           backgroundColor: colors.pathReview,

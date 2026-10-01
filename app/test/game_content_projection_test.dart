@@ -49,7 +49,7 @@ void main() {
     expect(result.stories.single.title, '紙ひこうき部、落下レース中止事件');
   });
 
-  test('練習ラボは期限・中断・active need・章ボスを別の事実から開く', () {
+  test('練習ラボは期限・中断・active need・総合検証を別の事実から開く', () {
     final lessonId = GamePathProjection.nodeId(
       'motion',
       'fall',
@@ -87,6 +87,9 @@ void main() {
     expect(byKind[PracticeModeKind.diagram]!.enabled, isTrue);
     // 実際にchallengeがin progressなので、任意の時間制も開く。
     expect(byKind[PracticeModeKind.timed]!.enabled, isTrue);
+    expect(byKind[PracticeModeKind.timed]!.title, '時間観察');
+    expect(byKind[PracticeModeKind.match]!.title, '対応づけ実験');
+    expect(byKind[PracticeModeKind.lightning]!.title, '連続観察');
 
     final withNeed = projection.build(
       catalog: _catalog,
@@ -134,8 +137,8 @@ void main() {
     expect(timed(build(canBuy: false)).enabled, isFalse);
     expect(timed(build(canBuy: false)).badge, contains('結晶不足'));
     expect(timed(build(pass: true, canBuy: false)).enabled, isTrue);
-    expect(timed(build(pass: true, canBuy: false)).badge, contains('挑戦券あり'));
+    expect(timed(build(pass: true, canBuy: false)).badge, contains('時間観察券あり'));
     expect(timed(build(schoolMode: true, canBuy: false)).enabled, isTrue);
-    expect(timed(build(schoolMode: true, canBuy: false)).badge, '任意・ハート無制限');
+    expect(timed(build(schoolMode: true, canBuy: false)).badge, '任意・試行余力は無制限');
   });
 }
