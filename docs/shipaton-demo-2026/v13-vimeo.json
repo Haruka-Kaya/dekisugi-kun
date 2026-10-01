@@ -1,0 +1,18 @@
+{
+  "watch_url": "https://vimeo.com/1232117345",
+  "title": "Dekisugi-kun — Learn Science by Teaching | Shipaton Next Gen",
+  "video": "shipaton-demo-v13.mp4",
+  "sha256": "0a35f8125c7a8bc2b417e11aa6462aa3771bf8ab2718048b93c76571818b10c6",
+  "privacy": "Public",
+  "content_rating": "All audiences",
+  "plan": "Free",
+  "paid_contract": false,
+  "upload_complete": true,
+  "optimization_complete": true,
+  "anonymous_playback": {
+    "verified": true,
+    "method": "Chrome Incognito, Vimeo Log in button visible; Play changed to Pause, audio-playing indicator and progress 00:10 of 01:07 observed",
+    "verified_at": "2026-10-01T18:16:22.554611+00:00",
+    "screenshot": "app/build/nextgen-work/vimeo-public-playback.png"
+  }
+}
