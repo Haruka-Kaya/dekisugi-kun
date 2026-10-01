@@ -1,0 +1,14 @@
+{
+  "source_commit": "11d9ae3cc1e9e6597a6206a4ab07b80f6ac49b8e",
+  "captured": "2026-10-01",
+  "method": "Native Android emulator screencap at display size 1179x2556; no resize, device frame, seeded progress or fabricated UI",
+  "route": "English debug build; offline on-device mode; prediction typed through native UI",
+  "files": {
+    "shot-1179x2556.png": "b3c1dcbb195d8ba281f869e1c29a48dc965eda9b65f10d8f6941e2d2aeea0125",
+    "evidence-1179x2556.png": "c89ab06bde2f56e55899f4d5b17d17464298f67a4f4d0e8509f4142d01cc2f33",
+    "teachback-1080x1920.png": "4af839c377e3920e206ef703b3131bb3f727bf2dfe5344475f52f0df3a8d3ec4",
+    "aurora-1080x1920.png": "40ae000b6d911876199ac39c35f7a5e9c88469cdf4deff3d944040336cd79ca2",
+    "parent-report-1080x1920.png": "0e4d8473d6011adc6dd0babe2889d783f8c0db6495f0d72c4ca840b9ad2e8966"
+  },
+  "additional_gallery": "The 1080x1920 files are unchanged native v8 capture pixels of the same app commit; action logs retained locally. The primary required screenshots are direct 1179x2556 captures."
+}

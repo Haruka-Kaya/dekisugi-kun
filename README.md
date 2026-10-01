@@ -1,103 +1,63 @@
-<!--
-  このリポジトリは public（Shipaton 2026 Next Gen Award 提出用）。次の2つは書かない:
-  - 導入を検討している相手の名前
-  - 鍵・トークンの実体（secrets/ は gitignore 済み）
+# Dekisugi-kun / AIデキすぎ君
 
-  README の方針: **できていないことを隠さない。**
-  「できている前提」で読まれると、実機で詰まったときに原因を探す場所を間違える。
--->
+**Learn science by teaching a companion.** For middle and high-school science,
+predict an outcome, read the evidence, close the material, and explain the idea
+in your own words. A fixed follow-up asks you to apply it to a new case.
 
-# AIデキすぎ君
+**Next Gen reviewers:** [start here](docs/nextgen-review-guide.md) ·
+[English demo](docs/shipaton-demo-2026/shipaton-demo-v9.mp4) ·
+[product overview](docs/product-overview-en.md) · [MIT license](LICENSE).
 
-**中高生がデキすぎ君に「教える」ことで学ぶ、端末内中心の理科学習アプリ。**
+![English native demo](docs/shipaton-demo-2026/shipaton-demo-v9-poster.jpg)
 
-一般的な学習アプリと逆で、デキすぎ君は先に答えを教えない。
-生徒が教材を読み、**教材を画面から消して**、自分の言葉で説明する。
+The video shows the current native Android app on an emulator, with editorial
+English narration and captions. It includes a completed **RevenueCat Test Store**
+purchase, an equipped Aurora Cape and a parent report; no real charge occurred.
+The core lessons remain free. External generative AI is disabled.
 
-```
-教材を読む → 教材を隠す → 自分の言葉で説明する
-   → デキすぎ君が固定の問い返しをする
-   → 説明を言い直す → 固定needだけが復習に残る
-```
+The core works offline, without an account or LLM grading. Free explanations and
+voice stay transient in the demonstrated route; the companion's misconception
+record uses cataloged need codes. A matching repair activity can resolve an
+observed need. Rewriting alone does not mark it corrected.
 
----
+- **Built:** native Flutter Field Notebook UI; 12 units / 35 concepts; fixed
+  follow-ups, hint/retry, review; RevenueCat purchase and restore integration.
+- **English:** curriculum and main learning flow available; some secondary UI
+  labels remain Japanese.
+- **Evidence:** integrated baseline of 1,337 app and 399 server tests; real
+  native emulator interactions. Physical-device voice QA and learner pilots
+  remain open. No measured learning gain or school rollout is claimed.
 
-## English quick start (for judges)
+## Native quick start
 
-**dekisugi-kun** is a Japanese middle/high-school science app where students
-*teach* an AI companion instead of being taught. The AI never gives the answer
-first: the student reads a fixed lesson, the lesson is hidden, the student
-explains by voice or text, and the AI asks a fixed follow-up question.
-Learning progress lives entirely on-device (SQLite); no account, no free-text
-upload, no LLM grading.
-
-The signature artifact is the **カルテ (misconception map)**: a canonical
-catalog of 35 misconceptions, one per concept, rendered as the companion's
-beliefs — students watch each recorded misconception flip to "corrected by
-your explanation". See [docs/product-overview-en.md](docs/product-overview-en.md)
-for the full design contract (C1–C9).
-
-![Dekisugi learning path](docs/store-shots-2026/devpost/shot-1179x2556.png)
-
-The English build on-device (Android emulator captures, `--dart-define=APP_LANG=en`):
-
-| Path | Teach-back | Story | Karte | Plus |
-|---|---|---|---|---|
-| ![EN path](docs/screenshots-en/path.png) | ![EN teach-back](docs/screenshots-en/teach-back.png) | ![EN story](docs/screenshots-en/story.png) | ![EN karte](docs/screenshots-en/karte.png) | ![EN plus](docs/screenshots-en/plus.png) |
-
-*The name:* in Japanese slang, *dekisugi* (デキすぎ) is the kid who is
-suspiciously good at everything — here it's the companion's persona: it knows
-the answers but is not allowed to reveal them, so the student has to teach it.
-
-**Live demo:** https://web-uxapnvfp.devinapps.com — the Flutter web build,
-running entirely in your browser against the bundled catalog (no server, no
-account, no network calls; local-mode toggle is in the entry screen). Switch
-to English with 表示言語 → English in Settings, or any lesson teaches you the
-loop end to end.
-
-- **Stack:** Flutter app (`app/`) + TypeScript server (`server/`, Vercel).
-  The app's core learning loop runs fully offline against the bundled
-  curriculum catalog — no server or credentials needed to run it.
-- **Bilingual:** the whole product runs in English too — every lesson,
-  practice stage, misconception follow-up, story, and notation task has a
-  canonical English build (`--dart-define=APP_LANG=en`, or the in-app
-  language toggle). The English catalog is machine-generated from the same
-  server source (`app/assets/catalog/units.en.json`), and `/api/units?lang=en`
-  serves it over the network; a coverage test fails the build on any
-  untranslated string.
-- **Monetization:** optional Plus *supporter plan* powered by the RevenueCat
-  SDK (`purchases_flutter`): purchase/restore grants the Aurora Mantle
-  companion skin, generated-AI reply prefaces via `/api/companion-line`
-  (consent-disclosed, catalog-verbatim pedagogy, deterministic fallback), and
-  a parent-facing karte report. Entitlement is verified on-device
-  (server-side re-verification via `server/lib/revenuecat.ts` +
-  `/api/revenuecat-webhook` is implemented and activates when restricted-data
-  processing is enabled — sending device IDs to RevenueCat is currently
-  held as minor-data processing). No learning content
-  is behind payment. The full purchase loop is exercise-able end-to-end with
-  RevenueCat's free Test Store — see
-  [docs/monetization-setup.md](docs/monetization-setup.md).
-
-### Run the app
+Use Flutter **3.47.5** and an Android device/emulator or iOS simulator:
 
 ```bash
 cd app
 flutter pub get
-flutter run            # bundled-catalog mode works with no network
-# flutter run -d chrome also works for a quick look (no SQLite, no purchases)
+flutter run --dart-define=APP_LANG=en
 ```
 
-### Run the tests
+Choose on-device learning after onboarding. Core learning requires no server or
+API key. The [reviewer guide](docs/nextgen-review-guide.md) explains the teach-back
+route and the separate adult-profile Test Store replay. Application ID:
+`jp.dekisugi.dekisugi`. Do not enable external AI for school/minor distribution.
+
+## Tests
+
+From the repository root:
 
 ```bash
-cd app && flutter test     # 1337 tests, no network
-cd server && npm install && npm test   # 399 tests, no network
+(cd app && flutter test)
+# Return to the repository root before running the server suite:
+(cd server && npm ci && npm test)
 ```
 
-Optional Live-AI research endpoints are disabled in production by design
-(minor-safety policy); they are not part of the shipped experience.
-
 ---
+
+中高生がデキすぎ君に「教える」ことで学ぶ、端末内中心の理科学習アプリ。
+教材を読み、**教材を画面から消して**、自分の言葉で説明する。
+固定の問い返しとヒントで考え直し、観測したneedを復習へつなげる。
 
 ## なぜこの形か
 

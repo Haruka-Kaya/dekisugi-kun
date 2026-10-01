@@ -1,6 +1,6 @@
 # Native English demo tooling
 
-These tools produced `docs/shipaton-demo-2026/shipaton-demo-v8.mp4` from real
+These tools produced the v8 and v9 English demos from real
 native Android captures. They never seed app progress or alter the emulator
 database. Run from the repository root. macOS was validated with Python 3.14.6,
 FFmpeg 8.1 (`ffmpeg-full`, including libass), and the built-in Avenir Next font.
@@ -64,7 +64,7 @@ quiet musical bed, normalizes narration, burns English captions into their own
 strip, and outputs an MP4, SRT, poster, and source hash manifest. Audio and video
 timestamps are normalized per scene before decoded concatenation to prevent AAC
 boundary drift and filter reinitialization.
-Use `--preview 05-explain` to inspect a scene composition without rendering all.
+Use `--preview 04-explain` to inspect a scene composition without rendering all.
 
 ## Verify a new edit
 
@@ -78,3 +78,19 @@ Never label emulator capture or metadata checks as physical-device acceptance.
 The checked v8 measurements and hashes are in
 `docs/shipaton-demo-2026/v8-validation.json`. The local retained source bundle
 is `app/build/demo-video-v8/`; raw footage and models are not committed.
+
+## Regenerate the Next Gen cut
+
+With the retained native v9 source files in `app/build/demo-video-v9/`:
+
+```bash
+python3 tools/demo-video/narrate.py docs/shipaton-demo-2026/v9-script.json \
+  --models /path/to/local/kokoro-models --output app/build/demo-video-v9/narration
+python3 tools/demo-video/render.py docs/shipaton-demo-2026/v9-script.json \
+  docs/shipaton-demo-2026/v9-edit.json --raw app/build/demo-video-v9 \
+  --output docs/shipaton-demo-2026 --name shipaton-demo-v9 --poster-time 3
+```
+
+`--name` chooses output names without overwriting the previous cut. Relative
+raw/output paths are resolved before FFmpeg concat files are written. The v9
+script, edit, manifest and validation sit alongside the final video.

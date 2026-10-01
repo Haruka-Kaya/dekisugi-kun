@@ -1,0 +1,116 @@
+{
+  "title": "Dekisugi-kun — Make understanding explainable",
+  "source_commit": "11d9ae3cc1e9e6597a6206a4ab07b80f6ac49b8e",
+  "capture": "Current native Android app on a dedicated emulator. Edited for pace; no fabricated UI or seeded progress.",
+  "scenes": [
+    {
+      "id": "01-hook",
+      "chapter": "THE IDEA",
+      "title": "You learn.\nBy teaching him.",
+      "body": "Middle and high-school science.\nExplain why, not just which answer.",
+      "tag": "A companion that needs your explanation",
+      "narration": [
+        "Recognizing an answer is different from explaining why it works.",
+        "Dekisugi-kun turns science study into teaching a companion."
+      ]
+    },
+    {
+      "id": "02-product",
+      "chapter": "THE EXPERIENCE",
+      "title": "A real question.\nYour own prediction.",
+      "body": "Two balls. Same height.\nWhich falls first in a vacuum?",
+      "tag": "Start with a belief you can revisit",
+      "narration": [
+        "For middle and high-school learners, each mission starts with a concrete question.",
+        "I predict that the heavier ball falls faster."
+      ]
+    },
+    {
+      "id": "03-source",
+      "chapter": "READ THE EVIDENCE",
+      "title": "Look for why.\nLook for when.",
+      "body": "A focused lesson explains\nthe principle and its conditions.",
+      "tag": "One idea, with evidence",
+      "narration": [
+        "The lesson explains why both balls fall together, and when that claim holds."
+      ]
+    },
+    {
+      "id": "04-explain",
+      "chapter": "THE SIGNATURE MOMENT",
+      "title": "Close the material.\nTeach it back.",
+      "body": "The source disappears.\nText is a full route alongside voice.",
+      "tag": "Produce an explanation from memory",
+      "narration": [
+        "Then the material disappears. I must explain it in my own words.",
+        "Typing is a full learning route, alongside voice."
+      ]
+    },
+    {
+      "id": "05-followup",
+      "chapter": "PUT THE IDEA TO WORK",
+      "title": "A new case\ntests my explanation.",
+      "body": "Key terms are a prompt to reflect.\nA fixed question checks a new case.",
+      "tag": "Coverage is not a mastery score",
+      "narration": [
+        "Key-term coverage prompts reflection, not a mastery score.",
+        "A fixed follow-up asks me to apply the idea to a new case."
+      ]
+    },
+    {
+      "id": "06-rethink",
+      "chapter": "RETHINK THE CONDITION",
+      "title": "A hint.\nThen another explanation.",
+      "body": "A wrong choice points me back\nto the missing condition.",
+      "tag": "The learner does the thinking",
+      "narration": [
+        "My wrong choice brings a hint about the vacuum condition.",
+        "I rethink my explanation instead of receiving an answer to copy."
+      ]
+    },
+    {
+      "id": "07-record",
+      "chapter": "A PURPOSE FOR REVIEW",
+      "title": "Keep track of\nwhat needs another look.",
+      "body": "The companion’s record keeps\nuncertain ideas available for review.",
+      "tag": "Observed uncertainty, not a weakness label",
+      "narration": [
+        "The companion's record keeps uncertain ideas for a matching repair activity.",
+        "Rewriting alone does not mark an idea corrected."
+      ]
+    },
+    {
+      "id": "08-design",
+      "chapter": "THE PRODUCT DECISION",
+      "title": "Learning stays\non the device.",
+      "body": "No account for core learning.\nNo upload or AI grading of free text.",
+      "tag": "External generative AI is disabled",
+      "narration": [
+        "The core works offline, without an account.",
+        "Student explanations are neither uploaded nor graded by an external AI."
+      ]
+    },
+    {
+      "id": "09-plus",
+      "chapter": "THOUGHTFUL MONETIZATION",
+      "title": "Support the app.\nKeep learning free.",
+      "body": "Optional companion styling\nand parent reports.",
+      "tag": "RevenueCat Test Store · No real charge",
+      "narration": [
+        "RevenueCat powers optional Plus, with companion styling and parent reports.",
+        "Here is a completed Test Store purchase. No real charge, and core lessons stay free."
+      ]
+    },
+    {
+      "id": "10-close",
+      "chapter": "NEXT GEN / DEKISUGI-KUN",
+      "title": "Read it.\nExplain it.\nRethink it.",
+      "body": "Native Flutter. 12 science units.\n35 concepts. MIT source.",
+      "tag": "Make explaining part of studying",
+      "narration": [
+        "Twelve science units. Thirty-five concepts.",
+        "Dekisugi-kun. Make explaining part of studying."
+      ]
+    }
+  ]
+}

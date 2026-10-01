@@ -1,126 +1,70 @@
-# Dekisugi (AI デキすぎ君) — product overview for judges
+# Dekisugi-kun — product overview
 
-*English companion to the Japanese README. Written for Shipaton 2026 Next Gen
-Award reviewers who cannot read Japanese.*
+**Learn science by teaching a companion.** For middle and high-school science,
+Dekisugi-kun makes explaining an idea part of studying it. The companion asks
+for the learner's reasoning instead of giving the answer first.
 
-## The idea in one sentence
+See the [reviewer guide](nextgen-review-guide.md) for the video, native run
+instructions, RevenueCat replay, and criterion-to-code evidence.
 
-**Students learn science by teaching it to an AI companion that never answers
-first** — the app only ever stores what the *student* changed in the
-companion's understanding.
+## One idea, through a complete learning loop
 
-Most AI study products put a chatbot between the learner and the answer:
-type a question, get a fluent explanation, feel like you learned something.
-Decades of learning-science results point the other way — the durable gains
-come from *producing* an explanation (self-explanation, retrieval practice,
-the protégé effect), not from receiving one. Dekisugi inverts the interface
-accordingly: the AI companion デキすぎ君 is the student, and you are the
-teacher.
+The learner first predicts what happens in a concrete science case, then reads
+a short lesson covering the principle and its conditions. The material is
+hidden while the learner explains in their own words. Text is a complete route
+alongside voice; the learner must reread text or replay voice before continuing.
 
-## The core loop (one mission ≈ 3 minutes)
+On-device key-term coverage is a reflection aid, not a semantic score or proof
+of mastery. A fixed catalog follow-up asks the learner to apply the idea. A
+wrong choice records a cataloged need, offers a condition or reasoning hint,
+and asks for another explanation.
 
-1. **Read** a compact lesson page for one science concept.
-2. **Predict** the outcome of a concrete case before seeing the answer.
-3. **Explain** — the lesson is *hidden* at this point (by design rule C2).
-   Voice and text are equal first-class paths; a voice explanation must be
-   replayed, a text one explicitly re-read, before continuing.
-4. **Checkpoint** — the companion asks one *fixed, cataloged* follow-up
-   question per concept. There is no free-form grading of student writing.
-5. **Hint-and-retry** — a wrong answer records a canonical misconception and
-   costs a heart, but never reveals the answer. The learner gets a scientific
-   hint and must explain again.
+The companion's misconception record keeps observed uncertainty available for
+review. A matching repair activity can resolve a need. Merely rewriting a free
+explanation does not mark it corrected. The record is framed as the companion's
+beliefs, not a diagnosis of the student's weakness.
 
-## The misconception map (理解カルテ)
+## Product choices
 
-The distinctive asset under the hood is a **canonical misconception catalog**:
-35 entries (M01–M35), one per concept, each pairing the classic textbook
-misconception ("a stationary object has no forces on it") with the correct
-understanding, plus a probe phrasing the companion uses to *elicit* the
-misconception rather than guess it.
+- **Close the material:** make retrieval and explanation visible actions.
+- **Keep text equal to voice:** learning can continue without a microphone.
+- **Use fixed checkpoints:** avoid claiming an external model can grade a
+  learner's free explanation reliably.
+- **Keep the core on-device:** no account or external AI connection is needed.
+  The demonstrated route does not upload or persist free explanation text or
+  voice; durable learning records use catalog IDs, need codes and progress.
+- **Make payment optional:** sell supporter benefits while core lessons remain
+  available. Do not sell answers, automatic correction, or learning progress.
 
-The カルテ ("chart/record") screen — reachable from the profile tab — surfaces
-this as a map of the companion's beliefs, not a report card of the student's
-weaknesses:
+These choices are pinned by the [C1–C9 constitution](../AGENTS.md). They are
+design hypotheses informed by learning research, not measured learning gains
+from this app.
 
-- each concept card shows the misconception デキすぎ君 currently holds;
-- observed gaps appear as labeled work items ("仕組みの土台", "条件の整理",
-  notation skills, …) derived only from cataloged need codes — never from
-  free text;
-- resolved items flip to 訂正できた ("corrected by your explanation") and
-  display the canonical correct understanding as the student's achievement.
+## RevenueCat
 
-This is what makes the pedagogy visible: progress is literally "beliefs of
-the AI corrected", which is the protégé effect made legible. Privacy-wise the
-record is minimal — the note on screen states that answer text and voice are
-not retained in the shipped build; only cataloged misconception codes and
-their resolution events persist.
+The native `purchases_flutter` SDK handles packages, purchases, restore and the
+`plus` entitlement. The paywall uses store-returned prices and periods rather
+than invented prices. The current demo shows a completed RevenueCat Test Store
+purchase, an equipped Aurora Cape, and an unlocked parent report. No real
+charge occurred. The cosmetic grant remains in the local grant ledger.
 
-## Product constitution (C1–C9)
+Server-side entitlement re-verification and webhook code also exist, but the
+video does not claim a successful production purchase or conversation-allowance
+sync. Live conversation remains disabled. The optional remote companion-line
+research path is not enabled or demonstrated. See
+[monetization setup](monetization-setup.md) and [age restrictions](age-restriction.md).
 
-`AGENTS.md` pins nine invariants that every feature must respect, e.g.:
+## Build and current scope
 
-- **C2** hide the material during explanation;
-- **C5** never make points/currency the main driver (intrinsic motivation);
-- **C8** text input is a first-class path equal to voice;
-- **C9** never tell the learner "this is your weakness" — elicit and observe
-  instead.
+The native Flutter app has a Field Notebook interface across exploration,
+science cases, experiments, diagrams, shared observations and My Lab. Its
+bundled Japanese/English curriculum contains **12 units and 35 concepts**.
+Some secondary UI labels remain Japanese. The TypeScript/Vercel server serves
+the catalog and implements optional server integrations.
 
-These rules, not growth-hack metrics, are the design contract.
-
-## Safety posture for minors
-
-- All learning content is bundled in the app; the core loop works fully
-  offline with no account.
-- External generative-AI endpoints are disabled in production (503) pending a
-  provider contract that permits minors — the companion's lines are cataloged,
-  not generated live.
-- One carefully scoped generative path exists: `/api/companion-line` produces
-  only the short opening line of the companion's reply (the question and its
-  choices stay verbatim catalog). It sends only the student's explanation
-  text, heard keywords, and the unit label — never the answer, choices, lure,
-  name, or voice — through our own server (the API key never ships to the
-  device), is disclosed in the in-app consent text, and falls back
-  deterministically to the cataloged line. It ships dark until a provider key
-  is configured, and is a **Plus supporter perk** on the client.
-- Voice audio and free text stay in RAM; the device stores only lesson IDs,
-  misconception codes, hearts, and progress.
-- Optional **Plus** (RevenueCat) is a supporter plan — it grants the
-  Aurora Mantle companion skin, the generated-AI reply preface above, and a
-  parent-facing karte report; no learning content is ever gated.
-- Entitlement is deliberately verified **on-device, not server-side**:
-  proving entitlement server-side would require sending device identifiers
-  to RevenueCat, which we classify as restricted data processing for minors
-  (`server/lib/restricted-data-processing.ts` — the webhook and sync routes
-  stay 503 in production). The server-verified path exists in code
-  (`grantEntitlement` / `revokeEntitlement` behind the recheck) and activates
-  when that processing is enabled; meanwhile the paid artifacts live in the
-  on-device entitlement ledger, and hitting `/api/companion-line` directly
-  yields only a few catalog-less filler words — never the paid content.
-
-## Language
-
-The product is fully bilingual — Japanese and English. Every user-facing
-string has a canonical English build: the catalog content (lesson material,
-practice prompts, checkpoint lures and options, stories, notation tasks) is
-localized in `server/lib/i18n.ts` + `server/lib/en/` and machine-generated
-into `app/assets/catalog/units.en.json`; UI chrome strings are bilingual via
-`app/lib/config/app_language.dart`. `flutter run --dart-define=APP_LANG=en`
-or the in-app language toggle runs the whole product in English, and
-`/api/units?lang=en` serves the English catalog. Coverage tests
-(`missingContentTranslations`, `missingTranslations`) fail the build on any
-untranslated key — a partial-English build cannot ship.
-
-## Content & platform
-
-- 12 units / 35 concepts aligned to Japan's MEXT national science curriculum,
-  each with curriculum page references.
-- Flutter app (Android/iOS/desktop/web) + a small TypeScript server on Vercel
-  for catalog sync and entitlement re-verification.
-- ~1,260 client tests and ~400 server tests; the misconception catalog is
-  linted by `tools/misconception-survey/check_items.py`.
-- The misconception items come from an elicitation survey administered to
-  real middle/high-school students (delivery UI in `server/public/survey`,
-  analysis in `tools/misconception-survey/analyze.py`, n=18 responses so
-  far) — the karte's "35 beliefs" are what actual students actually
-  misbelieve, not invented distractors. The karte screen states this
-  provenance to its users.
+The integrated baseline passed **1,337 app tests and 399 server tests**.
+The native Android footage is emulator evidence. Physical-device voice QA,
+first-time learner pilots and measured learning outcomes remain outstanding.
+The existing elicitation survey has **18 responses**; it does not establish
+that the product improves learning. No school deployment or store release is
+claimed. Source is licensed under [MIT](../LICENSE).
