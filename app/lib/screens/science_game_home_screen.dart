@@ -23,9 +23,11 @@ import '../models/game_hub.dart';
 import '../models/game_path.dart';
 import '../models/lan_social.dart';
 import '../models/mission.dart';
+import '../models/reminder.dart';
 import '../models/unit.dart';
 import '../services/lan_social_client.dart';
 import '../services/local_practice_store.dart';
+import '../services/reminders.dart';
 import '../services/session_store.dart';
 import '../services/units_client.dart';
 import '../ui/_material.dart';
@@ -111,6 +113,7 @@ class ScienceGameHomeScreen extends StatefulWidget {
     this.onOpenClassroom,
     this.onExitLocalMode,
     this.onOpenPlus,
+    this.reminders,
     this.lanSocialAllowed = false,
     this.lanSocialMeaningfulEventContributor,
     this.lanSocialFriendsQuestLoader,
@@ -129,6 +132,10 @@ class ScienceGameHomeScreen extends StatefulWidget {
   /// Plus特典の案内カード（カルテの保護者レポート）からpaywallを開く。
   /// 成人online同意ツリーからだけ渡す。school/local modeではnullのまま。
   final VoidCallback? onOpenPlus;
+
+  /// 1日1通のローカル通知。開くたびに次の1件を立て直す。
+  /// 未接続の画面（テスト・旧入口）ではnullのまま。
+  final Reminders? reminders;
 
   /// 成人online同意ツリーからだけtrueを渡す。local-only/schoolは既定false。
   final bool lanSocialAllowed;
@@ -624,6 +631,7 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
         _legacyCompleted = legacyCompleted;
         _loading = false;
       });
+      unawaited(_rescheduleReminder(catalog, snapshot, now));
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -631,6 +639,53 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
         _loadFailed = true;
       });
     }
+  }
+
+  /// 次の声かけを立て直す。**失敗しても何も止めない。**
+  ///
+  /// 文面は学習状態で変わるので、Homeを開くたびに同じIDへ書き直す。
+  /// 考査日は現行の学習ループが持たないため daysLeft は送らない —
+  /// 「残り」「期限切れ」の2文面だけが使われる。
+  Future<void> _rescheduleReminder(
+    List<UnitSummary> catalog,
+    LearningProgressSnapshot snapshot,
+    DateTime now,
+  ) async {
+    final reminders = widget.reminders;
+    if (reminders == null) return;
+    final today = dayKeyOf(now.toLocal());
+    final catalogSkillIds = {
+      for (final unit in catalog)
+        for (final concept in unit.concepts) '${unit.id}/${concept.key}',
+    };
+    var remaining = 0;
+    var dueCount = 0;
+    final skillsById = {
+      for (final skill in snapshot.skills) skill.skillId: skill,
+    };
+    for (final skillId in catalogSkillIds) {
+      final skill = skillsById[skillId];
+      if (skill == null || skill.lastSuccessDay == null) {
+        remaining += 1;
+        continue;
+      }
+      if (skill.lastOutcome == LearningSkillOutcome.needsPractice ||
+          skill.nextDueDay.compareTo(today) <= 0) {
+        dueCount += 1;
+      }
+    }
+    await reminders.reschedule(
+      ReminderState(
+        daysLeft: null,
+        remaining: remaining,
+        dueCount: dueCount,
+        graceLeft: snapshot.streakFreezeRemainingFor(today),
+        doneToday: snapshot.days.any(
+          (day) => day.day == today && day.qualifyingCount > 0,
+        ),
+        restDay: false,
+      ),
+    );
   }
 
   Future<void> _reloadSnapshot() async {

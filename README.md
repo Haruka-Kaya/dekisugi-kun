@@ -125,7 +125,7 @@ Optional Live-AI research endpoints are disabled in production by design
 |---|---|
 | 音声／文字で教えるTeach-back | 教材を隠す→stage別の説明→実再生／明示再読→固定問い返し→必要なら訂正→自己比較まで実装。**物理端末の録音・再生QA待ち** |
 | 外部生成AIとのLive会話 | production 6タブから到達不能。対象年齢の外部規約・DPA・安全運用を解決するまで再接続しない |
-| まいにちの声かけ（通知） | 予約まで実機で確認。**着弾は未確認** |
+| まいにちの声かけ（通知） | **予約〜alarm発火〜通知欄への表示まで実機で確認済み**（端末内完結・1日1通上限を仕組みで担保） |
 | 10分の壁（約9分の切断からの復帰） | 実装済み。**実機未確認** |
 | 教材を読む → 隠す → 説明する導線 | 動く。1文字入力や録音開始だけでは完了・XPを作らない |
 | 固定問い返しとRepair | 動く。誤答本文でなくcanonical needだけを保存し、exact Repairだけで解消する |
@@ -133,7 +133,7 @@ Optional Live-AI research endpoints are disabled in production by design
 | 中断と再開 | 動く |
 | 文字での説明 | 動く。**音声と対等**。本人の明示再読を経て同じ固定問い返しへ進む |
 | iOS / iPadOS | **iPhone / iPad Simulatorで動作確認済み**。物理端末の音声は未確認 |
-| 任意の Plus 購入 | RevenueCat SDK とサーバー再照会を実装済み。有効化で限定マスコット「オーロラマント」が端末内に付く（`learning_cosmetic_grants`台帳）。**ストア商品・鍵・webhook は未設定** |
+| 任意の Plus 購入 | RevenueCat Test Store で商品3点（月額・年額・買切）と公開鍵を設定済み。**購入→`plus` entitlement→オーロラマント装備→保護者レポート解放まで実機で確認済み**（`docs/shipaton-demo-2026/shipaton-demo-v7.mp4` に収録）。本番ストア鍵と webhook は配布時に切替（手順: `docs/monetization-setup.md`） |
 | 通信しない端末内モード | 同梱教材→想起→条件／理由→具体場面→Teach-back→固定checkpointまで動く。**自由記述・音声・選択内容の送信／永続保存、自動採点、習得認定なし**。固定教材ID、進行・再開状態、完了日時、端末内報酬など必要最小限の状態だけを端末内に保存 |
 | ゲーム型学習UI | 学ぶ／物語／練習／記号／競う／自分の6タブと蛇行Learning Pathを実装済み。連続学習・結晶・ハート・quest入口は6タブ共通headerに固定し、学習画面へ入っても戻る／連続／結晶／ハートHUDを保持する。デキすぎ君は開始・思考・訂正・完了で反応を変え、保存成功後だけ実XP・実結晶・今回時間を祝福面へ出す。**最新画面のAndroid / iOS物理端末目視と初見学習者pilotは未実施** |
 | クラスの合計（チーム戦） | **実機で確認済み**（参加・表示） |
