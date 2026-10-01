@@ -1,7 +1,6 @@
 # Devpost submission copy — Next Gen Award
 
-English draft for the current native build. Replace the video URL placeholder
-with a public YouTube/Vimeo URL before submitting.
+English copy for the current native build, with the demo hosted on Vimeo.
 
 ## Project name
 
@@ -134,7 +133,7 @@ restrained data collection are deliberate product choices.
 ## Submission assets
 
 - Source: https://github.com/Haruka-Kaya/dekisugi-kun — MIT.
-- **Video URL:** `[PUBLIC YOUTUBE OR VIMEO URL — REQUIRED BEFORE SUBMIT]`
+- **Video URL:** [Vimeo demo](https://vimeo.com/1232117345)
 - Video file: [shipaton-demo-v13.mp4](shipaton-demo-2026/shipaton-demo-v13.mp4), 67.4 seconds.
 - Captions: [English SRT](shipaton-demo-2026/shipaton-demo-v13-captions.en.srt).
 - Icon: `docs/store/icon-1024.png` — 1024×1024.

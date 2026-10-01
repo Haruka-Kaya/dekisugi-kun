@@ -5,7 +5,7 @@ predict an outcome, read the evidence, close the material, and explain the idea
 in your own words. A fixed follow-up asks you to apply it to a new case.
 
 **Next Gen reviewers:** [start here](docs/nextgen-review-guide.md) ·
-[English demo](docs/shipaton-demo-2026/shipaton-demo-v13.mp4) ·
+[English demo on Vimeo](https://vimeo.com/1232117345) ·
 [product overview](docs/product-overview-en.md) · [MIT license](LICENSE).
 
 ![English native demo](docs/shipaton-demo-2026/shipaton-demo-v13-poster.jpg)

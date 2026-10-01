@@ -3,8 +3,9 @@
 **Current candidate: [shipaton-demo-v13.mp4](shipaton-demo-v13.mp4)** — 67.4 seconds,
 1080×1920 portrait, 30 fps, English narration and burned-in English captions.
 The matching [SRT](shipaton-demo-v13-captions.en.srt) and
-[poster](shipaton-demo-v13-poster.jpg) are included. YouTube/Vimeo upload and
-Devpost submission are separate from completion of this local artifact.
+[poster](shipaton-demo-v13-poster.jpg) are included.
+
+**Watch on [Vimeo](https://vimeo.com/1232117345).** Devpost submission is a separate step.
 
 The opening asks whether the viewer can explain why things fall. The native
 interaction then shows prediction, evidence, hidden-source explanation, rereading,
