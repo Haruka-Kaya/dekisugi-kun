@@ -1,0 +1,17 @@
+{
+  "title": "Dekisugi-kun — Learn science by teaching",
+  "source_commit": "11d9ae3cc1e9e6597a6206a4ab07b80f6ac49b8e",
+  "capture": "Real native Android emulator recordings. Learning footage retained from v8; fresh adult personal Test Store profile for Plus. Cuts and modest speed changes; no seeded progress or fabricated UI.",
+  "scenes": [
+    {"id":"01-start","chapter":"LEARN BY TEACHING","title":"Science you can explain.","tag":"Actual native app · English build","narration":["Learn science by teaching Dekisugi-kun."]},
+    {"id":"02-evidence","chapter":"PREDICT → READ","title":"Look for why. And when.","tag":"Same height · Air resistance negligible","narration":["Predict first. Then read the principle and its conditions.","Here, air resistance must be negligible."]},
+    {"id":"03-hide","chapter":"HIDE THE MATERIAL","title":"Your turn to explain.","tag":"Core learning works offline · No account","narration":["Now, hide the material and teach it back."]},
+    {"id":"04-type","chapter":"EXPLAIN IN YOUR OWN WORDS","title":"A full text route.","tag":"Text alongside voice · No external AI grading","narration":["I explain in my own words.","Text is a full route, alongside voice. Student explanations stay on the device."]},
+    {"id":"05-reflect","chapter":"REREAD → REFLECT","title":"Check your explanation.","tag":"Key-term coverage is not a mastery score","narration":["I reread my explanation. Key terms prompt reflection, not a mastery score."]},
+    {"id":"06-question","chapter":"APPLY THE IDEA","title":"Try a different case.","tag":"A fixed question · The learner does the thinking","narration":["A fixed follow-up asks me to apply the idea."]},
+    {"id":"07-rethink","chapter":"CHOOSE → RETHINK","title":"A hint. Another try.","tag":"Wrong choice → hint → revised explanation","narration":["A wrong choice brings a hint about the vacuum condition.","I rethink my explanation and try again."]},
+    {"id":"08-record","chapter":"KEEP A PURPOSE FOR REVIEW","title":"Still unsure? Revisit it.","tag":"Rewriting alone does not clear an observed need","narration":["Uncertain ideas stay in the record for review."]},
+    {"id":"09-plus","chapter":"OPTIONAL PLUS / REVENUECAT","title":"Support the app.","tag":"Separate Test Store demo · No real charge · Core lessons free","narration":["RevenueCat powers optional Plus: companion styling and parent reports.","This is a Test Store purchase. Core lessons stay free."]},
+    {"id":"10-close","chapter":"DEKISUGI-KUN / NEXT GEN","title":"Learn by teaching.","tag":"Native Flutter · 12 science units · MIT source","narration":["Learn by teaching."]}
+  ]
+}

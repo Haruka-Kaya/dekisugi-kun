@@ -1,0 +1,37 @@
+{
+  "duration_seconds": 56.1,
+  "video": {
+    "codec": "h264",
+    "size": [
+      1920,
+      1080
+    ],
+    "frame_rate": "30/1",
+    "frames": 1683,
+    "pixel_format": "yuv420p"
+  },
+  "audio": {
+    "codec": "aac",
+    "channels": 2,
+    "sample_rate": "48000"
+  },
+  "unordered_dts_packets": 0,
+  "captions": {
+    "count": 14,
+    "minimum_hold_seconds": 1.195,
+    "matches_complete_narration": true
+  },
+  "source_hashes_match": true,
+  "scene_and_source_durations_match_edit": true,
+  "sha256": "813bc14a2fdc76f3f1a0e7282e0180e939d53db3b719c41d0c05c05093cb055a",
+  "full_decode_exit_code": 0,
+  "integrated_loudness_lufs": -17.2,
+  "true_peak_dbfs": -4.0,
+  "recording_source_seconds": 50.3,
+  "held_screenshot_seconds": 3.6,
+  "end_card_seconds": 2.2,
+  "recording_source_share_percent": 89.7,
+  "motion_limit": "Recording-source share is not a claim that every frame moves. No synthetic pans or tap animations were added.",
+  "visual_review": "All scene compositions inspected, including shortened evidence/reflection/question/record scenes and final Test Store/equip/report transitions.",
+  "playback_limit": "Metadata/decode and visual checks do not certify auditory quality or physical-device voice behavior."
+}

@@ -1,0 +1,286 @@
+{
+  "source_commit": "11d9ae3cc1e9e6597a6206a4ab07b80f6ac49b8e",
+  "capture": "Real native Android emulator recordings. Learning footage retained from v8; fresh adult personal Test Store profile for Plus. Cuts and modest speed changes; no seeded progress or fabricated UI.",
+  "narrator": "Local Kokoro af_sarah; speed 1.06; lead .12s; gap .08s",
+  "duration": 56.1,
+  "recording_source_seconds": 50.3,
+  "held_screenshot_seconds": 3.6,
+  "end_card_seconds": 2.2,
+  "sources": {
+    "equip-motion.mp4": "309c4b3d7dcc24a9cfed7b59a6162ff3aa1ca03da7f8f524f38b023f18ee7102",
+    "explain.mp4": "a74f538f5271e0a892ae1f122fd6ed57e2d91f58b0feee1ca2213029ea581e6c",
+    "followup.mp4": "74e74b9dad3999c1acf25749eb63c2abeccc8dbd71e712f89c3ce9f50d60ba7a",
+    "hint.png": "e0c327658df74313d2f14ed0a1a8f4602646a3b165530fc9d7b0812bbb31f8a1",
+    "parent-motion.mp4": "797beb7ef0a4b02e6eaa48c9e12a8b9ca11edab323cb0a7fb31d7f3d0afa043e",
+    "path.mp4": "7be94c6e0d03361ee95d9b91b2b26d6ee6c514e4c7bfabdfa48f23e5749a5986",
+    "plus-purchase.mp4": "748ff2575f2ceb4483839766d119a2ecc92e63428355000bd813b501ca4042dd",
+    "record.mp4": "c9c1a1f32085fa7cf315fec103eb8a04c71331829e3263a247222842bf0e0a22",
+    "retry-clean.png": "a3ccd23daf20b15a90c7dee20f96a0b863108468b5e7827cbeba8155a8c8ba2c",
+    "source.mp4": "1bfce31f6c8f2cd18b94e2a4b9f6e2900ee1d65f6178e017f0c8c7952d266e6b",
+    "wrong-pick.mp4": "18460ef00bfc6d26b0fabf9ae07ea23538b0eb1662a5369840276260f7383191"
+  },
+  "scenes": [
+    {
+      "scene": "01-start",
+      "start": 0.0,
+      "duration": 3.2,
+      "shots": [
+        {
+          "file": "path.mp4",
+          "start": 3,
+          "duration": 3.2,
+          "crop": [
+            42,
+            330,
+            1038,
+            1320
+          ]
+        }
+      ]
+    },
+    {
+      "scene": "02-evidence",
+      "start": 3.2,
+      "duration": 7.5,
+      "shots": [
+        {
+          "file": "source.mp4",
+          "start": 0,
+          "duration": 3.3,
+          "crop": [
+            42,
+            880,
+            1038,
+            1510
+          ]
+        },
+        {
+          "file": "source.mp4",
+          "start": 23.5,
+          "duration": 1.8,
+          "crop": [
+            90,
+            1120,
+            1030,
+            1670
+          ]
+        },
+        {
+          "file": "source.mp4",
+          "start": 25.3,
+          "duration": 2.4,
+          "crop": [
+            42,
+            330,
+            1038,
+            1040
+          ],
+          "speed": 1.3
+        }
+      ]
+    },
+    {
+      "scene": "03-hide",
+      "start": 10.7,
+      "duration": 3.8,
+      "shots": [
+        {
+          "file": "explain.mp4",
+          "start": 0,
+          "duration": 3.8,
+          "crop": [
+            42,
+            475,
+            1038,
+            1300
+          ]
+        }
+      ]
+    },
+    {
+      "scene": "04-type",
+      "start": 14.5,
+      "duration": 9.0,
+      "shots": [
+        {
+          "file": "explain.mp4",
+          "start": 25.5,
+          "duration": 9.0,
+          "speed": 1.2,
+          "crop": [
+            90,
+            690,
+            1030,
+            1340
+          ]
+        }
+      ]
+    },
+    {
+      "scene": "05-reflect",
+      "start": 23.5,
+      "duration": 5.6,
+      "shots": [
+        {
+          "file": "explain.mp4",
+          "start": 77,
+          "duration": 5.6,
+          "speed": 1.3,
+          "crop": [
+            42,
+            880,
+            1038,
+            1575
+          ]
+        }
+      ]
+    },
+    {
+      "scene": "06-question",
+      "start": 29.1,
+      "duration": 3.3,
+      "shots": [
+        {
+          "file": "followup.mp4",
+          "start": 2,
+          "duration": 3.3,
+          "speed": 1.3,
+          "crop": [
+            90,
+            900,
+            1030,
+            1660
+          ]
+        }
+      ]
+    },
+    {
+      "scene": "07-rethink",
+      "start": 32.4,
+      "duration": 7.2,
+      "shots": [
+        {
+          "file": "wrong-pick.mp4",
+          "start": 0,
+          "duration": 2.5,
+          "speed": 1.3,
+          "crop": [
+            42,
+            535,
+            1038,
+            1430
+          ]
+        },
+        {
+          "file": "wrong-pick.mp4",
+          "start": 3.4,
+          "duration": 1.1,
+          "speed": 1.25,
+          "crop": [
+            65,
+            750,
+            1038,
+            1440
+          ]
+        },
+        {
+          "file": "hint.png",
+          "duration": 1.8,
+          "crop": [
+            150,
+            1150,
+            1020,
+            1480
+          ]
+        },
+        {
+          "file": "retry-clean.png",
+          "duration": 1.8,
+          "crop": [
+            85,
+            550,
+            1035,
+            1030
+          ]
+        }
+      ]
+    },
+    {
+      "scene": "08-record",
+      "start": 39.6,
+      "duration": 3.3,
+      "shots": [
+        {
+          "file": "record.mp4",
+          "start": 0.9,
+          "duration": 3.3,
+          "crop": [
+            42,
+            860,
+            1038,
+            1570
+          ]
+        }
+      ]
+    },
+    {
+      "scene": "09-plus",
+      "start": 42.9,
+      "duration": 11.0,
+      "shots": [
+        {
+          "file": "plus-purchase.mp4",
+          "start": 1.2,
+          "duration": 2.7,
+          "speed": 1.2,
+          "crop": [
+            46,
+            576,
+            1040,
+            1403
+          ]
+        },
+        {
+          "file": "plus-purchase.mp4",
+          "start": 20,
+          "duration": 2.6,
+          "crop": [
+            46,
+            576,
+            1040,
+            1403
+          ]
+        },
+        {
+          "file": "equip-motion.mp4",
+          "start": 0,
+          "duration": 2.7,
+          "crop": [
+            100,
+            350,
+            1010,
+            1460
+          ]
+        },
+        {
+          "file": "parent-motion.mp4",
+          "start": 2.0,
+          "duration": 3.0,
+          "crop": [
+            63,
+            300,
+            1017,
+            1070
+          ]
+        }
+      ]
+    },
+    {
+      "scene": "10-close",
+      "start": 53.9,
+      "duration": 2.2,
+      "shots": []
+    }
+  ],
+  "sha256": "813bc14a2fdc76f3f1a0e7282e0180e939d53db3b719c41d0c05c05093cb055a"
+}
