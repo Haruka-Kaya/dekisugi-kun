@@ -280,6 +280,7 @@ class _GateState extends State<_Gate> {
         sessionStore: store,
         scope: _localOnlyScope,
         schoolMode: schoolMode,
+        reminders: context.read<Reminders>(),
         lanSocialAllowed: false,
         controller: _localGameController,
         // 旧端末内練習は個人記録。学校scopeへ混ぜない。
@@ -450,6 +451,7 @@ class _OnlineServices extends StatelessWidget {
           sessionStore: store,
           scope: LearningScope.personal,
           schoolMode: false,
+          reminders: providerContext.read<Reminders>(),
           lanSocialAllowed: true,
           legacyProgress: LocalPracticeStore(store),
           onOpenSettings: () => _openOnlineSettings(providerContext),

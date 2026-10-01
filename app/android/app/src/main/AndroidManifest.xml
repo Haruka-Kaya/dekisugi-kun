@@ -9,6 +9,8 @@
          Android 13+ では実行時に求める。同意画面では聞かず、
          初回の会話を終えた直後に聞く -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- 予約した声かけを再起動後も届けるために必要。通知自体は端末内で完結する。 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <!-- LAN参加コード・教室教材番号のQRを読むためだけに使う。読み取った値は
          確認欄へ入れるだけで、映像・回答・音声・管理キーを保存しない。 -->
     <uses-permission android:name="android.permission.CAMERA"/>
@@ -47,6 +49,21 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- flutter_local_notifications v16+ はreceiverをアプリ側で宣言する。
+             宣言がないと予約したalarmが発火してもonReceiveへ届かず、通知は出ない。 -->
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

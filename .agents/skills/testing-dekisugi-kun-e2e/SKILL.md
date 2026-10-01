@@ -51,3 +51,22 @@ cd app && ~/sdk/flutter/bin/flutter run -d chrome --web-port=7357   # tty sessio
 - Story node (CASE): acts, then a 3-option judgment; wrong answer shows that option's hint and costs a heart; correct proceeds to comparison/complete.
 - Practice node (DIAGRAM LAB): pick an option → reason text → compare.
 - State resets on every `flutter run` restart (fresh consent screen). Story/practice progress persists in-memory only.
+
+## Android emulator (primary E2E target)
+
+- adb: `~/android-sdk/platform-tools/adb` (not on PATH). AVD `shipaton` (android-34), device `emulator-5554`, 1179×2556, 1:1 screencap/tap coords.
+- Emulator dies between sessions → restart: `sudo -n chmod 666 /dev/kvm; nohup ~/android-sdk/emulator/emulator -avd shipaton -no-snapshot-load -no-window &` (~40s). Runs headless — desktop recording useless; use `adb shell screenrecord --time-limit N /sdcard/x.mp4` + `adb pull` for footage, `adb exec-out screencap -p > out.png` for stills.
+- Airplane-mode persistence gotcha: AVD can boot with `airplane_mode_on=1` → "Network is unreachable". Fix: `settings put global airplane_mode_on 0` + `svc wifi enable` + `svc data enable` (the AIRPLANE_MODE broadcast is permission-denied).
+- Build+install: `cd app && ~/sdk/flutter/bin/flutter build apk --debug [--dart-define=...]` → `adb install -r build/app/outputs/flutter-apk/app-debug.apk` (preserves DB).
+- Package `jp.dekisugi.dekisugi`. UI automation: `uiautomator dump /sdcard/ui.xml` → pull exact bounds for taps (Flutter desc/text present; some taps miss without bounds). `input keyevent KEYCODE_BACK` for back.
+- DB: `run-as jp.dekisugi.dekisugi sqlite3 /data/data/jp.dekisugi.dekisugi/databases/dekisugi.db` — tables `learning_need_state`, `learning_cosmetic_grants`, `learning_cosmetic_loadout`, `settings` (keys incl. `app_lang`, `reminder.enabled`, `reminder.hour`).
+
+## Notifications (まいにちの声かけ) verification
+
+- `reminders.dart` uses `zonedSchedule` id=1 channel `reminder`, `inexactAllowWhileIdle`, next occurrence of `reminder.hour` (default 20).
+- **Manifest gotcha (verified 2026-10):** plugin ≥v16 does NOT declare receivers — app must declare `ScheduledNotificationReceiver`/`ScheduledNotificationBootReceiver` + `RECEIVE_BOOT_COMPLETED` in `android/app/src/main/AndroidManifest.xml`. If missing: alarm fires but broadcast resolves to 0 receivers → notification never posts.
+- Verify scheduling: `dumpsys alarm | grep dekisugi` → `RTC_WAKEUP ... tag=*walarm*:...ScheduledNotificationReceiver origWhen=...`.
+- Verify delivery: `dumpsys notification | grep NotificationRecord | grep dekisugi`; broadcast delivery: `dumpsys activity broadcasts | grep -A14 ScheduledNotificationReceiver` (DELIVERED vs dispatchClockTime=1970/terminalCount=0 = dropped).
+- Shade shot: `input swipe 589 0 589 1200 600` (full swipe from y=0) then screencap.
+- Test technique: grant `pm grant jp.dekisugi.dekisugi android.permission.POST_NOTIFICATIONS`; temp-patch `_nextAt` → `now + 75s` and a reachable callsite to `reschedule(ReminderState(...))` (e.g. settings `_toggle`); note `reschedule`/`scheduleTomorrowCase` are otherwise only in dead code (`_Home`/HomeScreen/TalkScreen unreachable — `_Gate` → `ScienceGameHomeScreen` in all modes).
+- Clock manipulation for delivery: `adb root` (userdebug AVD allows it) then `adb shell date MMDDhhmmYYYY.ss` — set just past the alarm's origWhen to fire immediately; restore with `date $(date +%m%d%H%M%Y.%S)` then `adb unroot`.
