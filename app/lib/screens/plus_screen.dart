@@ -392,12 +392,12 @@ class _PlusScreenState extends State<PlusScreen> {
               StudioPageIntro(
                 eyebrow: l10n.t('PLUS  ·  サポータープラン', 'PLUS  ·  Supporter plan'),
                 title: l10n.t(
-                  '応援プラン。\n特典はすぐ届く。',
-                  'A supporter plan.\nPerks arrive right away.',
+                  '次の復習を、\n家族で一緒に。',
+                  'Make the next review\na family conversation.',
                 ),
                 body: l10n.t(
-                  '開発を応援しながら、限定の見た目と生成AIの返事を受け取るプランです。',
-                  'Support development and get exclusive looks plus generative-AI replies.',
+                  '復習する単元、保護者が聞く問い、共有レポートをひとつに。限定マスコットも使えます。',
+                  'A next-review topic, questions to ask, and a shareable report. Plus an exclusive mascot.',
                 ),
               ),
               const SizedBox(height: 22),

@@ -401,8 +401,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   icon: Icons.forum_outlined,
                   title: l10n.t('デキすぎ君 Plus', 'Dekisugi-kun Plus'),
                   description: l10n.t(
-                    '学び方はそのまま。Plusは限定マスコットの応援プラン',
-                    'Learning stays the same. Plus is a supporter plan with an exclusive mascot',
+                    'Plusは保護者向け復習プランと共有レポート、限定マスコット',
+                    'Plus adds a family review plan, shareable report, and exclusive mascot',
                   ),
                   onTap: () => unawaited(_openPlusOnce()),
                 ),
