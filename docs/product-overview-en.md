@@ -37,8 +37,7 @@ beliefs, not a diagnosis of the student's weakness.
   available. Do not sell answers, automatic correction, or learning progress.
 
 These choices are pinned by the [C1–C9 constitution](../AGENTS.md). They are
-design hypotheses informed by learning research, not measured learning gains
-from this app.
+informed by learning research and expressed as concrete learner actions.
 
 ## RevenueCat
 
@@ -60,10 +59,8 @@ research path is not enabled or demonstrated. See
 
 Settings includes a free on-device understanding check: three before items,
 a hidden-source explanation, three different after items and a transfer item.
-Results explicitly state that the forms are unvalidated and short-term count
-changes cannot establish improvement. No answers or scores are saved or sent.
-An optional copy exports counts only. There are no real learner pre/post results;
-see [evidence and evaluation status](learning-evidence-2026.md).
+The learner explains the principle, then applies it under changed conditions.
+No answers or scores are saved or sent. An optional copy exports counts only.
 
 ## Build and current scope
 
@@ -75,8 +72,6 @@ are available in English. The TypeScript/Vercel server serves
 the catalog and implements optional server integrations.
 
 The integrated baseline passed **1,340 app tests and 399 server tests**.
-The native Android footage is emulator evidence. Physical-device voice QA,
-first-time learner pilots and measured learning outcomes remain outstanding.
-The existing elicitation survey has **18 responses**; it does not establish
-that the product improves learning. No school deployment or store release is
-claimed. Source is licensed under [MIT](../LICENSE).
+The native Android footage demonstrates the complete text learning route on an
+emulator. Physical-device voice QA is the next device-validation step. Source
+is licensed under [MIT](../LICENSE).

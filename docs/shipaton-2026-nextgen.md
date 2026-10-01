@@ -13,7 +13,7 @@ Next Genは在学生向け。動画と公開OSSコードが審査対象で、ス
 | RevenueCat購入 | Native Test Storeで購入完了、Aurora Cape付与・装備、保護者レポート表示を確認。実課金なし |
 | 公開コード + OSSライセンス | publicへ変更済み。匿名GitHub APIで公開状態・MITを確認 |
 | ソース・素材・実行手順 | [英語審査ガイド](nextgen-review-guide.md)とREADMEから案内 |
-| 2分以内の英語動画 | [v12 MP4](shipaton-demo-2026/shipaton-demo-v12.mp4)、67.4秒、1080×1920縦型、英語音声・字幕。単一の実画面・BGMなし。YouTube/Vimeo公開URLは未設定 |
+| 2分以内の英語動画 | [v13 MP4](shipaton-demo-2026/shipaton-demo-v13.mp4)、67.4秒、1080×1920縦型、英語音声・字幕。単一の実画面・BGMなし。YouTube/Vimeo公開URLは未設定 |
 | 英語提出文 | [Devpost欄ごとの原稿](shipaton-submission-copy.md)完成。外部下書きへの反映は未確認 |
 | 1024×1024アイコン | `docs/store/icon-1024.png` |
 | 1179×2556・フレームなし画像 | `docs/store-shots-2026/devpost/shot-1179x2556.png`。現行UIを指定サイズで直接撮影 |
