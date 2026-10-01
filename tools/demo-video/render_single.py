@@ -47,6 +47,9 @@ for scene in script['scenes']:
     if d.textlength(scene['title'], font=font(44, True)) > 960:
         raise ValueError('Title exceeds canvas')
     d.text((60, 82), scene['title'], font=font(44, True), fill=INK)
+    if d.textlength(scene['tag'], font=font(20)) > 960:
+        raise ValueError('Context label exceeds canvas')
+    d.text((60, 137), scene['tag'], font=font(20), fill=TEAL)
     d.rectangle((58, 166, 1022, 1724), outline=INK, width=2)
     d.rectangle((0, 1750, 1080, 1920), fill=INK)
     if not spec.get('shots'):
@@ -66,6 +69,14 @@ for scene in script['scenes']:
         still = source.suffix.lower() in ('.png', '.jpg')
         speed, duration = shot.get('speed', 1), shot['duration']
         assert duration > 0 and speed > 0
+        if not still:
+            probe = str(Path(a.ffmpeg).with_name('ffprobe'))
+            source_duration = float(subprocess.check_output([
+                probe, '-v', 'error', '-show_entries', 'format=duration',
+                '-of', 'default=nw=1:nk=1', str(source),
+            ]))
+            if shot.get('start', 0) + duration * speed > source_duration:
+                raise ValueError(f'{ident}/{j}: cut exceeds source duration')
         args = ['-loop', '1', '-framerate', '30', '-i', str(bg_path)]
         if still: args += ['-loop', '1', '-framerate', '30']
         args += ['-i', str(source)]
@@ -73,10 +84,14 @@ for scene in script['scenes']:
         # 最初の変化フレームが先頭へ移り、タップ前の時間が失われる。
         # 必ず元の時間軸をCFRへ展開してからtrimする。
         start = shot.get('start', 0)
+        crop_y, crop_h = shot.get('crop_y', 110), shot.get('crop_h', 1748)
+        phone_h = round(crop_h * 960 / 1080 / 2) * 2
+        phone_y = 168 + (1554 - phone_h) // 2
+        assert 0 <= crop_y and crop_h > 0 and crop_y + crop_h <= 1920
         fc = (f'[1:v]fps=30:start_time=0,trim=start={start}:duration={duration*speed},'
               f'setpts=(PTS-STARTPTS)/{speed},fps=30,'
-              'crop=1080:1748:0:110,scale=960:1554:flags=lanczos,setsar=1[phone];'
-              '[0:v][phone]overlay=60:168:shortest=1[v]')
+              f'crop=1080:{crop_h}:0:{crop_y},scale=960:{phone_h}:flags=lanczos,setsar=1[phone];'
+              f'[0:v][phone]overlay=60:{phone_y}:shortest=1[v]')
         segment = work / f'{ident}-{j}.mp4'
         run([*args, '-filter_complex', fc, '-map', '[v]', '-t', str(duration), '-an',
              '-c:v', 'libx264', '-preset', 'fast', '-crf', '18', '-pix_fmt', 'yuv420p', str(segment)])

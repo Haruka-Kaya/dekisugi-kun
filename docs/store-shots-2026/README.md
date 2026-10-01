@@ -1,5 +1,14 @@
 # Store screenshots 2026
 
+## Current Next Gen image — 2026-10-02
+
+Only `devpost/shot-1179x2556.png` is the refreshed v12 submission image.
+It is a direct Android screenshot of source `c9887bd`, English Field Notebook,
+1179×2556, RGB, without resizing, device frames or seeded progress.
+SHA-256: `9261c24bf46e75f227d91040ace3395b90263b2007750b33fb5519c68a4e195a`.
+The old store pipeline and other images below remain historical candidates;
+the manually seeded old karte images are not submission evidence.
+
 > [!danger] 旧提出候補を配布・提出に使わない
 > このディレクトリの画像・SHA・撮影手順は**現行productionの正本ではない旧候補**です。
 > 現行buildから再撮影・再検証するまで、Store、Shipaton、学校向け資料へ提出してはいけません。

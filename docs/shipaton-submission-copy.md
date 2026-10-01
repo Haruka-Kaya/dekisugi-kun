@@ -10,18 +10,20 @@ Dekisugi-kun
 
 ## Tagline
 
-Learn science by teaching a companion.
+Don't just recognize the answer. Teach the science.
 
 ## Inspiration
 
-Recognizing a correct answer and explaining why it works are different tasks.
-I wanted a study experience where producing an explanation is the central
-action. Dekisugi-kun gives the learner a companion to teach, a concrete science
-question to reason about, and another case that tests the conditions of the idea.
+“Heavier things always fall faster.” It sounds plausible until you have to
+explain a feather and a hammer falling together on the Moon. Recognizing an
+answer and explaining its conditions are different tasks. I built Dekisugi-kun
+around that gap: the learner teaches a companion that needs their explanation,
+then tests the idea in another situation.
 
 ## What it does
 
-For middle and high-school science, the learner predicts an outcome, reads a
+The central interaction is a teach-back loop for middle and high-school science.
+The learner predicts an outcome, reads a
 focused lesson, and then explains it with the material hidden. Text is a full
 learning route alongside voice. The learner rereads or replays their explanation
 before the companion asks a fixed follow-up from the lesson catalog.
@@ -31,17 +33,16 @@ A wrong choice brings a hint and another explanation, rather than an answer to
 copy. The companion's misconception record keeps uncertain ideas available for
 a matching repair activity. Rewriting alone does not mark a need corrected.
 
-The native Field Notebook app includes 12 science units and 35 concepts, story
+This is a working native Field Notebook app, with 12 science units and 35 concepts, story
 cases, diagram activities and review. Core learning works on-device without an
 account. In the demonstrated route, free explanation text and voice are neither
 uploaded nor retained as durable records.
 
-An optional free understanding check compares three before questions, three
-different after questions, and one new situation around a hidden-source teaching
-activity. It is a formative self-check, not a validated efficacy test. Answers,
-explanation and counts are neither saved nor uploaded; copying aggregate counts
-is the learner's choice. The app does not claim that a count difference proves
-improvement.
+A free understanding check makes the reasoning inspectable: three questions
+before teaching, three different questions afterward, and a new situation. It
+is an unvalidated formative check; learner effectiveness has not yet been measured.
+Answers and explanations disappear on leaving the screen. Optional copying
+exports aggregate counts only.
 
 ## How I built it
 
@@ -51,12 +52,18 @@ Fixed catalog checkpoints and canonical need codes connect an observed gap to
 an appropriate repair activity; no external LLM grades student writing.
 
 RevenueCat's `purchases_flutter` SDK provides store packages, purchase, restore
-and the `plus` entitlement. Plus is optional: a family review plan turns local observation records into a
-next topic, a question a parent can ask, and a new-situation prompt. Parents can
-copy the report without child answer text, audio or personal scores. Companion
-styling is an additional benefit. Core lessons and understanding checks remain free. The video shows a
-completed native RevenueCat Test Store purchase, Aurora Cape equipped, and the
-parent report opened. No real charge occurred.
+and the `plus` entitlement. The payer's job is concrete: “What should we review,
+and what should I ask?” Plus adds a local family review plan that selects a topic,
+explains why it was selected, supplies a parent question, and changes one condition
+to test transfer. The report can be copied without answer text, audio or personal
+scores. Aurora Cape adds a visible supporter benefit. Core lessons, text, review
+and understanding checks stay free.
+
+The video shows a native RevenueCat Test Store purchase and the family report in
+a separate adult test profile. No real charge occurred. Family review is a local
+plan and shareable report, not cloud-linked parent/child accounts. The current
+supporter grant is retained after a subscription lapses; I do not claim that
+recurring willingness to pay has been validated.
 
 The repository includes the product constitution, tests, native run
 instructions, English submission assets, and reproducible capture/edit tools.
@@ -75,17 +82,18 @@ unresolved. Text supports the complete learning route. A key-term match is not
 reported as mastery, and an observed need remains open until its matching repair
 activity resolves it.
 
-The test purchase also exposed a cached cosmetic view that needed a restart.
-Server conversation-allowance sync showed a retry notice; the video demonstrates
-the local supporter grant and does not claim that separate sync succeeded.
+The purchase route uses store-supplied prices and billing terms, rather than
+invented trial promises. The current monetization claim is the demonstrated
+supporter benefit; production-store revenue and live-conversation allowance
+sync are not claimed.
 
 ## Accomplishments
 
 A working native learning loop connects prediction, evidence, explanation,
 follow-up, hints and review. The current interface makes the companion's record
-part of the experience, and the optional purchase grants a visible supporter
-benefit. The updated app passed 1,340 client tests; the unchanged server baseline passed
-399 tests.
+part of the experience. Plus now answers a practical family-review question,
+while the complete learning loop remains free. The updated app passed 1,340
+client tests; the unchanged server baseline passed 399 tests.
 The entry's video demonstrates the real app within two minutes.
 [Evidence and evaluation status](learning-evidence-2026.md) separates the research
 rationale from functional verification. No learner efficacy study has been conducted.
@@ -99,8 +107,8 @@ that supports the app without buying the learning outcome.
 
 ## What's next
 
-Physical-device recording/playback and permission-denial QA, first-time learner
-pilots, and evaluating whether the teach-back loop improves explanations. The
+First-time learner pilots comparing explanations and delayed transfer against
+reading-only practice, then physical-device recording/playback and permission QA. The
 existing elicitation survey has 18 responses and is not evidence of learning
 effectiveness. External AI will remain disabled for school/minor distribution
 until the provider and consent requirements are resolved.
@@ -108,10 +116,12 @@ until the provider and consent requirements are resolved.
 ## Why Next Gen
 
 This entry focuses on a clear product idea and meaningful progress toward a
-working native app: a learner teaches the companion, applies an idea, and sees
-what needs another look. The demo and MIT repository expose both the experience
-and the decisions behind it. RevenueCat supports an optional plan with visible
-benefits; it does not gate core science lessons or sell correct answers.
+working native app: a learner produces an explanation, applies the conditions,
+and keeps uncertain ideas available for review. The demo shows the actual
+interaction; the MIT repository exposes the implementation and its product
+constitution. RevenueCat supports a specific family convenience while keeping
+core learning free. Native interaction, offline access, equal text access, and
+restrained data collection are deliberate product choices.
 
 ## RevenueCat integration / additional information
 
@@ -129,8 +139,8 @@ benefits; it does not gate core science lessons or sell correct answers.
 
 - Source: https://github.com/Haruka-Kaya/dekisugi-kun — MIT.
 - **Video URL:** `[PUBLIC YOUTUBE OR VIMEO URL — REQUIRED BEFORE SUBMIT]`
-- Video file: [shipaton-demo-v11.mp4](shipaton-demo-2026/shipaton-demo-v11.mp4), 52.8 seconds.
-- Captions: [English SRT](shipaton-demo-2026/shipaton-demo-v11-captions.en.srt).
+- Video file: [shipaton-demo-v12.mp4](shipaton-demo-2026/shipaton-demo-v12.mp4), 67.4 seconds.
+- Captions: [English SRT](shipaton-demo-2026/shipaton-demo-v12-captions.en.srt).
 - Icon: `docs/store/icon-1024.png` — 1024×1024.
 - Screenshot: `docs/store-shots-2026/devpost/shot-1179x2556.png` — current native
   app, 1179×2556, no device frame.

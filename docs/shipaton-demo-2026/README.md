@@ -1,96 +1,78 @@
 # English demo — Next Gen review and introduction
 
-**Current candidate: [shipaton-demo-v11.mp4](shipaton-demo-v11.mp4)** — 52.8 seconds,
+**Current candidate: [shipaton-demo-v12.mp4](shipaton-demo-v12.mp4)** — 67.4 seconds,
 1080×1920 portrait, 30 fps, English narration and burned-in English captions.
-The matching [SRT](shipaton-demo-v11-captions.en.srt) and
-[poster](shipaton-demo-v11-poster.jpg) are included. This is a local video candidate;
-this change does not publish it to YouTube, Vimeo, or Devpost.
+The matching [SRT](shipaton-demo-v12-captions.en.srt) and
+[poster](shipaton-demo-v12-poster.jpg) are included. YouTube/Vimeo upload and
+Devpost submission are separate from completion of this local artifact.
 
-The opening shows the companion-as-student idea directly in the native app.
-The edit then follows one science question: predict which ball falls first, read the evidence,
-hide the material, explain in English, review key terms, answer a fixed
-follow-up, and receive a hint after a wrong choice. It then shows the
-companion's misconception record and optional Plus purchase and benefits.
-Real typing, scrolling, choice selection, question transitions and Test Store
-interactions take the place of long explanatory slides. One fixed, full native
-app view fills the portrait frame, with a short heading above and English
-captions below. There is no duplicate crop, animated zoom, artificial tap
-effect or music. The native recording timeline is expanded to 30 fps before
-cuts so sparse screen-recording frames do not skip the pre-tap state.
-The hint, rewritten explanation and purchase result are held screenshots
-(total 5.6 seconds); the closing card is 2 seconds. Some pauses let the viewer
-read or hear the explanation; recording-source share is not a motion score.
+The opening asks whether the viewer can explain why things fall. The native
+interaction then shows prediction, evidence, hidden-source explanation, rereading,
+a fixed follow-up, a condition hint and another try. Uncertain ideas remain in
+the companion's record. The last section shows optional RevenueCat Plus,
+a family review plan with parent questions, copying the report, and a free
+understanding check. The payer's task is concrete: decide what to review and
+what to ask, while core learning remains free.
 
-## Evidence and limits
+One native app view fills the frame. No duplicate view, artificial tap effect,
+animated zoom or music is used. Native typing, selection, transitions and
+scrolling carry the story. Hint, rewritten explanation and self-check result
+screenshots are held for 7.9 seconds in total; the closing card is 2 seconds.
+Pauses leave time for reading and narration. Recording-source share is not a
+claim that every second contains movement.
 
-- App source: `11d9ae3cc1e9e6597a6206a4ab07b80f6ac49b8e` (Field Notebook).
-- Captured on a dedicated Android emulator, using the English build. Some
-  existing secondary labels remain Japanese. This is not physical-device QA.
-- Progress comes from real native UI interactions. No database values or UI
-  screens were fabricated. Cuts and modest speed changes remove waits. Held
-  screenshots show only the hint and the actual rewritten explanation.
-- The misconception shown remains **Still unsure**. Rewriting a free explanation
-  or answering a checkpoint does not itself clear an observed need; the
-  corresponding repair experiment is required. The edit does not claim a
-  measured learning gain or a resolved misconception.
-- The purchase uses the RevenueCat SDK against the project's **Test Store**.
-  A separate fresh adult personal test profile was used for the v10 source purchase
-  and benefits sequence. Its empty report does not represent the earlier
-  learning sequence. The native test confirmation and local Aurora Cape grant
-  were verified, the look was equipped, and the parent report was opened. No real
-  charge or production-store purchase occurred. See
-  [monetization setup](../monetization-setup.md).
-- Server conversation-allowance synchronization was not confirmed; the app
-  displayed its retry notice. The purchase footage does not claim server sync
-  or enabled live conversation. A restart refreshed the cached cosmetic view.
-- External generative AI was disabled. Narration is a separate, locally
-  generated editorial voice, not the companion speaking in the app.
+## Evidence
+
+- Latest code: `c9887bd`. New v12 recordings cover the English prediction and
+  material, current Plus purchase, family plan/report copying and free check.
+  The core teach-back and need record use retained v8/v10 native recordings.
+  The prior metrics bar is cropped from retained teaching shots; the source
+  hashes and crop decisions are explicit in the manifest and edit file.
+- All app UI is genuine native Android emulator footage. Progress was produced
+  through UI interactions; no database values, temporary unlocks or app screens
+  were fabricated. Cuts and a modest typing speed change remove waits.
+- Plus uses a separate adult personal **RevenueCat Test Store** profile. The
+  purchase confirmation and report access were verified, with no real charge.
+  Its empty observation record is explicitly shown. This is a local family
+  plan and shareable report, not cloud-linked parent/child accounts.
+- The separate live-conversation allowance sync showed a retry notice. The
+  video demonstrates the local supporter grant and report; it does not claim
+  that sync succeeded. External generative AI remained disabled.
+- The free check is a **developer replay**, with before 3/3, after 3/3 and new
+  situation 1/1. The forms are unvalidated; this is functional evidence, not
+  learner improvement or an efficacy study. No actual learner pre/post data
+  exists. See [evaluation status](../learning-evidence-2026.md).
+- Narration is a separate local editorial voice, not the companion's in-app
+  voice. Emulator capture is not physical-device acceptance.
 
 ## Sources and reproduction
 
-[Script](v11-script.json), [edit decisions](v11-edit.json), and
-[manifest](v11-manifest.json) identify scene timing, source hashes, and the final
-video hash. The tools and regeneration commands are in
-[tools/demo-video](../../tools/demo-video/README.md).
+[Script](v12-script.json), [edit decisions](v12-edit.json),
+[manifest](v12-manifest.json) and [validation](v12-validation.json) identify the
+source hashes, timings and final video hash. Commands are documented in
+[tools/demo-video](../../tools/demo-video/README.md). Raw captures, XML observations,
+action logs and narration remain locally in `app/build/demo-video-v12/`, ignored
+by Git. A new checkout needs its own capture or that source bundle to regenerate
+this edit; the committed MP4 and captions are directly usable.
 
-Raw native captures, XML observations, action logs, and narration are preserved
-locally at `app/build/demo-video-v10/` (ignored by Git). A new checkout must
-capture its own footage or receive that source bundle; the MP4 and its captions
-are directly usable without the bundle. No emulator database or account state
-is part of the public artifact.
-
-The English narration uses [Kokoro ONNX](https://github.com/thewh1teagle/kokoro-onnx)
-and [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), locally. v11 reuses
-the existing English narration and removes the synthesized music. The closing
-card uses the project's current `docs/store/icon-1024.png` artwork.
+Narration uses local [Kokoro ONNX](https://github.com/thewh1teagle/kokoro-onnx)
+and [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), voice `af_sarah`.
+The closing card uses the project's current `docs/store/icon-1024.png` artwork.
 
 ## Validation
 
-The full MP4 decodes without errors, contains 1584 frames at 30 fps, and has
-ordered audio/video timestamps. All captions match the complete narration.
-Each shot was compared with its original source timeline near its beginning
-and end (36 frame comparisons). The fixed app view and caption layout were
-inspected at all scene starts and ends. QuickTime playback reached the end;
-input and follow-up screens were also sampled during playback.
-Integrated loudness is -16.23 LUFS and true peak is -1.5 dBFS. Details are in
-`v11-validation.json`. These checks establish timing and composition, not a
-subjective guarantee about the synthetic voice or physical-device behavior.
-
-## Why v10 was replaced
-
-The user rejected v10's presentation. Its duplicate view and changing crops
-cut text or the companion, and input seeking followed by `PTS-STARTPTS` moved
-the first sparse VFR frame to the cut's beginning, skipping the pre-action
-state. Full decoding and static composition checks had not caught that
-viewing problem. v11 removes the duplicate view and music and uses CFR before
-trimming. The longer 5.3-second frozen reflection section was replaced with
-the real reread interaction and the later scroll to the follow-up button.
+The entire MP4 decodes without errors. Audio/video timestamps are ordered and
+captions match the complete narration. Every shot is compared against its
+original source timeline near its beginning and end. Composition was inspected
+at every scene start and end, including purchase, report and result transitions.
+The original variable-frame-rate timeline is expanded to 30 fps **before**
+trimming, preserving the pre-action frame. Measurements and limits are recorded
+in `v12-validation.json`.
 
 ## Earlier edits
 
-[v10](shipaton-demo-v10.mp4) (56.1 seconds) is retained only as an earlier,
-rejected cut. [v9](shipaton-demo-v9.mp4) (93.13 seconds),
-[v8](shipaton-demo-v8.mp4) (84 seconds) and [v7](shipaton-demo-v7.mp4)
-(114 seconds, portrait, silent) remain for comparison. v1–v6 are historical
-cuts under `docs/attic/`. The English reviewer guide carries the longer
-product rationale.
+[v11](shipaton-demo-v11.mp4) (52.8 seconds) is the previous single-view cut.
+It fixed v10's duplicate view and sparse-frame input-seeking issue. v12 keeps
+that timing fix and adds current English UI, family-review value and a check.
+[v10](shipaton-demo-v10.mp4), [v9](shipaton-demo-v9.mp4),
+[v8](shipaton-demo-v8.mp4) and [v7](shipaton-demo-v7.mp4) are historical cuts.

@@ -145,3 +145,25 @@ Only native hint, rewrite and Test Store result screenshots are held. The
 manifest identifies all raw-source hashes; `v11-validation.json` includes
 frame comparisons against the original source timeline at the beginning and
 end of every shot. Recording-source share is not used as a motion-quality score.
+
+## Current competition cut (v12)
+
+v12 combines retained native teaching interactions with new English prediction,
+RevenueCat Test Store purchase, family review plan/copy and free self-check captures.
+The old metrics bar is cropped only on retained teaching shots; edit decisions
+are explicit. New screens use the default full app crop. Context labels identify
+Test Store/no charge and developer replay/no efficacy measurement.
+
+```bash
+python3 tools/demo-video/narrate.py docs/shipaton-demo-2026/v12-script.json \
+  --models /path/to/local/kokoro-models --output app/build/demo-video-v12/narration \
+  --lead .12 --gap .08 --speed 1.06
+python3 tools/demo-video/render_single.py docs/shipaton-demo-2026/v12-script.json \
+  docs/shipaton-demo-2026/v12-edit.json --raw app/build/demo-video-v12 \
+  --output docs/shipaton-demo-2026 --name shipaton-demo-v12
+```
+
+The raw directory contains genuine native sources named by `v12-edit.json`;
+retained files use the `retained-` prefix. Do not fabricate progress or seed a
+public demo. Keep Test Store purchases in an adult test profile and external
+AI disabled. A developer self-check replay is functional evidence only.

@@ -45,7 +45,7 @@ from this app.
 The native `purchases_flutter` SDK handles packages, purchases, restore and the
 `plus` entitlement. The paywall uses store-returned prices and periods rather
 than invented prices. The current demo shows a completed RevenueCat Test Store
-purchase, an equipped Aurora Cape, and an unlocked parent report. Plus now adds
+purchase and an unlocked parent report. Plus adds
 a local family review plan: next topic, selection reason, parent prompt and a
 new-situation check. No real
 charge occurred. The cosmetic grant remains in the local grant ledger.
@@ -70,10 +70,11 @@ see [evidence and evaluation status](learning-evidence-2026.md).
 The native Flutter app has a Field Notebook interface across exploration,
 science cases, experiments, diagrams, shared observations and My Lab. Its
 bundled Japanese/English curriculum contains **12 units and 35 concepts**.
-Some secondary UI labels remain Japanese. The TypeScript/Vercel server serves
+The curriculum, primary and secondary learning UI, and accessibility descriptions
+are available in English. The TypeScript/Vercel server serves
 the catalog and implements optional server integrations.
 
-The integrated baseline passed **1,337 app tests and 399 server tests**.
+The integrated baseline passed **1,340 app tests and 399 server tests**.
 The native Android footage is emulator evidence. Physical-device voice QA,
 first-time learner pilots and measured learning outcomes remain outstanding.
 The existing elicitation survey has **18 responses**; it does not establish
