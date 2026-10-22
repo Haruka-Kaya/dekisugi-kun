@@ -19,8 +19,12 @@ void main() {
 
   Future<void> openConfirmation(WidgetTester tester) async {
     final tile = find.byKey(const ValueKey('school-learning-reset'));
-    await tester.scrollUntilVisible(tile, 250, scrollable: find.byType(Scrollable).first);
-    await tester.tap(tile);
+    final action = find.descendant(of: tile, matching: find.text('学校の学習記録を消す'));
+    await tester.scrollUntilVisible(action, 250, scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(action);
+    await tester.pumpAndSettle();
+    expect(action.hitTestable(), findsOneWidget);
+    await tester.tap(action);
     await tester.pumpAndSettle();
   }
 
@@ -29,7 +33,7 @@ void main() {
     expect(find.byKey(const ValueKey('school-learning-reset')), findsNothing);
   });
 
-  testWidgets('confirmation explains the scope and cancel makes no change at 200 percent', (tester) async {
+  testWidgets('confirmation and cancel remain reachable at 200 percent', (tester) async {
     tester.view.physicalSize = const Size(320, 700);
     tester.view.devicePixelRatio = 1;
     tester.platformDispatcher.textScaleFactorTestValue = 2;
@@ -41,10 +45,20 @@ void main() {
     expect(find.textContaining('個人モードの記録や通知・言語設定は残ります'), findsOneWidget);
     expect(find.textContaining('元に戻せません'), findsOneWidget);
     expect(tester.takeException(), isNull);
+    expect(find.text('残す').hitTestable(), findsOneWidget);
+    expect(find.byKey(const ValueKey('confirm-school-reset')).hitTestable(), findsOneWidget);
     await tester.tap(find.text('残す'));
     await tester.pumpAndSettle();
     expect(calls, 0);
     expect(find.byType(AlertDialog), findsNothing);
+    await openConfirmation(tester);
+    final confirm = find.byKey(const ValueKey('confirm-school-reset'));
+    expect(confirm.hitTestable(), findsOneWidget);
+    await tester.tap(confirm);
+    await tester.pumpAndSettle();
+    expect(calls, 1);
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('success waits for completion, prevents repeated activation and back navigation', (tester) async {
