@@ -21,6 +21,9 @@ import '../models/league_ladder.dart';
 import '../models/review.dart';
 import '../models/streak.dart';
 
+/// 学校内でのみ使う授業の再開・完了状態。学校台帳と同じ操作で消す。
+const kLocalClassroomRunSettingKey = 'local_classroom_run_v1';
+
 /// 端末に残す会話の記録。
 ///
 /// ## なぜ端末なのか
@@ -338,6 +341,10 @@ abstract class SessionStore {
 
   /// 指定scopeだけを消す。学校と個人を同じ操作で巻き込まない。
   Future<void> clearLearningScope(LearningScope scope);
+
+  /// 学校台帳と授業の再開・完了状態を原子的に消す。
+  /// 個人の学習、旧会話、他の設定は残す。呼び出し元で旧writerを停止する。
+  Future<void> resetSchoolLearningData();
 
   Future<void> close();
 }
@@ -3072,88 +3079,103 @@ class SqfliteSessionStore implements SessionStore {
 
   @override
   Future<void> clearLearningScope(LearningScope scope) =>
-      _db.transaction((tx) async {
-        final eventRows = await tx.query(
-          'learning_events',
-          columns: ['id'],
-          where: 'scope = ?',
-          whereArgs: [scope.wire],
-        );
-        final eventIds = eventRows
-            .map((row) => row['id'] as String? ?? '')
-            .where((id) => id.isNotEmpty)
-            .toList();
-        final questRows = await tx.query(
-          'learning_quest_progress',
-          columns: ['quest_instance_id'],
-          where: 'scope = ?',
-          whereArgs: [scope.wire],
-        );
-        final coopRunRows = await tx.query(
-          'learning_local_coop_runs',
-          columns: ['run_id'],
-          where: 'scope = ?',
-          whereArgs: [scope.wire],
-        );
-        for (final eventId in eventIds) {
-          await tx.delete(
-            'learning_event_skills',
-            where: 'event_id = ?',
-            whereArgs: [eventId],
-          );
-          await tx.delete(
-            'learning_practice_needs',
-            where: 'event_id = ?',
-            whereArgs: [eventId],
-          );
-          await tx.delete(
-            'learning_quest_events',
-            where: 'event_id = ?',
-            whereArgs: [eventId],
-          );
-        }
-        for (final row in questRows) {
-          await tx.delete(
-            'learning_quest_events',
-            where: 'quest_instance_id = ?',
-            whereArgs: [row['quest_instance_id']],
-          );
-        }
-        for (final row in coopRunRows) {
-          await tx.delete(
-            'learning_local_coop_contributions',
-            where: 'run_id = ?',
-            whereArgs: [row['run_id']],
-          );
-          await tx.delete(
-            'learning_local_coop_participants',
-            where: 'run_id = ?',
-            whereArgs: [row['run_id']],
-          );
-        }
-        for (final table in const [
-          'learning_events',
-          'learning_node_progress',
-          'learning_skill_progress',
-          'learning_days',
-          'learning_reward_ledger',
-          'learning_quest_progress',
-          'learning_freezes',
-          'learning_challenge_heart_state',
-          'learning_challenge_heart_losses',
-          'learning_challenge_heart_practice_recoveries',
-          'learning_runs',
-          'learning_gem_spends',
-          'learning_cosmetic_loadout',
-          'learning_cosmetic_grants',
-          'learning_local_coop_runs',
-          'learning_league_history',
-          'learning_local_league_history',
-          'learning_need_state',
-        ]) {
-          await tx.delete(table, where: 'scope = ?', whereArgs: [scope.wire]);
-        }
-      });
+      _db.transaction((tx) => _clearLearningScope(tx, scope));
+
+  @override
+  Future<void> resetSchoolLearningData() => _db.transaction((tx) async {
+    await _clearLearningScope(tx, LearningScope.schoolLocal);
+    await tx.delete(
+      'settings',
+      where: 'key = ?',
+      whereArgs: [kLocalClassroomRunSettingKey],
+    );
+  });
+
+  Future<void> _clearLearningScope(
+    DatabaseExecutor tx,
+    LearningScope scope,
+  ) async {
+    final eventRows = await tx.query(
+      'learning_events',
+      columns: ['id'],
+      where: 'scope = ?',
+      whereArgs: [scope.wire],
+    );
+    final eventIds = eventRows
+        .map((row) => row['id'] as String? ?? '')
+        .where((id) => id.isNotEmpty)
+        .toList();
+    final questRows = await tx.query(
+      'learning_quest_progress',
+      columns: ['quest_instance_id'],
+      where: 'scope = ?',
+      whereArgs: [scope.wire],
+    );
+    final coopRunRows = await tx.query(
+      'learning_local_coop_runs',
+      columns: ['run_id'],
+      where: 'scope = ?',
+      whereArgs: [scope.wire],
+    );
+    for (final eventId in eventIds) {
+      await tx.delete(
+        'learning_event_skills',
+        where: 'event_id = ?',
+        whereArgs: [eventId],
+      );
+      await tx.delete(
+        'learning_practice_needs',
+        where: 'event_id = ?',
+        whereArgs: [eventId],
+      );
+      await tx.delete(
+        'learning_quest_events',
+        where: 'event_id = ?',
+        whereArgs: [eventId],
+      );
+    }
+    for (final row in questRows) {
+      await tx.delete(
+        'learning_quest_events',
+        where: 'quest_instance_id = ?',
+        whereArgs: [row['quest_instance_id']],
+      );
+    }
+    for (final row in coopRunRows) {
+      await tx.delete(
+        'learning_local_coop_contributions',
+        where: 'run_id = ?',
+        whereArgs: [row['run_id']],
+      );
+      await tx.delete(
+        'learning_local_coop_participants',
+        where: 'run_id = ?',
+        whereArgs: [row['run_id']],
+      );
+    }
+    for (final table in const [
+      'learning_events',
+      'learning_node_progress',
+      'learning_skill_progress',
+      'learning_days',
+      'learning_reward_ledger',
+      'learning_quest_progress',
+      'learning_freezes',
+      'learning_challenge_heart_state',
+      'learning_challenge_heart_losses',
+      'learning_challenge_heart_practice_recoveries',
+      'learning_runs',
+      'learning_gem_spends',
+      'learning_cosmetic_loadout',
+      'learning_cosmetic_grants',
+      'learning_local_coop_runs',
+      'learning_league_history',
+      'learning_local_league_history',
+      'learning_need_state',
+    ]) {
+      await tx.delete(table, where: 'scope = ?', whereArgs: [scope.wire]);
+    }
+  }
 
   @override
   Future<void> close() => _db.close();
@@ -7443,6 +7465,16 @@ class MemorySessionStore implements SessionStore {
 
   @override
   Future<void> clearLearningScope(LearningScope scope) async {
+    _clearLearningScope(scope);
+  }
+
+  @override
+  Future<void> resetSchoolLearningData() async {
+    _clearLearningScope(LearningScope.schoolLocal);
+    _settings.remove(kLocalClassroomRunSettingKey);
+  }
+
+  void _clearLearningScope(LearningScope scope) {
     final eventIds = _learningEvents.values
         .where((event) => event.scope == scope)
         .map((event) => event.eventId)

@@ -13,15 +13,21 @@ import '../widgets/app_language_tile.dart';
 import '../widgets/readable_width.dart';
 import '../widgets/studio_ui.dart';
 
-/// 設定。いまは通知だけ。
+/// 通知・表示言語と、学校モードでだけ提供する端末内記録の削除。
 ///
 /// **増やす余地を作らない。** 通知の頻度は1日1通で固定してあり、
 /// 画面から変えられるのは「使うかどうか」と「何時か」だけ。
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key, required this.reminders, this.onOpenPlus});
+  const SettingsScreen({
+    super.key,
+    required this.reminders,
+    this.onOpenPlus,
+    this.onResetSchoolLearning,
+  });
 
   final Reminders reminders;
   final Future<void> Function()? onOpenPlus;
+  final Future<void> Function()? onResetSchoolLearning;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -31,6 +37,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _on = false;
   int _hour = kDefaultReminderHour;
   bool _loading = true;
+  bool _resetDialogOpen = false;
+  bool _resetting = false;
 
   @override
   void initState() {
@@ -84,8 +92,84 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (mounted) setState(() => _hour = picked);
   }
 
+  Future<void> _confirmSchoolReset() async {
+    final reset = widget.onResetSchoolLearning;
+    if (reset == null || _resetDialogOpen || _resetting) return;
+    _resetDialogOpen = true;
+    final bool? confirmed;
+    try {
+      confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          scrollable: true,
+          title: Text(
+            l10n.t('学校の学習記録を消しますか？', 'Delete school learning records?'),
+          ),
+          content: Text(
+            l10n.t(
+              'この端末の学校モードの学習記録と、授業の再開位置・最後の完了表示を消します。'
+                  '個人モードの記録や通知・言語設定は残ります。元に戻せません。',
+              'This deletes school-mode learning records, the class resume point, '
+                  'and the last completion display from this device. Personal-mode '
+                  'records, reminders, and language settings stay. This cannot be undone.',
+            ),
+          ),
+          actions: [
+            TextButton(
+              autofocus: true,
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(l10n.t('残す', 'Keep records')),
+            ),
+            FilledButton(
+              key: const ValueKey('confirm-school-reset'),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(l10n.t('学校の記録を消す', 'Delete school records')),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      _resetDialogOpen = false;
+    }
+    if (confirmed != true || !mounted) return;
+    setState(() => _resetting = true);
+    try {
+      await reset();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.t('学校の学習記録を消しました。', 'School learning records deleted.'),
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.t(
+              '学校の記録を消せませんでした。もう一度お試しください。',
+              'Could not delete school records. Please try again.',
+            ),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _resetting = false);
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PopScope(
+    canPop: !_resetting,
+    child: AbsorbPointer(
+      absorbing: _resetting,
+      child: _buildSettings(context),
+    ),
+  );
+
+  Widget _buildSettings(BuildContext context) {
     final t = Theme.of(context);
     final scheme = t.colorScheme;
 
@@ -129,6 +213,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 14),
                   const AppLanguageTile(),
+                  if (widget.onResetSchoolLearning != null) ...[
+                    const SizedBox(height: 14),
+                    StudioActionTile(
+                      key: const ValueKey('school-learning-reset'),
+                      icon: Icons.delete_outline,
+                      title: l10n.t(
+                        '学校の学習記録を消す',
+                        'Delete school learning records',
+                      ),
+                      description: _resetting
+                          ? l10n.t('記録を消しています…', 'Deleting records…')
+                          : l10n.t(
+                              'この端末の学校モードだけ。個人の記録は残します。',
+                              'School mode on this device only. Personal records stay.',
+                            ),
+                      onTap: () => unawaited(_confirmSchoolReset()),
+                    ),
+                    if (_resetting) const LinearProgressIndicator(),
+                  ],
                   const SizedBox(height: 14),
                   StudioActionTile(
                     icon: Icons.science_outlined,

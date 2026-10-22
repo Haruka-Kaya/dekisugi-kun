@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'session_store.dart';
+import 'school_learning_session.dart';
 
 /// 端末内の授業ミッションが、どこまで進んだか。
 ///
@@ -105,12 +106,13 @@ class LocalClassroomRun {
 /// 既存の5項目を使って1件だけを上書きする。学校で指定されたA/B/Cは
 /// 個人練習のローテーションへ混ぜず、このstoreだけで保持する。
 class LocalClassroomRunStore {
-  LocalClassroomRunStore(this._store);
+  LocalClassroomRunStore(this._store, {this.schoolSession});
 
-  static const settingKey = 'local_classroom_run_v1';
+  static const settingKey = kLocalClassroomRunSettingKey;
   static const _version = 2;
 
   final SessionStore _store;
+  final SchoolLearningSession? schoolSession;
   Future<void> _writeTail = Future<void>.value();
 
   Future<LocalClassroomRun?> load() => _serialize(_loadCurrent);
@@ -266,7 +268,9 @@ class LocalClassroomRunStore {
       _serialize(() async => _store.setSetting(settingKey, null));
 
   Future<T> _serialize<T>(Future<T> Function() operation) {
-    final result = _writeTail.then((_) => operation());
+    final result = _writeTail.then(
+      (_) => schoolSession?.write(operation) ?? operation(),
+    );
     _writeTail = result.then<void>(
       (_) {},
       onError: (Object _, StackTrace stackTrace) {},

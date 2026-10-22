@@ -30,6 +30,7 @@ import '../services/lan_social_client.dart';
 import '../services/local_practice_store.dart';
 import '../services/reminders.dart';
 import '../services/session_store.dart';
+import '../services/school_learning_session.dart';
 import '../services/units_client.dart';
 import '../ui/_material.dart';
 import '../widgets/game_activity_scaffold.dart';
@@ -110,6 +111,7 @@ class ScienceGameHomeScreen extends StatefulWidget {
     required this.schoolMode,
     required this.onOpenSettings,
     this.controller,
+    this.schoolSession,
     this.legacyProgress,
     this.onOpenClassroom,
     this.onExitLocalMode,
@@ -129,6 +131,7 @@ class ScienceGameHomeScreen extends StatefulWidget {
   final bool schoolMode;
   final VoidCallback onOpenSettings;
   final ScienceGameHomeController? controller;
+  final SchoolLearningSession? schoolSession;
   final VoidCallback? onOpenClassroom;
   final VoidCallback? onExitLocalMode;
 
@@ -282,11 +285,18 @@ class _ScienceGameHomeScreenState extends State<ScienceGameHomeScreen>
     final rules = plan != null && plan.learningDay == dayKeyOf(now.toLocal())
         ? plan.commitRules
         : const LearningCommitRules();
-    return SessionLearningProgressStore(widget.sessionStore, rules: rules);
+    return SessionLearningProgressStore(
+      widget.sessionStore,
+      rules: rules,
+      schoolSession: widget.schoolSession,
+    );
   }
 
   SessionLearningProgressStore get _baseProgressStore =>
-      SessionLearningProgressStore(widget.sessionStore);
+      SessionLearningProgressStore(
+        widget.sessionStore,
+        schoolSession: widget.schoolSession,
+      );
 
   /// teach-back の生成AI前置き（Plusサポーター特典）の所有確認。
   /// personal scope でauroraマスコットを持つ端末だけ true。
