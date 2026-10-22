@@ -27,6 +27,16 @@ jobs:
     name: Typecheck, tests, and audit
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    services:
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379/tcp
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
 
     steps:
       - name: Checkout
@@ -48,6 +58,12 @@ jobs:
       - name: Typecheck and test
         working-directory: server
         run: npm test
+
+      - name: Verify atomic team membership against isolated Redis
+        working-directory: server
+        env:
+          TEAM_REDIS_TEST_PORT: ${{ job.services.redis.ports[6379] }}
+        run: node --import tsx --test test/team_redis.integration.ts
 
       - name: Check public survey state script
         working-directory: server
