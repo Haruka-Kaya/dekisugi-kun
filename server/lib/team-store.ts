@@ -1,6 +1,7 @@
 import { jstDayKey, jstWeekKey } from './day.js'
 import { hasKv, kv } from './kv.js'
 import { MAX_MEMBERS, newInviteCode } from './team.js'
+import { CONTRIBUTE_TEAM_SCRIPT, JOIN_TEAM_SCRIPT, LEAVE_TEAM_SCRIPT } from './team-membership-scripts.js'
 
 /**
  * チームの保存。**`team.ts` は純粋に保ち、Redis に触るのはここだけ。**
@@ -57,7 +58,6 @@ export const keys = {
   sum: (teamId: string, periodId: string) => `t:${teamId}:sum:${periodId}`,
   mine: (mid: string) => `t:mine:${mid}`,
   cooldown: (mid: string) => `t:cool:${mid}`,
-  lock: (mid: string, day: string) => `t:lock:${mid}:${day}`,
 }
 
 /** チーム変更のクールダウン（秒）。週1回まで。 */
@@ -209,46 +209,32 @@ export async function joinTeam(
   need()
   const found = await readCode(code)
   if (!found) return { ok: false, reason: 'unknown_code' }
-  if (found.revoked || found.expiresAt <= now) return { ok: false, reason: 'expired' }
-
-  const team = await readTeam(found.teamId)
-  if (!team) return { ok: false, reason: 'unknown_code' }
-
-  const [mineRaw, coolRaw, sizeRaw, isMemberRaw] = await kv([
-    ['GET', keys.mine(mid)],
-    ['GET', keys.cooldown(mid)],
-    ['SCARD', keys.members(team.id)],
-    ['SISMEMBER', keys.members(team.id), mid],
-  ])
-  const mine = mineRaw == null ? undefined : String(mineRaw)
-  const already = Number(isMemberRaw ?? 0) === 1
-
-  if (already) {
-    return { ok: true, team, memberCount: Number(sizeRaw ?? 0), alreadyIn: true }
+  // The lookup only selects keys. Lua rechecks the current code and team before
+  // checking membership/capacity and writing; a pipeline alone is not atomic.
+  const [result] = await kv([[
+    'EVAL', JOIN_TEAM_SCRIPT, '5', keys.code(code), keys.team(found.teamId),
+    keys.members(found.teamId), keys.mine(mid), keys.cooldown(mid),
+    found.teamId, mid, String(now), String(MAX_MEMBERS), String(400 * 86400),
+  ]])
+  const failure = () => new Error('チーム参加応答の形式が不正です')
+  if (!Array.isArray(result)) throw failure()
+  if (result.length === 2 && result[0] === 0) {
+    const reason = result[1]
+    if (reason === 'unknown_code' || reason === 'expired' || reason === 'team_full'
+      || reason === 'in_other_team' || reason === 'cooldown') return { ok: false, reason }
   }
-
-  // **抜けた直後は、同じチームにも入り直せない。**
-  //
-  // 退出は合計を減らさず個人の記録だけ消す。つまり入り直して同じ日を
-  // 送り直すと、合計に二重で乗る。これは移籍だけの話ではなく
-  // **同じチームへの出入りでも成立する**（設計時に見落としていた）。
-  //
-  // 誤って抜けた生徒は1週間戻れないが、
-  // 退出は確認を挟む操作なので、青天井の水増しより受け入れる。
-  // 被害は週あたり最大 3点×14日 に有界になる。
-  if (coolRaw != null && Number(coolRaw) > now) {
-    return { ok: false, reason: 'cooldown' }
+  if (result.length !== 7 || result[0] !== 1
+    || result.slice(1, 5).some((value) => typeof value !== 'string')
+    || !Number.isSafeInteger(result[5]) || result[5] < 0
+    || (result[6] !== 0 && result[6] !== 1)) throw failure()
+  return {
+    ok: true,
+    team: {
+      id: found.teamId, name: result[1], periodId: result[2],
+      periodStart: result[3], periodEnd: result[4],
+    },
+    memberCount: result[5], alreadyIn: result[6] === 1,
   }
-  if (mine && mine !== team.id) return { ok: false, reason: 'in_other_team' }
-  if (Number(sizeRaw ?? 0) >= MAX_MEMBERS) return { ok: false, reason: 'team_full' }
-
-  await kv([
-    ['SADD', keys.members(team.id), mid],
-    ['EXPIRE', keys.members(team.id), String(400 * 86400)],
-    ['SET', keys.mine(mid), team.id],
-    ['EXPIRE', keys.mine(mid), String(400 * 86400)],
-  ])
-  return { ok: true, team, memberCount: Number(sizeRaw ?? 0) + 1, alreadyIn: false }
 }
 
 /**
@@ -264,19 +250,15 @@ export async function joinTeam(
  */
 export async function leaveTeam(mid: string, teamId: string, now = Date.now()): Promise<boolean> {
   need()
-  const [wasMember] = await kv([['SISMEMBER', keys.members(teamId), mid]])
-  if (Number(wasMember ?? 0) !== 1) return false
-
-  await kv([
-    ['SREM', keys.members(teamId), mid],
-    // **個人の記録だけ消す。** sum は触らない
-    ['DEL', keys.memberDays(teamId, mid)],
-    ['DEL', keys.mine(mid)],
-    // 抜けて入り直すと同じ日を送り直せるので、変更に間隔を空けさせる
-    ['SET', keys.cooldown(mid), String(now + CHANGE_COOLDOWN_SECONDS * 1000)],
-    ['EXPIRE', keys.cooldown(mid), String(CHANGE_COOLDOWN_SECONDS)],
-  ])
-  return true
+  // Remove only individual records (never totals), and install the one-week
+  // cooldown in the same execution so a concurrent join cannot slip between.
+  const [result] = await kv([[
+    'EVAL', LEAVE_TEAM_SCRIPT, '4', keys.members(teamId), keys.mine(mid),
+    keys.memberDays(teamId, mid), keys.cooldown(mid), mid, teamId,
+    String(now + CHANGE_COOLDOWN_SECONDS * 1000), String(CHANGE_COOLDOWN_SECONDS),
+  ]])
+  if (result !== 0 && result !== 1) throw new Error('チーム退出応答の形式が不正です')
+  return result === 1
 }
 
 // ── 貢献 ────────────────────────────────────────────────────
@@ -294,11 +276,9 @@ export type Rejected = { day: string; reason: string }
  *
  * ## `kv()` はトランザクションではない
  *
- * パイプラインは「まとめて送る」だけで、途中に他の書き込みが割り込みうる。
- * 読んで書くあいだを短いロックで守る。取れなければ何もしない（次回でよい）。
- *
- * 競合の被害は**同一端末・同一日で最大3点**に有界なので、
- * Lua まで持ち出さずロックで足りる。
+ * 所属の再確認、日次の差分、合計更新を同じLua実行で確定する。
+ * 退出より先なら個人記録は退出で消え、退出より後なら書き込まない。
+ * 短期ロックの期限や別pipelineの順序には依存しない。
  */
 export async function contribute(
   mid: string,
@@ -311,31 +291,22 @@ export async function contribute(
   const rejected: Rejected[] = []
 
   for (const e of entries) {
-    const lock = keys.lock(mid, e.day)
-    const got = (await kv([['SET', lock, '1', 'NX', 'EX', '5']]))[0]
-    if (got == null) {
-      // 端末は冪等に再送できるので、取れなかった日は次回に回す
-      rejected.push({ day: e.day, reason: 'busy' })
+    const [result] = await kv([[
+      'EVAL', CONTRIBUTE_TEAM_SCRIPT, '5', keys.mine(mid), keys.members(team.id),
+      keys.memberDays(team.id, mid), keys.sum(team.id, team.periodId), keys.team(team.id),
+      mid, team.id, team.periodId, e.day, String(e.value), String(400 * 86400),
+    ]])
+    if (Array.isArray(result) && result.length === 2
+      && result[0] === 0 && result[1] === 'not_in_team') {
+      rejected.push({ day: e.day, reason: 'not_in_team' })
       continue
     }
-    try {
-      const prev = Number((await kv([['HGET', keys.memberDays(team.id, mid), e.day]]))[0] ?? 0)
-      const delta = e.value - prev
-      if (delta <= 0) {
-        // **減らして送っても減らさない。** 単調増加を保つ
-        applied.push({ day: e.day, value: prev, added: 0 })
-        continue
-      }
-      await kv([
-        ['HSET', keys.memberDays(team.id, mid), e.day, String(e.value)],
-        ['HINCRBY', keys.sum(team.id, team.periodId), 'total', String(delta)],
-        ['EXPIRE', keys.memberDays(team.id, mid), String(400 * 86400)],
-        ['EXPIRE', keys.sum(team.id, team.periodId), String(400 * 86400)],
-      ])
-      applied.push({ day: e.day, value: e.value, added: delta })
-    } finally {
-      await kv([['DEL', lock]])
+    if (!Array.isArray(result) || result.length !== 3 || result[0] !== 1
+      || !Number.isSafeInteger(result[1]) || result[1] < 0
+      || !Number.isSafeInteger(result[2]) || result[2] < 0 || result[2] > result[1]) {
+      throw new Error('チーム寄与応答の形式が不正です')
     }
+    applied.push({ day: e.day, value: result[1], added: result[2] })
   }
   return { applied, rejected }
 }

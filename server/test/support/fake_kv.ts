@@ -12,6 +12,8 @@
  * 綴りを間違えたまま緑になる）。
  */
 
+import { CONTRIBUTE_TEAM_SCRIPT, JOIN_TEAM_SCRIPT, LEAVE_TEAM_SCRIPT } from '../../lib/team-membership-scripts.js'
+
 type Val = string | Set<string> | Map<string, string>
 
 export class FakeKv {
@@ -51,6 +53,70 @@ export class FakeKv {
     const [op, key, ...rest] = cmd
     const k = key ?? ''
     switch (op?.toUpperCase()) {
+      case 'EVAL': {
+        // Deterministic stand-in for ordinary HTTP tests. The actual Lua is
+        // independently exercised against Redis by team_redis.integration.ts.
+        const count = Number(rest[0])
+        const ks = rest.slice(1, count + 1)
+        const args = rest.slice(count + 1)
+        const call = (...parts: string[]) => this.run(parts)
+        if (key === JOIN_TEAM_SCRIPT && count === 5) {
+          const [teamId, mid, now, limit, ttl] = args as [string, string, string, string, string]
+          const [code, team, members, mineKey, coolKey] = ks as [string, string, string, string, string]
+          if (call('HGET', code, 'teamId') !== teamId) return [0, 'unknown_code']
+          const expires = Number(call('HGET', code, 'expiresAt') ?? 0)
+          if (call('HGET', code, 'revoked') === '1' || !Number.isFinite(expires)
+            || expires <= Number(now)) return [0, 'expired']
+          const name = call('HGET', team, 'name')
+          if (!name) return [0, 'unknown_code']
+          const mine = call('GET', mineKey)
+          const cool = call('GET', coolKey)
+          let size = Number(call('SCARD', members))
+          const already = Number(call('SISMEMBER', members, mid))
+          if (already) {
+            if (mine && mine !== teamId) return [0, 'in_other_team']
+          } else {
+            if (cool != null && (!Number.isFinite(Number(cool)) || Number(cool) > Number(now))) {
+              return [0, 'cooldown']
+            }
+            if (mine && mine !== teamId) return [0, 'in_other_team']
+            if (size >= Number(limit)) return [0, 'team_full']
+            size += Number(call('SADD', members, mid))
+            call('EXPIRE', members, ttl)
+            call('SET', mineKey, teamId, 'EX', ttl)
+          }
+          return [1, name, call('HGET', team, 'periodId') ?? '',
+            call('HGET', team, 'periodStart') ?? '', call('HGET', team, 'periodEnd') ?? '', size, already]
+        }
+        if (key === LEAVE_TEAM_SCRIPT && count === 4) {
+          const [mid, teamId, until, ttl] = args as [string, string, string, string]
+          const [members, mineKey, days, coolKey] = ks as [string, string, string, string]
+          const mine = call('GET', mineKey)
+          if (mine && mine !== teamId) return 0
+          if (call('SISMEMBER', members, mid) !== 1) return 0
+          call('SREM', members, mid)
+          call('DEL', days)
+          call('DEL', mineKey)
+          call('SET', coolKey, until, 'EX', ttl)
+          return 1
+        }
+        if (key === CONTRIBUTE_TEAM_SCRIPT && count === 5) {
+          const [mid, teamId, periodId, day, value, ttl] = args as [string, string, string, string, string, string]
+          const [mine, members, days, sum, team] = ks as [string, string, string, string, string]
+          if (call('GET', mine) !== teamId || call('SISMEMBER', members, mid) !== 1
+            || call('HGET', team, 'periodId') !== periodId) return [0, 'not_in_team']
+          const previous = Number(call('HGET', days, day) ?? 0)
+          if (!Number.isFinite(previous)) throw new Error('Invalid stored contribution')
+          const delta = Number(value) - previous
+          if (delta <= 0) return [1, previous, 0]
+          call('HINCRBY', sum, 'total', String(delta))
+          call('HSET', days, day, value)
+          call('EXPIRE', days, ttl)
+          call('EXPIRE', sum, ttl)
+          return [1, Number(value), delta]
+        }
+        throw new Error('未対応のEVAL')
+      }
       case 'GET':
         return this.alive(k) ? (this.data.get(k) as string) : null
       case 'SET': {
