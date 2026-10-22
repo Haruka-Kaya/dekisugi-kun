@@ -1,4 +1,5 @@
 import '../../services/session_store.dart';
+import '../../services/school_learning_session.dart';
 import '../domain/learning_economy.dart';
 import '../domain/learning_event.dart';
 import '../domain/learning_policy.dart';
@@ -138,27 +139,34 @@ abstract interface class LearningProgressStore {
 final class SessionLearningProgressStore implements LearningProgressStore {
   const SessionLearningProgressStore(
     this._store, {
+    this.schoolSession,
     this.rules = const LearningCommitRules(),
     this.economyPolicy = const SafeLearningEconomyPolicyV1(),
     this.economyCatalog = const SafeLearningEconomyCatalogV1(),
   });
 
   final SessionStore _store;
+  final SchoolLearningSession? schoolSession;
   final LearningCommitRules rules;
   final SafeLearningEconomyPolicyV1 economyPolicy;
   final SafeLearningEconomyCatalogV1 economyCatalog;
 
+  Future<T> _write<T>(Future<T> Function() operation) =>
+      schoolSession?.write(operation) ?? operation();
+
   @override
   Future<CommitLearningResult> commit(LearningEventCommand event) =>
-      _store.commitLearningEvent(event, rules: rules);
+      _write(() => _store.commitLearningEvent(event, rules: rules));
 
   @override
   Future<LearningQuestMaterializationResult> materializeQuestDefinitions({
     required LearningScope scope,
     required Iterable<LearningQuestDefinition> definitions,
-  }) => _store.materializeLearningQuestDefinitions(
-    scope: scope,
-    definitions: definitions,
+  }) => _write(
+    () => _store.materializeLearningQuestDefinitions(
+      scope: scope,
+      definitions: definitions,
+    ),
   );
 
   @override
@@ -166,7 +174,8 @@ final class SessionLearningProgressStore implements LearningProgressStore {
       _store.learningProgressSnapshot(scope);
 
   @override
-  Future<LearningRun> beginRun(LearningRun run) => _store.beginLearningRun(run);
+  Future<LearningRun> beginRun(LearningRun run) =>
+      _write(() => _store.beginLearningRun(run));
 
   @override
   Future<LearningRun> checkpointRun(
@@ -174,15 +183,18 @@ final class SessionLearningProgressStore implements LearningProgressStore {
     required int activityIndex,
     int? challengeHearts,
     required DateTime updatedAt,
-  }) => _store.checkpointLearningRun(
-    runId,
-    activityIndex: activityIndex,
-    challengeHearts: challengeHearts,
-    updatedAt: updatedAt,
+  }) => _write(
+    () => _store.checkpointLearningRun(
+      runId,
+      activityIndex: activityIndex,
+      challengeHearts: challengeHearts,
+      updatedAt: updatedAt,
+    ),
   );
 
   @override
-  Future<void> discardRun(String runId) => _store.discardLearningRun(runId);
+  Future<void> discardRun(String runId) =>
+      _write(() => _store.discardLearningRun(runId));
 
   @override
   Future<LearningChallengeHeartSpendResult> spendChallengeHeart(
@@ -191,21 +203,25 @@ final class SessionLearningProgressStore implements LearningProgressStore {
     required int activityIndex,
     required String learningDay,
     required DateTime occurredAt,
-  }) => _store.spendLearningChallengeHeart(
-    runId,
-    lossId: lossId,
-    activityIndex: activityIndex,
-    learningDay: learningDay,
-    occurredAt: occurredAt,
+  }) => _write(
+    () => _store.spendLearningChallengeHeart(
+      runId,
+      lossId: lossId,
+      activityIndex: activityIndex,
+      learningDay: learningDay,
+      occurredAt: occurredAt,
+    ),
   );
 
   @override
   Future<LearningChallengeHeartRefreshResult> refreshChallengeHearts({
     required String learningDay,
     required DateTime occurredAt,
-  }) => _store.refreshLearningChallengeHearts(
-    learningDay: learningDay,
-    occurredAt: occurredAt,
+  }) => _write(
+    () => _store.refreshLearningChallengeHearts(
+      learningDay: learningDay,
+      occurredAt: occurredAt,
+    ),
   );
 
   @override
@@ -215,17 +231,19 @@ final class SessionLearningProgressStore implements LearningProgressStore {
     required String sourceEventId,
     required String learningDay,
     required DateTime occurredAt,
-  }) => _store.recoverLearningChallengeHeartWithPractice(
-    recoveryId: recoveryId,
-    sourceEventId: sourceEventId,
-    learningDay: learningDay,
-    occurredAt: occurredAt,
+  }) => _write(
+    () => _store.recoverLearningChallengeHeartWithPractice(
+      recoveryId: recoveryId,
+      sourceEventId: sourceEventId,
+      learningDay: learningDay,
+      occurredAt: occurredAt,
+    ),
   );
 
   @override
   Future<LearningLocalCoopRun> beginLocalCoopRun(
     LearningLocalCoopRunCommand command,
-  ) => _store.beginLearningLocalCoopRun(command);
+  ) => _write(() => _store.beginLearningLocalCoopRun(command));
 
   @override
   Future<LearningLocalCoopContributionResult> contributeLocalCoopRun(
@@ -234,12 +252,14 @@ final class SessionLearningProgressStore implements LearningProgressStore {
     required String participantId,
     required String eventId,
     required DateTime occurredAt,
-  }) => _store.contributeLearningLocalCoopRun(
-    runId,
-    contributionId: contributionId,
-    participantId: participantId,
-    eventId: eventId,
-    occurredAt: occurredAt,
+  }) => _write(
+    () => _store.contributeLearningLocalCoopRun(
+      runId,
+      contributionId: contributionId,
+      participantId: participantId,
+      eventId: eventId,
+      occurredAt: occurredAt,
+    ),
   );
 
   @override
@@ -251,9 +271,11 @@ final class SessionLearningProgressStore implements LearningProgressStore {
   Future<LearningLocalLeagueFinalizeResult> finalizeLocalWeeklyLeague({
     required String weekKey,
     required DateTime finalizedAt,
-  }) => _store.finalizeLearningLocalWeeklyLeague(
-    weekKey: weekKey,
-    finalizedAt: finalizedAt,
+  }) => _write(
+    () => _store.finalizeLearningLocalWeeklyLeague(
+      weekKey: weekKey,
+      finalizedAt: finalizedAt,
+    ),
   );
 
   @override
@@ -261,10 +283,12 @@ final class SessionLearningProgressStore implements LearningProgressStore {
     required String currentWeekKey,
     required DateTime finalizedAt,
     String? afterWeekKey,
-  }) => _store.catchUpLearningLocalWeeklyLeagues(
-    currentWeekKey: currentWeekKey,
-    finalizedAt: finalizedAt,
-    afterWeekKey: afterWeekKey,
+  }) => _write(
+    () => _store.catchUpLearningLocalWeeklyLeagues(
+      currentWeekKey: currentWeekKey,
+      finalizedAt: finalizedAt,
+      afterWeekKey: afterWeekKey,
+    ),
   );
 
   @override
@@ -272,11 +296,13 @@ final class SessionLearningProgressStore implements LearningProgressStore {
     required String spendId,
     required String learningDay,
     required DateTime occurredAt,
-  }) => _store.replenishLearningStreakFreezeWithGems(
-    spendId: spendId,
-    learningDay: learningDay,
-    occurredAt: occurredAt,
-    economyPolicy: economyPolicy,
+  }) => _write(
+    () => _store.replenishLearningStreakFreezeWithGems(
+      spendId: spendId,
+      learningDay: learningDay,
+      occurredAt: occurredAt,
+      economyPolicy: economyPolicy,
+    ),
   );
 
   @override
@@ -284,11 +310,13 @@ final class SessionLearningProgressStore implements LearningProgressStore {
     required String spendId,
     required String learningDay,
     required DateTime occurredAt,
-  }) => _store.recoverLearningChallengeHeartsWithGems(
-    spendId: spendId,
-    learningDay: learningDay,
-    occurredAt: occurredAt,
-    economyPolicy: economyPolicy,
+  }) => _write(
+    () => _store.recoverLearningChallengeHeartsWithGems(
+      spendId: spendId,
+      learningDay: learningDay,
+      occurredAt: occurredAt,
+      economyPolicy: economyPolicy,
+    ),
   );
 
   @override
@@ -298,13 +326,15 @@ final class SessionLearningProgressStore implements LearningProgressStore {
     required String productId,
     required String learningDay,
     required DateTime occurredAt,
-  }) => _store.purchaseLearningCosmeticWithGems(
-    scope: scope,
-    spendId: spendId,
-    productId: productId,
-    learningDay: learningDay,
-    occurredAt: occurredAt,
-    catalog: economyCatalog,
+  }) => _write(
+    () => _store.purchaseLearningCosmeticWithGems(
+      scope: scope,
+      spendId: spendId,
+      productId: productId,
+      learningDay: learningDay,
+      occurredAt: occurredAt,
+      catalog: economyCatalog,
+    ),
   );
 
   @override
@@ -312,21 +342,25 @@ final class SessionLearningProgressStore implements LearningProgressStore {
     required LearningScope scope,
     required String productId,
     required DateTime occurredAt,
-  }) => _store.equipLearningCosmetic(
-    scope: scope,
-    productId: productId,
-    occurredAt: occurredAt,
-    catalog: economyCatalog,
+  }) => _write(
+    () => _store.equipLearningCosmetic(
+      scope: scope,
+      productId: productId,
+      occurredAt: occurredAt,
+      catalog: economyCatalog,
+    ),
   );
 
   @override
   Future<LearningCosmeticState> grantPlusCosmetics({
     required LearningScope scope,
     required DateTime occurredAt,
-  }) => _store.grantLearningPlusCosmetics(
-    scope: scope,
-    occurredAt: occurredAt,
-    catalog: economyCatalog,
+  }) => _write(
+    () => _store.grantLearningPlusCosmetics(
+      scope: scope,
+      occurredAt: occurredAt,
+      catalog: economyCatalog,
+    ),
   );
 
   @override
@@ -336,13 +370,15 @@ final class SessionLearningProgressStore implements LearningProgressStore {
     required String productId,
     required String learningDay,
     required DateTime occurredAt,
-  }) => _store.purchaseLearningChallengePassWithGems(
-    scope: scope,
-    spendId: spendId,
-    productId: productId,
-    learningDay: learningDay,
-    occurredAt: occurredAt,
-    catalog: economyCatalog,
+  }) => _write(
+    () => _store.purchaseLearningChallengePassWithGems(
+      scope: scope,
+      spendId: spendId,
+      productId: productId,
+      learningDay: learningDay,
+      occurredAt: occurredAt,
+      catalog: economyCatalog,
+    ),
   );
 
   @override
@@ -353,5 +389,5 @@ final class SessionLearningProgressStore implements LearningProgressStore {
 
   @override
   Future<void> clearScope(LearningScope scope) =>
-      _store.clearLearningScope(scope);
+      _write(() => _store.clearLearningScope(scope));
 }

@@ -41,6 +41,7 @@ import 'services/purchase_service.dart';
 import 'services/reminders.dart';
 import 'services/revenuecat_purchase_adapter.dart';
 import 'services/session_store.dart';
+import 'services/school_learning_session.dart';
 import 'services/subscription_sync_client.dart';
 import 'services/team_client.dart';
 import 'services/units_client.dart';
@@ -222,6 +223,8 @@ class _GateState extends State<_Gate> {
   UnitsClient? _localOnlyUnits;
   LocalPracticeStore? _localPractice;
   LocalClassroomRunStore? _localClassroomRun;
+  SchoolLearningSession? _schoolSession;
+  bool _schoolResetting = false;
   LearningScope _localOnlyScope = LearningScope.personal;
   bool _loading = true;
   bool _showTabGuide = false;
@@ -276,6 +279,7 @@ class _GateState extends State<_Gate> {
       final progress = _localPractice ??= LocalPracticeStore(store);
       final schoolMode = _localOnlyScope == LearningScope.schoolLocal;
       return ScienceGameHomeScreen(
+        key: schoolMode ? ObjectKey(_schoolSession) : null,
         units: units,
         sessionStore: store,
         scope: _localOnlyScope,
@@ -285,6 +289,7 @@ class _GateState extends State<_Gate> {
         reminders: context.read<Reminders>(),
         lanSocialAllowed: false,
         controller: _localGameController,
+        schoolSession: schoolMode ? _schoolSession : null,
         // 旧端末内練習は個人記録。学校scopeへ混ぜない。
         legacyProgress: schoolMode ? null : progress,
         onOpenSettings: () => _openLocalSettings(context),
@@ -335,6 +340,9 @@ class _GateState extends State<_Gate> {
     // 入口へ戻り、今回選んだ経路だけをpersonal/schoolLocalへ明示的に割り当てる。
     setState(() {
       _localOnlyScope = scope;
+      if (scope == LearningScope.schoolLocal) {
+        _schoolSession ??= SchoolLearningSession();
+      }
       _showTabGuide = true;
       _localOnlyUnits = UnitsClient(
         baseUrl: '',
@@ -353,14 +361,44 @@ class _GateState extends State<_Gate> {
   }
 
   void _openLocalSettings(BuildContext routeContext) {
+    final store = routeContext.read<SessionStore>();
     unawaited(
       Navigator.of(routeContext).push<void>(
         MaterialPageRoute<void>(
-          builder: (_) =>
-              SettingsScreen(reminders: routeContext.read<Reminders>()),
+          builder: (_) => SettingsScreen(
+            reminders: routeContext.read<Reminders>(),
+            onResetSchoolLearning: _localOnlyScope == LearningScope.schoolLocal
+                ? () => _resetSchoolLearning(store)
+                : null,
+          ),
         ),
       ),
     );
+  }
+
+  Future<void> _resetSchoolLearning(SessionStore store) async {
+    final session = _schoolSession;
+    if (_localOnlyScope != LearningScope.schoolLocal ||
+        session == null ||
+        _schoolResetting) {
+      throw StateError('school learning reset is not available');
+    }
+    _schoolResetting = true;
+    try {
+      await session.closeAndDrain();
+      await store.resetSchoolLearningData();
+    } finally {
+      _schoolResetting = false;
+      // The database transaction either committed or rolled back. In both cases
+      // discard cached screens and leave their old callbacks permanently closed.
+      // A failed reset can be retried without locking the learner out of the app.
+      if (mounted && identical(_schoolSession, session)) {
+        setState(() {
+          _schoolSession = SchoolLearningSession();
+          _localClassroomRun = null;
+        });
+      }
+    }
   }
 
   void _openLocalClassroom(BuildContext routeContext, UnitsClient units) {
@@ -372,14 +410,21 @@ class _GateState extends State<_Gate> {
     UnitsClient units,
   ) async {
     final store = routeContext.read<SessionStore>();
-    final runStore = _localClassroomRun ??= LocalClassroomRunStore(store);
+    final session = _schoolSession;
+    if (_localOnlyScope != LearningScope.schoolLocal || session == null) return;
+    final runStore = _localClassroomRun ??= LocalClassroomRunStore(
+      store,
+      schoolSession: session,
+    );
     await Navigator.of(routeContext).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => LocalClassroomScreen(
           units: units,
           runStore: runStore,
           onAssignmentCompleted: (assignment, occurredAt) =>
-              _recordSchoolAssignment(store, assignment, occurredAt),
+              session.write(
+                () => _recordSchoolAssignment(store, assignment, occurredAt),
+              ),
           onRunChanged: _localGameController.reloadSnapshot,
         ),
       ),

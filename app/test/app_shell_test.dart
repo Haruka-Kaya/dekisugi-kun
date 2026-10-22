@@ -20,6 +20,7 @@ import 'package:dekisugi/screens/settings_screen.dart';
 import 'package:dekisugi/services/consent.dart';
 import 'package:dekisugi/services/device_identity.dart';
 import 'package:dekisugi/services/local_practice_store.dart';
+import 'package:dekisugi/services/local_classroom_run_store.dart';
 import 'package:dekisugi/services/purchase_service.dart';
 import 'package:dekisugi/services/session_store.dart';
 import 'package:dekisugi/services/subscription_sync_client.dart';
@@ -386,6 +387,99 @@ void main() {
     fail('操作対象を画面内へ出せませんでした: $target');
   }
 
+  Future<ScienceGameHomeScreen> enterSchoolForReset(
+    WidgetTester tester,
+    SessionStore store,
+  ) async {
+    await tester.pumpWidget(DekisugiApp(
+      store: store,
+      localCatalogAssets: _JsonAssetBundle(_localCatalogJson),
+    ));
+    await tester.pumpAndSettle();
+    for (final target in [
+      find.text('15歳以下'),
+      find.byKey(const ValueKey('consent-next')),
+      find.text('学校からもらって使います'),
+      find.byKey(const ValueKey('use-local-only-mode')),
+    ]) {
+      await reveal(tester, target);
+      await tester.tap(target);
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.byKey(const ValueKey('game-tab-guide-dismiss')));
+    await tester.pumpAndSettle();
+    return tester.widget<ScienceGameHomeScreen>(find.byType(ScienceGameHomeScreen));
+  }
+
+  for (final failFirst in [false, true]) {
+    testWidgets('学校resetは古いcallbackを閉じ、新しい授業を再開できる failure=$failFirst', (tester) async {
+      final store = _ResetTestStore(failFirst: failFirst);
+      await store.setSetting('device_id', 'synthetic-identity');
+      await LocalPracticeStore(store).recordCompletion(
+        unitId: 'local-unit', conceptKey: 'first', completedAt: DateTime.utc(2026, 8, 9),
+      );
+      final oldHome = await enterSchoolForReset(tester, store);
+      oldHome.onOpenClassroom!();
+      await tester.pumpAndSettle();
+      final oldClassroom = tester.widget<LocalClassroomScreen>(find.byType(LocalClassroomScreen));
+      final assignment = ClassroomAssignment(
+        mission: ClassroomMission.fromUnits(await oldClassroom.units.list()).first,
+        round: ClassroomRound.a,
+      );
+      final occurredAt = DateTime.now();
+      await oldClassroom.runStore.begin(unitId: 'local-unit', conceptKey: 'first', practiceAttempt: 0);
+      await oldClassroom.runStore.enterPractice(unitId: 'local-unit', conceptKey: 'first', practiceAttempt: 0);
+      await oldClassroom.runStore.complete(unitId: 'local-unit', conceptKey: 'first', practiceAttempt: 0);
+      await oldClassroom.onAssignmentCompleted!(assignment, occurredAt);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      oldHome.onOpenSettings();
+      await tester.pumpAndSettle();
+
+      Future<void> confirmReset() async {
+        final tile = find.byKey(const ValueKey('school-learning-reset'));
+        await reveal(tester, tile);
+        await tester.tap(tile);
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey('confirm-school-reset')));
+        await tester.pumpAndSettle();
+      }
+
+      await confirmReset();
+      if (failFirst) {
+        expect(find.text('学校の学習記録を消しました。'), findsNothing);
+        expect((await store.learningProgressSnapshot(LearningScope.schoolLocal)).events, hasLength(1));
+        expect(await store.getSetting(LocalClassroomRunStore.settingKey), isNotNull);
+        await expectLater(oldClassroom.onAssignmentCompleted!(assignment, occurredAt), throwsStateError);
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pumpAndSettle();
+        await confirmReset();
+      }
+      expect(find.text('学校の学習記録を消しました。'), findsOneWidget);
+      expect((await store.learningProgressSnapshot(LearningScope.schoolLocal)).events, isEmpty);
+      expect(await store.getSetting(LocalClassroomRunStore.settingKey), isNull);
+      expect(await store.getSetting('device_id'), 'synthetic-identity');
+      expect(await LocalPracticeStore(store).records(), hasLength(1));
+      await expectLater(oldClassroom.onAssignmentCompleted!(assignment, occurredAt), throwsStateError);
+      await expectLater(
+        oldClassroom.runStore.begin(unitId: 'local-unit', conceptKey: 'first', practiceAttempt: 0),
+        throwsStateError,
+      );
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      final newHome = tester.widget<ScienceGameHomeScreen>(find.byType(ScienceGameHomeScreen));
+      expect(newHome.key, isNot(oldHome.key));
+      expect(newHome.scope, LearningScope.schoolLocal);
+      newHome.onOpenClassroom!();
+      await tester.pumpAndSettle();
+      final newClassroom = tester.widget<LocalClassroomScreen>(find.byType(LocalClassroomScreen));
+      expect(await newClassroom.runStore.load(), isNull);
+      await newClassroom.onAssignmentCompleted!(assignment, occurredAt);
+      expect((await store.learningProgressSnapshot(LearningScope.schoolLocal)).events, hasLength(1));
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('アプリ全体が端末の文字200%を1.6倍へ切り下げない', (tester) async {
     tester.view.physicalSize = const Size(320, 1000);
     tester.view.devicePixelRatio = 1;
@@ -529,6 +623,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('game-profile-settings')));
     await tester.pumpAndSettle();
     expect(find.byType(SettingsScreen), findsOneWidget);
+    expect(tester.widget<SettingsScreen>(find.byType(SettingsScreen)).onResetSchoolLearning, isNull);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     final exit = find.byKey(const ValueKey('game-profile-exit-local-mode'));
@@ -1013,4 +1108,18 @@ void main() {
     expect(find.byType(SettingsScreen), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+}
+
+class _ResetTestStore extends MemorySessionStore {
+  _ResetTestStore({required this.failFirst});
+  bool failFirst;
+
+  @override
+  Future<void> resetSchoolLearningData() async {
+    if (failFirst) {
+      failFirst = false;
+      throw StateError('synthetic reset failure');
+    }
+    await super.resetSchoolLearningData();
+  }
 }
