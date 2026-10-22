@@ -97,6 +97,10 @@
 
 ### Phase 1 — 学校コントロールプレーン
 
+内部契約と認可核は[学校control planeの実装範囲](school-control-policy.md)に分離した。
+合成adapterでの検証のみで、実IdP・保存先・管理APIには未接続。以下の完了条件と
+production/previewの学校経路閉鎖は引き続き維持する。
+
 - [ ] `tenant / school / class / enrollment / school_license` を端末 UUID から分離する。
 - [ ] 教職員を学校 IdP の OIDC/SAML で認証し、MFA と `admin / teacher / support` の
   最小権限を設ける。
